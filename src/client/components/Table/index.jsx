@@ -17,26 +17,24 @@ import PropTypes from 'prop-types'
 
 import helpers from 'lib/helpers'
 
-class Table extends React.Component {
-  render () {
-    const { headers, striped, stickyHeader, children, extraClass, useBody } = this.props
-    const tableClass =
-      'uk-table' +
-      (striped ? ' uk-table-striped stripe' : '') +
-      (stickyHeader ? ' sticky-header fixed-width' : '') +
-      (extraClass ? ' ' + extraClass : '')
-    return (
-      <table className={tableClass} style={this.props.style} ref={this.props.tableRef}>
-        {headers && (
-          <thead>
-            <tr>{headers}</tr>
-          </thead>
-        )}
-        {useBody && <tbody className={'scrollable full-height c91-fix'}>{children}</tbody>}
-        {!useBody && children}
-      </table>
-    )
-  }
+const Table = props => {
+  const { headers, striped, stickyHeader, children, extraClass, useBody, style, tableRef } = props
+  const tableClass =
+    'uk-table' +
+    (striped ? ' uk-table-striped stripe' : '') +
+    (stickyHeader ? ' sticky-header fixed-width' : '') +
+    (extraClass ? ' ' + extraClass : '')
+  return (
+    <table className={tableClass} style={style} ref={tableRef}>
+      {headers && (
+        <thead>
+          <tr>{headers}</tr>
+        </thead>
+      )}
+      {useBody && <tbody className={'scrollable full-height c91-fix'}>{children}</tbody>}
+      {!useBody && children}
+    </table>
+  )
 }
 
 Table.propTypes = {

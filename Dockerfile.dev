@@ -1,0 +1,18 @@
+FROM node:16.14-alpine
+
+RUN apk add --no-cache --update bash make gcc g++ python3 mongodb-tools
+
+WORKDIR /usr/src/trudesk
+
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn ./.yarn
+
+RUN yarn install
+
+COPY . .
+
+RUN yarn build
+
+EXPOSE 8118
+
+CMD ["./node_modules/.bin/grunt", "server"]

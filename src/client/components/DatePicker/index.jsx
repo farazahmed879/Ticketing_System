@@ -18,42 +18,45 @@ import clsx from 'clsx'
 import $ from 'jquery'
 import helpers from 'lib/helpers'
 
-class DatePicker extends React.Component {
-  componentDidMount () {
-    $(this.datepicker).on('change.uk.datepicker', e => {
-      if (this.props.onChange) this.props.onChange(e)
-    })
-  }
+const DatePicker = props => {
+  const { value, small, name, validation, format, onChange } = props
+  const datepickerRef = React.useRef()
 
-  componentDidUpdate () {
-    if (this.props.value) $(this.datepicker).val(helpers.formatDate(this.props.value, this.props.format))
-    if (this.props.value === undefined) $(this.datepicker).val('')
-  }
+  React.useEffect(() => {
+    const $el = $(datepickerRef.current)
+    const handleChange = e => {
+      if (onChange) onChange(e)
+    }
 
-  componentWillUnmount () {
-    $(this.datepicker).off('change.uk.datepicker')
-  }
+    $el.on('change.uk.datepicker', handleChange)
 
-  render () {
-    const { value, small, name, validation, readOnly } = this.props
+    return () => {
+      $el.off('change.uk.datepicker', handleChange)
+    }
+  }, [onChange])
 
-    return (
-      <Fragment>
-        <input
-          ref={r => (this.datepicker = r)}
-          id={name}
-          name={name}
-          type='text'
-          readOnly
-          className={clsx('md-input', small && 'small-font', small && 'p-0')}
-          data-uk-datepicker={`{format:'${this.props.format}'}`}
-          data-validation={validation}
-          style={this.style || { width: '97%' }}
-          defaultValue={value ? helpers.formatDate(value, this.props.format) : ''}
-        />
-      </Fragment>
-    )
-  }
+  React.useEffect(() => {
+    const $el = $(datepickerRef.current)
+    if (value) $el.val(helpers.formatDate(value, format))
+    if (value === undefined) $el.val('')
+  }, [value, format])
+
+  return (
+    <React.Fragment>
+      <input
+        ref={datepickerRef}
+        id={name}
+        name={name}
+        type='text'
+        readOnly
+        className={clsx('md-input', small && 'small-font', small && 'p-0', 'uk-datepicker')}
+        data-uk-datepicker={`{format:'${format}'}`}
+        data-validation={validation}
+        style={{ width: '97%' }}
+        defaultValue={value ? helpers.formatDate(value, format) : ''}
+      />
+    </React.Fragment>
+  )
 }
 
 DatePicker.propTypes = {

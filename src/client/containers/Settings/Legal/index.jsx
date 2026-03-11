@@ -22,60 +22,45 @@ import { updateSetting } from 'actions/settings'
 import helpers from 'lib/helpers'
 import SettingItem from 'components/Settings/SettingItem'
 
-class LegalSettingsContainer extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      privacyPolicy: ''
-    }
+const LegalSettingsContainer = props => {
+  const { active, settings, updateSetting } = props
+  const [privacyPolicy, setPrivacyPolicy] = React.useState('')
+
+  const getSetting = name => {
+    return settings.getIn(['settings', name, 'value']) ? settings.getIn(['settings', name, 'value']) : ''
   }
 
-  getSetting (name) {
-    return this.props.settings.getIn(['settings', name, 'value'])
-      ? this.props.settings.getIn(['settings', name, 'value'])
-      : ''
-  }
-
-  onSavePrivacyPolicyClicked (e) {
+  const onSavePrivacyPolicyClicked = e => {
     e.preventDefault()
-    console.log(this.state.privacyPolicy)
-    this.props
-      .updateSetting({
-        stateName: 'privacyPolicy',
-        name: 'legal:privacypolicy',
-        value: this.state.privacyPolicy,
-        noSnackbar: true
-      })
-      .then(() => {
-        helpers.UI.showSnackbar('Privacy Policy Updated')
-      })
+    updateSetting({
+      stateName: 'privacyPolicy',
+      name: 'legal:privacypolicy',
+      value: privacyPolicy,
+      noSnackbar: true
+    }).then(() => {
+      helpers.UI.showSnackbar('Privacy Policy Updated')
+    })
   }
 
-  render () {
-    const { active } = this.props
-    return (
-      <div className={!active ? 'hide' : ''}>
-        <SettingItem title={'Privacy Policy'} subtitle={'Paste in HTML/Text of your privacy policy.'}>
-          <div>
-            <EasyMDE
-              defaultValue={this.getSetting('privacyPolicy')}
-              onChange={v => this.setState({ privacyPolicy: v })}
-            />
-          </div>
-          <div className='uk-clearfix'>
-            <Button
-              text={'Save'}
-              extraClass={'uk-float-right'}
-              flat={true}
-              style={'success'}
-              waves={true}
-              onClick={e => this.onSavePrivacyPolicyClicked(e)}
-            />
-          </div>
-        </SettingItem>
-      </div>
-    )
-  }
+  return (
+    <div className={!active ? 'hide' : ''}>
+      <SettingItem title={'Privacy Policy'} subtitle={'Paste in HTML/Text of your privacy policy.'}>
+        <div>
+          <EasyMDE defaultValue={getSetting('privacyPolicy')} onChange={v => setPrivacyPolicy(v)} />
+        </div>
+        <div className='uk-clearfix'>
+          <Button
+            text={'Save'}
+            extraClass={'uk-float-right'}
+            flat={true}
+            style={'success'}
+            waves={true}
+            onClick={e => onSavePrivacyPolicyClicked(e)}
+          />
+        </div>
+      </SettingItem>
+    </div>
+  )
 }
 
 LegalSettingsContainer.propTypes = {

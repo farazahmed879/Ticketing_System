@@ -14,14 +14,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-class TruTabWrapper extends React.Component {
-  render () {
-    return (
-      <div className='tru-tabs uk-clearfix' style={this.props.style || { padding: '20px 0' }}>
-        {this.props.children}
-      </div>
-    )
-  }
+const TruTabWrapper = props => {
+  return (
+    <div className='tru-tabs uk-clearfix' style={props.style || { padding: '20px 0' }}>
+      {props.children}
+    </div>
+  )
 }
 
 TruTabWrapper.propTypes = {

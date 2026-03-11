@@ -132,20 +132,14 @@ ul.side-nav
 
     &.active > a
       padding-left: 55px !important
-      font-family: "Roboto", sans-serif !important
       background: $sidebar_item_active !important
-      color: $sidebar_item_active_text !important
-
-      border-left: 5px solid $accent_color
-      &:hover
-        &:after
-          width: 0
-          transform: translateX(0)
-
+      color: #fff !important
+      font-weight: 500
+      border-left: 4px solid $accent_color
       i,svg
-        color: $sidebar_item_active_text !important
-        fill: $sidebar_item_active_text !important
-        margin-left: -3px
+        color: #fff !important
+        fill: #fff !important
+        margin-left: -2px
 
   a
     padding: 0 0.875rem !important
@@ -170,8 +164,10 @@ ul.side-nav
       transition: transform 0.2s ease-in-out, -webkit-transform 0.2s ease-in-out
 
     &:hover
-      &:after
-        transform: translateX(5px)
+      background: rgba(255, 255, 255, 0.05) !important
+      color: #fff !important
+      i,svg
+        color: #fff !important
 
     &:not(.button)
       display: block

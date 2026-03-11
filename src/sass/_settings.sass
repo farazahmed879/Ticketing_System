@@ -26,13 +26,16 @@ $primary: #606771 !default
 $secondary: #f7f8fa !default
 //$secondary: #2a344c !default
 // Link, Some Buttons, notifications, and accent color
-$tertiary: #E74C3C !default
+$tertiary: #2563eb !default
 //$tertiary: #30b4c9 !default
 // Sidebar
-$quaternary: #e6e7e8 !default
+$quaternary: #1e293b !default
+$card-radius: 12px
+$card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)
+$card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.1)
 //$quaternary: darken(#ffffff, 9%) !default
 // Background color of Header
-$header_background: #42464d !default
+$header_background: #1e293b !default
 //$header_background: #eef0f6 !default
 // Text and icon color in the header
 $header_primary: #f6f7f8 !default
@@ -60,7 +63,7 @@ $p_color: $primary
 
 //THEME
 $logo_text_color: #FFFFFF
-$logo_circle_color: #E74C3C
+$logo_circle_color: #2563eb
 
 $topbar_bg: $header_background
 $topbar_text_color: $header_primary
@@ -80,12 +83,12 @@ $sidebar_border_right: 1px solid darken($sidebar_bg, 5%)
 $sidebar_text: automatic-text-color($sidebar_bg, 'sidebar')
 $sidebar_text_hover: $sidebar_text
 $sidebar_item_hover: darken($sidebar_bg, 8%)
-$sidebar_item_active: lighten($topbar_bg, 5%)
+$sidebar_item_active: rgba(255, 255, 255, 0.08)
 $sidebar_item_active_text: automatic-text-color($sidebar_item_active, 'sidebar')
 $sidebar_subnav_bg: darken($sidebar_bg, 5%)
 $sidebar_subnav_box_shadow: none
 $sidebar_subnav_text: automatic-text-color($sidebar_subnav_bg, 'sidebar')
-$sidebar_subnav_item_hover: lighten($sidebar_subnav_bg, 5%)
+$sidebar_subnav_item_hover: rgba(255, 255, 255, 0.05)
 $sidebar_subnav_hover: automatic-text-color($sidebar_subnav_item_hover, 'sidebar')
 $sidebar_subnav_active: automatic-text-color($sidebar_subnav_bg, 'sidebar')
 $sidebar_subnav_hr: darken($sidebar_subnav_bg, 5%)

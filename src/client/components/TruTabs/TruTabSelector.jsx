@@ -15,23 +15,21 @@ import React, { Fragment } from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 
-class TruTabSelector extends React.Component {
-  render () {
-    const { label, active, selectorId, showBadge, badgeText } = this.props
-    return (
-      <Fragment>
-        <a
-          role={'button'}
-          className={clsx('tru-tab-selector no-ajaxy', active && 'active')}
-          data-tabid={selectorId}
-          onClick={e => e.preventDefault()}
-        >
-          {label}
-          {showBadge && <span className='uk-badge uk-badge-grey uk-badge-small'>{badgeText}</span>}
-        </a>
-      </Fragment>
-    )
-  }
+const TruTabSelector = props => {
+  const { label, active, selectorId, showBadge, badgeText } = props
+  return (
+    <Fragment>
+      <a
+        role={'button'}
+        className={clsx('tru-tab-selector no-ajaxy', active && 'active')}
+        data-tabid={selectorId}
+        onClick={e => e.preventDefault()}
+      >
+        {label}
+        {showBadge && <span className='uk-badge uk-badge-grey uk-badge-small'>{badgeText}</span>}
+      </a>
+    </Fragment>
+  )
 }
 
 TruTabSelector.propTypes = {

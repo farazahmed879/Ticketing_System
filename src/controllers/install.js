@@ -39,6 +39,7 @@ installController.elastictest = function (req, res) {
   const data = req.body
   const CONNECTION_URI = data.host + ':' + data.port
 
+  winston.debug('Testing ElasticSearch Connection URI: ' + CONNECTION_URI)
   const child = require('child_process').fork(path.join(__dirname, '../../src/install/elasticsearchtest'), {
     env: { FORK: 1, NODE_ENV: global.env, ELASTICSEARCH_URI: CONNECTION_URI }
   })
@@ -57,12 +58,18 @@ installController.elastictest = function (req, res) {
 installController.mongotest = function (req, res) {
   const data = req.body
   const dbPassword = encodeURIComponent(data.password)
-  let CONNECTION_URI =
-    'mongodb://' + data.username + ':' + dbPassword + '@' + data.host + ':' + data.port + '/' + data.database
+  let CONNECTION_URI = ''
+  if (data.username && data.password) {
+    CONNECTION_URI =
+      'mongodb://' + data.username + ':' + dbPassword + '@' + data.host + ':' + data.port + '/' + data.database
+    if (data.port === '---')
+      CONNECTION_URI = 'mongodb+srv://' + data.username + ':' + dbPassword + '@' + data.host + '/' + data.database
+  } else {
+    CONNECTION_URI = 'mongodb://' + data.host + ':' + data.port + '/' + data.database
+    if (data.port === '---') CONNECTION_URI = 'mongodb+srv://' + data.host + '/' + data.database
+  }
 
-  if (data.port === '---')
-    CONNECTION_URI = 'mongodb+srv://' + data.username + ':' + dbPassword + '@' + data.host + '/' + data.database
-
+  winston.info('Testing Mongo Connection URI: ' + CONNECTION_URI)
   const child = require('child_process').fork(path.join(__dirname, '../../src/install/mongotest'), {
     env: { FORK: 1, NODE_ENV: global.env, MONGOTESTURI: CONNECTION_URI }
   })
@@ -156,8 +163,14 @@ installController.install = function (req, res) {
   }
 
   const dbPassword = encodeURIComponent(password)
-  let conuri = 'mongodb://' + username + ':' + dbPassword + '@' + host + ':' + port + '/' + database
-  if (port === '---') conuri = 'mongodb+srv://' + username + ':' + dbPassword + '@' + host + '/' + database
+  let conuri = ''
+  if (username && password) {
+    conuri = 'mongodb://' + username + ':' + dbPassword + '@' + host + ':' + port + '/' + database
+    if (port === '---') conuri = 'mongodb+srv://' + username + ':' + dbPassword + '@' + host + '/' + database
+  } else {
+    conuri = 'mongodb://' + host + ':' + port + '/' + database
+    if (port === '---') conuri = 'mongodb+srv://' + host + '/' + database
+  }
 
   async.waterfall(
     [
@@ -511,17 +524,19 @@ installController.restart = function (req, res) {
   pm2.connect(function (err) {
     if (err) {
       winston.error(err)
-      res.status(400).send(err)
-      return
+      // res.status(400).send(err)
+      return res.json({ success: true, message: 'PM2 not found. Please restart manually.' })
     }
     pm2.restart('trudesk', function (err) {
       if (err) {
-        res.status(400).send(err)
-        return winston.error(err)
+        // res.status(400).send(err)
+        winston.error(err)
+        pm2.disconnect()
+        return res.json({ success: true, message: 'PM2 restart failed. Please restart manually.' })
       }
 
       pm2.disconnect()
-      res.send()
+      res.json({ success: true })
     })
   })
 }

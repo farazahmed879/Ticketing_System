@@ -16,120 +16,64 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { updateSetting, updateMultipleSettings } from 'actions/settings'
-
-import Button from 'components/Button'
-import SettingItem from 'components/Settings/SettingItem'
-
-import helpers from 'lib/helpers'
-import axios from 'axios'
-import Log from '../../../logger'
-import EnableSwitch from 'components/Settings/EnableSwitch'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import UIKit from 'uikit'
 
-@observer
-class AccountsSettingsContainer extends React.Component {
-  @observable passwordComplexityEnabled = false
-  @observable allowUserRegistrationEnabled = false
+const AccountsSettingsContainer = props => {
+  const { active, updateSetting, settings } = props
+  const [passwordComplexityEnabled, setPasswordComplexityEnabled] = React.useState(false)
+  const [allowUserRegistrationEnabled, setAllowUserRegistrationEnabled] = React.useState(false)
 
-  constructor (props) {
-    super(props)
+  const getSetting = React.useCallback(
+    stateName => {
+      return settings.getIn(['settings', stateName, 'value']) ? settings.getIn(['settings', stateName, 'value']) : ''
+    },
+    [settings]
+  )
 
-    makeObservable(this)
+  React.useEffect(() => {
+    const pc = getSetting('accountsPasswordComplexity')
+    const ar = getSetting('allowUserRegistration')
+    if (passwordComplexityEnabled !== pc) setPasswordComplexityEnabled(pc)
+    if (allowUserRegistrationEnabled !== ar) setAllowUserRegistrationEnabled(ar)
+  }, [settings, getSetting])
 
-    this.state = {
-      restarting: false
-    }
-
-    this.restartServer = this.restartServer.bind(this)
+  const onUpdateSetting = (stateName, name, value) => {
+    updateSetting({ stateName, name, value })
   }
 
-  componentDidMount () {
-    // helpers.UI.inputs()
-  }
-
-  componentDidUpdate (prevProps) {
-    // helpers.UI.reRenderInputs()
-    if (prevProps.settings !== this.props.settings) {
-      if (this.passwordComplexityEnabled !== this.getSetting('accountsPasswordComplexity'))
-        this.passwordComplexityEnabled = this.getSetting('accountsPasswordComplexity')
-      if (this.allowUserRegistrationEnabled !== this.getSetting('allowUserRegistration'))
-        this.allowUserRegistrationEnabled = this.getSetting('allowUserRegistration')
-    }
-  }
-
-  restartServer () {
-    this.setState({ restarting: true })
-
-    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-    axios
-      .post(
-        '/api/v1/admin/restart',
-        {},
-        {
-          headers: {
-            'CSRF-TOKEN': token
-          }
+  return (
+    <div className={active ? 'active' : 'hide'}>
+      <SettingItem
+        title='Allow User Registration'
+        subtitle='Allow users to create accounts on the login screen.'
+        component={
+          <EnableSwitch
+            stateName='allowUserRegistration'
+            label='Enable'
+            checked={allowUserRegistrationEnabled}
+            onChange={e => {
+              onUpdateSetting('allowUserRegistration', 'allowUserRegistration:enable', e.target.checked)
+            }}
+          />
         }
-      )
-      .catch(error => {
-        helpers.hideLoader()
-        Log.error(error.responseText)
-        Log.error('Unable to restart server. Server must run under PM2 and Account must have admin rights.')
-        helpers.UI.showSnackbar('Unable to restart server. Are you an Administrator?', true)
-      })
-      .then(() => {
-        this.setState({ restarting: false })
-      })
-  }
-
-  getSetting (stateName) {
-    return this.props.settings.getIn(['settings', stateName, 'value'])
-      ? this.props.settings.getIn(['settings', stateName, 'value'])
-      : ''
-  }
-
-  updateSetting (stateName, name, value) {
-    this.props.updateSetting({ stateName, name, value })
-  }
-
-  render () {
-    const { active } = this.props
-    return (
-      <div className={active ? 'active' : 'hide'}>
-        <SettingItem
-          title='Allow User Registration'
-          subtitle='Allow users to create accounts on the login screen.'
-          component={
-            <EnableSwitch
-              stateName='allowUserRegistration'
-              label='Enable'
-              checked={this.allowUserRegistrationEnabled}
-              onChange={e => {
-                this.updateSetting('allowUserRegistration', 'allowUserRegistration:enable', e.target.checked)
-              }}
-            />
-          }
-        />
-        <SettingItem
-          title={'Password Complexity'}
-          subtitle={'Require users passwords to meet minimum password complexity'}
-          tooltip={'Minimum 8 characters with uppercase and numeric.'}
-          component={
-            <EnableSwitch
-              stateName={'accountsPasswordComplexity'}
-              label={'Enable'}
-              checked={this.passwordComplexityEnabled}
-              onChange={e => {
-                this.updateSetting('accountsPasswordComplexity', 'accountsPasswordComplexity:enable', e.target.checked)
-              }}
-            />
-          }
-        />
-      </div>
-    )
-  }
+      />
+      <SettingItem
+        title={'Password Complexity'}
+        subtitle={'Require users passwords to meet minimum password complexity'}
+        tooltip={'Minimum 8 characters with uppercase and numeric.'}
+        component={
+          <EnableSwitch
+            stateName={'accountsPasswordComplexity'}
+            label={'Enable'}
+            checked={passwordComplexityEnabled}
+            onChange={e => {
+              onUpdateSetting('accountsPasswordComplexity', 'accountsPasswordComplexity:enable', e.target.checked)
+            }}
+          />
+        }
+      />
+    </div>
+  )
 }
 
 AccountsSettingsContainer.propTypes = {

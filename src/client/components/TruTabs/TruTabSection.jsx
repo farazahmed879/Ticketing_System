@@ -15,19 +15,13 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 
-class TruTabSection extends React.Component {
-  render () {
-    const { sectionId, active } = this.props
-    return (
-      <div
-        className={clsx('tru-tab-section', !active && 'hidden')}
-        data-tabid={sectionId}
-        style={this.props.style || { paddingTop: 20 }}
-      >
-        {this.props.children}
-      </div>
-    )
-  }
+const TruTabSection = props => {
+  const { sectionId, active, style, children } = props
+  return (
+    <div className={clsx('tru-tab-section', !active && 'hidden')} data-tabid={sectionId} style={style || { paddingTop: 20 }}>
+      {children}
+    </div>
+  )
 }
 
 TruTabSection.propTypes = {

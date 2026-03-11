@@ -14,123 +14,126 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
-import { observer } from 'mobx-react'
-import { observable, makeObservable } from 'mobx'
 import { connect } from 'react-redux'
 
 import { TICKETS_STATUS_SET, TICKETS_UI_STATUS_UPDATE } from 'serverSocket/socketEventConsts'
 import { fetchTicketStatus } from 'actions/tickets'
 
-@observer
-class StatusSelector extends React.Component {
-  @observable status = null
 
-  constructor (props) {
-    super(props)
-    makeObservable(this)
 
-    this.status = this.props.status
+const StatusSelector = props => {
+  const { ticketId, status: propStatus, onStatusChange, hasPerm, socket, fetchTicketStatus, ticketStatuses } = props
+  const [status, setStatus] = React.useState(propStatus)
 
-    this.onDocumentClick = this.onDocumentClick.bind(this)
-    this.onUpdateTicketStatus = this.onUpdateTicketStatus.bind(this)
-  }
+  const selectorButton = React.useRef(null)
+  const dropMenu = React.useRef(null)
 
-  componentDidMount () {
-    document.addEventListener('click', this.onDocumentClick)
-
-    this.props.socket.on(TICKETS_UI_STATUS_UPDATE, this.onUpdateTicketStatus)
-    this.props.fetchTicketStatus()
-  }
-
-  componentDidUpdate (prevProps) {
-    if (prevProps.status !== this.props.status) this.status = this.props.status
-  }
-
-  componentWillUnmount () {
-    document.removeEventListener('click', this.onDocumentClick)
-    this.props.socket.off(TICKETS_UI_STATUS_UPDATE, this.onUpdateTicketStatus)
-  }
-
-  onDocumentClick (e) {
-    if (!this.selectorButton.contains(e.target) && this.dropMenu.classList.contains('shown')) this.forceClose()
-  }
-
-  onUpdateTicketStatus (data) {
-    if (this.props.ticketId === data.tid) {
-      this.status = data.status
-      if (this.props.onStatusChange) this.props.onStatusChange(this.status)
+  const forceClose = React.useCallback(() => {
+    if (dropMenu.current) {
+      dropMenu.current.classList.remove('shown')
+      dropMenu.current.classList.add('hide')
     }
-  }
+  }, [])
 
-  toggleDropMenu (e) {
+  const onDocumentClick = React.useCallback(
+    e => {
+      if (
+        selectorButton.current &&
+        !selectorButton.current.contains(e.target) &&
+        dropMenu.current &&
+        dropMenu.current.classList.contains('shown')
+      ) {
+        forceClose()
+      }
+    },
+    [forceClose]
+  )
+
+  const onUpdateTicketStatus = React.useCallback(
+    data => {
+      if (ticketId === data.tid) {
+        setStatus(data.status)
+        if (onStatusChange) onStatusChange(data.status)
+      }
+    },
+    [ticketId, onStatusChange]
+  )
+
+  React.useEffect(() => {
+    document.addEventListener('click', onDocumentClick)
+    socket.on(TICKETS_UI_STATUS_UPDATE, onUpdateTicketStatus)
+    fetchTicketStatus()
+
+    return () => {
+      document.removeEventListener('click', onDocumentClick)
+      socket.off(TICKETS_UI_STATUS_UPDATE, onUpdateTicketStatus)
+    }
+  }, [socket, fetchTicketStatus, onDocumentClick, onUpdateTicketStatus])
+
+  React.useEffect(() => {
+    setStatus(propStatus)
+  }, [propStatus])
+
+  const toggleDropMenu = e => {
     e.stopPropagation()
-    if (!this.props.hasPerm) return
-    const hasHide = this.dropMenu.classList.contains('hide')
-    const hasShown = this.dropMenu.classList.contains('shown')
-    hasHide ? this.dropMenu.classList.remove('hide') : this.dropMenu.classList.add('hide')
-    hasShown ? this.dropMenu.classList.remove('shown') : this.dropMenu.classList.add('shown')
+    if (!hasPerm) return
+    const hasHide = dropMenu.current.classList.contains('hide')
+    const hasShown = dropMenu.current.classList.contains('shown')
+    hasHide ? dropMenu.current.classList.remove('hide') : dropMenu.current.classList.add('hide')
+    hasShown ? dropMenu.current.classList.remove('shown') : dropMenu.current.classList.add('shown')
   }
 
-  forceClose () {
-    this.dropMenu.classList.remove('shown')
-    this.dropMenu.classList.add('hide')
+  const changeStatus = statusId => {
+    if (!hasPerm) return
+
+    socket.emit(TICKETS_STATUS_SET, { _id: ticketId, value: statusId })
+    forceClose()
   }
 
-  changeStatus (status) {
-    if (!this.props.hasPerm) return
+  const currentStatus = ticketStatuses ? ticketStatuses.find(s => s.get('_id') === status) : null
 
-    this.props.socket.emit(TICKETS_STATUS_SET, { _id: this.props.ticketId, value: status })
-    this.forceClose()
-  }
-
-  render () {
-    const currentStatus = this.props.ticketStatuses
-      ? this.props.ticketStatuses.find(s => s.get('_id') === this.status)
-      : null
-
-    return (
-      <div className='floating-ticket-status'>
-        <div
-          title='Change Status'
-          className={clsx(`ticket-status`, this.props.hasPerm && `cursor-pointer`)}
-          style={{ color: 'white', background: currentStatus != null ? currentStatus.get('htmlColor') : '#000000' }}
-          onClick={e => this.toggleDropMenu(e)}
-          ref={r => (this.selectorButton = r)}
-        >
-          <span>{currentStatus != null ? currentStatus.get('name') : 'Unknown'}</span>
-        </div>
-
-        {this.props.hasPerm && (
-          <span className='drop-icon material-icons' style={{ left: 'auto', right: 22, bottom: -18 }}>
-            keyboard_arrow_down
-          </span>
-        )}
-
-        <div
-          id={'statusSelect'}
-          ref={r => (this.dropMenu = r)}
-          className='hide'
-          style={{ height: 25 * this.props.ticketStatuses.size + 25 }}
-        >
-          <ul>
-            {this.props.ticketStatuses.map(
-              s =>
-                s && (
-                  <li
-                    key={s.get('_id')}
-                    className='ticket-status'
-                    onClick={() => this.changeStatus(s.get('_id'))}
-                    style={{ color: 'white', background: s.get('htmlColor') }}
-                  >
-                    <span>{s.get('name')}</span>
-                  </li>
-                )
-            )}
-          </ul>
-        </div>
+  return (
+    <div className='floating-ticket-status'>
+      <div
+        title='Change Status'
+        className={clsx(`ticket-status`, hasPerm && `cursor-pointer`)}
+        style={{ color: 'white', background: currentStatus != null ? currentStatus.get('htmlColor') : '#000000' }}
+        onClick={e => toggleDropMenu(e)}
+        ref={selectorButton}
+      >
+        <span>{currentStatus != null ? currentStatus.get('name') : 'Unknown'}</span>
       </div>
-    )
-  }
+
+      {hasPerm && (
+        <span className='drop-icon material-icons' style={{ left: 'auto', right: 22, bottom: -18 }}>
+          keyboard_arrow_down
+        </span>
+      )}
+
+      <div
+        id={'statusSelect'}
+        ref={dropMenu}
+        className='hide'
+        style={{ height: 25 * ticketStatuses.size + 25 }}
+      >
+        <ul>
+          {ticketStatuses.map(
+            s =>
+              s && (
+                <li
+                  key={s.get('_id')}
+                  className='ticket-status'
+                  onClick={() => changeStatus(s.get('_id'))}
+                  style={{ color: 'white', background: s.get('htmlColor') }}
+                >
+                  <span>{s.get('name')}</span>
+                </li>
+              )
+          )}
+        </ul>
+      </div>
+    </div>
+  )
 }
 
 StatusSelector.propTypes = {

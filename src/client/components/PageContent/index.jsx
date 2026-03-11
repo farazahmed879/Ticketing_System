@@ -17,23 +17,21 @@ import PropTypes from 'prop-types'
 
 import helpers from 'lib/helpers'
 
-class PageContent extends React.Component {
-  componentDidMount () {
+const PageContent = props => {
+  React.useEffect(() => {
     helpers.resizeFullHeight()
     helpers.setupScrollers()
-  }
+  }, [])
 
-  render () {
-    return (
-      <div
-        id={this.props.id}
-        className={'page-content no-border-top full-height scrollable ' + (this.props.extraClass || '')}
-        style={{ padding: this.props.padding }}
-      >
-        <div style={{ paddingBottom: this.props.paddingBottom }}>{this.props.children}</div>
-      </div>
-    )
-  }
+  return (
+    <div
+      id={props.id}
+      className={'page-content no-border-top full-height scrollable ' + (props.extraClass || '')}
+      style={{ padding: props.padding }}
+    >
+      <div style={{ paddingBottom: props.paddingBottom }}>{props.children}</div>
+    </div>
+  )
 }
 
 PageContent.propTypes = {

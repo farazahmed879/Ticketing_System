@@ -15,27 +15,25 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-class TableHeader extends React.Component {
-  render () {
-    const { width, height, padding, textAlign, text, component } = this.props
+const TableHeader = props => {
+  const { width, height, padding, textAlign, text, component } = props
 
-    return (
-      <th
-        style={{
-          width: width,
-          padding: padding,
-          height: height,
-          verticalAlign: 'middle',
-          fontSize: 12,
-          textTransform: 'uppercase',
-          textAlign: textAlign
-        }}
-      >
-        {component}
-        {text}
-      </th>
-    )
-  }
+  return (
+    <th
+      style={{
+        width: width,
+        padding: padding,
+        height: height,
+        verticalAlign: 'middle',
+        fontSize: 12,
+        textTransform: 'uppercase',
+        textAlign: textAlign
+      }}
+    >
+      {component}
+      {text}
+    </th>
+  )
 }
 
 TableHeader.propTypes = {

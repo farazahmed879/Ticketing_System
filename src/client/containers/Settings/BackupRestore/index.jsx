@@ -39,84 +39,56 @@ import SettingItem from 'components/Settings/SettingItem'
 import Zone from 'components/ZoneBox/zone'
 import ZoneBox from 'components/ZoneBox'
 
-class BackupRestoreSettingsContainer extends React.Component {
-  constructor (props) {
-    super(props)
+const BackupRestoreSettingsContainer = props => {
+  const {
+    socket,
+    active,
+    fetchMongoDBTools,
+    fetchBackups,
+    fetchDeletedTickets,
+    changeDeletedTicketsPage,
+    backupNow,
+    restoreDeletedTicket,
+    permDeleteTicket,
+    settings
+  } = props
 
-    this.initBackupUpload = this.initBackupUpload.bind(this)
-  }
+  const backupUploadProgressbar = React.useRef(null)
+  const backupUploadSelect = React.useRef(null)
+  const backupUploadBtn = React.useRef(null)
+  const deletedTicketsPagination = React.useRef(null)
 
-  componentDidMount () {
-    this.props.fetchMongoDBTools()
-    this.props.fetchBackups()
-    this.props.fetchDeletedTickets()
-  }
-
-  componentDidUpdate (prevProps) {
-    this.initBackupUpload()
-    if (!this.deletedTicketsPagination) {
-      const $deletedTicketPagination = $('.deletedTicketPagination')
-      if ($deletedTicketPagination.length > 0) {
-        this.deletedTicketsPagination = UIKit.pagination($deletedTicketPagination, {
-          items: this.props.settings.deletedTicketsCount,
-          itemsOnPage: 15
-        })
-        $deletedTicketPagination.on('select.uk.pagination', (e, pageIndex) => {
-          this.props.changeDeletedTicketsPage(pageIndex)
-        })
-      }
-    }
-
-    if (prevProps.settings.deletedTicketsCount !== this.props.settings.deletedTicketsCount) {
-      this.deletedTicketsPagination.pages = Math.ceil(this.props.settings.deletedTicketsCount / 15)
-        ? Math.ceil(this.props.settings.deletedTicketsCount / 15)
-        : 1
-      this.deletedTicketsPagination.render()
-      if (this.deletedTicketsPagination.currentPage > this.deletedTicketsPagination.pages - 1)
-        this.deletedTicketsPagination.selectPage(this.deletedTicketsPagination.pages - 1)
-    }
-  }
-
-  componentWillUnmount () {
-    if (this.deletedTicketsPagination) {
-      this.deletedTicketsPagination.element.off('select.uk.pagination')
-      this.deletedTicketsPagination = null
-    }
-  }
-
-  initBackupUpload () {
-    const $progressBar = $(this.backupUploadProgressbar)
-    const $uploadSelect = $(this.backupUploadSelect)
-    const $uploadButton = $(this.backupUploadBtn)
+  const initBackupUpload = React.useCallback(() => {
+    const $progressBar = $(backupUploadProgressbar.current)
+    const $uploadSelect = $(backupUploadSelect.current)
+    const $uploadButton = $(backupUploadBtn.current)
     const bar = $progressBar.find('.uk-progress-bar')
 
     if ($progressBar.length < 1 || $uploadSelect.length < 1 || $uploadButton.length < 1) return
 
-    const self = this
-
-    const settings = {
+    const uploadSettings = {
       action: '/api/v1/backup/upload',
       allow: '*.zip',
       type: 'json',
 
-      loadstart: function () {
+      loadstart: () => {
         bar.css('width', '0%').text('0%')
         $progressBar.removeClass('hide')
         $uploadButton.addClass('hide')
       },
-      notallowed: function () {
+      notallowed: () => {
         helpers.UI.showSnackbar('Invalid File Type. Please upload a Zip file.', true)
       },
-      error: function (err) {
+      error: err => {
         Log.error(err)
         helpers.UI.showSnackbar('An unknown error occurred. Check Console', true)
       },
-      progress: function (percent) {
+      progress: percent => {
         percent = Math.ceil(percent)
         bar.css('width', percent + '%').text(percent + '%')
       },
 
-      allcomplete: function (response) {
+      allcomplete: response => {
         Log.debug(response)
         if (!response.success) {
           helpers.UI.showSnackbar(response.error, true)
@@ -128,21 +100,64 @@ class BackupRestoreSettingsContainer extends React.Component {
           $progressBar.addClass('hide')
           $uploadButton.removeClass('hide')
           $uploadSelect.val(null)
-          self.props.fetchBackups()
+          fetchBackups()
           helpers.UI.playSound('success')
         }, 1500)
       }
     }
 
-    UIKit.uploadSelect($uploadSelect, settings)
-  }
+    UIKit.uploadSelect($uploadSelect, uploadSettings)
+  }, [fetchBackups])
 
-  onBackupNowClicked (e) {
+  React.useEffect(() => {
+    fetchMongoDBTools()
+    fetchBackups()
+    fetchDeletedTickets()
+  }, [fetchMongoDBTools, fetchBackups, fetchDeletedTickets])
+
+  React.useEffect(() => {
+    initBackupUpload()
+  }, [initBackupUpload])
+
+  React.useEffect(() => {
+    if (!deletedTicketsPagination.current) {
+      const $deletedTicketPagination = $('.deletedTicketPagination')
+      if ($deletedTicketPagination.length > 0) {
+        deletedTicketsPagination.current = UIKit.pagination($deletedTicketPagination, {
+          items: settings.deletedTicketsCount,
+          itemsOnPage: 15
+        })
+        $deletedTicketPagination.on('select.uk.pagination', (e, pageIndex) => {
+          changeDeletedTicketsPage(pageIndex)
+        })
+      }
+    }
+
+    return () => {
+      if (deletedTicketsPagination.current) {
+        deletedTicketsPagination.current.element.off('select.uk.pagination')
+        deletedTicketsPagination.current = null
+      }
+    }
+  }, [settings.deletedTicketsCount, changeDeletedTicketsPage])
+
+  React.useEffect(() => {
+    if (deletedTicketsPagination.current) {
+      deletedTicketsPagination.current.pages = Math.ceil(settings.deletedTicketsCount / 15)
+        ? Math.ceil(settings.deletedTicketsCount / 15)
+        : 1
+      deletedTicketsPagination.current.render()
+      if (deletedTicketsPagination.current.currentPage > deletedTicketsPagination.current.pages - 1)
+        deletedTicketsPagination.current.selectPage(deletedTicketsPagination.current.pages - 1)
+    }
+  }, [settings.deletedTicketsCount])
+
+  const onBackupNowClicked = e => {
     e.preventDefault()
-    this.props.backupNow()
+    backupNow()
   }
 
-  oneRestoreClicked (e, backup) {
+  const oneRestoreClicked = (backup) => {
     if (!backup) return
 
     const filename = backup.get('filename')
@@ -159,14 +174,14 @@ class BackupRestoreSettingsContainer extends React.Component {
             This process may take a while depending on the size of the backup.
         </p>`,
       () => {
-        this.props.socket.emit(BACKUP_RESTORE_SHOW_OVERLAY)
+        socket.emit(BACKUP_RESTORE_SHOW_OVERLAY)
 
         axios
           .post('/api/v1/backup/restore', { file: filename })
           .then(() => {
             helpers.UI.showSnackbar('Restore Complete. Logging all users out...')
             setTimeout(() => {
-              this.props.socket.emit(BACKUP_RESTORE_COMPLETE)
+              socket.emit(BACKUP_RESTORE_COMPLETE)
             }, 2000)
           })
           .catch(err => {
@@ -181,7 +196,7 @@ class BackupRestoreSettingsContainer extends React.Component {
     )
   }
 
-  onDeleteBackupClicked (e, backup) {
+  const onDeleteBackupClicked = (backup) => {
     UIKit.modal.confirm(
       `<h2 class="text-light">Are you sure?</h2>
         <p style="font-size: 14px;">This action is permanent and will destroy the backup file: 
@@ -192,7 +207,7 @@ class BackupRestoreSettingsContainer extends React.Component {
           .delete(`/api/v1/backup/${backup.get('filename')}`)
           .then(res => {
             if (res.data && res.data.success) {
-              this.props.fetchBackups()
+              fetchBackups()
               helpers.UI.showSnackbar('Backup successfully deleted')
             } else {
               helpers.UI.showSnackbar('Unable to delete backup', true)
@@ -210,223 +225,152 @@ class BackupRestoreSettingsContainer extends React.Component {
     )
   }
 
-  onRestoreTicketClicked (e, ticket) {
+  const onRestoreTicketClicked = (ticket) => {
     if (!ticket) return
-
-    this.props.restoreDeletedTicket({ _id: ticket.get('_id') })
+    restoreDeletedTicket({ _id: ticket.get('_id') })
   }
 
-  onDeleteTicketClicked (e, ticket) {
+  const onDeleteTicketClicked = (ticket) => {
     if (!ticket) return
-
-    this.props.permDeleteTicket({ _id: ticket.get('_id') })
+    permDeleteTicket({ _id: ticket.get('_id') })
   }
 
-  render () {
-    const { active } = this.props
-
-    return (
-      <div className={active ? 'active' : 'hide'}>
-        {!this.props.settings.hasMongoDBTools && (
-          <SettingItem
-            title={'MongoDB Tools Not Found'}
-            subtitle={'Unable to locate MongoDB tools. Please make sure MongoDB tools are installed.'}
-          >
-            <div>
-              <h4>Installing MongoDB Tools</h4>
-              <p style={{ margin: '0 0 5px 0', fontSize: '13px' }}>
-                MongoDB Tools are required to perform backup and restore. See below for instructions on installing
-                MongoDB Tools.
-              </p>
-              <h5>
-                <strong>Ubuntu 18.04</strong>
-              </h5>
-              <pre style={{ whiteSpace: 'pre-line' }}>sudo apt install -y mongo-tools</pre>
-              <br />
-              <h5>
-                <strong>ArchLinux</strong>
-              </h5>
-              <pre style={{ whiteSpace: 'pre-line' }}>yay -S mongodb-tools-bin</pre>
-              <br />
-              <h5>
-                <strong>Fedora 29</strong>
-              </h5>
-              <pre>dnf install -y mongo-tools</pre>
-              <br />
-              <h5>
-                <strong>Alpine Linux</strong>
-              </h5>
-              <pre>apk add mongodb-tools</pre>
-            </div>
-          </SettingItem>
-        )}
-        {this.props.settings.hasMongoDBTools && (
+  return (
+    <div className={active ? 'active' : 'hide'}>
+      {!settings.hasMongoDBTools && (
+        <SettingItem
+          title={'MongoDB Tools Not Found'}
+          subtitle={'Unable to locate MongoDB tools. Please make sure MongoDB tools are installed.'}
+        >
           <div>
-            <SettingItem
-              title={'Backup Now'}
-              subtitle={'Backup all site data. (Database, Attachments, Assets)'}
-              component={
-                <div className={'uk-float-right mt-10'}>
-                  <div
-                    className={
-                      'uk-progress uk-progress-success uk-progress-striped uk-active' +
-                      (!this.props.settings.backingup ? ' hide ' : '')
-                    }
-                    style={{ height: '31px', background: 'transparent' }}
-                  >
-                    <div
-                      className='uk-progress-bar uk-float-right'
-                      style={{ width: '115px', fontSize: '11px', textTransform: 'uppercase', lineHeight: '31px' }}
-                    >
-                      Please Wait...
-                    </div>
-                  </div>
-                  {!this.props.settings.backingup && (
-                    <Button
-                      text={'Backup Now'}
-                      style={'success'}
-                      small={true}
-                      styleOverride={{ width: '115px' }}
-                      onClick={e => this.onBackupNowClicked(e)}
-                    />
-                  )}
-                </div>
-              }
-            />
-            <SettingItem
-              title={'Backups'}
-              subtitle={'Currently stored backups'}
-              component={
-                <div className={'uk-float-right mt-10'} style={{ width: '85px' }}>
-                  <div
-                    className={'uk-progress hide'}
-                    style={{ height: '31px' }}
-                    ref={i => (this.backupUploadProgressbar = i)}
-                  >
-                    <div className='uk-progress-bar' style={{ width: 0, lineHeight: '31px', fontSize: '11px' }}>
-                      0%
-                    </div>
-                  </div>
-                  <form className='uk-form-stacked'>
-                    <button
-                      className={'md-btn md-btn-small md-btn-primary uk-form-file no-ajaxy'}
-                      style={{ width: '85px' }}
-                      ref={i => (this.backupUploadBtn = i)}
-                    >
-                      Upload
-                      <input ref={i => (this.backupUploadSelect = i)} type={'file'} name={'backupUploadSelect'} />
-                    </button>
-                  </form>
-                </div>
-              }
-            >
-              {this.props.settings.backups.size < 1 && (
-                <Zone>
-                  <ZoneBox>
-                    <h2 className={'uk-text-muted uk-text-center'}>No Backups</h2>
-                  </ZoneBox>
-                </Zone>
-              )}
-              {this.props.settings.backups.size > 0 && (
-                <table className='uk-table mt-0'>
-                  <thead>
-                    <tr>
-                      <th>Filename</th>
-                      <th>Size</th>
-                      <th />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {this.props.settings.backups.map(backup => {
-                      return (
-                        <tr key={backup.get('filename')}>
-                          <td className={'valign-middle'} style={{ width: '60%', height: '60px' }}>
-                            {backup.get('filename')}
-                          </td>
-                          <td className='valign-middle'>{backup.get('sizeFormat')}</td>
-                          <td className='uk-text-right valign-middle'>
-                            <ButtonGroup>
-                              <a
-                                href={`/backups/${backup.get('filename')}`}
-                                className={'md-btn md-btn-small md-btn-wave no-ajaxy'}
-                                download={backup.get('filename')}
-                              >
-                                download
-                              </a>
-                              <Button
-                                text={'Restore'}
-                                small={true}
-                                waves={true}
-                                onClick={e => this.oneRestoreClicked(e, backup)}
-                              />
-                              <Button
-                                text={'Delete'}
-                                small={true}
-                                style={'danger'}
-                                waves={true}
-                                onClick={e => this.onDeleteBackupClicked(e, backup)}
-                              />
-                            </ButtonGroup>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              )}
-            </SettingItem>
+            <h4>Installing MongoDB Tools</h4>
+            <p style={{ margin: '0 0 5px 0', fontSize: '13px' }}>
+              MongoDB Tools are required to perform backup and restore. See below for instructions on installing MongoDB
+              Tools.
+            </p>
+            <h5>
+              <strong>Ubuntu 18.04</strong>
+            </h5>
+            <pre style={{ whiteSpace: 'pre-line' }}>sudo apt install -y mongo-tools</pre>
+            <br />
+            <h5>
+              <strong>ArchLinux</strong>
+            </h5>
+            <pre style={{ whiteSpace: 'pre-line' }}>yay -S mongodb-tools-bin</pre>
+            <br />
+            <h5>
+              <strong>Fedora 29</strong>
+            </h5>
+            <pre>dnf install -y mongo-tools</pre>
+            <br />
+            <h5>
+              <strong>Alpine Linux</strong>
+            </h5>
+            <pre>apk add mongodb-tools</pre>
           </div>
-        )}
-        <SettingItem title={'Deleted Tickets'} subtitle={'Tickets marked as deleted are shown below.'}>
-          {this.props.settings.deletedTickets.size < 1 && (
-            <Zone>
-              <ZoneBox>
-                <h2 className='uk-text-muted uk-text-center'>No Deleted Tickets</h2>
-              </ZoneBox>
-            </Zone>
-          )}
-          {this.props.settings.deletedTickets.size > 0 && (
-            <div>
-              <table className='uk-table mt-0 mb-5'>
+        </SettingItem>
+      )}
+      {settings.hasMongoDBTools && (
+        <div>
+          <SettingItem
+            title={'Backup Now'}
+            subtitle={'Backup all site data. (Database, Attachments, Assets)'}
+            component={
+              <div className={'uk-float-right mt-10'}>
+                <div
+                  className={
+                    'uk-progress uk-progress-success uk-progress-striped uk-active' +
+                    (!settings.backingup ? ' hide ' : '')
+                  }
+                  style={{ height: '31px', background: 'transparent' }}
+                >
+                  <div
+                    className='uk-progress-bar uk-float-right'
+                    style={{ width: '115px', fontSize: '11px', textTransform: 'uppercase', lineHeight: '31px' }}
+                  >
+                    Please Wait...
+                  </div>
+                </div>
+                {!settings.backingup && (
+                  <Button
+                    text={'Backup Now'}
+                    style={'success'}
+                    small={true}
+                    styleOverride={{ width: '115px' }}
+                    onClick={e => onBackupNowClicked(e)}
+                  />
+                )}
+              </div>
+            }
+          />
+          <SettingItem
+            title={'Backups'}
+            subtitle={'Currently stored backups'}
+            component={
+              <div className={'uk-float-right mt-10'} style={{ width: '85px' }}>
+                <div className={'uk-progress hide'} style={{ height: '31px' }} ref={backupUploadProgressbar}>
+                  <div className='uk-progress-bar' style={{ width: 0, lineHeight: '31px', fontSize: '11px' }}>
+                    0%
+                  </div>
+                </div>
+                <form className='uk-form-stacked'>
+                  <button
+                    className={'md-btn md-btn-small md-btn-primary uk-form-file no-ajaxy'}
+                    style={{ width: '85px' }}
+                    ref={backupUploadBtn}
+                  >
+                    Upload
+                    <input ref={backupUploadSelect} type={'file'} name={'backupUploadSelect'} />
+                  </button>
+                </form>
+              </div>
+            }
+          >
+            {settings.backups.size < 1 && (
+              <Zone>
+                <ZoneBox>
+                  <h2 className={'uk-text-muted uk-text-center'}>No Backups</h2>
+                </ZoneBox>
+              </Zone>
+            )}
+            {settings.backups.size > 0 && (
+              <table className='uk-table mt-0'>
                 <thead>
                   <tr>
-                    <th>UID</th>
-                    <th>Subject</th>
-                    <th>Group</th>
-                    <th>Date</th>
+                    <th>Filename</th>
+                    <th>Size</th>
                     <th />
                   </tr>
                 </thead>
                 <tbody>
-                  {this.props.settings.deletedTickets.map(ticket => {
+                  {settings.backups.map(backup => {
                     return (
-                      <tr key={ticket.get('_id')}>
-                        <td className='valign-middle' style={{ width: '10%', height: '60px' }}>
-                          {ticket.get('uid')}
+                      <tr key={backup.get('filename')}>
+                        <td className={'valign-middle'} style={{ width: '60%', height: '60px' }}>
+                          {backup.get('filename')}
                         </td>
-                        <td className='valign-middle' style={{ width: '30%' }}>
-                          {ticket.get('subject')}
-                        </td>
-                        <td className='valign-middle' style={{ width: '30%' }}>
-                          {ticket.getIn(['group', 'name'])}
-                        </td>
-                        <td className='valign-middle' style={{ width: '30%' }}>
-                          {ticket.get('date')}
-                        </td>
+                        <td className='valign-middle'>{backup.get('sizeFormat')}</td>
                         <td className='uk-text-right valign-middle'>
                           <ButtonGroup>
-                            <Button
-                              text={'Delete'}
-                              style={'danger'}
-                              small={true}
-                              waves={true}
-                              onClick={e => this.onDeleteTicketClicked(e, ticket)}
-                            />
+                            <a
+                              href={`/backups/${backup.get('filename')}`}
+                              className={'md-btn md-btn-small md-btn-wave no-ajaxy'}
+                              download={backup.get('filename')}
+                            >
+                              download
+                            </a>
                             <Button
                               text={'Restore'}
                               small={true}
                               waves={true}
-                              onClick={e => this.onRestoreTicketClicked(e, ticket)}
+                              onClick={() => oneRestoreClicked(backup)}
+                            />
+                            <Button
+                              text={'Delete'}
+                              small={true}
+                              style={'danger'}
+                              waves={true}
+                              onClick={() => onDeleteBackupClicked(backup)}
                             />
                           </ButtonGroup>
                         </td>
@@ -435,13 +379,74 @@ class BackupRestoreSettingsContainer extends React.Component {
                   })}
                 </tbody>
               </table>
-              <div className='uk-pagination deletedTicketPagination' />
-            </div>
-          )}
-        </SettingItem>
-      </div>
-    )
-  }
+            )}
+          </SettingItem>
+        </div>
+      )}
+      <SettingItem title={'Deleted Tickets'} subtitle={'Tickets marked as deleted are shown below.'}>
+        {settings.deletedTickets.size < 1 && (
+          <Zone>
+            <ZoneBox>
+              <h2 className='uk-text-muted uk-text-center'>No Deleted Tickets</h2>
+            </ZoneBox>
+          </Zone>
+        )}
+        {settings.deletedTickets.size > 0 && (
+          <div>
+            <table className='uk-table mt-0 mb-5'>
+              <thead>
+                <tr>
+                  <th>UID</th>
+                  <th>Subject</th>
+                  <th>Group</th>
+                  <th>Date</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {settings.deletedTickets.map(ticket => {
+                  return (
+                    <tr key={ticket.get('_id')}>
+                      <td className='valign-middle' style={{ width: '10%', height: '60px' }}>
+                        {ticket.get('uid')}
+                      </td>
+                      <td className='valign-middle' style={{ width: '30%' }}>
+                        {ticket.get('subject')}
+                      </td>
+                      <td className='valign-middle' style={{ width: '30%' }}>
+                        {ticket.getIn(['group', 'name'])}
+                      </td>
+                      <td className='valign-middle' style={{ width: '30%' }}>
+                        {ticket.get('date')}
+                      </td>
+                      <td className='uk-text-right valign-middle'>
+                        <ButtonGroup>
+                          <Button
+                            text={'Delete'}
+                            style={'danger'}
+                            small={true}
+                            waves={true}
+                            onClick={() => onDeleteTicketClicked(ticket)}
+                          />
+                          <Button
+                            text={'Restore'}
+                            small={true}
+                            waves={true}
+                            onClick={() => onRestoreTicketClicked(ticket)}
+                          />
+                        </ButtonGroup>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            <div className='uk-pagination deletedTicketPagination' />
+          </div>
+        )}
+      </SettingItem>
+    </div>
+  )
 }
 
 BackupRestoreSettingsContainer.propTypes = {

@@ -93,289 +93,269 @@ const colorMap = {
   }
 }
 
-class AppearanceSettings extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      selectedColorScheme: 'light'
-    }
+const AppearanceSettings = props => {
+  const { active, settings, updateSetting, updateColorScheme } = props
+  const [selectedColorScheme, setSelectedColorScheme] = React.useState('light')
+
+  const headerBGColorSelect = React.useRef(null)
+  const headerPrimaryColorSelect = React.useRef(null)
+  const primaryColorSelect = React.useRef(null)
+  const secondaryColorSelect = React.useRef(null)
+  const tertiaryColorSelect = React.useRef(null)
+  const quaternaryColorSelect = React.useRef(null)
+
+  const getSettingsValue = name => {
+    return settings.getIn(['settings', name, 'value']) ? settings.getIn(['settings', name, 'value']) : ''
   }
 
-  componentDidUpdate () {
-    const colorScheme = this.calcColorScheme()
-    if (this.state.selectedColorScheme !== colorScheme)
-      this.setState({
-        selectedColorScheme: colorScheme
-      })
-  }
-
-  getSettingsValue (name) {
-    return this.props.settings.getIn(['settings', name, 'value'])
-      ? this.props.settings.getIn(['settings', name, 'value'])
-      : ''
-  }
-
-  updateSetting (name, value, stateName) {
-    this.props.updateSetting({ name, value, stateName })
-  }
-
-  calcColorScheme () {
+  const calcColorScheme = React.useCallback(() => {
     let colorScheme = 'light'
-    if (this.getSettingsValue('colorSecondary') === '#2f3640') colorScheme = 'dark'
-    else if (this.getSettingsValue('colorHeaderBG') === '#112d4e') colorScheme = 'bluejean'
-    else if (this.getSettingsValue('colorTertiary') === '#ee2b47') colorScheme = 'midnight'
-    else if (this.getSettingsValue('colorHeaderBG') === '#2e3238') colorScheme = 'moonlight'
-    else if (this.getSettingsValue('colorTertiary') === '#f67280') colorScheme = 'purplerain'
-    else if (this.getSettingsValue('colorHeaderBG') === '#625757') colorScheme = 'sandstone'
-    else if (this.getSettingsValue('colorHeaderBG') === '#404969') colorScheme = 'winterfire'
+    if (getSettingsValue('colorSecondary') === '#2f3640') colorScheme = 'dark'
+    else if (getSettingsValue('colorHeaderBG') === '#112d4e') colorScheme = 'bluejean'
+    else if (getSettingsValue('colorTertiary') === '#ee2b47') colorScheme = 'midnight'
+    else if (getSettingsValue('colorHeaderBG') === '#2e3238') colorScheme = 'moonlight'
+    else if (getSettingsValue('colorTertiary') === '#f67280') colorScheme = 'purplerain'
+    else if (getSettingsValue('colorHeaderBG') === '#625757') colorScheme = 'sandstone'
+    else if (getSettingsValue('colorHeaderBG') === '#404969') colorScheme = 'winterfire'
 
     return colorScheme
-  }
+  }, [settings])
 
-  onBuiltInColorSelectChange (e) {
+  React.useEffect(() => {
+    const colorScheme = calcColorScheme()
+    if (selectedColorScheme !== colorScheme) setSelectedColorScheme(colorScheme)
+  }, [settings, calcColorScheme])
+
+  const onBuiltInColorSelectChange = e => {
     if (!e.target || !e.target.value) return
-    this.headerBGColorSelect.setState(
-      { selectedColor: colorMap[e.target.value].headerBG },
-      this.headerBGColorSelect.updateColorButton
-    )
-    this.headerPrimaryColorSelect.setState(
-      { selectedColor: colorMap[e.target.value].headerPrimary },
-      this.headerPrimaryColorSelect.updateColorButton
-    )
-    this.primaryColorSelect.setState(
-      { selectedColor: colorMap[e.target.value].primary },
-      this.primaryColorSelect.updateColorButton
-    )
-    this.secondaryColorSelect.setState(
-      { selectedColor: colorMap[e.target.value].secondary },
-      this.secondaryColorSelect.updateColorButton
-    )
-    this.tertiaryColorSelect.setState(
-      { selectedColor: colorMap[e.target.value].tertiary },
-      this.tertiaryColorSelect.updateColorButton
-    )
-    this.quaternaryColorSelect.setState(
-      { selectedColor: colorMap[e.target.value].quaternary },
-      this.quaternaryColorSelect.updateColorButton
-    )
+    const scheme = colorMap[e.target.value]
+    if (headerBGColorSelect.current)
+      headerBGColorSelect.current.setState({ selectedColor: scheme.headerBG }, headerBGColorSelect.current.updateColorButton)
+    if (headerPrimaryColorSelect.current)
+      headerPrimaryColorSelect.current.setState(
+        { selectedColor: scheme.headerPrimary },
+        headerPrimaryColorSelect.current.updateColorButton
+      )
+    if (primaryColorSelect.current)
+      primaryColorSelect.current.setState({ selectedColor: scheme.primary }, primaryColorSelect.current.updateColorButton)
+    if (secondaryColorSelect.current)
+      secondaryColorSelect.current.setState(
+        { selectedColor: scheme.secondary },
+        secondaryColorSelect.current.updateColorButton
+      )
+    if (tertiaryColorSelect.current)
+      tertiaryColorSelect.current.setState({ selectedColor: scheme.tertiary }, tertiaryColorSelect.current.updateColorButton)
+    if (quaternaryColorSelect.current)
+      quaternaryColorSelect.current.setState(
+        { selectedColor: scheme.quaternary },
+        quaternaryColorSelect.current.updateColorButton
+      )
   }
 
-  saveColorScheme () {
+  const saveColorScheme = () => {
     const colors = [
-      { name: 'color:headerbg', value: this.headerBGColorSelect.state.selectedColor },
-      { name: 'color:headerprimary', value: this.headerPrimaryColorSelect.state.selectedColor },
-      { name: 'color:primary', value: this.primaryColorSelect.state.selectedColor },
-      { name: 'color:secondary', value: this.secondaryColorSelect.state.selectedColor },
-      { name: 'color:tertiary', value: this.tertiaryColorSelect.state.selectedColor },
-      { name: 'color:quaternary', value: this.quaternaryColorSelect.state.selectedColor }
+      { name: 'color:headerbg', value: headerBGColorSelect.current.state.selectedColor },
+      { name: 'color:headerprimary', value: headerPrimaryColorSelect.current.state.selectedColor },
+      { name: 'color:primary', value: primaryColorSelect.current.state.selectedColor },
+      { name: 'color:secondary', value: secondaryColorSelect.current.state.selectedColor },
+      { name: 'color:tertiary', value: tertiaryColorSelect.current.state.selectedColor },
+      { name: 'color:quaternary', value: quaternaryColorSelect.current.state.selectedColor }
     ]
 
-    this.props.updateColorScheme(colors)
+    updateColorScheme(colors)
   }
 
-  render () {
-    const { active } = this.props
-
-    return (
-      <div className={active ? 'active' : 'hide'}>
-        <SettingItem
-          title='Site Logo'
-          subtitle={
-            <div>
-              Upload site logo to display in top navigation. <i>Note: Resize to max width of 140px</i>
-            </div>
-          }
-          component={
-            <UploadButtonWithX
-              buttonText={'Upload Logo'}
-              uploadAction={'/settings/general/uploadlogo'}
-              extAllowed={'*.(jpg|jpeg|gif|png)'}
-              showX={this.getSettingsValue('hasCustomLogo')}
-              onXClick={() => {
-                this.updateSetting('gen:customlogo', false, 'hasCustomLogo')
-                setTimeout(() => {
-                  window.location.reload()
-                }, 1000)
-              }}
-            />
-          }
-        />
-
-        <SettingItem
-          title='Page Logo'
-          subtitle={
-            <div>
-              Upload logo to display within page views. <i>Note: Used on login page (min-width: 400px)</i>
-            </div>
-          }
-          component={
-            <UploadButtonWithX
-              buttonText={'Upload Logo'}
-              uploadAction={'/settings/general/uploadpagelogo'}
-              extAllowed={'*.(jpg|jpeg|gif|png)'}
-              showX={this.getSettingsValue('hasCustomPageLogo')}
-              onXClick={() => {
-                this.updateSetting('gen:custompagelogo', false, 'hasCustomPageLogo')
-              }}
-            />
-          }
-        />
-
-        <SettingItem
-          title='Favicon'
-          subtitle={'Upload a custom favicon'}
-          component={
-            <UploadButtonWithX
-              buttonText={'Upload Favicon'}
-              uploadAction={'/settings/general/uploadfavicon'}
-              extAllowed={'*.(jpg|jpeg|gif|png|ico)'}
-              showX={this.getSettingsValue('hasCustomFavicon')}
-              onXClick={() => {
-                this.updateSetting('gen:customfavicon', false, 'hasCustomFavicon')
-                setTimeout(() => {
-                  window.location.reload()
-                }, 1000)
-              }}
-            />
-          }
-        />
-        <SettingItem
-          title='Color Scheme'
-          subtitle='Select the colors for your color scheme.'
-          component={
-            <Button
-              text={'Save'}
-              flat={true}
-              style={'success'}
-              extraClass={'uk-float-right mt-10'}
-              onClick={() => {
-                this.saveColorScheme()
-              }}
-            />
-          }
-        >
-          <Zone>
-            <ZoneBox>
-              <SettingSubItem
-                title='Built-in Color Scheme'
-                subtitle='Select a predefined color scheme'
-                component={
-                  <SingleSelect
-                    width='60%'
-                    showTextbox={false}
-                    items={[
-                      { text: 'Light (Default)', value: 'light' },
-                      { text: 'Dark', value: 'dark' },
-                      { text: 'Blue Jean', value: 'bluejean' },
-                      { text: 'Midnight', value: 'midnight' },
-                      { text: 'Moonlight', value: 'moonlight' },
-                      { text: 'Purple Rain', value: 'purplerain' },
-                      { text: 'Sandstone', value: 'sandstone' },
-                      { text: "Winter's Fire", value: 'winterfire' }
-                    ]}
-                    defaultValue={this.state.selectedColorScheme}
-                    onSelectChange={e => {
-                      this.onBuiltInColorSelectChange(e)
-                    }}
-                  />
-                }
-              />
-            </ZoneBox>
-            <ZoneBox>
-              <SettingSubItem
-                title='Header Background'
-                subtitle='Background color of the header'
-                component={
-                  <ColorSelector
-                    ref={cs => {
-                      this.headerBGColorSelect = cs
-                    }}
-                    defaultColor={this.getSettingsValue('colorHeaderBG')}
-                    parentClass={'uk-width-2-3 uk-float-right'}
-                  />
-                }
-              />
-            </ZoneBox>
-            <ZoneBox>
-              <SettingSubItem
-                title='Header Primary'
-                subtitle='Text and icon color within the header'
-                component={
-                  <ColorSelector
-                    ref={cs => {
-                      this.headerPrimaryColorSelect = cs
-                    }}
-                    defaultColor={this.getSettingsValue('colorHeaderPrimary')}
-                    parentClass={'uk-width-2-3 uk-float-right'}
-                  />
-                }
-              />
-            </ZoneBox>
-            <ZoneBox>
-              <SettingSubItem
-                title='Primary'
-                subtitle='Most text and icons'
-                component={
-                  <ColorSelector
-                    ref={cs => {
-                      this.primaryColorSelect = cs
-                    }}
-                    defaultColor={this.getSettingsValue('colorPrimary')}
-                    parentClass={'uk-width-2-3 uk-float-right'}
-                  />
-                }
-              />
-            </ZoneBox>
-            <ZoneBox>
-              <SettingSubItem
-                title='Secondary'
-                subtitle='The main background color'
-                component={
-                  <ColorSelector
-                    ref={cs => {
-                      this.secondaryColorSelect = cs
-                    }}
-                    defaultColor={this.getSettingsValue('colorSecondary')}
-                    parentClass={'uk-width-2-3 uk-float-right'}
-                  />
-                }
-              />
-            </ZoneBox>
-            <ZoneBox>
-              <SettingSubItem
-                title='Tertiary'
-                subtitle='Accent color, used for links, some buttons, and notifications'
-                component={
-                  <ColorSelector
-                    ref={cs => {
-                      this.tertiaryColorSelect = cs
-                    }}
-                    defaultColor={this.getSettingsValue('colorTertiary')}
-                    parentClass={'uk-width-2-3 uk-float-right'}
-                  />
-                }
-              />
-            </ZoneBox>
-            <ZoneBox>
-              <SettingSubItem
-                title='Quaternary'
-                subtitle='Sidebar background color'
-                component={
-                  <ColorSelector
-                    ref={cs => {
-                      this.quaternaryColorSelect = cs
-                    }}
-                    defaultColor={this.getSettingsValue('colorQuaternary')}
-                    parentClass={'uk-width-2-3 uk-float-right'}
-                  />
-                }
-              />
-            </ZoneBox>
-          </Zone>
-        </SettingItem>
-      </div>
-    )
+  const onUpdateSetting = (name, value, stateName) => {
+    updateSetting({ name, value, stateName })
   }
+
+  return (
+    <div className={active ? 'active' : 'hide'}>
+      <SettingItem
+        title='Site Logo'
+        subtitle={
+          <div>
+            Upload site logo to display in top navigation. <i>Note: Resize to max width of 140px</i>
+          </div>
+        }
+        component={
+          <UploadButtonWithX
+            buttonText={'Upload Logo'}
+            uploadAction={'/settings/general/uploadlogo'}
+            extAllowed={'*.(jpg|jpeg|gif|png)'}
+            showX={getSettingsValue('hasCustomLogo')}
+            onXClick={() => {
+              onUpdateSetting('gen:customlogo', false, 'hasCustomLogo')
+              setTimeout(() => {
+                window.location.reload()
+              }, 1000)
+            }}
+          />
+        }
+      />
+
+      <SettingItem
+        title='Page Logo'
+        subtitle={
+          <div>
+            Upload logo to display within page views. <i>Note: Used on login page (min-width: 400px)</i>
+          </div>
+        }
+        component={
+          <UploadButtonWithX
+            buttonText={'Upload Logo'}
+            uploadAction={'/settings/general/uploadpagelogo'}
+            extAllowed={'*.(jpg|jpeg|gif|png)'}
+            showX={getSettingsValue('hasCustomPageLogo')}
+            onXClick={() => {
+              onUpdateSetting('gen:custompagelogo', false, 'hasCustomPageLogo')
+            }}
+          />
+        }
+      />
+
+      <SettingItem
+        title='Favicon'
+        subtitle={'Upload a custom favicon'}
+        component={
+          <UploadButtonWithX
+            buttonText={'Upload Favicon'}
+            uploadAction={'/settings/general/uploadfavicon'}
+            extAllowed={'*.(jpg|jpeg|gif|png|ico)'}
+            showX={getSettingsValue('hasCustomFavicon')}
+            onXClick={() => {
+              onUpdateSetting('gen:customfavicon', false, 'hasCustomFavicon')
+              setTimeout(() => {
+                window.location.reload()
+              }, 1000)
+            }}
+          />
+        }
+      />
+      <SettingItem
+        title='Color Scheme'
+        subtitle='Select the colors for your color scheme.'
+        component={
+          <Button
+            text={'Save'}
+            flat={true}
+            style={'success'}
+            extraClass={'uk-float-right mt-10'}
+            onClick={() => {
+              saveColorScheme()
+            }}
+          />
+        }
+      >
+        <Zone>
+          <ZoneBox>
+            <SettingSubItem
+              title='Built-in Color Scheme'
+              subtitle='Select a predefined color scheme'
+              component={
+                <SingleSelect
+                  width='60%'
+                  showTextbox={false}
+                  items={[
+                    { text: 'Light (Default)', value: 'light' },
+                    { text: 'Dark', value: 'dark' },
+                    { text: 'Blue Jean', value: 'bluejean' },
+                    { text: 'Midnight', value: 'midnight' },
+                    { text: 'Moonlight', value: 'moonlight' },
+                    { text: 'Purple Rain', value: 'purplerain' },
+                    { text: 'Sandstone', value: 'sandstone' },
+                    { text: "Winter's Fire", value: 'winterfire' }
+                  ]}
+                  defaultValue={selectedColorScheme}
+                  onSelectChange={e => {
+                    onBuiltInColorSelectChange(e)
+                  }}
+                />
+              }
+            />
+          </ZoneBox>
+          <ZoneBox>
+            <SettingSubItem
+              title='Header Background'
+              subtitle='Background color of the header'
+              component={
+                <ColorSelector
+                  ref={headerBGColorSelect}
+                  defaultColor={getSettingsValue('colorHeaderBG')}
+                  parentClass={'uk-width-2-3 uk-float-right'}
+                />
+              }
+            />
+          </ZoneBox>
+          <ZoneBox>
+            <SettingSubItem
+              title='Header Primary'
+              subtitle='Text and icon color within the header'
+              component={
+                <ColorSelector
+                  ref={headerPrimaryColorSelect}
+                  defaultColor={getSettingsValue('colorHeaderPrimary')}
+                  parentClass={'uk-width-2-3 uk-float-right'}
+                />
+              }
+            />
+          </ZoneBox>
+          <ZoneBox>
+            <SettingSubItem
+              title='Primary'
+              subtitle='Most text and icons'
+              component={
+                <ColorSelector
+                  ref={primaryColorSelect}
+                  defaultColor={getSettingsValue('colorPrimary')}
+                  parentClass={'uk-width-2-3 uk-float-right'}
+                />
+              }
+            />
+          </ZoneBox>
+          <ZoneBox>
+            <SettingSubItem
+              title='Secondary'
+              subtitle='The main background color'
+              component={
+                <ColorSelector
+                  ref={secondaryColorSelect}
+                  defaultColor={getSettingsValue('colorSecondary')}
+                  parentClass={'uk-width-2-3 uk-float-right'}
+                />
+              }
+            />
+          </ZoneBox>
+          <ZoneBox>
+            <SettingSubItem
+              title='Tertiary'
+              subtitle='Accent color, used for links, some buttons, and notifications'
+              component={
+                <ColorSelector
+                  ref={tertiaryColorSelect}
+                  defaultColor={getSettingsValue('colorTertiary')}
+                  parentClass={'uk-width-2-3 uk-float-right'}
+                />
+              }
+            />
+          </ZoneBox>
+          <ZoneBox>
+            <SettingSubItem
+              title='Quaternary'
+              subtitle='Sidebar background color'
+              component={
+                <ColorSelector
+                  ref={quaternaryColorSelect}
+                  defaultColor={getSettingsValue('colorQuaternary')}
+                  parentClass={'uk-width-2-3 uk-float-right'}
+                />
+              }
+            />
+          </ZoneBox>
+        </Zone>
+      </SettingItem>
+    </div>
+  )
 }
 
 AppearanceSettings.propTypes = {

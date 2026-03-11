@@ -126,7 +126,7 @@ class MailerSettings_Mailer extends React.Component {
     return (
       <SettingItem
         title={'Mailer'}
-        subtitle={'Preferences for trudesk to send email notifications to users.'}
+        subtitle={'Preferences for Jami Partners to send email notifications to users.'}
         component={
           <EnableSwitch
             stateName={'mailerEnabled'}

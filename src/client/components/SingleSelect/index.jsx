@@ -19,104 +19,98 @@ import $ from 'jquery'
 
 import helpers from 'lib/helpers'
 
-class SingleSelect extends React.Component {
-  value = ''
-  constructor (props) {
-    super(props)
+const SingleSelect = props => {
+  const { width: propWidth, items, multiple, showTextbox, defaultValue, disabled, onSelectChange } = props
+  const selectRef = React.useRef()
+  const valueRef = React.useRef(defaultValue || '')
 
-    if (this.props.defaultValue) this.value = this.props.defaultValue
-
-    this.onSelectChange = this.onSelectChange.bind(this)
-  }
-
-  componentDidMount () {
-    helpers.UI.selectize()
-    const $select = $(this.select)
-
-    this.updateSelectizeItems()
-    $select.on('change', this.onSelectChange)
-    if (this.props.multiple) this.value = []
-    if (this.props.defaultValue) this.value = this.props.defaultValue
-  }
-
-  componentWillUnmount () {
-    const selectize = this.select.selectize
-    if (selectize) selectize.destroy()
-  }
-
-  onSelectChange (e) {
-    if (e.target.value === '') {
-      if (this.props.onSelectChange && this.props.multiple) this.props.onSelectChange(e, [])
-      else return
-    }
-
-    if (this.props.multiple) this.value = this.select.selectize.items
-    else this.value = e.target.value
-
-    if (this.value && this.props.onSelectChange) this.props.onSelectChange(e, this.value)
-  }
-
-  componentDidUpdate (prevProps) {
-    if (prevProps.defaultValue !== this.props.defaultValue && !this.value) this.value = this.props.defaultValue
-
-    this.updateSelectizeItems()
-  }
-
-  updateSelectizeItems () {
-    if (this.select && this.select.selectize) {
-      const self = this
+  const updateSelectizeItems = React.useCallback(() => {
+    const selectElement = selectRef.current
+    if (selectElement && selectElement.selectize) {
+      const selectize = selectElement.selectize
       // Remove any options that were removed from Items array
-      each(this.select.selectize.options, function (i) {
-        const indexOfOption = findIndex(self.props.items, o => {
+      each(selectize.options, function (i) {
+        const indexOfOption = findIndex(items, o => {
           return i.value === o.value
         })
         if (indexOfOption === -1) {
-          self.select.selectize.removeOption(i.value, true)
+          selectize.removeOption(i.value, true)
         }
       })
 
       // Populate Options & Add existing selected values
-      this.select.selectize.addOption(this.props.items)
-      this.select.selectize.refreshOptions(false)
-      this.select.selectize.addItem(this.value, true)
+      selectize.addOption(items)
+      selectize.refreshOptions(false)
+      selectize.addItem(valueRef.current, true)
 
       // Force an update of each item from items prop
-      each(this.props.items, function (i) {
-        self.select.selectize.updateOption(i.value, i)
+      each(items, function (i) {
+        selectize.updateOption(i.value, i)
       })
 
-      this.props.disabled ? this.select.selectize.disable() : this.select.selectize.enable()
+      disabled ? selectize.disable() : selectize.enable()
     }
-  }
+  }, [items, disabled])
 
-  render () {
-    let width = '100%'
+  const handleSelectChange = React.useCallback(
+    e => {
+      if (e.target.value === '') {
+        if (onSelectChange && multiple) onSelectChange(e, [])
+        else return
+      }
 
-    if (this.props.width) width = this.props.width
+      if (multiple) valueRef.current = selectRef.current.selectize.items
+      else valueRef.current = e.target.value
 
-    const value = this.props.multiple && !isArray(this.value) ? [this.value] : this.value
+      if (valueRef.current && onSelectChange) onSelectChange(e, valueRef.current)
+    },
+    [multiple, onSelectChange]
+  )
 
-    return (
-      <div className={'uk-clearfix'}>
-        <div className='uk-width-1-1 uk-float-right' style={{ paddingRight: '10px', width: width }}>
-          <select
-            className='selectize'
-            ref={select => {
-              this.select = select
-            }}
-            data-md-selectize-inline
-            data-md-selectize-notextbox={this.props.showTextbox ? 'false' : 'true'}
-            value={value}
-            onChange={() => {}}
-            disabled={this.props.disabled}
-            data-md-selectize-bottom='true'
-            multiple={this.props.multiple}
-            data-md-selectize-top-offset='-32'
-          />
-        </div>
+  React.useEffect(() => {
+    helpers.UI.selectize()
+    const $select = $(selectRef.current)
+
+    if (multiple) valueRef.current = []
+    if (defaultValue) valueRef.current = defaultValue
+
+    updateSelectizeItems()
+    $select.on('change', handleSelectChange)
+
+    return () => {
+      const selectize = selectRef.current?.selectize
+      if (selectize) selectize.destroy()
+      $select.off('change', handleSelectChange)
+    }
+  }, []) // Initial mount
+
+  React.useEffect(() => {
+    updateSelectizeItems()
+  }, [items, defaultValue, disabled, updateSelectizeItems])
+
+  let width = '100%'
+  if (propWidth) width = propWidth
+
+  const value = multiple && !isArray(valueRef.current) ? [valueRef.current] : valueRef.current
+
+  return (
+    <div className={'uk-clearfix'}>
+      <div className='uk-width-1-1 uk-float-right' style={{ paddingRight: '10px', width: width }}>
+        <select
+          className='selectize'
+          ref={selectRef}
+          data-md-selectize-inline
+          data-md-selectize-notextbox={showTextbox ? 'false' : 'true'}
+          value={value}
+          onChange={() => {}}
+          disabled={disabled}
+          data-md-selectize-bottom='true'
+          multiple={multiple}
+          data-md-selectize-top-offset='-32'
+        />
       </div>
-    )
-  }
+    </div>
+  )
 }
 
 SingleSelect.propTypes = {

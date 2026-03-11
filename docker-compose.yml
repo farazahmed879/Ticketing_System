@@ -1,7 +1,6 @@
-version: '2.1'
 services:
   trudesk:
-    image: polonel/trudesk:1
+    image: farazshaikh879/trudesk:latest
     restart: always
     ports:
       - "8118:8118"
@@ -12,8 +11,13 @@ services:
       NODE_ENV: production
       TRUDESK_DOCKER: "true"
       TD_MONGODB_SERVER: mongo
+      TD_MONGODB_PORT: "27017"
       TD_MONGODB_DATABASE: trudesk
       USE_XFORWARDIP: "true"
+      TD_ELASTICSEARCH_URI: http://elasticsearch:9200
+    depends_on:
+      - mongo
+      - elasticsearch
     volumes:
       - trudesk_uploads:/usr/src/trudesk/public/uploads
       - trudesk_backups:/usr/src/trudesk/backups

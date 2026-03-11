@@ -14,7 +14,7 @@
 
 var _ = require('lodash')
 var path = require('path')
-var sass = require('node-sass')
+var sass = require('sass')
 var settingUtil = require('../settings/settingsUtil')
 
 var buildsass = {}
@@ -22,7 +22,13 @@ var buildsass = {}
 var sassOptionsDefaults = {
   indentedSyntax: true,
   includePaths: [path.join(__dirname, '../../src/sass')],
-  outputStyle: 'compressed'
+  outputStyle: 'compressed',
+  quietDeps: true,
+  logger: {
+    warn: function (message, options) {
+      // Silence warnings
+    }
+  }
 }
 
 function sassVariable (name, value) {

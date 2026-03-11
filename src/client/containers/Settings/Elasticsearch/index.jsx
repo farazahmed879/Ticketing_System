@@ -15,8 +15,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import { updateSetting, updateMultipleSettings } from 'actions/settings'
 
 import Button from 'components/Button'
@@ -28,175 +26,144 @@ import axios from 'axios'
 import helpers from 'lib/helpers'
 import UIKit from 'uikit'
 
-@observer
-class ElasticsearchSettingsContainer extends React.Component {
-  @observable esStatus = 'Not Configured'
-  @observable esStatusClass = ''
-  @observable indexCount = 0
-  @observable inSyncText = 'Not Configured'
-  @observable inSyncClass = ''
-  @observable disableRebuild = false
+const ElasticsearchSettingsContainer = props => {
+  const { active, settings, updateSetting, updateMultipleSettings } = props
 
-  constructor (props) {
-    super(props)
-    makeObservable(this)
+  const [esStatus, setEsStatus] = React.useState('Not Configured')
+  const [esStatusClass, setEsStatusClass] = React.useState('')
+  const [indexCount, setIndexCount] = React.useState(0)
+  const [inSyncText, setInSyncText] = React.useState('Not Configured')
+  const [inSyncClass, setInSyncClass] = React.useState('')
+  const [disableRebuild, setDisableRebuild] = React.useState(false)
 
-    this.state = {
-      host: false,
-      port: '',
+  const [host, setHost] = React.useState(false)
+  const [port, setPort] = React.useState('')
+  const [configured, setConfigured] = React.useState(false)
 
-      configured: false
-    }
+  const loaded = React.useRef(false)
 
-    this.getStatus = this.getStatus.bind(this)
-    this.rebuildIndex = this.rebuildIndex.bind(this)
-  }
+  const getSetting = React.useCallback(
+    name => {
+      return settings.getIn(['settings', name, 'value']) ? settings.getIn(['settings', name, 'value']) : ''
+    },
+    [settings]
+  )
 
-  componentDidMount () {
-    helpers.UI.inputs()
-  }
-
-  componentDidUpdate () {
-    helpers.UI.reRenderInputs()
-
-    if (!this.loaded && this.state.configured) {
-      this.getStatus()
-      this.loaded = true
-    }
-  }
-
-  static getDerivedStateFromProps (nextProps, state) {
-    if (nextProps.settings) {
-      let stateObj = { ...state }
-      if (state.host === false)
-        stateObj.host = nextProps.settings.getIn(['settings', 'elasticSearchHost', 'value']) || false
-      if (!state.port) stateObj.port = nextProps.settings.getIn(['settings', 'elasticSearchPort', 'value']) || ''
-
-      if (!state.configured)
-        stateObj.configured = nextProps.settings.getIn(['settings', 'elasticSearchConfigured', 'value']) || false
-
-      return stateObj
-    }
-
-    return null
-  }
-
-  getSetting (name) {
-    return this.props.settings.getIn(['settings', name, 'value'])
-      ? this.props.settings.getIn(['settings', name, 'value'])
-      : ''
-  }
-
-  onEnableChanged (e) {
-    const checked = e.target.checked
-    const self = this
-    this.props
-      .updateSetting({
-        stateName: 'elasticSearchEnabled',
-        name: 'es:enable',
-        value: checked,
-        noSnackbar: true
-      })
-      .then(() => {
-        if (checked && this.state.host && this.state.port) {
-          this.setState({ configured: true }, () => {
-            this.getStatus()
-          })
-        } else {
-          this.setState({ configured: false }, () => {
-            self.esStatus = 'Not Configured'
-            self.esStatusClass = ''
-            self.inSyncText = 'Not Configured'
-            self.inSyncClass = ''
-            self.indexCount = 0
-          })
-        }
-      })
-  }
-
-  onInputChanged (e, settingName) {
-    this.setState({
-      [settingName]: e.target.value
-    })
-  }
-
-  onFormSubmit (e) {
-    e.preventDefault()
-
-    const payload = [
-      { name: 'es:host', value: this.state.host },
-      { name: 'es:port', value: this.state.port }
-    ]
-
-    this.props.updateMultipleSettings(payload)
-  }
-
-  getStatus () {
-    const self = this
-    // self.esStatus = 'Please Wait...'
-    // self.inSyncText = 'Please Wait...'
-    // if (!this.state.configured) {
-    //   this.esStatus = 'Not Configured'
-    //   this.indexCount = 0
-    //   this.inSyncText = 'Not Configured'
-    //   this.inSyncClass = ''
-    //
-    //   return false
-    // }
-
+  const getStatus = React.useCallback(() => {
     axios
       .get('/api/v2/es/status')
       .then(res => {
         const data = res.data
         if (data.status.isRebuilding) {
-          self.esStatus = 'Rebuilding...'
-          self.esStatusClass = ''
-        } else self.esStatus = data.status.esStatus
-        if (self.esStatus.toLowerCase() === 'connected') self.esStatusClass = 'text-success'
-        else if (self.esStatus.toLowerCase() === 'error') self.esStatusClass = 'text-danger'
-
-        self.indexCount = data.status.indexCount.toLocaleString()
-        if (data.status.inSync) {
-          self.inSyncText = 'In Sync'
-          self.inSyncClass = 'bg-success'
+          setEsStatus('Rebuilding...')
+          setEsStatusClass('')
         } else {
-          self.inSyncText = 'Out of Sync'
-          self.inSyncClass = 'bg-warn'
+          setEsStatus(data.status.esStatus)
+          if (data.status.esStatus.toLowerCase() === 'connected') setEsStatusClass('text-success')
+          else if (data.status.esStatus.toLowerCase() === 'error') setEsStatusClass('text-danger')
+        }
+
+        setIndexCount(data.status.indexCount.toLocaleString())
+        if (data.status.inSync) {
+          setInSyncText('In Sync')
+          setInSyncClass('bg-success')
+        } else {
+          setInSyncText('Out of Sync')
+          setInSyncClass('bg-warn')
         }
 
         if (data.status.isRebuilding) {
-          setTimeout(self.getStatus, 3000)
-          self.disableRebuild = true
-        } else self.disableRebuild = false
+          setTimeout(getStatus, 3000)
+          setDisableRebuild(true)
+        } else {
+          setDisableRebuild(false)
+        }
       })
       .catch(err => {
-        this.esStatus = 'Error'
-        this.esStatusClass = 'text-danger'
-        this.inSyncText = 'Unknown'
-        this.inSyncClass = ''
+        setEsStatus('Error')
+        setEsStatusClass('text-danger')
+        setInSyncText('Unknown')
+        setInSyncClass('')
         if (err.error && err.error.message) helpers.UI.showSnackbar('Error: ' + err.error.message, true)
         else helpers.UI.showSnackbar('Error: An unknown error occurred. Check Console.', true)
         Log.error(err)
       })
+  }, [])
+
+  React.useEffect(() => {
+    helpers.UI.inputs()
+  }, [])
+
+  React.useEffect(() => {
+    helpers.UI.reRenderInputs()
+  })
+
+  React.useEffect(() => {
+    if (settings) {
+      if (host === false) setHost(settings.getIn(['settings', 'elasticSearchHost', 'value']) || false)
+      if (!port) setPort(settings.getIn(['settings', 'elasticSearchPort', 'value']) || '')
+      if (!configured) setConfigured(settings.getIn(['settings', 'elasticSearchConfigured', 'value']) || false)
+    }
+  }, [settings, host, port, configured])
+
+  React.useEffect(() => {
+    if (!loaded.current && configured) {
+      getStatus()
+      loaded.current = true
+    }
+  }, [configured, getStatus])
+
+  const onEnableChanged = e => {
+    const checked = e.target.checked
+    updateSetting({
+      stateName: 'elasticSearchEnabled',
+      name: 'es:enable',
+      value: checked,
+      noSnackbar: true
+    }).then(() => {
+      if (checked && host && port) {
+        setConfigured(true)
+        getStatus()
+      } else {
+        setConfigured(false)
+        setEsStatus('Not Configured')
+        setEsStatusClass('')
+        setInSyncText('Not Configured')
+        setInSyncClass('')
+        setIndexCount(0)
+      }
+    })
   }
 
-  rebuildIndex () {
-    const self = this
+  const onInputChanged = (e, settingName) => {
+    if (settingName === 'host') setHost(e.target.value)
+    if (settingName === 'port') setPort(e.target.value)
+  }
+
+  const onFormSubmit = e => {
+    e.preventDefault()
+    const payload = [
+      { name: 'es:host', value: host },
+      { name: 'es:port', value: port }
+    ]
+    updateMultipleSettings(payload)
+  }
+
+  const rebuildIndex = () => {
     UIKit.modal.confirm(
       'Are you sure you want to rebuild the index?',
       function () {
-        self.esStatus = 'Rebuilding...'
-        self.inSyncText = 'Out of Sync'
-        self.inSyncClass = 'bg-warn'
-        self.indexCount = 0
+        setEsStatus('Rebuilding...')
+        setInSyncText('Out of Sync')
+        setInSyncClass('bg-warn')
+        setIndexCount(0)
         axios
           .get('/api/v2/es/rebuild')
           .then(() => {
-            self.esStatus = 'Rebuilding...'
-            // $scope.esStatusClass = 'text-warning';
+            setEsStatus('Rebuilding...')
             helpers.UI.showSnackbar('Rebuilding Index...', false)
-            self.disableRebuild = true
-            setTimeout(self.getStatus, 3000)
+            setDisableRebuild(true)
+            setTimeout(getStatus, 3000)
           })
           .catch(function (err) {
             Log.error('[trudesk:settings:es:RebuildIndex]', err)
@@ -210,97 +177,95 @@ class ElasticsearchSettingsContainer extends React.Component {
     )
   }
 
-  render () {
-    return (
-      <div className={this.props.active ? '' : 'hide'}>
-        <SettingItem
-          title={'Elasticsearch - Beta'}
-          subtitle={'Enable the Elasticsearch engine'}
-          component={
-            <EnableSwitch
-              stateName={'elasticSearchEnabled'}
-              label={'Enable'}
-              checked={this.getSetting('elasticSearchEnabled')}
-              onChange={e => this.onEnableChanged(e)}
+  return (
+    <div className={active ? '' : 'hide'}>
+      <SettingItem
+        title={'Elasticsearch - Beta'}
+        subtitle={'Enable the Elasticsearch engine'}
+        component={
+          <EnableSwitch
+            stateName={'elasticSearchEnabled'}
+            label={'Enable'}
+            checked={getSetting('elasticSearchEnabled')}
+            onChange={e => onEnableChanged(e)}
+          />
+        }
+      />
+      <SettingItem
+        title={'Connection Status'}
+        subtitle={'Current connection status to the Elasticsearch server.'}
+        component={<h4 className={`right mr-15 mt-15 ${esStatusClass}`}>{esStatus}</h4>}
+      />
+      <SettingItem
+        title={'Indexed Documents'}
+        subtitle={'Current count of indexed documents.'}
+        component={<h4 className={'right mr-15 mt-15'}>{indexCount}</h4>}
+      />
+      <SettingItem
+        title={'Index Status'}
+        subtitle={'Current status of the index. if the status is not green, the index may need rebuilding.'}
+        extraClass={inSyncClass}
+        component={<h4 className={'right mr-15 mt-15'}>{inSyncText}</h4>}
+      />
+      <SettingItem
+        title={'Elasticsearch Server Configuration'}
+        tooltip={'Changing server settings will require a rebuild of the index and server restart.'}
+        subtitle={'The connection settings to the Elasticsearch server.'}
+      >
+        <form onSubmit={e => onFormSubmit(e)}>
+          <div className='uk-margin-medium-bottom'>
+            <label>Server</label>
+            <input
+              type='text'
+              className={'md-input md-input-width-medium'}
+              value={host || ''}
+              disabled={!getSetting('elasticSearchEnabled')}
+              onChange={e => onInputChanged(e, 'host')}
             />
-          }
-        />
-        <SettingItem
-          title={'Connection Status'}
-          subtitle={'Current connection status to the Elasticsearch server.'}
-          component={<h4 className={`right mr-15 mt-15 ${this.esStatusClass}`}>{this.esStatus}</h4>}
-        />
-        <SettingItem
-          title={'Indexed Documents'}
-          subtitle={'Current count of indexed documents.'}
-          component={<h4 className={'right mr-15 mt-15'}>{this.indexCount}</h4>}
-        />
-        <SettingItem
-          title={'Index Status'}
-          subtitle={'Current status of the index. if the status is not green, the index may need rebuilding.'}
-          extraClass={this.inSyncClass}
-          component={<h4 className={'right mr-15 mt-15'}>{this.inSyncText}</h4>}
-        />
-        <SettingItem
-          title={'Elasticsearch Server Configuration'}
-          tooltip={'Changing server settings will require a rebuild of the index and server restart.'}
-          subtitle={'The connection settings to the Elasticsearch server.'}
-        >
-          <form onSubmit={e => this.onFormSubmit(e)}>
-            <div className='uk-margin-medium-bottom'>
-              <label>Server</label>
-              <input
-                type='text'
-                className={'md-input md-input-width-medium'}
-                value={this.state.host}
-                disabled={!this.getSetting('elasticSearchEnabled')}
-                onChange={e => this.onInputChanged(e, 'host')}
-              />
-            </div>
-            <div className='uk-margin-medium-bottom'>
-              <label>Port</label>
-              <input
-                type='text'
-                className={'md-input md-input-width-medium'}
-                value={this.state.port}
-                disabled={!this.getSetting('elasticSearchEnabled')}
-                onChange={e => this.onInputChanged(e, 'port')}
-              />
-            </div>
-            <div className='uk-clearfix'>
-              <Button
-                text={'Apply'}
-                type={'submit'}
-                flat={true}
-                waves={true}
-                disabled={!this.getSetting('elasticSearchEnabled')}
-                style={'success'}
-                extraClass={'uk-float-right'}
-              />
-            </div>
-          </form>
-        </SettingItem>
-        <SettingItem
-          title={'Rebuild Index'}
-          subtitle={'Wipe index and rebuild'}
-          tooltip={
-            'Rebuilding the index should only occur if the index is out of sync with the database, or has not been initialized. Rebuilding will take some time.'
-          }
-          component={
+          </div>
+          <div className='uk-margin-medium-bottom'>
+            <label>Port</label>
+            <input
+              type='text'
+              className={'md-input md-input-width-medium'}
+              value={port || ''}
+              disabled={!getSetting('elasticSearchEnabled')}
+              onChange={e => onInputChanged(e, 'port')}
+            />
+          </div>
+          <div className='uk-clearfix'>
             <Button
-              text={'Rebuild'}
-              flat={false}
+              text={'Apply'}
+              type={'submit'}
+              flat={true}
               waves={true}
-              style={'primary'}
-              extraClass={'right mt-8 mr-5'}
-              disabled={this.disableRebuild}
-              onClick={this.rebuildIndex}
+              disabled={!getSetting('elasticSearchEnabled')}
+              style={'success'}
+              extraClass={'uk-float-right'}
             />
-          }
-        />
-      </div>
-    )
-  }
+          </div>
+        </form>
+      </SettingItem>
+      <SettingItem
+        title={'Rebuild Index'}
+        subtitle={'Wipe index and rebuild'}
+        tooltip={
+          'Rebuilding the index should only occur if the index is out of sync with the database, or has not been initialized. Rebuilding will take some time.'
+        }
+        component={
+          <Button
+            text={'Rebuild'}
+            flat={false}
+            waves={true}
+            style={'primary'}
+            extraClass={'right mt-8 mr-5'}
+            disabled={disableRebuild}
+            onClick={rebuildIndex}
+          />
+        }
+      />
+    </div>
+  )
 }
 
 ElasticsearchSettingsContainer.propTypes = {

@@ -15,22 +15,20 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-class Grid extends React.Component {
-  render () {
-    return (
-      <div
-        className={
-          'uk-grid uk-clearfix' +
-          (this.props.gutterSize ? ' uk-grid-' + this.props.gutterSize : '') +
-          (this.props.collapse ? ' uk-grid-collapse' : '') +
-          (this.props.extraClass ? ' ' + this.props.extraClass : '')
-        }
-        style={this.props.style}
-      >
-        {this.props.children}
-      </div>
-    )
-  }
+const Grid = props => {
+  return (
+    <div
+      className={
+        'uk-grid uk-clearfix' +
+        (props.gutterSize ? ' uk-grid-' + props.gutterSize : '') +
+        (props.collapse ? ' uk-grid-collapse' : '') +
+        (props.extraClass ? ' ' + props.extraClass : '')
+      }
+      style={props.style}
+    >
+      {props.children}
+    </div>
+  )
 }
 
 Grid.propTypes = {

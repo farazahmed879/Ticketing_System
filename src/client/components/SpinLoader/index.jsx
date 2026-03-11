@@ -12,48 +12,38 @@
  *  Copyright (c) 2014-2019. All rights reserved.
  */
 
-import React, { createRef } from 'react'
+import React from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 
 import $ from 'jquery'
 
-class SpinLoader extends React.Component {
-  constructor (props) {
-    super(props)
+const SpinLoader = props => {
+  const spinnerRef = React.useRef()
 
-    this.spinnerRef = createRef()
-  }
+  React.useEffect(() => {
+    if (spinnerRef.current && props.animate) {
+      const $spinnerRef = $(spinnerRef.current)
 
-  componentDidUpdate (prevProps, prevState, snapshot) {
-    if (this.spinnerRef.current && this.props.animate) {
-      const $spinnerRef = $(this.spinnerRef.current)
-
-      // Becoming Active
-      if (!prevProps.active && this.props.active) {
+      if (props.active) {
         $spinnerRef.css({ opacity: 1 }).show()
-      }
-
-      // Becoming Inactive
-      if (prevProps.active && !this.props.active) {
-        $spinnerRef.animate({ opacity: 0 }, this.props.animateDelay, () => {
+      } else {
+        $spinnerRef.animate({ opacity: 0 }, props.animateDelay, () => {
           $spinnerRef.hide()
         })
       }
     }
-  }
+  }, [props.active, props.animate, props.animateDelay])
 
-  render () {
-    return (
-      <div
-        ref={this.spinnerRef}
-        className={clsx('card-spinner', this.props.extraClass, !this.props.active && !this.props.animate && 'hide')}
-        style={this.props.style}
-      >
-        <div className='spinner' style={this.props.spinnerStyle} />
-      </div>
-    )
-  }
+  return (
+    <div
+      ref={spinnerRef}
+      className={clsx('card-spinner', props.extraClass, !props.active && !props.animate && 'hide')}
+      style={props.style}
+    >
+      <div className='spinner' style={props.spinnerStyle} />
+    </div>
+  )
 }
 
 SpinLoader.propTypes = {

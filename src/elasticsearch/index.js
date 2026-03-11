@@ -61,6 +61,7 @@ ES.testConnection = async callback => {
           node: ES.host
         })
 
+        winston.debug('Testing Elasticsearch connection to: ' + ES.host)
         await checkConnection()
 
         if (typeof callback === 'function') callback()
@@ -297,6 +298,7 @@ ES.init = async callback => {
     if (process.env.ELATICSEARCH_URI) ES.host = process.env.ELATICSEARCH_URI
     else ES.host = settings.elasticSearchHost.value + ':' + settings.elasticSearchPort.value
 
+    winston.debug('Elasticsearch host: ' + ES.host)
     ES.buildClient(ES.host)
 
     await checkConnection()

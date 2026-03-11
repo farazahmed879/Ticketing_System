@@ -15,8 +15,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import moment from 'moment-timezone'
-import { observer } from 'mobx-react'
-import { observable, entries, makeObservable, configure } from 'mobx'
 import { isUndefined } from 'lodash'
 
 import { MESSAGES_SPAWN_CHAT_WINDOW } from 'serverSocket/socketEventConsts'
@@ -26,44 +24,38 @@ import OffCanvas from 'components/OffCanvas'
 
 import UIkit from 'uikit'
 
-@observer
-class OnlineUserListPartial extends React.Component {
-  @observable activeUsers = new Map()
+const OnlineUserListPartial = props => {
+  const { sessionUser, timezone, users, socket } = props
+  const [activeUsers, setActiveUsers] = React.useState({})
 
-  constructor (props) {
-    super(props)
-    configure({ enforceActions: 'never' })
-    makeObservable(this)
+  const onSocketUpdateUsers = React.useCallback(data => {
+    setActiveUsers(data)
+  }, [])
 
-    this.onSocketUpdateUsers = this.onSocketUpdateUsers.bind(this)
-  }
+  React.useEffect(() => {
+    socket.on('updateUsers', onSocketUpdateUsers)
+    return () => {
+      socket.off('updateUsers', onSocketUpdateUsers)
+    }
+  }, [socket, onSocketUpdateUsers])
 
-  componentDidMount () {
-    this.props.socket.on('updateUsers', this.onSocketUpdateUsers)
-  }
+  const isActiveUser = React.useCallback(
+    username => {
+      return !!activeUsers[username]
+    },
+    [activeUsers]
+  )
 
-  componentWillUnmount () {
-    this.props.socket.off('updateUsers', this.onSocketUpdateUsers)
-  }
-
-  onSocketUpdateUsers (data) {
-    this.activeUsers.replace(data)
-  }
-
-  isActiveUser (username) {
-    return !!this.activeUsers.get(username)
-  }
-
-  onUserClicked (e, _id) {
+  const onUserClicked = (e, _id) => {
     e.preventDefault()
     UIkit.offcanvas.hide()
 
-    startConversation(this.props.sessionUser._id, _id).then(conversation => {
-      this.props.socket.emit(MESSAGES_SPAWN_CHAT_WINDOW, { convoId: conversation._id })
+    startConversation(sessionUser._id, _id).then(conversation => {
+      socket.emit(MESSAGES_SPAWN_CHAT_WINDOW, { convoId: conversation._id })
     })
   }
 
-  fromNow (timezone, date) {
+  const fromNow = (timezone, date) => {
     if (isUndefined(date)) {
       return 'Never'
     }
@@ -85,76 +77,32 @@ class OnlineUserListPartial extends React.Component {
       }
     })
 
-    return moment
-      .utc(date)
-      .tz(timezone)
-      .fromNow()
+    return moment.utc(date).tz(timezone).fromNow()
   }
 
-  render () {
-    const { timezone, users } = this.props
-    return (
-      <OffCanvas title={'Online Users'} id={'online-user-list'}>
-        <div style={{ padding: '0 5px' }}>
-          <div className='active-now'>
-            <h5>Active Now</h5>
-            <div className='online-list-wrapper'>
-              <ul className='online-list'>
-                {entries(this.activeUsers).map(([key, value]) => {
-                  if (this.props.sessionUser && value.user._id === this.props.sessionUser._id) return null
-                  const image = value.user.image || 'defaultProfile.jpg'
-                  const isAgentOrAdmin = value.user.role.isAdmin || value.user.role.isAgent
-                  return (
-                    <li key={key}>
-                      <a className={'no-ajaxy'} onClick={e => this.onUserClicked(e, value.user._id)}>
-                        <div className='user-list-user'>
-                          <div className='image'>
-                            <img src={`/uploads/users/${image}`} alt='Profile Pic' />
-                          </div>
-                          <span className='online-status' data-user-status-id={value.user._id} />
-                          <div className={'user-name' + (isAgentOrAdmin ? ' _agent' : '')}>
-                            {value.user.fullname + (isAgentOrAdmin ? ' - Agent' : '')}
-                          </div>
-                        </div>
-                      </a>
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
-          </div>
-
-          <h5>More Conversations</h5>
-          <div className='user-list-wrapper' style={{ lineHeight: 'normal' }}>
-            <div
-              className='online-list-search-box search-box'
-              style={{ borderTop: '1px solid rgba(0,0,0,0.1)', borderRight: 'none' }}
-            >
-              <input type='text' placeholder={'Search'} />
-            </div>
-            <ul className='user-list'>
-              {users.map(user => {
-                if (this.props.sessionUser && user._id === this.props.sessionUser._id) return null
-                const image = user.get('image') || 'defaultProfile.jpg'
+  return (
+    <OffCanvas title={'Online Users'} id={'online-user-list'}>
+      <div style={{ padding: '0 5px' }}>
+        <div className='active-now'>
+          <h5>Active Now</h5>
+          <div className='online-list-wrapper'>
+            <ul className='online-list'>
+              {Object.entries(activeUsers).map(([key, value]) => {
+                if (sessionUser && value.user._id === sessionUser._id) return null
+                const image = value.user.image || 'defaultProfile.jpg'
+                const isAgentOrAdmin = value.user.role.isAdmin || value.user.role.isAgent
                 return (
-                  <li key={user.get('_id')} data-search-term={user.get('fullname').toLowerCase()}>
-                    <a className='no-ajaxy' onClick={e => OnlineUserListPartial.onUserClicked(e, user.get('_id'))}>
+                  <li key={key}>
+                    <a className={'no-ajaxy'} onClick={e => onUserClicked(e, value.user._id)}>
                       <div className='user-list-user'>
                         <div className='image'>
-                          <img src={`/uploads/users/${image}`} alt='Profile Picture' />
+                          <img src={`/uploads/users/${image}`} alt='Profile Pic' />
+                        </div>
+                        <span className='online-status' data-user-status-id={value.user._id} />
+                        <div className={'user-name' + (isAgentOrAdmin ? ' _agent' : '')}>
+                          {value.user.fullname + (isAgentOrAdmin ? ' - Agent' : '')}
                         </div>
                       </div>
-                      <span
-                        className={
-                          'online-status-offline' + (this.isActiveUser(user.get('username')) ? ' success-text' : '')
-                        }
-                        data-user-status-id={user.get('_id')}
-                      >
-                        {this.isActiveUser(user.get('username'))
-                          ? 'Now'
-                          : this.fromNow(timezone, user.get('lastOnline'))}
-                      </span>
-                      <div className='user-name'>{user.get('fullname')}</div>
                     </a>
                   </li>
                 )
@@ -162,9 +110,43 @@ class OnlineUserListPartial extends React.Component {
             </ul>
           </div>
         </div>
-      </OffCanvas>
-    )
-  }
+
+        <h5>More Conversations</h5>
+        <div className='user-list-wrapper' style={{ lineHeight: 'normal' }}>
+          <div
+            className='online-list-search-box search-box'
+            style={{ borderTop: '1px solid rgba(0,0,0,0.1)', borderRight: 'none' }}
+          >
+            <input type='text' placeholder={'Search'} />
+          </div>
+          <ul className='user-list'>
+            {users.map(user => {
+              if (sessionUser && user._id === sessionUser._id) return null
+              const image = user.get('image') || 'defaultProfile.jpg'
+              return (
+                <li key={user.get('_id')} data-search-term={user.get('fullname').toLowerCase()}>
+                  <a className='no-ajaxy' onClick={e => onUserClicked(e, user.get('_id'))}>
+                    <div className='user-list-user'>
+                      <div className='image'>
+                        <img src={`/uploads/users/${image}`} alt='Profile Picture' />
+                      </div>
+                    </div>
+                    <span
+                      className={'online-status-offline' + (isActiveUser(user.get('username')) ? ' success-text' : '')}
+                      data-user-status-id={user.get('_id')}
+                    >
+                      {isActiveUser(user.get('username')) ? 'Now' : fromNow(timezone, user.get('lastOnline'))}
+                    </span>
+                    <div className='user-name'>{user.get('fullname')}</div>
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      </div>
+    </OffCanvas>
+  )
 }
 
 OnlineUserListPartial.propTypes = {

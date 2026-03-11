@@ -77,6 +77,7 @@ module.exports.init = async function (callback, connectionString, opts) {
   global.CONNECTION_URI = CONNECTION_URI
 
   mongoose.Promise = global.Promise
+  winston.debug('Connecting to MongoDB: ' + CONNECTION_URI)
   mongoose
     .connect(CONNECTION_URI, options)
     .then(function () {

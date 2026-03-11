@@ -1,41 +1,28 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { observer } from 'mobx-react'
-import { observable } from 'mobx'
 
 import helpers from 'lib/helpers'
 
-@observer
-class Input extends React.Component {
-  @observable value = ''
+const Input = props => {
+  const { name, type, defaultValue, onChange } = props
+  // eslint-disable-next-line no-unused-vars
+  const [value, setValue] = React.useState('')
 
-  constructor (props) {
-    super(props)
-  }
-
-  componentDidMount () {
+  React.useEffect(() => {
     helpers.UI.inputs()
+  }, [])
+
+  const handleChange = e => {
+    const newVal = e.target.value
+    setValue(newVal)
+    if (onChange) onChange(newVal)
   }
 
-  handleChange = e => {
-    this.value = e.target.value
-    if (this.props.onChange) this.props.onChange(this.value)
-  }
-
-  render () {
-    const { name, type, defaultValue } = this.props
-    return (
-      <div>
-        <input
-          className={'md-input'}
-          name={name}
-          type={type}
-          defaultValue={defaultValue}
-          onChange={e => this.handleChange(e)}
-        />
-      </div>
-    )
-  }
+  return (
+    <div>
+      <input className={'md-input'} name={name} type={type} defaultValue={defaultValue} onChange={handleChange} />
+    </div>
+  )
 }
 
 Input.propTypes = {

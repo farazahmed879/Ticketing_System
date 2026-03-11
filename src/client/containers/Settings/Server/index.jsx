@@ -16,49 +16,29 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import { updateSetting, updateMultipleSettings } from 'actions/settings'
-
-import Button from 'components/Button'
-import SettingItem from 'components/Settings/SettingItem'
-
-import helpers from 'lib/helpers'
-import axios from 'axios'
-import Log from '../../../logger'
-import EnableSwitch from 'components/Settings/EnableSwitch'
-import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 import UIKit from 'uikit'
 
-@observer
-class ServerSettingsController extends React.Component {
-  @observable maintenanceModeEnabled = false
+const ServerSettingsController = props => {
+  const { active, updateSetting, settings } = props
+  const [maintenanceModeEnabled, setMaintenanceModeEnabled] = React.useState(false)
+  const [restarting, setRestarting] = React.useState(false)
 
-  constructor (props) {
-    super(props)
+  const getSetting = React.useCallback(
+    stateName => {
+      return settings.getIn(['settings', stateName, 'value']) ? settings.getIn(['settings', stateName, 'value']) : ''
+    },
+    [settings]
+  )
 
-    makeObservable(this)
-
-    this.state = {
-      restarting: false
+  React.useEffect(() => {
+    const mm = getSetting('maintenanceMode')
+    if (maintenanceModeEnabled !== mm) {
+      setMaintenanceModeEnabled(mm)
     }
+  }, [settings, getSetting])
 
-    this.restartServer = this.restartServer.bind(this)
-  }
-
-  componentDidMount () {
-    // helpers.UI.inputs()
-  }
-
-  componentDidUpdate (prevProps) {
-    // helpers.UI.reRenderInputs()
-    if (prevProps.settings !== this.props.settings) {
-      if (this.maintenanceModeEnabled !== this.getSetting('maintenanceMode'))
-        this.maintenanceModeEnabled = this.getSetting('maintenanceMode')
-    }
-  }
-
-  restartServer () {
-    this.setState({ restarting: true })
-
+  const restartServer = () => {
+    setRestarting(true)
     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content')
     axios
       .post(
@@ -77,18 +57,11 @@ class ServerSettingsController extends React.Component {
         helpers.UI.showSnackbar('Unable to restart server. Are you an Administrator?', true)
       })
       .then(() => {
-        this.setState({ restarting: false })
+        setRestarting(false)
       })
   }
 
-  getSetting (stateName) {
-    return this.props.settings.getIn(['settings', stateName, 'value'])
-      ? this.props.settings.getIn(['settings', stateName, 'value'])
-      : ''
-  }
-
-  onMaintenanceModeChange (e) {
-    const self = this
+  const onMaintenanceModeChange = e => {
     const val = e.target.checked
 
     if (val === true) {
@@ -99,16 +72,14 @@ class ServerSettingsController extends React.Component {
         </p>
         `,
         () => {
-          this.props
-            .updateSetting({
-              name: 'maintenanceMode:enable',
-              value: val,
-              stateName: 'maintenanceMode',
-              noSnackbar: true
-            })
-            .then(() => {
-              self.maintenanceModeEnabled = val
-            })
+          updateSetting({
+            name: 'maintenanceMode:enable',
+            value: val,
+            stateName: 'maintenanceMode',
+            noSnackbar: true
+          }).then(() => {
+            setMaintenanceModeEnabled(val)
+          })
         },
         {
           labels: { Ok: 'Yes', Cancel: 'No' },
@@ -116,48 +87,45 @@ class ServerSettingsController extends React.Component {
         }
       )
     } else {
-      this.props
-        .updateSetting({ name: 'maintenanceMode:enable', value: val, stateName: 'maintenanceMode', noSnackbar: true })
-        .then(() => {
-          self.maintenanceModeEnabled = val
-        })
+      updateSetting({ name: 'maintenanceMode:enable', value: val, stateName: 'maintenanceMode', noSnackbar: true }).then(
+        () => {
+          setMaintenanceModeEnabled(val)
+        }
+      )
     }
   }
 
-  render () {
-    const { active } = this.props
-    return (
-      <div className={active ? 'active' : 'hide'}>
-        <SettingItem
-          title={'Restart Server'}
-          subtitle={'Restart the Trudesk Instance. '}
-          component={
-            <Button
-              text={'Restart'}
-              flat={false}
-              waves={true}
-              style={'danger'}
-              extraClass={'right mt-8 mr-5'}
-              onClick={this.restartServer}
-              disabled={this.state.restarting}
-            />
-          }
-        />
-        <SettingItem
-          title={'Maintenance Mode'}
-          subtitle={'Only Administrators are allowed to login.'}
-          component={
-            <EnableSwitch
-              stateName={'maintenanceMode'}
-              label={'Enable'}
-              checked={this.maintenanceModeEnabled}
-              onChange={e => this.onMaintenanceModeChange(e)}
-            />
-          }
-        />
-      </div>
-    )
-  }
+  return (
+    <div className={active ? 'active' : 'hide'}>
+      <SettingItem
+        title={'Restart Server'}
+        subtitle={'Restart the Jami Partners Instance. '}
+        component={
+          <Button
+            text={'Restart'}
+            flat={false}
+            waves={true}
+            style={'danger'}
+            extraClass={'right mt-8 mr-5'}
+            onClick={restartServer}
+            disabled={restarting}
+          />
+        }
+      />
+      <SettingItem
+        title={'Maintenance Mode'}
+        subtitle={'Only Administrators are allowed to login.'}
+        component={
+          <EnableSwitch
+            stateName={'maintenanceMode'}
+            label={'Enable'}
+            checked={maintenanceModeEnabled}
+            onChange={onMaintenanceModeChange}
+          />
+        }
+      />
+    </div>
+  )
 }
 
 ServerSettingsController.propTypes = {

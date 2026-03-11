@@ -2,66 +2,53 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import clsx from 'clsx'
 import { observer } from 'mobx-react'
-import { makeObservable, observable } from 'mobx'
 
-@observer
-class TruAccordion extends React.Component {
-  @observable expanded = false
-  @observable expandedContentShown = false
+const TruAccordion = observer(props => {
+  const [expanded, setExpanded] = React.useState(props.startExpanded)
+  const [expandedContentShown, setExpandedContentShown] = React.useState(props.startExpanded)
 
-  constructor (props) {
-    super(props)
-
-    makeObservable(this)
-  }
-
-  componentDidMount () {
-    this.expanded = this.props.startExpanded
-    this.expandedContentShown = this.props.startExpanded
-  }
-
-  onHeaderClick = e => {
+  const onHeaderClick = e => {
     e.preventDefault()
-    if (this.expanded === false) this.expandedContentShown = true
+    if (expanded === false) setExpandedContentShown(true)
+
     setTimeout(() => {
-      this.expanded = !this.expanded
+      const newExpanded = !expanded
+      setExpanded(newExpanded)
+
+      if (props.onExpandedChange) props.onExpandedChange(newExpanded)
     }, 10)
 
     setTimeout(() => {
-      this.expandedContentShown = this.expanded
+      setExpandedContentShown(!expanded)
     }, 300)
-
-    if (this.props.onExpandedChange) this.props.onExpandedChange(this.expanded)
   }
 
-  render () {
-    const { headerContent, content, contentPadding } = this.props
-    const contentStyle = {}
-    if (typeof contentPadding !== 'undefined') contentStyle.padding = contentPadding
+  const { headerContent, content, contentPadding } = props
+  const contentStyle = {}
+  if (typeof contentPadding !== 'undefined') contentStyle.padding = contentPadding
 
-    return (
-      <div className={clsx('truaccordion-wrapper', this.expanded && ' expanded')}>
-        <div className={'truaccordion-header'} role={'button'} onClick={e => this.onHeaderClick(e)}>
-          <div className={'truaccordion-header-content'}>
-            <h4>{headerContent}</h4>
-            <div className={'arrow'}>
-              <span>
-                <i className={'material-icons'}>chevron_right</i>
-              </span>
-            </div>
+  return (
+    <div className={clsx('truaccordion-wrapper', expanded && ' expanded')}>
+      <div className={'truaccordion-header'} role={'button'} onClick={e => onHeaderClick(e)}>
+        <div className={'truaccordion-header-content'}>
+          <h4>{headerContent}</h4>
+          <div className={'arrow'}>
+            <span>
+              <i className={'material-icons'}>chevron_right</i>
+            </span>
           </div>
         </div>
-        {this.expandedContentShown && (
-          <div className={'truaccordion-content'}>
-            <div className={'truaccordion-content-inner'} style={contentStyle}>
-              {content}
-            </div>
-          </div>
-        )}
       </div>
-    )
-  }
-}
+      {expandedContentShown && (
+        <div className={'truaccordion-content'}>
+          <div className={'truaccordion-content-inner'} style={contentStyle}>
+            {content}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+})
 
 TruAccordion.propTypes = {
   startExpanded: PropTypes.bool,

@@ -27,29 +27,29 @@ import PermissionBody from './permissionBody'
 
 import $ from 'jquery'
 
-class PermissionsSettingsContainer extends React.Component {
-  componentDidMount () {
-    this.props.fetchRoles()
+const PermissionsSettingsContainer = props => {
+  const { active, roles, roleOrder, settings, fetchRoles, updateRoleOrder, showModal, updateSetting } = props
+
+  React.useEffect(() => {
+    fetchRoles()
+  }, [fetchRoles])
+
+  const getSetting = name => {
+    return settings.getIn(['settings', name, 'value']) ? settings.getIn(['settings', name, 'value']) : ''
   }
 
-  getSetting (name) {
-    return this.props.settings.getIn(['settings', name, 'value'])
-      ? this.props.settings.getIn(['settings', name, 'value'])
-      : ''
-  }
-
-  onRoleOrderChanged (e) {
+  const onRoleOrderChanged = e => {
     const children = $(e.target).children('li')
     const arr = []
     for (let i = 0; i < children.length; i++) arr.push($(children[i]).attr('data-key'))
 
-    this.props.updateRoleOrder({ roleOrder: arr })
+    updateRoleOrder({ roleOrder: arr })
   }
 
-  getRoleMenu () {
-    if (this.props.roleOrder && this.props.roleOrder.get('order') && this.props.roles) {
-      const menu = this.props.roleOrder.get('order').map(o => {
-        return this.props.roles.find(v => {
+  const getRoleMenu = () => {
+    if (roleOrder && roleOrder.get('order') && roles) {
+      const menu = roleOrder.get('order').map(o => {
+        return roles.find(v => {
           return v.get('_id') === o
         })
       })
@@ -60,69 +60,59 @@ class PermissionsSettingsContainer extends React.Component {
     return []
   }
 
-  onCreateRoleClicked (e) {
+  const onCreateRoleClicked = e => {
     e.preventDefault()
-
-    this.props.showModal('CREATE_ROLE')
+    showModal('CREATE_ROLE')
   }
 
-  onDefaultUserRoleChange (e) {
-    this.props.updateSetting({ name: 'role:user:default', value: e.target.value, stateName: 'defaultUserRole' })
+  const onDefaultUserRoleChange = e => {
+    updateSetting({ name: 'role:user:default', value: e.target.value, stateName: 'defaultUserRole' })
   }
 
-  render () {
-    const mappedRoles = this.props.roles
-      .map(role => {
-        return { text: role.get('name'), value: role.get('_id') }
-      })
-      .toArray()
+  const mappedRoles = roles
+    .map(role => {
+      return { text: role.get('name'), value: role.get('_id') }
+    })
+    .toArray()
 
-    return (
-      <div className={this.props.active ? '' : 'hide'}>
-        <SettingItem
-          title={'Default New User Role'}
-          subtitle={'Role assigned to users created during sign-up and public tickets'}
-          component={
-            <SingleSelect
-              items={mappedRoles}
-              defaultValue={this.getSetting('defaultUserRole')}
-              onSelectChange={e => {
-                this.onDefaultUserRoleChange(e)
-              }}
-              width={'50%'}
-              showTextbox={false}
-            />
-          }
-        />
-        <SplitSettingsPanel
-          title={'Permissions'}
-          tooltip={'Permission order is top down. ex: Admins at top; Users at bottom.'}
-          subtitle={
-            <div>
-              Create/Modify Role Permissions{' '}
-              <span className={'uk-text-danger'}>Note: Changes take affect after page refresh</span>
-            </div>
-          }
-          rightComponent={
-            <Button
-              text={'Create'}
-              style={'success'}
-              flat={true}
-              waves={true}
-              onClick={e => this.onCreateRoleClicked(e)}
-            />
-          }
-          menuItems={this.getRoleMenu().map(role => {
-            return { key: role.get('_id'), title: role.get('name'), bodyComponent: <PermissionBody role={role} /> }
-          })}
-          menuDraggable={true}
-          menuOnDrag={e => {
-            this.onRoleOrderChanged(e)
-          }}
-        />
-      </div>
-    )
-  }
+  return (
+    <div className={active ? '' : 'hide'}>
+      <SettingItem
+        title={'Default New User Role'}
+        subtitle={'Role assigned to users created during sign-up and public tickets'}
+        component={
+          <SingleSelect
+            items={mappedRoles}
+            defaultValue={getSetting('defaultUserRole')}
+            onSelectChange={e => {
+              onDefaultUserRoleChange(e)
+            }}
+            width={'50%'}
+            showTextbox={false}
+          />
+        }
+      />
+      <SplitSettingsPanel
+        title={'Permissions'}
+        tooltip={'Permission order is top down. ex: Admins at top; Users at bottom.'}
+        subtitle={
+          <div>
+            Create/Modify Role Permissions <span className={'uk-text-danger'}>Note: Changes take affect after page refresh</span>
+          </div>
+        }
+        rightComponent={
+          <Button text={'Create'} style={'success'} flat={true} waves={true} onClick={e => onCreateRoleClicked(e)} />
+        }
+        menuItems={getRoleMenu().map(role => {
+          return { key: role.get('_id'), title: role.get('name'), bodyComponent: <PermissionBody role={role} /> }
+        })}
+        menuDraggable={true}
+        menuOnDrag={e => {
+          onRoleOrderChanged(e)
+        }}
+      />
+    </div>
+  )
 }
 
 PermissionsSettingsContainer.propTypes = {

@@ -1,14 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-class Spacer extends React.Component {
-  render () {
-    return (
-      <div style={{ display: 'block', marginTop: this.props.top, marginBottom: this.props.bottom }}>
-        {this.props.showBorder && <hr style={{ display: 'block', margin: 0, height: this.props.borderSize }} />}
-      </div>
-    )
-  }
+const Spacer = props => {
+  return (
+    <div style={{ display: 'block', marginTop: props.top, marginBottom: props.bottom }}>
+      {props.showBorder && <hr style={{ display: 'block', margin: 0, height: props.borderSize }} />}
+    </div>
+  )
 }
 
 Spacer.propTypes = {

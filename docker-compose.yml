@@ -21,6 +21,16 @@ services:
     volumes:
       - trudesk_uploads:/usr/src/trudesk/public/uploads
       - trudesk_backups:/usr/src/trudesk/backups
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8118
+    depends_on:
+      - trudesk
   mongo:
     image: mongo:5.0-focal
     restart: always

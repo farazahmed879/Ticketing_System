@@ -1,13 +1,12 @@
 services:
   trudesk:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile.dev
     environment:
       NODE_ENV: development
     volumes:
-      - .:/usr/src/trudesk
+      - ./backend:/usr/src/trudesk
       - /usr/src/trudesk/node_modules
-    # Ensure it uses the mongo service from the main compose
     depends_on:
       - mongo

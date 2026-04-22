@@ -11,14 +11,7 @@ import { RoleName, StatusName, UIMessages } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
 import { socket } from "../../services/socket";
 import CustomSelect from "../../components/CustomSelect";
-import type { Ticket } from "../../types";
-
-interface Column {
-  id: string;
-  name: string;
-  color: string;
-  tickets: Ticket[];
-}
+import type { Column, Ticket } from "../../types";
 
 const TicketBoard: React.FC = () => {
   const [columns, setColumns] = useState<Column[]>([]);
@@ -29,6 +22,10 @@ const TicketBoard: React.FC = () => {
   const [selectedPriorityNames, setSelectedPriorityNames] = useState<string[]>(
     [],
   );
+  const [groups, setGroups] = useState<any[]>([]);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [fullTicketData, setFullTicketData] = useState<any>(null);
@@ -63,6 +60,87 @@ const TicketBoard: React.FC = () => {
     );
   };
 
+  const toggleAllColumns = () => {
+    if (collapsedColumns.length === columns.length) {
+      setCollapsedColumns([]);
+    } else {
+      setCollapsedColumns(columns.map((col) => col.id));
+    }
+  };
+
+  const fetchBoardData = useCallback(async () => {
+    try {
+      const [
+        ticketsRes,
+        statusRes,
+        agentsRes,
+        priorityRes,
+        groupsRes,
+        customersRes,
+      ] = await Promise.all([
+        api.get(API_ROUTES.TICKETS.BASE, {
+          params: {
+            limit: -1,
+            assignee:
+              selectedAgentIds.length > 0
+                ? selectedAgentIds.join(",")
+                : undefined,
+            priority:
+              selectedPriorityNames.length > 0
+                ? selectedPriorityNames.join(",")
+                : undefined,
+            group:
+              selectedGroupIds.length > 0
+                ? selectedGroupIds.join(",")
+                : undefined,
+            owner:
+              selectedCustomerIds.length > 0
+                ? selectedCustomerIds.join(",")
+                : undefined,
+          },
+        }),
+        api.get(API_ROUTES.COMMON.STATUSES),
+        api.get(API_ROUTES.USERS.BASE, {
+          params: { type: "agents", limit: -1 },
+        }),
+        api.get(API_ROUTES.COMMON.PRIORITIES),
+        api.get(API_ROUTES.COMMON.GROUPS, { params: { limit: -1 } }),
+        api.get(API_ROUTES.USERS.BASE, {
+          params: { type: "customers", limit: -1 },
+        }),
+      ]);
+
+      const allTickets = ticketsRes.data.tickets;
+      const allStatuses = statusRes.data.statuses;
+      setAgents(agentsRes.data.accounts);
+      setPriorities(priorityRes.data.priorities);
+      setGroups(groupsRes.data.groups);
+      setCustomers(customersRes.data.accounts);
+
+      const boardColumns: Column[] = allStatuses.map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        color: s.color,
+        tickets: allTickets.filter((t: Ticket) => t.status.id === s.id),
+      }));
+
+      setColumns(boardColumns);
+    } catch (err) {
+      console.error("Failed to fetch board data", err);
+      showNotification("error", UIMessages.BOARD.LOAD_FAILED);
+    } finally {
+      setLoading(false);
+      setIsLoading(false);
+    }
+  }, [
+    selectedAgentIds,
+    selectedPriorityNames,
+    selectedGroupIds,
+    selectedCustomerIds,
+    showNotification,
+    setIsLoading,
+  ]);
+
   const openTicketDetail = async (ticket: any) => {
     setSelectedTicket(ticket);
     setIsDetailModalOpen(true);
@@ -81,7 +159,9 @@ const TicketBoard: React.FC = () => {
     if (!selectedTicket) return;
     try {
       setIsLoading(true);
-      await api.put(API_ROUTES.TICKETS.BY_ID(selectedTicket.id), { priorityId });
+      await api.put(API_ROUTES.TICKETS.BY_ID(selectedTicket.id), {
+        priorityId,
+      });
       showNotification("success", "Priority updated successfully");
 
       const priority = priorities.find((p) => p.id === priorityId);
@@ -102,7 +182,9 @@ const TicketBoard: React.FC = () => {
     if (!selectedTicket) return;
     try {
       setIsLoading(true);
-      await api.put(API_ROUTES.TICKETS.BY_ID(selectedTicket.id), { assigneeId });
+      await api.put(API_ROUTES.TICKETS.BY_ID(selectedTicket.id), {
+        assigneeId,
+      });
       showNotification("success", "Ticket assigned successfully");
 
       // Update local state
@@ -145,51 +227,6 @@ const TicketBoard: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-  const fetchBoardData = useCallback(async () => {
-    try {
-      const [ticketsRes, statusRes, agentsRes, priorityRes] = await Promise.all(
-        [
-          api.get(API_ROUTES.TICKETS.BASE, {
-            params: {
-              limit: -1,
-              assignee:
-                selectedAgentIds.length > 0
-                  ? selectedAgentIds.join(",")
-                  : undefined,
-              priority:
-                selectedPriorityNames.length > 0
-                  ? selectedPriorityNames.join(",")
-                  : undefined,
-            },
-          }),
-          api.get(API_ROUTES.COMMON.STATUSES),
-          api.get(API_ROUTES.USERS.BASE, { params: { type: "agents", limit: -1 } }),
-          api.get(API_ROUTES.COMMON.PRIORITIES),
-        ],
-      );
-
-      const allTickets = ticketsRes.data.tickets;
-      const allStatuses = statusRes.data.statuses;
-      setAgents(agentsRes.data.accounts);
-      setPriorities(priorityRes.data.priorities);
-
-      const boardColumns: Column[] = allStatuses.map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        color: s.color,
-        tickets: allTickets.filter((t: Ticket) => t.status.id === s.id),
-      }));
-
-      setColumns(boardColumns);
-    } catch (err) {
-      console.error("Failed to fetch board data", err);
-      showNotification("error", UIMessages.BOARD.LOAD_FAILED);
-    } finally {
-      setLoading(false);
-      setIsLoading(false);
-    }
-  }, [selectedAgentIds, selectedPriorityNames, showNotification, setIsLoading]);
 
   useEffect(() => {
     fetchBoardData();
@@ -281,6 +318,21 @@ const TicketBoard: React.FC = () => {
     );
   };
 
+  const [isGroupOpen, setIsGroupOpen] = useState(false);
+  const [isCustomerOpen, setIsCustomerOpen] = useState(false);
+
+  const toggleGroup = (id: string) => {
+    setSelectedGroupIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  };
+
+  const toggleCustomer = (id: string) => {
+    setSelectedCustomerIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  };
+
   return (
     <div className={styles.boardContainer}>
       <div className={styles.header}>
@@ -289,151 +341,354 @@ const TicketBoard: React.FC = () => {
           <p>Drag and drop tickets to manage workflow</p>
         </div>
 
-        <div className={styles.filterGroup}>
-          {/* Agent Filter Custom Dropdown */}
-          <div className={styles.customDropdown}>
-            <button
-              className={styles.dropdownTrigger}
-              onClick={() => setIsAgentOpen(!isAgentOpen)}
-            >
-              <div className={styles.triggerContent}>
-                <CustomIcon name="User" size={18} />
-                <span>
-                  {selectedAgentIds.length === 0
-                    ? "All Agents"
-                    : selectedAgentIds.length === 1
-                      ? agents.find((a) => a.id === selectedAgentIds[0])
-                          ?.fullname
-                      : `${selectedAgentIds.length} Agents Selected`}
-                </span>
-              </div>
-              <CustomIcon
-                name="ChevronRight"
-                size={16}
-                style={{
-                  transform: isAgentOpen ? "rotate(90deg)" : "rotate(0)",
-                  transition: "0.2s",
-                }}
-              />
-            </button>
+        <div className={styles.headerActions}>
+          <button
+            className={styles.collapseAllBtn}
+            onClick={toggleAllColumns}
+            title={
+              collapsedColumns.length === columns.length
+                ? "Expand All"
+                : "Collapse All"
+            }
+          >
+            <CustomIcon
+              name={
+                collapsedColumns.length === columns.length
+                  ? "Maximize2"
+                  : "Minimize2"
+              }
+              size={18}
+            />
+            <span>
+              {collapsedColumns.length === columns.length
+                ? "Expand All"
+                : "Collapse All"}
+            </span>
+          </button>
 
-            {isAgentOpen && (
-              <>
-                <div
-                  className={styles.dropdownOverlay}
-                  onClick={() => setIsAgentOpen(false)}
-                />
-                <div className={styles.dropdownMenu}>
-                  <div
-                    className={`${styles.dropdownItem} ${selectedAgentIds.length === 0 ? styles.activeItem : ""}`}
-                    onClick={() => setSelectedAgentIds([])}
-                  >
-                    <CustomIcon name="User" size={16} />
-                    <span>All Agents</span>
-                    {selectedAgentIds.length === 0 && (
-                      <CustomIcon name="Check" size={14} className={styles.checkIcon} />
-                    )}
-                  </div>
-                  <div className={styles.divider} />
-                  {agents.map((agent) => {
-                    const isSelected = selectedAgentIds.includes(agent.id);
-                    return (
-                      <div
-                        key={agent.id}
-                        className={`${styles.dropdownItem} ${isSelected ? styles.activeItem : ""}`}
-                        onClick={() => toggleAgent(agent.id)}
-                      >
-                        {agent.image ? (
-                          <img
-                            src={agent.image}
-                            alt=""
-                            className={styles.filterAvatar}
-                          />
-                        ) : (
-                          <div className={styles.filterInitials}>
-                            {agent.fullname.charAt(0)}
-                          </div>
-                        )}
-                        <span>{agent.fullname}</span>
-                        {isSelected && (
-                          <CustomIcon name="Check" size={14} className={styles.checkIcon} />
-                        )}
-                      </div>
-                    );
-                  })}
+          <div className={styles.filterGroup}>
+            {/* Agent Filter Custom Dropdown */}
+            <div className={styles.customDropdown}>
+              <button
+                className={styles.dropdownTrigger}
+                onClick={() => setIsAgentOpen(!isAgentOpen)}
+              >
+                <div className={styles.triggerContent}>
+                  <CustomIcon name="User" size={18} />
+                  <span>
+                    {selectedAgentIds.length === 0
+                      ? "All Agents"
+                      : selectedAgentIds.length === 1
+                        ? agents.find((a) => a.id === selectedAgentIds[0])
+                            ?.fullname
+                        : `${selectedAgentIds.length} Agents Selected`}
+                  </span>
                 </div>
-              </>
-            )}
-          </div>
-
-          {/* Priority Filter Custom Dropdown */}
-          <div className={styles.customDropdown}>
-            <button
-              className={styles.dropdownTrigger}
-              onClick={() => setIsPriorityOpen(!isPriorityOpen)}
-            >
-              <div className={styles.triggerContent}>
-                <CustomIcon name="Layers" size={18} />
-                <span>
-                  {selectedPriorityNames.length === 0
-                    ? "All Priorities"
-                    : selectedPriorityNames.length === 1
-                      ? selectedPriorityNames[0]
-                      : `${selectedPriorityNames.length} Selected`}
-                </span>
-              </div>
-              <CustomIcon
-                name="ChevronRight"
-                size={16}
-                style={{
-                  transform: isPriorityOpen ? "rotate(90deg)" : "rotate(0)",
-                  transition: "0.2s",
-                }}
-              />
-            </button>
-
-            {isPriorityOpen && (
-              <>
-                <div
-                  className={styles.dropdownOverlay}
-                  onClick={() => setIsPriorityOpen(false)}
+                <CustomIcon
+                  name="ChevronRight"
+                  size={16}
+                  style={{
+                    transform: isAgentOpen ? "rotate(90deg)" : "rotate(0)",
+                    transition: "0.2s",
+                  }}
                 />
-                <div className={styles.dropdownMenu}>
+              </button>
+
+              {isAgentOpen && (
+                <>
                   <div
-                    className={`${styles.dropdownItem} ${selectedPriorityNames.length === 0 ? styles.activeItem : ""}`}
-                    onClick={() => setSelectedPriorityNames([])}
-                  >
-                    <CustomIcon name="Layers" size={16} />
-                    <span>All Priorities</span>
-                    {selectedPriorityNames.length === 0 && (
-                      <CustomIcon name="Check" size={14} className={styles.checkIcon} />
-                    )}
-                  </div>
-                  <div className={styles.divider} />
-                  {priorities.map((priority) => {
-                    const isSelected = selectedPriorityNames.includes(
-                      priority.name,
-                    );
-                    return (
-                      <div
-                        key={priority.id}
-                        className={`${styles.dropdownItem} ${isSelected ? styles.activeItem : ""}`}
-                        onClick={() => togglePriority(priority.name)}
-                      >
+                    className={styles.dropdownOverlay}
+                    onClick={() => setIsAgentOpen(false)}
+                  />
+                  <div className={styles.dropdownMenu}>
+                    <div
+                      className={`${styles.dropdownItem} ${selectedAgentIds.length === 0 ? styles.activeItem : ""}`}
+                      onClick={() => setSelectedAgentIds([])}
+                    >
+                      <CustomIcon name="User" size={16} />
+                      <span>All Agents</span>
+                      {selectedAgentIds.length === 0 && (
+                        <CustomIcon
+                          name="Check"
+                          size={14}
+                          className={styles.checkIcon}
+                        />
+                      )}
+                    </div>
+                    <div className={styles.divider} />
+                    {agents.map((agent) => {
+                      const isSelected = selectedAgentIds.includes(agent.id);
+                      return (
                         <div
-                          className={styles.priorityDot}
-                          style={{ background: priority.color }}
-                        ></div>
-                        <span>{priority.name}</span>
-                        {isSelected && (
-                          <CustomIcon name="Check" size={14} className={styles.checkIcon} />
-                        )}
-                      </div>
-                    );
-                  })}
+                          key={agent.id}
+                          className={`${styles.dropdownItem} ${isSelected ? styles.activeItem : ""}`}
+                          onClick={() => toggleAgent(agent.id)}
+                        >
+                          {agent.image ? (
+                            <img
+                              src={agent.image}
+                              alt=""
+                              className={styles.filterAvatar}
+                            />
+                          ) : (
+                            <div className={styles.filterInitials}>
+                              {agent.fullname.charAt(0)}
+                            </div>
+                          )}
+                          <span>{agent.fullname}</span>
+                          {isSelected && (
+                            <CustomIcon
+                              name="Check"
+                              size={14}
+                              className={styles.checkIcon}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Priority Filter Custom Dropdown */}
+            <div className={styles.customDropdown}>
+              <button
+                className={styles.dropdownTrigger}
+                onClick={() => setIsPriorityOpen(!isPriorityOpen)}
+              >
+                <div className={styles.triggerContent}>
+                  <CustomIcon name="Layers" size={18} />
+                  <span>
+                    {selectedPriorityNames.length === 0
+                      ? "All Priorities"
+                      : selectedPriorityNames.length === 1
+                        ? selectedPriorityNames[0]
+                        : `${selectedPriorityNames.length} Selected`}
+                  </span>
                 </div>
-              </>
-            )}
+                <CustomIcon
+                  name="ChevronRight"
+                  size={16}
+                  style={{
+                    transform: isPriorityOpen ? "rotate(90deg)" : "rotate(0)",
+                    transition: "0.2s",
+                  }}
+                />
+              </button>
+
+              {isPriorityOpen && (
+                <>
+                  <div
+                    className={styles.dropdownOverlay}
+                    onClick={() => setIsPriorityOpen(false)}
+                  />
+                  <div className={styles.dropdownMenu}>
+                    <div
+                      className={`${styles.dropdownItem} ${selectedPriorityNames.length === 0 ? styles.activeItem : ""}`}
+                      onClick={() => setSelectedPriorityNames([])}
+                    >
+                      <CustomIcon name="Layers" size={16} />
+                      <span>All Priorities</span>
+                      {selectedPriorityNames.length === 0 && (
+                        <CustomIcon
+                          name="Check"
+                          size={14}
+                          className={styles.checkIcon}
+                        />
+                      )}
+                    </div>
+                    <div className={styles.divider} />
+                    {priorities.map((priority) => {
+                      const isSelected = selectedPriorityNames.includes(
+                        priority.name,
+                      );
+                      return (
+                        <div
+                          key={priority.id}
+                          className={`${styles.dropdownItem} ${isSelected ? styles.activeItem : ""}`}
+                          onClick={() => togglePriority(priority.name)}
+                        >
+                          <div
+                            className={styles.priorityDot}
+                            style={{ background: priority.color }}
+                          ></div>
+                          <span>{priority.name}</span>
+                          {isSelected && (
+                            <CustomIcon
+                              name="Check"
+                              size={14}
+                              className={styles.checkIcon}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Group Filter Custom Dropdown */}
+            <div className={styles.customDropdown}>
+              <button
+                className={styles.dropdownTrigger}
+                onClick={() => setIsGroupOpen(!isGroupOpen)}
+              >
+                <div className={styles.triggerContent}>
+                  <CustomIcon name="Users" size={18} />
+                  <span>
+                    {selectedGroupIds.length === 0
+                      ? "All Groups"
+                      : selectedGroupIds.length === 1
+                        ? groups.find((g) => g.id === selectedGroupIds[0])?.name
+                        : `${selectedGroupIds.length} Groups`}
+                  </span>
+                </div>
+                <CustomIcon
+                  name="ChevronRight"
+                  size={16}
+                  style={{
+                    transform: isGroupOpen ? "rotate(90deg)" : "rotate(0)",
+                    transition: "0.2s",
+                  }}
+                />
+              </button>
+
+              {isGroupOpen && (
+                <>
+                  <div
+                    className={styles.dropdownOverlay}
+                    onClick={() => setIsGroupOpen(false)}
+                  />
+                  <div className={styles.dropdownMenu}>
+                    <div
+                      className={`${styles.dropdownItem} ${selectedGroupIds.length === 0 ? styles.activeItem : ""}`}
+                      onClick={() => setSelectedGroupIds([])}
+                    >
+                      <CustomIcon name="Users" size={16} />
+                      <span>All Groups</span>
+                      {selectedGroupIds.length === 0 && (
+                        <CustomIcon
+                          name="Check"
+                          size={14}
+                          className={styles.checkIcon}
+                        />
+                      )}
+                    </div>
+                    <div className={styles.divider} />
+                    {groups.map((group) => {
+                      const isSelected = selectedGroupIds.includes(group.id);
+                      return (
+                        <div
+                          key={group.id}
+                          className={`${styles.dropdownItem} ${isSelected ? styles.activeItem : ""}`}
+                          onClick={() => toggleGroup(group.id)}
+                        >
+                          <div className={styles.filterInitials}>
+                            {group.name.charAt(0)}
+                          </div>
+                          <span>{group.name}</span>
+                          {isSelected && (
+                            <CustomIcon
+                              name="Check"
+                              size={14}
+                              className={styles.checkIcon}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Customer Filter Custom Dropdown */}
+            <div className={styles.customDropdown}>
+              <button
+                className={styles.dropdownTrigger}
+                onClick={() => setIsCustomerOpen(!isCustomerOpen)}
+              >
+                <div className={styles.triggerContent}>
+                  <CustomIcon name="UserCheck" size={18} />
+                  <span>
+                    {selectedCustomerIds.length === 0
+                      ? "All Customers"
+                      : selectedCustomerIds.length === 1
+                        ? customers.find((c) => c.id === selectedCustomerIds[0])
+                            ?.fullname
+                        : `${selectedCustomerIds.length} Customers`}
+                  </span>
+                </div>
+                <CustomIcon
+                  name="ChevronRight"
+                  size={16}
+                  style={{
+                    transform: isCustomerOpen ? "rotate(90deg)" : "rotate(0)",
+                    transition: "0.2s",
+                  }}
+                />
+              </button>
+
+              {isCustomerOpen && (
+                <>
+                  <div
+                    className={styles.dropdownOverlay}
+                    onClick={() => setIsCustomerOpen(false)}
+                  />
+                  <div className={styles.dropdownMenu}>
+                    <div
+                      className={`${styles.dropdownItem} ${selectedCustomerIds.length === 0 ? styles.activeItem : ""}`}
+                      onClick={() => setSelectedCustomerIds([])}
+                    >
+                      <CustomIcon name="UserCheck" size={16} />
+                      <span>All Customers</span>
+                      {selectedCustomerIds.length === 0 && (
+                        <CustomIcon
+                          name="Check"
+                          size={14}
+                          className={styles.checkIcon}
+                        />
+                      )}
+                    </div>
+                    <div className={styles.divider} />
+                    {customers.map((customer) => {
+                      const isSelected = selectedCustomerIds.includes(
+                        customer.id,
+                      );
+                      return (
+                        <div
+                          key={customer.id}
+                          className={`${styles.dropdownItem} ${isSelected ? styles.activeItem : ""}`}
+                          onClick={() => toggleCustomer(customer.id)}
+                        >
+                          {customer.image ? (
+                            <img
+                              src={customer.image}
+                              alt=""
+                              className={styles.filterAvatar}
+                            />
+                          ) : (
+                            <div className={styles.filterInitials}>
+                              {customer.fullname.charAt(0)}
+                            </div>
+                          )}
+                          <span>{customer.fullname}</span>
+                          {isSelected && (
+                            <CustomIcon
+                              name="Check"
+                              size={14}
+                              className={styles.checkIcon}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -635,14 +890,17 @@ const TicketBoard: React.FC = () => {
                       fontWeight: 600,
                     }}
                   >
-                    <CustomIcon name="Clock" size={16} /> {selectedTicket.status.name}
+                    <CustomIcon name="Clock" size={16} />{" "}
+                    {selectedTicket.status.name}
                   </span>
                   {canUpdatePriority ? (
                     <CustomSelect
                       options={priorities.map((p) => ({
                         value: p.id,
                         label: p.name,
-                        icon: <CustomIcon name="Tag" size={14} color={p.color} />,
+                        icon: (
+                          <CustomIcon name="Tag" size={14} color={p.color} />
+                        ),
                       }))}
                       value={selectedTicket.priority.id}
                       onChange={handleUpdatePriority}
@@ -667,7 +925,8 @@ const TicketBoard: React.FC = () => {
                         fontWeight: 600,
                       }}
                     >
-                      <CustomIcon name="Tag" size={16} /> {selectedTicket.priority.name}
+                      <CustomIcon name="Tag" size={16} />{" "}
+                      {selectedTicket.priority.name}
                     </span>
                   )}
                   <span
@@ -727,7 +986,12 @@ const TicketBoard: React.FC = () => {
                     gap: 8,
                   }}
                 >
-                  <CustomIcon name="Info" size={16} color="var(--accent-primary)" /> Description
+                  <CustomIcon
+                    name="Info"
+                    size={16}
+                    color="var(--accent-primary)"
+                  />{" "}
+                  Description
                 </label>
                 <div
                   className="glass-card"
@@ -766,7 +1030,12 @@ const TicketBoard: React.FC = () => {
                       gap: 8,
                     }}
                   >
-                    <CustomIcon name="User" size={18} color="var(--accent-primary)" /> Reporter
+                    <CustomIcon
+                      name="User"
+                      size={18}
+                      color="var(--accent-primary)"
+                    />{" "}
+                    Reporter
                   </label>
                   <div
                     className="glass-card"
@@ -858,7 +1127,11 @@ const TicketBoard: React.FC = () => {
                       gap: 8,
                     }}
                   >
-                    <CustomIcon name="UserPlus" size={18} color="var(--accent-secondary)" />{" "}
+                    <CustomIcon
+                      name="UserPlus"
+                      size={18}
+                      color="var(--accent-secondary)"
+                    />{" "}
                     Assignee
                   </label>
                   <div
@@ -950,7 +1223,10 @@ const TicketBoard: React.FC = () => {
                                     }}
                                     title="Chat with Assignee"
                                   >
-                                    <CustomIcon name="MessageSquare" size={14} />
+                                    <CustomIcon
+                                      name="MessageSquare"
+                                      size={14}
+                                    />
                                   </button>
                                 )}
                               </div>
@@ -996,7 +1272,11 @@ const TicketBoard: React.FC = () => {
                     gap: 10,
                   }}
                 >
-                  <CustomIcon name="MessageCircle" size={20} color="var(--accent-primary)" />
+                  <CustomIcon
+                    name="MessageCircle"
+                    size={20}
+                    color="var(--accent-primary)"
+                  />
                   Comments{" "}
                   {fullTicketData?.comments?.length
                     ? `(${fullTicketData.comments.length})`

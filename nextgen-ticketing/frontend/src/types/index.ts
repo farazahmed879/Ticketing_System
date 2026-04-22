@@ -3,11 +3,11 @@ export interface User {
   fullname: string;
   email: string;
   title?: string;
-  role: { 
-    id: string; 
-    name: string; 
-    isAdmin?: boolean; 
-    isAgent?: boolean; 
+  role: {
+    id: string;
+    name: string;
+    isAdmin?: boolean;
+    isAgent?: boolean;
     isCustomer?: boolean;
     isEmployee?: boolean;
     permissions?: any;
@@ -67,7 +67,12 @@ export interface Conversation {
   isGroup: boolean;
   name?: string | null;
   members?: any[];
-  partner?: { id: string, fullname: string, image?: string, lastOnline?: string } | null;
+  partner?: {
+    id: string;
+    fullname: string;
+    image?: string;
+    lastOnline?: string;
+  } | null;
   recentMessage: string;
   updatedAt: string;
 }
@@ -114,8 +119,15 @@ export interface RecentTicket {
   id: string;
   uid: number;
   subject: string;
-  status: { name: string, color: string };
-  priority: { name: string, color: string };
+  status: { name: string; color: string };
+  priority: { name: string; color: string };
   owner: { fullname: string };
   createdAt: string;
+}
+
+export interface Column {
+  id: string;
+  name: string;
+  color: string;
+  tickets: Ticket[];
 }

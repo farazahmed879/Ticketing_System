@@ -1,80 +1,83 @@
 export const RoleName = {
-  ADMIN: 'Admin',
-  AGENT: 'Agent',
-  EMPLOYEE: 'Employee',
-  CUSTOMER: 'Customer',
+  ADMIN: "Admin",
+  AGENT: "Agent",
+  EMPLOYEE: "Employee",
+  CUSTOMER: "Customer",
 } as const;
-export type RoleName = typeof RoleName[keyof typeof RoleName];
+export type RoleName = (typeof RoleName)[keyof typeof RoleName];
 
 export const RoleType = {
-  AGENTS: 'agents',
-  ADMINS: 'admins',
-  CUSTOMERS: 'customers',
-  ALL: 'all',
+  AGENTS: "agents",
+  ADMINS: "admins",
+  CUSTOMERS: "customers",
+  ALL: "all",
 } as const;
-export type RoleType = typeof RoleType[keyof typeof RoleType];
+export type RoleType = (typeof RoleType)[keyof typeof RoleType];
 
 export const TicketType = {
-  ISSUE: 'Issue',
-  TASK: 'Task',
-  REQUEST: 'Request',
+  ISSUE: "Issue",
+  TASK: "Task",
+  REQUEST: "Request",
 } as const;
-export type TicketType = typeof TicketType[keyof typeof TicketType];
+export type TicketType = (typeof TicketType)[keyof typeof TicketType];
 
 export const StatusName = {
-  NEW: 'New',
-  OPEN: 'Open',
-  CANCELLED: 'Cancelled',
-  FAILED: 'Failed',
-  IN_PROCESS: 'In Process',
-  RESOLVED: 'Resolved',
-  CLOSED: 'Closed',
+  NEW: "New",
+  OPEN: "Open",
+  CANCELLED: "Cancelled",
+  FAILED: "Failed",
+  IN_PROCESS: "In Process",
+  RESOLVED: "Resolved",
+  CLOSED: "Closed",
+  APPROVED: "Approved",
 } as const;
-export type StatusName = typeof StatusName[keyof typeof StatusName];
+export type StatusName = (typeof StatusName)[keyof typeof StatusName];
 
 export const PriorityName = {
-  LOW: 'Low',
-  NORMAL: 'Normal',
-  HIGH: 'High',
-  URGENT: 'Urgent',
+  LOW: "Low",
+  NORMAL: "Normal",
+  HIGH: "High",
+  URGENT: "Urgent",
 } as const;
-export type PriorityName = typeof PriorityName[keyof typeof PriorityName];
+export type PriorityName = (typeof PriorityName)[keyof typeof PriorityName];
 
 export const ActionName = {
-  TICKET_CREATED: 'TICKET_CREATED',
-  TICKET_UPDATED: 'TICKET_UPDATED',
-  TICKET_DELETED: 'TICKET_DELETED',
-  STATUS_CHANGED: 'STATUS_CHANGED',
-  PRIORITY_CHANGED: 'PRIORITY_CHANGED',
-  ASSIGNEE_CHANGED: 'ASSIGNEE_CHANGED',
-  COMMENT_ADDED: 'COMMENT_ADDED',
-  NOTE_ADDED: 'NOTE_ADDED',
+  TICKET_CREATED: "TICKET_CREATED",
+  TICKET_UPDATED: "TICKET_UPDATED",
+  TICKET_DELETED: "TICKET_DELETED",
+  STATUS_CHANGED: "STATUS_CHANGED",
+  PRIORITY_CHANGED: "PRIORITY_CHANGED",
+  ASSIGNEE_CHANGED: "ASSIGNEE_CHANGED",
+  COMMENT_ADDED: "COMMENT_ADDED",
+  NOTE_ADDED: "NOTE_ADDED",
 } as const;
-export type ActionName = typeof ActionName[keyof typeof ActionName];
+export type ActionName = (typeof ActionName)[keyof typeof ActionName];
 
 export const LoginHelpType = {
-  FORGOT_PASSWORD: 'FORGOT_PASSWORD',
-  UNABLE_TO_LOGIN: 'UNABLE_TO_LOGIN',
-  OTHER: 'OTHER',
+  FORGOT_PASSWORD: "FORGOT_PASSWORD",
+  UNABLE_TO_LOGIN: "UNABLE_TO_LOGIN",
+  OTHER: "OTHER",
 } as const;
-export type LoginHelpType = typeof LoginHelpType[keyof typeof LoginHelpType];
+export type LoginHelpType = (typeof LoginHelpType)[keyof typeof LoginHelpType];
 
 export const SocketEvent = {
-  TICKET_UPDATED: 'ticket:updated',
-  CHAT_SEND: 'chat:send',
-  CHAT_RECEIVE: 'chat:receive',
-  CHAT_TYPING: 'chat:typing',
-  CHAT_STOP_TYPING: 'chat:stopTyping',
-  NOTIFICATIONS_GET: 'notifications:get',
-  NOTIFICATIONS_UPDATE: 'notifications:update',
-  NOTIFICATIONS_NEW: 'notifications:new',
-  USERS_ONLINE: 'users:online',
+  TICKET_UPDATED: "ticket:updated",
+  CHAT_SEND: "chat:send",
+  CHAT_RECEIVE: "chat:receive",
+  CHAT_TYPING: "chat:typing",
+  CHAT_STOP_TYPING: "chat:stopTyping",
+  NOTIFICATIONS_GET: "notifications:get",
+  NOTIFICATIONS_UPDATE: "notifications:update",
+  NOTIFICATIONS_NEW: "notifications:new",
+  USERS_ONLINE: "users:online",
 } as const;
-export type SocketEvent = typeof SocketEvent[keyof typeof SocketEvent];
+export type SocketEvent = (typeof SocketEvent)[keyof typeof SocketEvent];
 
 export const NotificationMessages = {
-  TICKET_CREATED: (subject: string) => `A new ticket has been created: ${subject}`,
-  CUSTOMER_TICKET_CREATED: (uid: number, owner: string) => `A new ticket #${uid} has been created by ${owner}.`,
+  TICKET_CREATED: (subject: string) =>
+    `A new ticket has been created: ${subject}`,
+  CUSTOMER_TICKET_CREATED: (uid: number, owner: string) =>
+    `A new ticket #${uid} has been created by ${owner}.`,
   TICKET_ASSIGNED: (uid: number) => `Ticket #${uid} has been assigned to you`,
   TICKET_UPDATED: (uid: number) => `Ticket #${uid} has been updated`,
   NEW_COMMENT: (uid: number) => `A new comment was added to Ticket #${uid}`,
@@ -84,5 +87,5 @@ export const NotificationMessages = {
     ASSIGNMENT: "Ticket Assigned",
     UPDATE: "Ticket Updated",
     COMMENT: "New Comment",
-  }
+  },
 } as const;

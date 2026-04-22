@@ -18,7 +18,7 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
     if (type === RoleType.AGENTS) roleFilter = { role: { OR: [{ isAgent: true }, { isEmployee: true }] } };
     else if (type === RoleType.ADMINS) roleFilter = { role: { isAdmin: true } };
     else if (type === RoleType.CUSTOMERS)
-      roleFilter = { role: { isAdmin: false, isAgent: false } };
+      roleFilter = { role: { name: RoleName.CUSTOMER } };
 
     const users = await prisma.user.findMany({
       where: {

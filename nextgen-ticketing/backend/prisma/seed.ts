@@ -1,6 +1,12 @@
+/// <reference types="node" />
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { RoleName, StatusName, PriorityName, TicketType } from "../src/utils/constants";
+import {
+  RoleName,
+  StatusName,
+  PriorityName,
+  TicketType,
+} from "../src/utils/constants";
 
 const prisma = new PrismaClient();
 
@@ -17,7 +23,13 @@ async function main() {
       isAdmin: true,
       isAgent: false,
       permissions: {
-        tickets: { view: true, create: true, update: true, delete: true, priority: true },
+        tickets: {
+          view: true,
+          create: true,
+          update: true,
+          delete: true,
+          priority: true,
+        },
         accounts: { view: true, create: true, update: true, delete: true },
         groups: { view: true, create: true, update: true, delete: true },
         teams: { view: true, create: true, update: true, delete: true },
@@ -45,7 +57,13 @@ async function main() {
       isAdmin: false,
       isAgent: true,
       permissions: {
-        tickets: { view: true, create: true, update: true, delete: false, priority: true },
+        tickets: {
+          view: true,
+          create: true,
+          update: true,
+          delete: false,
+          priority: true,
+        },
         accounts: { view: true, create: false, update: false, delete: false },
         groups: { view: true, create: false, update: false, delete: false },
         teams: { view: true, create: false, update: false, delete: false },
@@ -64,10 +82,16 @@ async function main() {
       isAdmin: false,
       isAgent: true,
       permissions: {
-        tickets: { view: true, create: true, update: true, delete: false, priority: true },
+        tickets: {
+          view: true,
+          create: true,
+          update: true,
+          delete: false,
+          priority: true,
+        },
         messages: { view: true, create: true },
         groups: { view: true },
-        teams: { view: true }
+        teams: { view: true },
       },
     },
   });
@@ -92,21 +116,67 @@ async function main() {
   const statuses = [
     { name: StatusName.NEW, color: "#29b955", order: 0, isResolved: false },
     { name: StatusName.OPEN, color: "#2196f3", order: 1, isResolved: false },
-    { name: StatusName.IN_PROCESS, color: "#ff9800", order: 2, isResolved: false },
-    { name: StatusName.RESOLVED, color: "#4caf50", order: 3, isResolved: true },
-    { name: StatusName.CLOSED, color: "#9e9e9e", order: 4, isResolved: true },
-    { name: StatusName.CANCELLED, color: "#ff5252", order: 5, isResolved: true },
-    { name: StatusName.FAILED, color: "#ef4444", order: 6, isResolved: true, description: "Ticket could not be resolved" },
+    {
+      name: StatusName.FAILED,
+      color: "#ef4444",
+      order: 2,
+      isResolved: true,
+    },
+    {
+      name: StatusName.IN_PROCESS,
+      color: "#ff9800",
+      order: 3,
+      isResolved: false,
+    },
+    { name: StatusName.RESOLVED, color: "#4caf50", order: 4, isResolved: true },
+    {
+      name: StatusName.APPROVED,
+      color: "#00e676",
+      order: 5,
+      isResolved: true,
+    },
+    { name: StatusName.CLOSED, color: "#9e9e9e", order: 6, isResolved: true },
+    {
+      name: StatusName.CANCELLED,
+      color: "#ff5252",
+      order: 7,
+      isResolved: true,
+    },
   ];
 
   for (const s of statuses) {
     await prisma.status.upsert({
       where: { name: s.name },
-      update: {},
+      update: { color: s.color, order: s.order, isResolved: s.isResolved },
       create: s,
     });
   }
   console.log("  ✅ Statuses seeded");
+
+  // Get all statuses to assign board permissions
+  const allStatuses = await prisma.status.findMany();
+  const statusMap = allStatuses.reduce(
+    (acc, s) => ({ ...acc, [s.name]: s.id }),
+    {} as Record<string, string>,
+  );
+
+  // Update Agent Role with board permissions
+  await prisma.role.update({
+    where: { name: RoleName.AGENT },
+    data: {
+      permissions: {
+        ...(agentRole.permissions as any),
+        boardStatuses: {
+          [statusMap[StatusName.NEW]]: true,
+          [statusMap[StatusName.OPEN]]: true,
+          [statusMap[StatusName.IN_PROCESS]]: true,
+          [statusMap[StatusName.RESOLVED]]: true,
+          [statusMap[StatusName.APPROVED]]: true,
+        },
+      },
+    },
+  });
+  console.log("  ✅ Agent role permissions updated with board transitions");
 
   // ========== PRIORITIES ==========
   const priorities = [
@@ -126,7 +196,11 @@ async function main() {
   console.log("  ✅ Priorities seeded");
 
   // ========== TYPES ==========
-  const types = [{ name: TicketType.ISSUE }, { name: TicketType.TASK }, { name: TicketType.REQUEST }];
+  const types = [
+    { name: TicketType.ISSUE },
+    { name: TicketType.TASK },
+    { name: TicketType.REQUEST },
+  ];
 
   for (const t of types) {
     await prisma.type.upsert({

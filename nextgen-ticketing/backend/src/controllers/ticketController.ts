@@ -39,8 +39,14 @@ export const getTickets = async (req: AuthRequest, res: Response) => {
       where.priority = { name: { in: priorityList } };
     }
 
-    if (group) where.groupId = group as string;
-    if (owner) where.ownerId = owner as string;
+    if (group) {
+      const groupList = (group as string).split(",");
+      where.groupId = { in: groupList };
+    }
+    if (owner) {
+      const ownerList = (owner as string).split(",");
+      where.ownerId = { in: ownerList };
+    }
 
     if (assignee) {
       const assigneeList = (assignee as string).split(",");

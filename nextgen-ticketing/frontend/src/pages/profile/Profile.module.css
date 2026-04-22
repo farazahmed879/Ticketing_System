@@ -1,0 +1,108 @@
+.header {
+  margin-bottom: 80px;
+  position: relative;
+}
+
+.cover {
+  height: 180px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: 20px;
+  opacity: 0.3;
+}
+
+.profileMeta {
+  position: absolute;
+  bottom: -40px;
+  left: 32px;
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+}
+
+.avatarLarge {
+  width: 120px;
+  height: 120px;
+  background: var(--bg-card);
+  backdrop-filter: var(--blur-md);
+  border: 4px solid var(--bg-main);
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+  box-shadow: var(--shadow-glass);
+}
+
+.nameSection h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.nameSection p {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 24px;
+}
+
+.card {
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.detailsList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.iconWrapper {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+}
+
+.detailContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.value {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+@media (max-width: 992px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,97 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.statCard {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.statHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-secondary);
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.statLabel {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.recentTickets {
+  padding: 24px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: 12px 16px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-glass);
+  font-size: 0.95rem;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.priorityHigh { color: #f87171; background: rgba(239, 68, 68, 0.1); }
+.priorityNormal { color: #60a5fa; background: rgba(37, 99, 235, 0.1); }
+.priorityLow { color: #34d399; background: rgba(16, 185, 129, 0.1); }
+ 
+ .viewAllBtn {
+   color: var(--accent-primary);
+   font-size: 0.85rem;
+   font-weight: 600;
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   background: rgba(255, 255, 255, 0.05);
+   padding: 6px 14px;
+   border-radius: 8px;
+   transition: var(--transition-fast);
+   text-decoration: none;
+   border: 1px solid var(--border-glass);
+ }
+ 
+ .viewAllBtn:hover {
+   background: rgba(255, 255, 255, 0.1);
+   border-color: var(--accent-primary);
+ }

@@ -1,0 +1,74 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import http from 'http';
+import { Server } from 'socket.io';
+import { PrismaClient } from '@prisma/client';
+
+// Routes
+import authRoutes from './routes/authRoutes';
+import ticketRoutes from './routes/ticketRoutes';
+import userRoutes from './routes/userRoutes';
+import teamRoutes from './routes/teamRoutes';
+import departmentRoutes from './routes/departmentRoutes';
+import noticeRoutes from './routes/noticeRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+import chatRoutes from './routes/chatRoutes';
+import commonRoutes from './routes/commonRoutes';
+import roleRoutes from './routes/roleRoutes';
+import requestRoutes from './routes/requestRoutes';
+
+// Swagger & Socket
+import { setupSwagger } from './swagger';
+import { setupSocketEvents } from './socketio/events';
+
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
+dotenv.config({ path: envFile });
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+  },
+});
+
+app.set('io', io);
+
+const prisma = new PrismaClient();
+const PORT = process.env.PORT || 4000;
+
+app.use(cors());
+app.use(express.json());
+
+// Swagger
+setupSwagger(app);
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/tickets', ticketRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/teams', teamRoutes);
+app.use('/api/departments', departmentRoutes);
+app.use('/api/notices', noticeRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/messages', chatRoutes);
+app.use('/api/common', commonRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/requests', requestRoutes);
+
+// Root → Swagger
+app.get('/', (req, res) => {
+  res.redirect('/api-docs');
+});
+
+// Socket.io
+setupSocketEvents(io);
+
+// Start Server
+server.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+export { app, io, prisma };

@@ -1,0 +1,616 @@
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  User,
+  Calendar,
+  Tag,
+  Send,
+  Lock,
+  MoreVertical,
+  Layers,
+  UserPlus,
+  MessageSquare,
+} from "lucide-react";
+import api from "../../services/api";
+import { API_ROUTES } from "../../utils/apiRoutes";
+import styles from "./TicketDetail.module.css";
+import tableStyles from "../dashboard/Dashboard.module.css";
+import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "../../context/AuthContext";
+import { useNotification } from "../../context/NotificationContext";
+import CustomSelect from "../../components/CustomSelect";
+import { RoleName, StatusName } from "../../utils/constants";
+
+import type { TicketDetail as ITicketDetail } from "../../types";
+
+const TicketDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const [ticket, setTicket] = useState<ITicketDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"comments" | "history">(
+    "comments",
+  );
+  const [newComment, setNewComment] = useState("");
+  const [isNote, setIsNote] = useState(false);
+  const [statuses, setStatuses] = useState<any[]>([]);
+  const [priorities, setPriorities] = useState<any[]>([]);
+  const [agents, setAgents] = useState<any[]>([]);
+  const { user } = useAuth();
+  const { showNotification, setIsLoading } = useNotification();
+  const navigate = useNavigate();
+
+  const handleStartChat = (userId: string | undefined) => {
+    navigate(`/messages?userId=${userId}`);
+  };
+
+  const canAssign =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.permissions?.tickets?.assign;
+  const canUpdatePriority =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.permissions?.tickets?.priority;
+
+  const fetchTicket = async () => {
+    try {
+      const res = await api.get(API_ROUTES.TICKETS.BY_ID(id!));
+      setTicket(res.data.ticket);
+    } catch (err) {
+      console.error("Failed to fetch ticket", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAgents = async () => {
+    try {
+      const res = await api.get(API_ROUTES.USERS.BASE, {
+        params: { type: "agents", limit: -1 },
+      });
+      setAgents(res.data.accounts);
+    } catch (err) {
+      console.error("Failed to fetch agents", err);
+    }
+  };
+
+  const fetchStatuses = async () => {
+    try {
+      const res = await api.get(API_ROUTES.COMMON.STATUSES);
+      setStatuses(res.data.statuses);
+    } catch (err) {
+      console.error("Failed to fetch statuses", err);
+    }
+  };
+
+  const fetchPriorities = async () => {
+    try {
+      const res = await api.get(API_ROUTES.COMMON.PRIORITIES);
+      setPriorities(res.data.priorities);
+    } catch (err) {
+      console.error("Failed to fetch priorities", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchTicket();
+    if (canAssign) fetchAgents();
+    fetchStatuses();
+    fetchPriorities();
+  }, [id, canAssign]);
+
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    try {
+      await api.post(API_ROUTES.TICKETS.COMMENTS(id!), {
+        comment: newComment,
+        isNote,
+      });
+      setNewComment("");
+      setIsNote(false);
+      fetchTicket(); // Refresh ticket to show new comment
+    } catch (err) {
+      console.error("Failed to add comment", err);
+    }
+  };
+
+  const handleAssign = async (assigneeId: string) => {
+    try {
+      setIsLoading(true);
+      await api.put(API_ROUTES.TICKETS.BY_ID(id!), { assigneeId });
+      showNotification("success", "Ticket assigned successfully");
+      fetchTicket();
+    } catch (err) {
+      console.error("Failed to assign ticket", err);
+      showNotification("error", "Failed to assign ticket");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (statusId: string) => {
+    if (!ticket) return;
+
+    const isOwner = ticket.owner.id === user?.id;
+    const canUpdate =
+      user?.role?.name === RoleName.ADMIN ||
+      user?.role?.permissions?.tickets?.update ||
+      isOwner;
+
+    // Check if the target status is 'Open' or 'Cancelled' - common actions for owners
+    const targetStatus = statuses.find((s) => s.id === statusId);
+    const statusName = targetStatus?.name.toLowerCase();
+    const isBasicAction =
+      statusName === StatusName.OPEN.toLowerCase() ||
+      statusName === StatusName.CANCELLED.toLowerCase() ||
+      statusName === StatusName.FAILED.toLowerCase();
+
+    const isStatusAllowed =
+      user?.role?.name === RoleName.ADMIN ||
+      user?.role?.permissions?.boardStatuses?.[statusId] === true ||
+      (isOwner && isBasicAction);
+
+    if (!canUpdate) {
+      showNotification(
+        "error",
+        "You do not have permission to update ticket status",
+      );
+      return;
+    }
+
+    if (!isStatusAllowed) {
+      showNotification(
+        "error",
+        `Access Denied: Your role is not allowed to move tickets to "${targetStatus?.name || "this status"}"`,
+      );
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await api.put(API_ROUTES.TICKETS.BY_ID(id!), { statusId });
+      showNotification("success", "Ticket status updated");
+      fetchTicket();
+    } catch (err: any) {
+      console.error("Failed to update status", err);
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to update ticket status",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdatePriority = async (priorityId: string) => {
+    if (!ticket) return;
+
+    if (!canUpdatePriority) {
+      showNotification(
+        "error",
+        "You do not have permission to change ticket priority",
+      );
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await api.put(API_ROUTES.TICKETS.BY_ID(id!), { priorityId });
+      showNotification("success", "Ticket priority updated");
+      fetchTicket();
+    } catch (err) {
+      console.error("Failed to update priority", err);
+      showNotification("error", "Failed to update ticket priority");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (loading || !ticket) return <div>Loading ticket...</div>;
+
+  return (
+    <div className={`${styles.container} animate-fade-in`}>
+      <div className={styles.leftColumn}>
+        <div className={`${styles.ticketInfo} glass-card`}>
+          <div className={styles.ticketHeader}>
+            <div>
+              <span className={styles.uid}>Ticket #{ticket.uid}</span>
+              <h1 className={styles.title}>{ticket.subject}</h1>
+            </div>
+            <button
+              className="glass-card"
+              style={{ padding: 8, borderRadius: 10 }}
+            >
+              <MoreVertical size={20} color="var(--text-muted)" />
+            </button>
+          </div>
+
+          <div className={styles.issue}>{ticket.issue}</div>
+
+          <div style={{ marginTop: 24, display: "flex", gap: 12 }}>
+            {ticket.tags.map((tag) => (
+              <span
+                key={tag}
+                className="glass-card"
+                style={{
+                  padding: "4px 12px",
+                  fontSize: "0.8rem",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.tabs}>
+          <div
+            className={`${styles.tab} ${activeTab === "comments" ? styles.tabActive : ""}`}
+            onClick={() => setActiveTab("comments")}
+          >
+            Comments ({ticket.comments.length})
+          </div>
+          <div
+            className={`${styles.tab} ${activeTab === "history" ? styles.tabActive : ""}`}
+            onClick={() => setActiveTab("history")}
+          >
+            History
+          </div>
+        </div>
+
+        {activeTab === "comments" ? (
+          <div className={styles.commentFeed}>
+            {ticket.comments.map((comment) => (
+              <div key={comment.id} className={styles.comment}>
+                <div
+                  className={tableStyles.avatar}
+                  style={{ width: 40, height: 40 }}
+                >
+                  <User size={20} />
+                </div>
+                <div
+                  className={`${styles.commentContent} ${comment.isNote ? styles.isNote : ""}`}
+                >
+                  {comment.isNote && (
+                    <span className={styles.noteLabel}>Internal Note</span>
+                  )}
+                  <div className={styles.commentHeader}>
+                    <span className={styles.authorName}>
+                      {comment.author.fullname}
+                    </span>
+                    <span className={styles.time}>
+                      {formatDistanceToNow(new Date(comment.createdAt), {
+                        addSuffix: true,
+                      })}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.95rem",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    {comment.comment}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div className={`${styles.commentInput} glass-card`}>
+              <form onSubmit={handleAddComment} className={styles.inputWrapper}>
+                <textarea
+                  placeholder="Type your message here..."
+                  rows={4}
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  style={{ width: "100%", resize: "none" }}
+                />
+                <div className={styles.inputActions}>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      cursor: "pointer",
+                      fontSize: "0.9rem",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isNote}
+                      onChange={(e) => setIsNote(e.target.checked)}
+                    />
+                    <Lock size={14} />
+                    Internal Note
+                  </label>
+                  <button
+                    type="submit"
+                    className="bg-gradient"
+                    style={{
+                      padding: "8px 24px",
+                      borderRadius: 8,
+                      color: "white",
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    Send
+                    <Send size={16} />
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.historyList}>
+            {ticket.history.map((item) => (
+              <div key={item.id} className={styles.historyItem}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>
+                    {item.action}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    {item.description}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "var(--text-muted)",
+                      marginTop: 4,
+                    }}
+                  >
+                    By {item.actor.fullname} •{" "}
+                    {formatDistanceToNow(new Date(item.createdAt), {
+                      addSuffix: true,
+                    })}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className={styles.rightColumn}>
+        <div
+          className="glass-card"
+          style={{
+            padding: 24,
+            display: "flex",
+            flexDirection: "column",
+            gap: 24,
+          }}
+        >
+          <div className={styles.sidebarItem}>
+            <span className={styles.sidebarLabel}>
+              Status {ticket.status.name}
+            </span>
+
+            <CustomSelect
+              options={statuses.map((s) => ({
+                value: s.id,
+                label: s.name,
+                disabled: !(
+                  user?.role?.name === RoleName.ADMIN ||
+                  user?.role?.permissions?.boardStatuses?.[s.id] === true ||
+                  (ticket.owner.id === user?.id &&
+                    (s.name.toLowerCase() === StatusName.OPEN.toLowerCase() ||
+                      s.name.toLowerCase() ===
+                        StatusName.CANCELLED.toLowerCase() ||
+                      s.name.toLowerCase() === StatusName.FAILED.toLowerCase()))
+                ),
+                icon: (
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: s.color,
+                    }}
+                  />
+                ),
+              }))}
+              value={ticket.status.id}
+              onChange={handleUpdateStatus}
+              placeholder="Change status..."
+            />
+          </div>
+
+          <div className={styles.sidebarItem}>
+            <span className={styles.sidebarLabel}>Priority</span>
+            {canUpdatePriority ? (
+              <CustomSelect
+                options={priorities.map((p) => ({
+                  value: p.id,
+                  label: p.name,
+                  icon: (
+                    <div
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        background: p.color,
+                      }}
+                    />
+                  ),
+                }))}
+                value={ticket.priority.id}
+                onChange={handleUpdatePriority}
+                placeholder="Priority"
+              />
+            ) : (
+              <div
+                className={tableStyles.badge}
+                style={{
+                  background: `${ticket.priority.color}15`,
+                  color: ticket.priority.color,
+                  textAlign: "center",
+                  padding: "8px",
+                }}
+              >
+                {ticket.priority.name}
+              </div>
+            )}
+          </div>
+
+          <div className={styles.sidebarItem}>
+            <span className={styles.sidebarLabel}>Owner</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                className={tableStyles.avatar}
+                style={{ width: 32, height: 32 }}
+              >
+                <User size={16} />
+              </div>
+              <span style={{ fontSize: "0.9rem" }}>
+                {ticket.owner.fullname}
+              </span>
+              {ticket.owner.id !== user?.id && (
+                <button
+                  onClick={() => handleStartChat(ticket.owner.id)}
+                  style={{
+                    background: "transparent",
+                    color: "var(--accent-primary)",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  title="Chat with Owner"
+                >
+                  <MessageSquare size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.sidebarItem}>
+            <span className={styles.sidebarLabel}>Assignee</span>
+            {canAssign ? (
+              <CustomSelect
+                options={[
+                  {
+                    value: "",
+                    label: "Unassigned",
+                    icon: <UserPlus size={16} />,
+                  },
+                  ...agents.map((agent) => ({
+                    value: agent.id,
+                    label: agent.fullname,
+                    image: agent.image,
+                  })),
+                ]}
+                value={ticket.assignee?.id || ""}
+                onChange={handleAssign}
+                placeholder="Assign ticket..."
+              />
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div
+                  className={tableStyles.avatar}
+                  style={{ width: 32, height: 32 }}
+                >
+                  {ticket?.assignee?.image ? (
+                    <img
+                      src={ticket?.assignee?.image}
+                      alt=""
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                      }}
+                    />
+                  ) : (
+                    <UserPlus size={16} />
+                  )}
+                </div>
+                <span style={{ fontSize: "0.9rem" }}>
+                  {ticket?.assignee?.fullname || "Unassigned"}
+                </span>
+                {ticket?.assignee && ticket?.assignee?.id !== user?.id && (
+                  <button
+                    onClick={() => handleStartChat(ticket?.assignee?.id)}
+                    style={{
+                      background: "transparent",
+                      color: "var(--accent-secondary)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                    title="Chat with Assignee"
+                  >
+                    <MessageSquare size={14} />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className={styles.sidebarItem}>
+            <span className={styles.sidebarLabel}>Details</span>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                marginTop: 4,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  fontSize: "0.85rem",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <Tag size={16} />
+                <span>Type: {ticket.type?.name || "Issue"}</span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  fontSize: "0.85rem",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <Layers size={16} />
+                <span>Group: {ticket.group?.name || "None"}</span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  fontSize: "0.85rem",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <Calendar size={16} />
+                <span>
+                  Due:{" "}
+                  {ticket.dueDate
+                    ? new Date(ticket.dueDate).toLocaleDateString()
+                    : "No due date"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TicketDetail;

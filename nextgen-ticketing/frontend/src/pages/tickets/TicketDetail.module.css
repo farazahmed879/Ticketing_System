@@ -1,0 +1,181 @@
+.container {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 32px;
+  align-items: start;
+}
+
+.ticketInfo {
+  padding: 32px;
+  margin-bottom: 32px;
+}
+
+.ticketHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.uid {
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.issue {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 32px;
+  border-bottom: 1px solid var(--border-glass);
+  margin-bottom: 24px;
+}
+
+.tab {
+  padding: 12px 0;
+  color: var(--text-muted);
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  transition: var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tabActive {
+  color: var(--accent-primary);
+}
+
+.tabActive::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--accent-primary);
+}
+
+.commentFeed {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 12px;
+}
+
+.comment {
+  display: flex;
+  gap: 16px;
+}
+
+.commentContent {
+  flex: 1;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+}
+
+.commentHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.authorName {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.time {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.isNote {
+  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.noteLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--accent-warning);
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.commentInput {
+  margin-top: 32px;
+  padding: 24px;
+}
+
+.inputWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inputActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebarSection {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sidebarItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebarLabel {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.historyItem {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-left: 2px solid var(--border-glass);
+  padding-left: 20px;
+  position: relative;
+}
+
+.historyItem::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 16px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-glass);
+}

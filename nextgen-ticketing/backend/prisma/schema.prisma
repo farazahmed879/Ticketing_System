@@ -1,0 +1,249 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== AUTH & USERS ====================
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  email         String    @unique
+  password      String
+  fullname      String
+  image         String?
+  title         String?
+  workNumber    String?
+  mobileNumber  String?
+
+  roleId        String    @db.ObjectId
+  role          Role      @relation(fields: [roleId], references: [id])
+
+  groupIds      String[]  @db.ObjectId
+  groups        Group[]   @relation(fields: [groupIds], references: [id])
+
+  teamIds       String[]  @db.ObjectId
+  teams         Team[]    @relation(fields: [teamIds], references: [id])
+
+  ownedTickets    Ticket[] @relation("TicketOwner")
+  assignedTickets Ticket[] @relation("TicketAssignee")
+
+  comments      Comment[]
+  history       History[]
+
+  chatMessages  ChatMessage[]
+  chatRoomIds   String[]      @db.ObjectId
+  chatRooms     ChatRoom[]    @relation(fields: [chatRoomIds], references: [id])
+
+  notifications Notification[]
+  requests      UserRequest[]
+
+  lastOnline    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deleted       Boolean   @default(false)
+}
+
+model Role {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String?
+  isAdmin     Boolean  @default(false)
+  isAgent     Boolean  @default(false)
+  isCustomer  Boolean  @default(false)
+  isEmployee  Boolean  @default(false)
+  permissions Json
+  users       User[]
+}
+
+// ==================== TICKETS ====================
+
+model Ticket {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  uid         Int      @unique
+  subject     String
+  issue       String
+
+  statusId    String   @db.ObjectId
+  status      Status   @relation(fields: [statusId], references: [id])
+
+  priorityId  String   @db.ObjectId
+  priority    Priority @relation(fields: [priorityId], references: [id])
+
+  typeId      String   @db.ObjectId
+  type        Type     @relation(fields: [typeId], references: [id])
+
+  ownerId     String   @db.ObjectId
+  owner       User     @relation("TicketOwner", fields: [ownerId], references: [id])
+
+  assigneeId  String?  @db.ObjectId
+  assignee    User?    @relation("TicketAssignee", fields: [assigneeId], references: [id])
+
+  groupId     String?  @db.ObjectId
+  group       Group?   @relation(fields: [groupId], references: [id])
+
+  tags        String[]
+  comments    Comment[]
+  history     History[]
+
+  dueDate     DateTime?
+  closedAt    DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deleted     Boolean  @default(false)
+}
+
+model Status {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  color       String   @default("#000000")
+  order       Int      @default(0)
+  isResolved  Boolean  @default(false)
+  tickets     Ticket[]
+}
+
+model Priority {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  color       String   @default("#000000")
+  order       Int      @default(0)
+  tickets     Ticket[]
+}
+
+model Type {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  tickets     Ticket[]
+}
+
+model Comment {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  comment     String
+  isNote      Boolean  @default(false)
+  authorId    String   @db.ObjectId
+  author      User     @relation(fields: [authorId], references: [id])
+  ticketId    String   @db.ObjectId
+  ticket      Ticket   @relation(fields: [ticketId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model History {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  action      String
+  description String
+  actorId     String   @db.ObjectId
+  actor       User     @relation(fields: [actorId], references: [id])
+  ticketId    String   @db.ObjectId
+  ticket      Ticket   @relation(fields: [ticketId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+// ==================== ORGANIZATION ====================
+
+model Group {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  isPublic    Boolean  @default(false)
+  memberIds   String[] @db.ObjectId
+  members     User[]   @relation(fields: [memberIds], references: [id])
+  tickets     Ticket[]
+
+  departmentIds String[] @db.ObjectId
+  departments   Department[] @relation(fields: [departmentIds], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model Team {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  memberIds   String[] @db.ObjectId
+  members     User[]   @relation(fields: [memberIds], references: [id])
+
+  departmentIds String[] @db.ObjectId
+  departments   Department[] @relation(fields: [departmentIds], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model Department {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String?
+  allGroups   Boolean  @default(false)
+
+  teamIds     String[] @db.ObjectId
+  teams       Team[]   @relation(fields: [teamIds], references: [id])
+
+  groupIds    String[] @db.ObjectId
+  groups      Group[]  @relation(fields: [groupIds], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+// ==================== NOTIFICATIONS ====================
+
+model Notification {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  message     String
+  type        String   @default("info")
+  unread      Boolean  @default(true)
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  data        Json?
+  createdAt   DateTime @default(now())
+}
+
+model Notice {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  message     String
+  color       String   @default("#7c3aed")
+  fontColor   String   @default("#ffffff")
+  active      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==================== CHAT ====================
+
+model ChatRoom {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String?
+  isGroup     Boolean  @default(false)
+  memberIds   String[] @db.ObjectId
+  members     User[]   @relation(fields: [memberIds], references: [id])
+  messages    ChatMessage[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ChatMessage {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  body        String
+  senderId    String   @db.ObjectId
+  sender      User     @relation(fields: [senderId], references: [id])
+  roomId      String   @db.ObjectId
+  room        ChatRoom @relation(fields: [roomId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+// ==================== REQUESTS ====================
+
+model UserRequest {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  type        String   // e.g., "FORGOT_PASSWORD"
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  message     String?
+  userId      String?  @db.ObjectId
+  user        User?    @relation(fields: [userId], references: [id])
+  email       String?
+  data        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -1,0 +1,138 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border-glass);
+}
+
+.filterBtn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filterBtn:hover {
+  color: var(--text-primary);
+}
+
+.activeFilter {
+  background: var(--accent-primary);
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.listContainer {
+  padding: 0;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: 16px 24px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.table td {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-glass);
+  font-size: 0.9rem;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.typeBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.userName {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.userEmail {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.messageCell {
+  max-width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+}
+
+.statusBadge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pending { background: rgba(255, 152, 0, 0.1); color: #ff9800; }
+.approved { background: rgba(76, 175, 80, 0.1); color: #4caf50; }
+.rejected { background: rgba(244, 67, 54, 0.1); color: #f44336; }
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.actionBtn {
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionBtn:hover {
+  transform: scale(1.1);
+}
+
+.emptyState {
+  padding: 80px 40px;
+  text-align: center;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

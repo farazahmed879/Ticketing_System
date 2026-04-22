@@ -1,0 +1,65 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000; /* Higher z-index */
+  padding: 24px;
+}
+
+.modal {
+  width: 95%;
+  max-width: 550px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
+  background: var(--bg-card); 
+  backdrop-filter: var(--blur-lg);
+  border: 1px solid var(--border-glass);
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalSlideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.header {
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.closeBtn {
+  background: transparent;
+  color: var(--text-muted);
+  transition: var(--transition-fast);
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
+  transform: rotate(90deg);
+}
+
+.content {
+  padding: 24px;
+  overflow-y: auto;
+}

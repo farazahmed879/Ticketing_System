@@ -1,0 +1,95 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top left, #1a1b26, #0a0b10);
+  position: relative;
+  overflow: hidden;
+}
+
+.blob {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: var(--accent-primary);
+  filter: blur(120px);
+  opacity: 0.15;
+  border-radius: 50%;
+  z-index: 0;
+}
+
+.blob1 { top: -100px; right: -100px; background: var(--accent-secondary); }
+.blob2 { bottom: -100px; left: -100px; }
+
+.loginCard {
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  z-index: 1;
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.header p {
+  color: var(--text-secondary);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputGroup label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
+.submitBtn {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  font-weight: 600;
+  transition: var(--transition-fast);
+}
+
+.submitBtn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+}
+
+.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--accent-danger);
+  color: #ff8080;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}

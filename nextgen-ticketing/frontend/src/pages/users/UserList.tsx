@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from "react";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
-import Modal from "../../components/Modal.tsx";
 import CustomInput from "../../components/CustomInput";
 import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
 import styles from "./UserList.module.css";
 import { API_ROUTES } from "../../utils/apiRoutes";
 
-import type { User } from "../../types";
+import type { User, Role, UserFormData } from "../../types";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import type { TableColumn } from "../../components/types";
+import UserForm from "./components/UserForm";
+import UserModal from "./components/UserModal";
 
 const UserList: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [roles, setRoles] = useState<any[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { showNotification, setIsLoading } = useNotification();
@@ -25,13 +26,7 @@ const UserList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
 
-  // Form state
-  const [fullname, setFullname] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [title, setTitle] = useState("");
-  const [roleId, setRoleId] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const fetchData = async () => {
     try {
@@ -58,23 +53,18 @@ const UserList: React.FC = () => {
     fetchData();
   }, [roleFilter]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: UserFormData) => {
     setIsLoading(true);
     try {
-      const payload: any = { fullname, email, title, roleId };
-      if (password) payload.password = password;
-
-      if (editingId) {
-        await api.put(API_ROUTES.USERS.BY_ID(editingId), payload);
+      if (editingUser) {
+        await api.put(API_ROUTES.USERS.BY_ID(editingUser.id), data);
         showNotification("success", "User updated successfully");
       } else {
-        if (!password) throw new Error("Password is required for new users");
-        await api.post(API_ROUTES.USERS.BASE, payload);
+        await api.post(API_ROUTES.USERS.BASE, data);
         showNotification("success", "User created successfully");
       }
       setIsModalOpen(false);
-      resetForm();
+      setEditingUser(null);
       fetchData();
     } catch (err: any) {
       showNotification(
@@ -86,22 +76,8 @@ const UserList: React.FC = () => {
     }
   };
 
-  const resetForm = () => {
-    setFullname("");
-    setEmail("");
-    setPassword("");
-    setTitle("");
-    setRoleId("");
-    setEditingId(null);
-  };
-
   const handleEdit = (u: User) => {
-    setFullname(u.fullname);
-    setEmail(u.email);
-    setTitle(u.title || "");
-    setRoleId(u.role.id);
-    setPassword("");
-    setEditingId(u.id);
+    setEditingUser(u);
     setIsModalOpen(true);
   };
 
@@ -151,7 +127,7 @@ const UserList: React.FC = () => {
       header: "Role",
       key: "role",
       render: (u) => (
-        <CustomBadge variant={u.role.isAdmin ? 'danger' : 'info'}>
+        <CustomBadge variant={u.role.isAdmin ? "danger" : "info"}>
           {u.role.name}
         </CustomBadge>
       ),
@@ -232,7 +208,7 @@ const UserList: React.FC = () => {
           variant="gradient"
           icon={<CustomIcon name="Plus" size={20} />}
           onClick={() => {
-            resetForm();
+            setEditingUser(null);
             setIsModalOpen(true);
           }}
         >
@@ -270,83 +246,13 @@ const UserList: React.FC = () => {
         emptyMessage="No users found"
       />
 
-      <Modal
+      <UserModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingId ? "Edit User" : "Add New User"}
-      >
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: 16 }}
-        >
-          <CustomInput
-            label="Full Name"
-            type="text"
-            value={fullname}
-            onChange={(e) => setFullname(e.target.value)}
-            placeholder="Full Name"
-            required
-          />
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: 16,
-            }}
-          >
-            <CustomInput
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@example.com"
-              required
-            />
-            <CustomInput
-              label={`Password ${editingId ? "(Leave blank to keep current)" : ""}`}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              required={!editingId}
-            />
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: 16,
-            }}
-          >
-            <CustomInput
-              label="Job Title / Company"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Senior Agent"
-            />
-            <CustomSelect
-              label="System Role"
-              value={roleId}
-              onChange={(val) => setRoleId(val)}
-              placeholder="Select Role"
-              options={roles.map((r) => ({ value: r.id, label: r.name }))}
-              required={true}
-            />
-          </div>
-
-          <CustomButton
-            type="submit"
-            variant="gradient"
-            fullWidth
-            style={{ marginTop: 10 }}
-          >
-            {editingId ? "Update User" : "Create User"}
-          </CustomButton>
-        </form>
-      </Modal>
+        user={editingUser}
+        roles={roles}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 };

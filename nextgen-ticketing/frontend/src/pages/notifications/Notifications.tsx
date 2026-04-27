@@ -1,33 +1,29 @@
 import React, { useEffect, useState } from "react";
-import {
-  Bell,
-  CheckCircle2,
-  Trash2,
-  MessageSquare,
-  UserPlus,
-  Ticket,
-  ChevronRight,
-  Headset,
-  FileQuestion,
-} from "lucide-react";
+import CustomIcon from "../../components/CustomIcon";
 import { formatDistanceToNow } from "date-fns";
 import api from "../../services/api";
 import { socket } from "../../services/socket";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import styles from "./Notifications.module.css";
 import { useNavigate } from "react-router-dom";
+import CustomButton from "../../components/CustomButton";
 
 import type { NotificationItem } from "../../types";
 
 const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const navigate = useNavigate();
+
+  const LIMIT = 15;
 
   const fetchNotifications = async () => {
     try {
-      const res = await api.get(`${API_ROUTES.NOTIFICATIONS.BASE}?limit=50`);
+      const res = await api.get(`${API_ROUTES.NOTIFICATIONS.BASE}?limit=${LIMIT}&page=${page}`);
       setNotifications(res.data.items);
+      setTotalCount(res.data.totalCount);
     } catch (err) {
       console.error("Failed to fetch notifications", err);
     } finally {
@@ -37,13 +33,18 @@ const Notifications: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
+  }, [page]);
 
-    socket.on("notifications:new", (notification: NotificationItem) => {
+  useEffect(() => {
+    const handleNewNotification = (notification: NotificationItem) => {
       setNotifications((prev) => [notification, ...prev]);
-    });
+      setTotalCount((prev) => prev + 1);
+    };
+
+    socket.on("notifications:new", handleNewNotification);
 
     return () => {
-      socket.off("notifications:new");
+      socket.off("notifications:new", handleNewNotification);
     };
   }, []);
 
@@ -73,6 +74,7 @@ const Notifications: React.FC = () => {
     try {
       await api.delete(API_ROUTES.NOTIFICATIONS.CLEAR);
       setNotifications([]);
+      setTotalCount(0);
     } catch (err) {
       console.error("Failed to clear notifications", err);
     }
@@ -81,17 +83,17 @@ const Notifications: React.FC = () => {
   const getIcon = (type: string) => {
     switch (type) {
       case "message":
-        return <MessageSquare size={18} color="#4caf50" />;
+        return <CustomIcon name="MessageSquare" size={18} color="#4caf50" />;
       case "assignment":
-        return <UserPlus size={18} color="#2196f3" />;
+        return <CustomIcon name="UserPlus" size={18} color="#2196f3" />;
       case "ticket":
-        return <Ticket size={18} color="#ff9800" />;
+        return <CustomIcon name="Ticket" size={18} color="#ff9800" />;
       case "support":
-        return <Headset size={18} color="#9c27b0" />;
+        return <CustomIcon name="Headset" size={18} color="#9c27b0" />;
       case "request":
-        return <FileQuestion size={18} color="#00bcd4" />;
+        return <CustomIcon name="FileQuestion" size={18} color="#00bcd4" />;
       default:
-        return <Bell size={18} color="var(--text-muted)" />;
+        return <CustomIcon name="Bell" size={18} color="var(--text-muted)" />;
     }
   };
 
@@ -119,7 +121,7 @@ const Notifications: React.FC = () => {
             onClick={handleMarkAllRead}
             disabled={!notifications.some((n) => n.unread)}
           >
-            <CheckCircle2 size={16} /> Mark all read
+            <CustomIcon name="CheckCircle2" size={16} /> Mark all read
           </button>
           <button
             className={`${styles.actionBtn} glass-card glass-card-hover`}
@@ -127,7 +129,7 @@ const Notifications: React.FC = () => {
             disabled={notifications.length === 0}
             style={{ color: "var(--accent-danger)" }}
           >
-            <Trash2 size={16} /> Clear all
+            <CustomIcon name="Trash2" size={16} /> Clear all
           </button>
         </div>
       </div>
@@ -135,7 +137,7 @@ const Notifications: React.FC = () => {
       <div className={`${styles.listContainer} glass-card`}>
         {notifications.length === 0 ? (
           <div className={styles.emptyState}>
-            <Bell size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
+            <CustomIcon name="Bell" size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
             <p>You have no notifications at the moment.</p>
           </div>
         ) : (
@@ -170,12 +172,53 @@ const Notifications: React.FC = () => {
                 <p className={styles.message}>{n.message}</p>
               </div>
               <div className={styles.itemActions}>
-                <ChevronRight size={18} color="var(--text-muted)" />
+                <CustomIcon name="ChevronRight" size={18} color="var(--text-muted)" />
               </div>
             </div>
           ))
         )}
       </div>
+
+      {notifications.length > 0 && (
+        <div
+          className="glass-card"
+          style={{
+            marginTop: 16,
+            padding: "16px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div
+            style={{
+              color: "var(--text-secondary)",
+              fontSize: "0.95rem",
+              fontWeight: 500,
+            }}
+          >
+            Showing {notifications.length} of {totalCount} notifications
+          </div>
+          <div style={{ display: "flex", gap: 12 }}>
+            <CustomButton
+              variant="secondary"
+              size="sm"
+              style={{ padding: 8, borderRadius: 10 }}
+              disabled={page === 0}
+              onClick={() => setPage(page - 1)}
+              icon={<CustomIcon name="ChevronLeft" size={20} />}
+            />
+            <CustomButton
+              variant="secondary"
+              size="sm"
+              style={{ padding: 8, borderRadius: 10 }}
+              disabled={(page + 1) * LIMIT >= totalCount}
+              onClick={() => setPage(page + 1)}
+              icon={<CustomIcon name="ChevronRight" size={20} />}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

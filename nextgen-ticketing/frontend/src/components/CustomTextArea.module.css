@@ -1,23 +1,25 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  /* gap: 8px; */
   width: 100%;
 }
 
 .label {
+  display: block;
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-secondary);
   margin-left: 4px;
+  margin-bottom: 8px;
 }
 
 .inputWrapper {
   display: flex;
-  padding: 4px 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-glass);
-  border-radius: 12px;
+  padding: 4px 16px;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-glass) !important;
+  border-radius: 12px !important;
   transition: var(--transition-fast);
 }
 
@@ -37,7 +39,8 @@
   border: none;
   padding: 12px 0;
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
   outline: none;
   width: 100%;
   resize: vertical;

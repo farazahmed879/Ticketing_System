@@ -2,9 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
-import Modal from "../../components/Modal.tsx";
 import CustomInput from "../../components/CustomInput";
-import CustomTextArea from "../../components/CustomTextArea";
 import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
@@ -13,10 +11,11 @@ import { RoleName, StatusName, PriorityName } from "../../utils/constants";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { format } from "date-fns";
 
-import type { Ticket } from "../../types";
+import type { Ticket, TicketFormData } from "../../types";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
+import CreateTicketModal from "./components/CreateTicketModal";
 
 const TicketList: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -26,22 +25,18 @@ const TicketList: React.FC = () => {
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Create Ticket State
+  // Create Ticket Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [subject, setSubject] = useState("");
-  const [issue, setIssue] = useState("");
-  const [selectedPriority, setSelectedPriority] = useState("");
-  const [selectedGroup, setSelectedGroup] = useState("");
-  const [selectedType, setSelectedType] = useState("");
-  const [selectedAssignee, setSelectedAssignee] = useState("");
 
   // Metadata for form
   const [priorities, setPriorities] = useState<any[]>([]);
-  const [groups, setGroups] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [types, setTypes] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
 
   const navigate = useNavigate();
+  const { showNotification, setIsLoading } = useNotification();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchMetadata = async () => {
@@ -53,9 +48,7 @@ const TicketList: React.FC = () => {
           api.get(API_ROUTES.USERS.BASE, { params: { type: "agents" } }),
         ]);
         setPriorities(pRes.data.priorities);
-        if (pRes.data.priorities.length > 0)
-          setSelectedPriority(pRes.data.priorities[0].id);
-        setGroups(gRes.data.groups);
+        setProjects(gRes.data.groups);
         setTypes(tRes.data.types);
         setAgents(aRes.data.accounts);
       } catch (err) {
@@ -83,24 +76,15 @@ const TicketList: React.FC = () => {
     fetchTickets();
   }, [search, status, page]);
 
-  const { showNotification, setIsLoading } = useNotification();
-  const { user } = useAuth();
-
-  const handleCreateTicket = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateTicket = async (data: TicketFormData) => {
     setIsLoading(true);
     try {
       await api.post(API_ROUTES.TICKETS.BASE, {
-        subject,
-        issue,
-        priorityId: selectedPriority,
-        groupId: selectedGroup || null,
-        typeId: selectedType,
-        assigneeId: selectedAssignee || null,
+        ...data,
+        groupId: data.groupId || null,
+        assigneeId: data.assigneeId || null,
       });
       setIsModalOpen(false);
-      setSubject("");
-      setIssue("");
       fetchTickets();
       showNotification("success", "Ticket created successfully!");
     } catch (err: any) {
@@ -160,7 +144,13 @@ const TicketList: React.FC = () => {
           />
           <CustomButton
             variant="secondary"
-            icon={<CustomIcon name="Filter" size={18} color="var(--accent-primary)" />}
+            icon={
+              <CustomIcon
+                name="Filter"
+                size={18}
+                color="var(--accent-primary)"
+              />
+            }
             style={{ padding: "0 16px" }}
           >
             More Filters
@@ -198,8 +188,10 @@ const TicketList: React.FC = () => {
               header: "Priority",
               key: "priority",
               render: (t) => (
-                <CustomBadge 
-                  variant={t.priority.name === PriorityName.HIGH ? 'danger' : 'neutral'}
+                <CustomBadge
+                  variant={
+                    t.priority.name === PriorityName.HIGH ? "danger" : "neutral"
+                  }
                 >
                   {t.priority.name}
                 </CustomBadge>
@@ -211,7 +203,7 @@ const TicketList: React.FC = () => {
               render: (t) => t.assignee?.fullname || "Unassigned",
             },
             {
-              header: "Group",
+              header: "Project",
               key: "group",
               render: (t) => t.group?.name || "-",
             },
@@ -276,129 +268,16 @@ const TicketList: React.FC = () => {
         </div>
       </div>
 
-      <Modal
+      <CreateTicketModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Create New Ticket"
-      >
-        <form
-          onSubmit={handleCreateTicket}
-          style={{ display: "flex", flexDirection: "column", gap: 20 }}
-        >
-          <CustomInput
-            label="Subject"
-            placeholder="Brief summary of the issue"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            required
-          />
-
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
-          >
-            <CustomSelect
-              label="Group"
-              value={selectedGroup}
-              onChange={(val) => setSelectedGroup(val)}
-              placeholder="No Group"
-              options={[
-                { value: "", label: "No Group" },
-                ...groups.map((g) => ({ value: g.id, label: g.name })),
-              ]}
-            />
-            <CustomSelect
-              label="Type"
-              value={selectedType}
-              onChange={(val) => setSelectedType(val)}
-              placeholder="Select Type"
-              options={types.map((t) => ({ value: t.id, label: t.name }))}
-              required
-            />
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <label
-              style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}
-            >
-              Priority
-            </label>
-            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              {priorities.map((p) => (
-                <label
-                  key={p.id}
-                  style={{
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "6px 12px",
-                    borderRadius: 8,
-                    background:
-                      selectedPriority === p.id
-                        ? `${p.color}30`
-                        : "rgba(255,255,255,0.05)",
-                    border: `1px solid ${selectedPriority === p.id ? p.color : "transparent"}`,
-                    transition: "0.2s",
-                  }}
-                >
-                  <input
-                    type="radio"
-                    name="priority"
-                    value={p.id}
-                    checked={selectedPriority === p.id}
-                    onChange={(e) => setSelectedPriority(e.target.value)}
-                    style={{ display: "none" }}
-                  />
-                  <div
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      background: p.color,
-                    }}
-                  ></div>
-                  <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
-                    {p.name}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {(user?.role?.name === RoleName.ADMIN ||
-            user?.role?.name === RoleName.AGENT) && (
-            <CustomSelect
-              label="Assign To (Optional)"
-              value={selectedAssignee}
-              onChange={(val) => setSelectedAssignee(val)}
-              placeholder="Unassigned"
-              options={[
-                { value: "", label: "Unassigned" },
-                ...agents.map((a) => ({ value: a.id, label: a.fullname })),
-              ]}
-            />
-          )}
-
-          <CustomTextArea
-            label="Description"
-            placeholder="Detailed explanation..."
-            rows={5}
-            value={issue}
-            onChange={(e) => setIssue(e.target.value)}
-            required
-            style={{ resize: "none" }}
-          />
-
-          <CustomButton
-            type="submit"
-            variant="gradient"
-            fullWidth
-            style={{ marginTop: 10 }}
-          >
-            Create Ticket
-          </CustomButton>
-        </form>
-      </Modal>
+        priorities={priorities}
+        projects={projects}
+        types={types}
+        agents={agents}
+        user={user}
+        onSubmit={handleCreateTicket}
+      />
     </>
   );
 };

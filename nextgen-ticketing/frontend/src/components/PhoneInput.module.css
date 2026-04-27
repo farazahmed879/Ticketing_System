@@ -1,0 +1,145 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-left: 4px;
+  margin-bottom: 8px;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-glass) !important;
+  border-radius: 12px !important;
+  transition: var(--transition-fast);
+  min-height: 48px;
+  overflow: visible;
+  position: relative;
+}
+
+.inputWrapper:focus-within {
+  border-color: var(--accent-primary);
+  background: rgba(124, 58, 237, 0.05);
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+}
+
+.inputWrapperError {
+  border-color: var(--accent-danger) !important;
+}
+
+.codeSelector {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.codeTrigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  height: 100%;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 12px 0 0 12px;
+  transition: background 0.2s ease;
+  user-select: none;
+}
+
+.codeTrigger:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.separator {
+  width: 1px;
+  height: 24px;
+  background: var(--border-glass);
+  margin: 0 8px;
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  outline: none;
+  width: 100%;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 220px;
+  z-index: 100000;
+  padding: 8px;
+  max-height: 250px;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  background: var(--bg-dropdown);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+
+.dropdown::-webkit-scrollbar-thumb {
+  background: var(--border-glass);
+  border-radius: 10px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+}
+
+.option:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.optionSelected {
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--accent-primary);
+}
+
+.optionLabel {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.errorText {
+  font-size: 0.75rem;
+  color: var(--accent-danger);
+  margin-left: 4px;
+  margin-top: 2px;
+}

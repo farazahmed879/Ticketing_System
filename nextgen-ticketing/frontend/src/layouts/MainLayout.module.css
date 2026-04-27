@@ -70,6 +70,13 @@
   position: sticky;
   top: 0;
   z-index: 90;
+  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+.topbarScrolled {
+  background-color: var(--bg-main);
+  border-bottom: 1px solid var(--border-active);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .pageContainer {

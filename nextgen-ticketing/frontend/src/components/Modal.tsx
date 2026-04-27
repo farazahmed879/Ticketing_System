@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { X } from 'lucide-react';
+import CustomIcon from './CustomIcon';
 import styles from './Modal.module.css';
 
 interface ModalProps {
@@ -9,18 +9,24 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
   maxWidth?: string;
+  minHeight?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, maxWidth }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, maxWidth, minHeight }) => {
   if (!isOpen) return null;
+
+  const modalStyle: React.CSSProperties = {
+    maxWidth: maxWidth || '550px',
+    minHeight: minHeight || 'auto'
+  };
 
   return ReactDOM.createPortal(
     <div className={styles.overlay} onClick={onClose}>
-      <div className={`${styles.modal} glass-card animate-fade-in`} style={maxWidth ? { maxWidth } : {}} onClick={e => e.stopPropagation()}>
+      <div className={`${styles.modal} glass-card animate-fade-in`} style={modalStyle} onClick={e => e.stopPropagation()}>
         <div className={styles.header}>
           <h2>{title}</h2>
           <button onClick={onClose} className={styles.closeBtn}>
-            <X size={20} />
+            <CustomIcon name="X" size={20} />
           </button>
         </div>
         <div className={styles.content}>

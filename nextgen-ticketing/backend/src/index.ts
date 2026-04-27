@@ -17,6 +17,9 @@ import chatRoutes from './routes/chatRoutes';
 import commonRoutes from './routes/commonRoutes';
 import roleRoutes from './routes/roleRoutes';
 import requestRoutes from './routes/requestRoutes';
+import timesheetRoutes from './routes/timesheetRoutes';
+import candidateRoutes from './routes/candidateRoutes';
+import interviewRoutes from './routes/interviewRoutes';
 
 // Swagger & Socket
 import { setupSwagger } from './swagger';
@@ -57,6 +60,9 @@ app.use('/api/messages', chatRoutes);
 app.use('/api/common', commonRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/requests', requestRoutes);
+app.use('/api/timesheets', timesheetRoutes);
+app.use('/api/candidates', candidateRoutes);
+app.use('/api/interviews', interviewRoutes);
 
 // Root → Swagger
 app.get('/', (req, res) => {

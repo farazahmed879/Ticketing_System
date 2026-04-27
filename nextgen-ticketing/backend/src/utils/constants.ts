@@ -3,6 +3,7 @@ export const RoleName = {
   AGENT: "Agent",
   EMPLOYEE: "Employee",
   CUSTOMER: "Customer",
+  HR: "HR",
 } as const;
 export type RoleName = (typeof RoleName)[keyof typeof RoleName];
 
@@ -30,6 +31,8 @@ export const StatusName = {
   RESOLVED: "Resolved",
   CLOSED: "Closed",
   APPROVED: "Approved",
+  PENDING: "Pending",
+  REJECTED: "Rejected",
 } as const;
 export type StatusName = (typeof StatusName)[keyof typeof StatusName];
 
@@ -50,6 +53,10 @@ export const ActionName = {
   ASSIGNEE_CHANGED: "ASSIGNEE_CHANGED",
   COMMENT_ADDED: "COMMENT_ADDED",
   NOTE_ADDED: "NOTE_ADDED",
+  TIMESHEET_CREATED: "TIMESHEET_CREATED",
+  TIMESHEET_UPDATED: "TIMESHEET_UPDATED",
+  TIMESHEET_APPROVED: "TIMESHEET_APPROVED",
+  TIMESHEET_REJECTED: "TIMESHEET_REJECTED",
 } as const;
 export type ActionName = (typeof ActionName)[keyof typeof ActionName];
 
@@ -72,6 +79,30 @@ export const SocketEvent = {
   USERS_ONLINE: "users:online",
 } as const;
 export type SocketEvent = (typeof SocketEvent)[keyof typeof SocketEvent];
+
+export const InterviewStatus = {
+  SCHEDULED: "Scheduled",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+} as const;
+export type InterviewStatus = (typeof InterviewStatus)[keyof typeof InterviewStatus];
+
+export const CandidateStatus = {
+  ACTIVE: "Active",
+  HIRED: "Hired",
+  REJECTED: "Rejected",
+  ON_HOLD: "On Hold",
+} as const;
+export type CandidateStatus = (typeof CandidateStatus)[keyof typeof CandidateStatus];
+
+export const Recommendation = {
+  STRONG_HIRE: "Strong Hire",
+  HIRE: "Hire",
+  NEUTRAL: "Neutral",
+  NO_HIRE: "No Hire",
+  STRONG_NO_HIRE: "Strong No Hire",
+} as const;
+export type Recommendation = (typeof Recommendation)[keyof typeof Recommendation];
 
 export const NotificationMessages = {
   TICKET_CREATED: (subject: string) =>

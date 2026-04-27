@@ -30,6 +30,10 @@
   --blur-md: blur(12px);
   --blur-lg: blur(20px);
   --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --icon-bg: rgba(255, 255, 255, 0.03);
+  --picker-icon-filter: invert(1);
+  --bg-skeleton: rgba(255, 255, 255, 0.06);
+  --bg-skeleton-shimmer: rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="light"] {
@@ -49,6 +53,10 @@
   --blur-md: none;
   --blur-lg: none;
   --shadow-glass: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --icon-bg: rgba(0, 0, 0, 0.04);
+  --picker-icon-filter: none;
+  --bg-skeleton: #e2e8f0;
+  --bg-skeleton-shimmer: #f1f5f9;
 }
 
 * {
@@ -143,4 +151,8 @@ input:focus, select:focus, textarea:focus {
 
 .animate-fade-in {
   animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

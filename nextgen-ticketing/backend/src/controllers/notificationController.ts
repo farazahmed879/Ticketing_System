@@ -8,17 +8,22 @@ export const getNotifications = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
   if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
+  const page = parseInt(req.query.page as string) || 0;
   const limit = parseInt(req.query.limit as string) || 20;
+  const skip = page * limit;
+
   try {
-    const [items, unreadCount] = await Promise.all([
+    const [items, unreadCount, totalCount] = await Promise.all([
       prisma.notification.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
         take: limit,
+        skip: skip,
       }),
       prisma.notification.count({ where: { userId, unread: true } }),
+      prisma.notification.count({ where: { userId } }),
     ]);
-    res.json({ success: true, items, count: unreadCount });
+    res.json({ success: true, items, count: unreadCount, totalCount });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }

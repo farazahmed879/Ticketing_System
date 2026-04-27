@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  CheckCircle2, 
-  XCircle, 
-  Trash2
-} from 'lucide-react';
+import CustomIcon from '../../components/CustomIcon';
 import { formatDistanceToNow } from 'date-fns';
 import api from "../../services/api";
 import styles from "./Requests.module.css";
@@ -114,7 +110,7 @@ const Requests: React.FC = () => {
                 onClick={() => handleUpdateStatus(r.id, 'APPROVED')}
                 title="Approve"
                 style={{ color: 'var(--accent-success)' }}
-                icon={<CheckCircle2 size={18} />}
+                icon={<CustomIcon name="CheckCircle2" size={18} />}
               />
               <CustomButton 
                 variant="ghost"
@@ -122,7 +118,7 @@ const Requests: React.FC = () => {
                 onClick={() => handleUpdateStatus(r.id, 'REJECTED')}
                 title="Reject"
                 style={{ color: 'var(--accent-danger)' }}
-                icon={<XCircle size={18} />}
+                icon={<CustomIcon name="XCircle" size={18} />}
               />
             </>
           )}
@@ -131,14 +127,12 @@ const Requests: React.FC = () => {
             size="sm"
             onClick={() => handleDelete(r.id)}
             title="Delete"
-            icon={<Trash2 size={18} />}
+            icon={<CustomIcon name="Trash2" size={18} />}
           />
         </div>
       ),
     },
   ];
-
-  if (loading) return <div className="animate-fade-in">Loading requests...</div>;
 
   return (
     <div className="animate-fade-in">

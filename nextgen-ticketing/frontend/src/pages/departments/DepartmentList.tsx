@@ -2,11 +2,9 @@ import React, { useEffect, useState } from 'react';
 import CustomIcon from "../../components/CustomIcon";
 import api from '../../services/api';
 import { API_ROUTES } from '../../utils/apiRoutes';
-import Modal from '../../components/Modal.tsx';
-import CustomInput from '../../components/CustomInput';
-import CustomTextArea from '../../components/CustomTextArea';
 import { useNotification } from '../../context/NotificationContext';
 import styles from './DepartmentList.module.css';
+import DepartmentModal from './components/DepartmentModal';
 
 import type { Department } from "../../types";
 
@@ -16,8 +14,6 @@ const DepartmentList: React.FC = () => {
   
   // Create Department State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
 
   const fetchDepts = async () => {
     try {
@@ -36,14 +32,11 @@ const DepartmentList: React.FC = () => {
 
   const { showNotification, setIsLoading } = useNotification();
 
-  const handleCreateDepartment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateDepartment = async (name: string, description: string) => {
     setIsLoading(true);
     try {
       await api.post(API_ROUTES.DEPARTMENTS.BASE, { name, description });
       setIsModalOpen(false);
-      setName('');
-      setDescription('');
       fetchDepts();
       showNotification('success', 'Department created successfully!');
     } catch (err: any) {
@@ -107,35 +100,11 @@ const DepartmentList: React.FC = () => {
         )}
       </div>
 
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title="Create New Department"
-      >
-        <form onSubmit={handleCreateDepartment} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <CustomInput 
-            label="Department Name"
-            placeholder="e.g., Engineering, Sales" 
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          
-          <CustomTextArea 
-            label="Description"
-            placeholder="What does this department do?" 
-            rows={4}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-            style={{ resize: 'none' }}
-          />
-
-          <button type="submit" className="bg-gradient" style={{ marginTop: 10, padding: 12, borderRadius: 10, color: 'white', fontWeight: 600 }}>
-            Create Department
-          </button>
-        </form>
-      </Modal>
+      <DepartmentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreateDepartment}
+      />
     </>
   );
 };

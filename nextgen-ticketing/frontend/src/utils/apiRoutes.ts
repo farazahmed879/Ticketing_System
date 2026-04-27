@@ -21,6 +21,15 @@ export const API_ROUTES = {
     BY_ID: (id: string) => `/tickets/${id}`,
     COMMENTS: (id: string) => `/tickets/${id}/comments`,
   },
+  
+  // Timesheets
+  TIMESHEETS: {
+    ENTRIES: '/timesheets/entries',
+    APPROVE: (id: string) => `/timesheets/approve/${id}`,
+    REJECT: (id: string) => `/timesheets/reject/${id}`,
+    PENDING: '/timesheets/pending',
+    REPORT: '/timesheets/report',
+  },
 
   // Users
   USERS: {
@@ -68,5 +77,20 @@ export const API_ROUTES = {
     GROUPS: '/common/groups',
     TYPES: '/common/types',
     STATUSES: '/common/statuses',
+  },
+
+  // Candidates
+  CANDIDATES: {
+    BASE: '/candidates',
+    BY_ID: (id: string) => `/candidates/${id}`,
+    UPLOAD_RESUME: '/candidates/upload-resume',
+  },
+
+  // Interviews
+  INTERVIEWS: {
+    BASE: '/interviews',
+    BY_ID: (id: string) => `/interviews/${id}`,
+    STATUS: (id: string) => `/interviews/${id}/status`,
+    FEEDBACK: (id: string) => `/interviews/${id}/feedback`,
   },
 };

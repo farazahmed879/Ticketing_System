@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { CheckCircle, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
+import CustomIcon from '../components/CustomIcon';
 import styles from './Notification.module.css';
 
 type NotificationType = 'success' | 'error' | 'info' | 'warning';
@@ -43,14 +43,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         {notifications.map((n) => (
           <div key={n.id} className={`${styles.toast} ${styles[n.type]}`}>
             <div className={styles.icon}>
-              {n.type === 'success' && <CheckCircle size={20} />}
-              {n.type === 'error' && <AlertCircle size={20} />}
-              {n.type === 'info' && <Info size={20} />}
-              {n.type === 'warning' && <AlertTriangle size={20} />}
+              {n.type === 'success' && <CustomIcon name="CheckCircle" size={20} />}
+              {n.type === 'error' && <CustomIcon name="AlertCircle" size={20} />}
+              {n.type === 'info' && <CustomIcon name="Info" size={20} />}
+              {n.type === 'warning' && <CustomIcon name="AlertTriangle" size={20} />}
             </div>
             <div className={styles.message}>{n.message}</div>
             <button className={styles.close} onClick={() => removeNotification(n.id)}>
-              <X size={16} />
+              <CustomIcon name="X" size={16} />
             </button>
           </div>
         ))}

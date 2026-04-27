@@ -1,16 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  User,
-  Calendar,
-  Tag,
-  Send,
-  Lock,
-  MoreVertical,
-  Layers,
-  UserPlus,
-  MessageSquare,
-} from "lucide-react";
+import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import styles from "./TicketDetail.module.css";
@@ -132,10 +122,10 @@ const TicketDetail: React.FC = () => {
     if (!ticket) return;
 
     const isOwner = ticket.owner.id === user?.id;
-    const canUpdate =
-      user?.role?.name === RoleName.ADMIN ||
-      user?.role?.permissions?.tickets?.update ||
-      isOwner;
+    // const canUpdate =
+    //   user?.role?.name === RoleName.ADMIN ||
+    //   user?.role?.permissions?.tickets?.update ||
+    //   isOwner;
 
     // Check if the target status is 'Open' or 'Cancelled' - common actions for owners
     const targetStatus = statuses.find((s) => s.id === statusId);
@@ -150,13 +140,13 @@ const TicketDetail: React.FC = () => {
       user?.role?.permissions?.boardStatuses?.[statusId] === true ||
       (isOwner && isBasicAction);
 
-    if (!canUpdate) {
-      showNotification(
-        "error",
-        "You do not have permission to update ticket status",
-      );
-      return;
-    }
+    // if (!canUpdate) {
+    //   showNotification(
+    //     "error",
+    //     "You do not have permission to update ticket status",
+    //   );
+    //   return;
+    // }
 
     if (!isStatusAllowed) {
       showNotification(
@@ -221,7 +211,11 @@ const TicketDetail: React.FC = () => {
               className="glass-card"
               style={{ padding: 8, borderRadius: 10 }}
             >
-              <MoreVertical size={20} color="var(--text-muted)" />
+              <CustomIcon
+                name="MoreVertical"
+                size={20}
+                color="var(--text-muted)"
+              />
             </button>
           </div>
 
@@ -267,7 +261,7 @@ const TicketDetail: React.FC = () => {
                   className={tableStyles.avatar}
                   style={{ width: 40, height: 40 }}
                 >
-                  <User size={20} />
+                  <CustomIcon name="User" size={20} />
                 </div>
                 <div
                   className={`${styles.commentContent} ${comment.isNote ? styles.isNote : ""}`}
@@ -322,7 +316,7 @@ const TicketDetail: React.FC = () => {
                       checked={isNote}
                       onChange={(e) => setIsNote(e.target.checked)}
                     />
-                    <Lock size={14} />
+                    <CustomIcon name="Lock" size={14} />
                     Internal Note
                   </label>
                   <button
@@ -339,7 +333,7 @@ const TicketDetail: React.FC = () => {
                     }}
                   >
                     Send
-                    <Send size={16} />
+                    <CustomIcon name="Send" size={16} />
                   </button>
                 </div>
               </form>
@@ -391,9 +385,7 @@ const TicketDetail: React.FC = () => {
           }}
         >
           <div className={styles.sidebarItem}>
-            <span className={styles.sidebarLabel}>
-              Status {ticket.status.name}
-            </span>
+            <span className={styles.sidebarLabel}>Status</span>
 
             <CustomSelect
               options={statuses.map((s) => ({
@@ -469,7 +461,7 @@ const TicketDetail: React.FC = () => {
                 className={tableStyles.avatar}
                 style={{ width: 32, height: 32 }}
               >
-                <User size={16} />
+                <CustomIcon name="User" size={16} />
               </div>
               <span style={{ fontSize: "0.9rem" }}>
                 {ticket.owner.fullname}
@@ -486,7 +478,7 @@ const TicketDetail: React.FC = () => {
                   }}
                   title="Chat with Owner"
                 >
-                  <MessageSquare size={14} />
+                  <CustomIcon name="MessageSquare" size={14} />
                 </button>
               )}
             </div>
@@ -500,7 +492,7 @@ const TicketDetail: React.FC = () => {
                   {
                     value: "",
                     label: "Unassigned",
-                    icon: <UserPlus size={16} />,
+                    icon: <CustomIcon name="UserPlus" size={16} />,
                   },
                   ...agents.map((agent) => ({
                     value: agent.id,
@@ -529,7 +521,7 @@ const TicketDetail: React.FC = () => {
                       }}
                     />
                   ) : (
-                    <UserPlus size={16} />
+                    <CustomIcon name="UserPlus" size={16} />
                   )}
                 </div>
                 <span style={{ fontSize: "0.9rem" }}>
@@ -547,7 +539,7 @@ const TicketDetail: React.FC = () => {
                     }}
                     title="Chat with Assignee"
                   >
-                    <MessageSquare size={14} />
+                    <CustomIcon name="MessageSquare" size={14} />
                   </button>
                 )}
               </div>
@@ -573,7 +565,7 @@ const TicketDetail: React.FC = () => {
                   color: "var(--text-secondary)",
                 }}
               >
-                <Tag size={16} />
+                <CustomIcon name="Tag" size={16} />
                 <span>Type: {ticket.type?.name || "Issue"}</span>
               </div>
               <div
@@ -585,8 +577,8 @@ const TicketDetail: React.FC = () => {
                   color: "var(--text-secondary)",
                 }}
               >
-                <Layers size={16} />
-                <span>Group: {ticket.group?.name || "None"}</span>
+                <CustomIcon name="Layers" size={16} />
+                <span>Project: {ticket.group?.name || "None"}</span>
               </div>
               <div
                 style={{
@@ -597,7 +589,7 @@ const TicketDetail: React.FC = () => {
                   color: "var(--text-secondary)",
                 }}
               >
-                <Calendar size={16} />
+                <CustomIcon name="Calendar" size={16} />
                 <span>
                   Due:{" "}
                   {ticket.dueDate

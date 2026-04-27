@@ -1,5 +1,5 @@
-import React from 'react';
-import * as Icons from 'lucide-react';
+import React from "react";
+import * as Icons from "lucide-react";
 
 /**
  * CustomIcon Component
@@ -8,8 +8,8 @@ import * as Icons from 'lucide-react';
 
 export type IconName = keyof typeof Icons;
 
-interface CustomIconProps extends Omit<Icons.LucideProps, 'ref'> {
-  name: IconName;
+interface CustomIconProps extends Omit<Icons.LucideProps, "ref"> {
+  name: IconName | string;
 }
 
 const CustomIcon: React.FC<CustomIconProps> = ({ name, ...props }) => {

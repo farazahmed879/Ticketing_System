@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Mail, Shield, Building, Calendar, Phone, Briefcase } from 'lucide-react';
+import CustomIcon from "../../components/CustomIcon";
 import { useAuth } from "../../context/AuthContext";
 import styles from './Profile.module.css';
 
@@ -12,23 +12,23 @@ const Profile: React.FC = () => {
     {
       title: 'Personal Information',
       items: [
-        { label: 'Full Name', value: user.fullname, icon: <User size={18} /> },
-        { label: 'Email Address', value: user.email, icon: <Mail size={18} /> },
-        { label: 'Contact Number', value: '+1 234 567 890', icon: <Phone size={18} /> },
+        { label: 'Full Name', value: user.fullname, icon: <CustomIcon name="User" size={18} /> },
+        { label: 'Email Address', value: user.email, icon: <CustomIcon name="Mail" size={18} /> },
+        { label: 'Contact Number', value: '+1 234 567 890', icon: <CustomIcon name="Phone" size={18} /> },
       ]
     },
     {
       title: 'Professional Details',
       items: [
-        { label: 'Job Title', value: user.title || 'Support Professional', icon: <Briefcase size={18} /> },
-        { label: 'Department', value: 'Operations', icon: <Building size={18} /> },
-        { label: 'Role', value: user.role.name, icon: <Shield size={18} /> },
+        { label: 'Job Title', value: user.title || 'Support Professional', icon: <CustomIcon name="Briefcase" size={18} /> },
+        { label: 'Department', value: 'Operations', icon: <CustomIcon name="Building" size={18} /> },
+        { label: 'Role', value: user.role.name, icon: <CustomIcon name="Shield" size={18} /> },
       ]
     },
     {
       title: 'Account Settings',
       items: [
-        { label: 'Joined Date', value: 'January 12, 2024', icon: <Calendar size={18} /> },
+        { label: 'Joined Date', value: 'January 12, 2024', icon: <CustomIcon name="Calendar" size={18} /> },
       ]
     }
   ];
@@ -39,7 +39,7 @@ const Profile: React.FC = () => {
         <div className={styles.cover}></div>
         <div className={styles.profileMeta}>
           <div className={styles.avatarLarge}>
-            <User size={48} />
+            <CustomIcon name="User" size={48} />
           </div>
           <div className={styles.nameSection}>
             <h1>{user.fullname}</h1>

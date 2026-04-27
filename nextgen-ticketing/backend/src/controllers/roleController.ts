@@ -19,10 +19,10 @@ export const getRoles = async (req: AuthRequest, res: Response) => {
 
 // Create role
 export const createRole = async (req: AuthRequest, res: Response) => {
-  const { name, description, isAdmin, isAgent, isCustomer, isEmployee, permissions } = req.body;
+  const { name, description, isAdmin, isAgent, isCustomer, isEmployee, isHR, permissions } = req.body;
   try {
     const role = await prisma.role.create({
-      data: { name, description, isAdmin, isAgent, isCustomer, isEmployee, permissions: permissions || {} }
+      data: { name, description, isAdmin, isAgent, isCustomer, isEmployee, isHR, permissions: permissions || {} }
     });
     res.status(201).json({ success: true, role });
   } catch (error: any) {
@@ -33,11 +33,11 @@ export const createRole = async (req: AuthRequest, res: Response) => {
 // Update role
 export const updateRole = async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const { name, description, isAdmin, isAgent, isCustomer, isEmployee, permissions } = req.body;
+  const { name, description, isAdmin, isAgent, isCustomer, isEmployee, isHR, permissions } = req.body;
   try {
     const role = await prisma.role.update({
       where: { id: id as string },
-      data: { name, description, isAdmin, isAgent, isCustomer, isEmployee, permissions: permissions || {} }
+      data: { name, description, isAdmin, isAgent, isCustomer, isEmployee, isHR, permissions: permissions || {} }
     });
     res.json({ success: true, role });
   } catch (error: any) {

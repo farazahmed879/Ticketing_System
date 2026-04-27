@@ -1,4 +1,5 @@
 import React from 'react';
+import { TableSkeleton } from './CustomSkeleton';
 import tableStyles from '../pages/dashboard/Dashboard.module.css';
 
 import type { CustomTableProps } from './types';
@@ -8,10 +9,17 @@ const CustomTable = <T extends { id: string | number }>({
   data,
   loading = false,
   emptyMessage = 'No data found',
-  loadingMessage = 'Loading data...',
   onRowClick,
   className = '',
 }: CustomTableProps<T>) => {
+  if (loading) {
+    return (
+      <div className={`glass-card ${className}`} style={{ padding: 0, overflow: 'hidden' }}>
+        <TableSkeleton columns={columns.length} rows={6} />
+      </div>
+    );
+  }
+
   return (
     <div className={`glass-card ${className}`}>
       <table className={tableStyles.table}>
@@ -25,13 +33,7 @@ const CustomTable = <T extends { id: string | number }>({
           </tr>
         </thead>
         <tbody>
-          {loading ? (
-            <tr>
-              <td colSpan={columns.length} style={{ textAlign: 'center', padding: 40 }}>
-                <div style={{ color: 'var(--text-muted)' }}>{loadingMessage}</div>
-              </td>
-            </tr>
-          ) : data.length === 0 ? (
+          {data.length === 0 ? (
             <tr>
               <td colSpan={columns.length} style={{ textAlign: 'center', padding: 40 }}>
                 <div style={{ color: 'var(--text-muted)' }}>{emptyMessage}</div>

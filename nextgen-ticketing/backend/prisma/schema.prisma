@@ -41,6 +41,13 @@ model User {
   notifications Notification[]
   requests      UserRequest[]
 
+  timesheetEntries   TimesheetEntry[] @relation("UserTimesheets")
+  approvedTimesheets TimesheetEntry[] @relation("TimesheetApprover")
+
+  scheduledInterviews  Interview[]          @relation("InterviewScheduler")
+  interviewPanels      InterviewPanel[]
+  interviewFeedbacks   InterviewFeedback[]  @relation("InterviewFeedbackGiver")
+
   lastOnline    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -55,6 +62,7 @@ model Role {
   isAgent     Boolean  @default(false)
   isCustomer  Boolean  @default(false)
   isEmployee  Boolean  @default(false)
+  isHR        Boolean  @default(false)
   permissions Json
   users       User[]
 }
@@ -88,6 +96,7 @@ model Ticket {
   tags        String[]
   comments    Comment[]
   history     History[]
+  timesheetTasks TimesheetTask[]
 
   dueDate     DateTime?
   closedAt    DateTime?
@@ -151,6 +160,7 @@ model Group {
   memberIds   String[] @db.ObjectId
   members     User[]   @relation(fields: [memberIds], references: [id])
   tickets     Ticket[]
+  timesheetTasks TimesheetTask[]
 
   departmentIds String[] @db.ObjectId
   departments   Department[] @relation(fields: [departmentIds], references: [id])
@@ -246,4 +256,121 @@ model UserRequest {
   data        Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+// ==================== TIMESHEET ====================
+
+model TimesheetEntry {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  date        DateTime
+  totalHours  Float    @default(0) // Manually entered by user
+  notes       String?
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  userId      String   @db.ObjectId
+  user        User     @relation("UserTimesheets", fields: [userId], references: [id])
+  
+  approvedById String? @db.ObjectId
+  approvedBy   User?   @relation("TimesheetApprover", fields: [approvedById], references: [id])
+  
+  tasks       TimesheetTask[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([userId, date])
+}
+
+model TimesheetTask {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  description   String
+  hours         Float
+  
+  projectId     String?  @db.ObjectId
+  project       Group?   @relation(fields: [projectId], references: [id])
+  
+  ticketId      String?  @db.ObjectId
+  ticket        Ticket?  @relation(fields: [ticketId], references: [id])
+  
+  entryId       String   @db.ObjectId
+  entry         TimesheetEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime @default(now())
+}
+
+// ==================== INTERVIEWS ====================
+
+model Candidate {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  email           String   @unique
+  phone           String?
+  cnic            String?
+  address         String?
+  position        String
+  resumeUrl       String?
+  notes           String?
+  objective       String?
+  technicalSkills String?
+  workExperience  String?
+  linkedin        String?
+  portfolio       String?
+  github          String?
+  projects        String?
+  status          String   @default("Active") // Active, Hired, Rejected, On Hold
+  interviews      Interview[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Interview {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  scheduledAt     DateTime
+  duration        Int      @default(60)
+  location        String?
+  status          String   @default("Scheduled") // Scheduled, Completed, Cancelled
+  notes           String?
+
+  candidateId     String   @db.ObjectId
+  candidate       Candidate @relation(fields: [candidateId], references: [id])
+
+  scheduledById   String   @db.ObjectId
+  scheduledBy     User     @relation("InterviewScheduler", fields: [scheduledById], references: [id])
+
+  panelMembers    InterviewPanel[]
+  feedbacks       InterviewFeedback[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model InterviewPanel {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  interviewId   String    @db.ObjectId
+  interview     Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  userId        String    @db.ObjectId
+  user          User      @relation(fields: [userId], references: [id])
+
+  @@unique([interviewId, userId])
+}
+
+model InterviewFeedback {
+  id                   String    @id @default(auto()) @map("_id") @db.ObjectId
+  interviewId          String    @db.ObjectId
+  interview            Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  interviewerId        String    @db.ObjectId
+  interviewer          User      @relation("InterviewFeedbackGiver", fields: [interviewerId], references: [id])
+
+  communicationRating  Int
+  technicalRating      Int
+  leadershipRating     Int
+  overallRating        Float
+  comments             String?
+  recommendation       String   @default("Neutral") // Strong Hire, Hire, Neutral, No Hire, Strong No Hire
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([interviewId, interviewerId])
 }

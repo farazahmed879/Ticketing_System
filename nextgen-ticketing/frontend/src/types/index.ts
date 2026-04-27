@@ -10,6 +10,7 @@ export interface User {
     isAgent?: boolean;
     isCustomer?: boolean;
     isEmployee?: boolean;
+    isHR?: boolean;
     permissions?: any;
   };
   workNumber?: string;
@@ -36,6 +37,7 @@ export interface Role {
   isAgent: boolean;
   isCustomer: boolean;
   isEmployee: boolean;
+  isHR: boolean;
   permissions?: any;
   _count?: { users: number };
 }
@@ -47,8 +49,8 @@ export interface Ticket {
   issue?: string;
   status: { id: string; name: string; color: string };
   priority: { id: string; name: string; color: string };
-  type?: { name: string };
-  group: { name: string };
+  type?: { id: string; name: string };
+  group: { id: string; name: string };
   owner: { id: string; fullname: string; image?: string };
   assignee?: { id: string; fullname: string; image?: string };
   createdAt: string;
@@ -130,4 +132,174 @@ export interface Column {
   name: string;
   color: string;
   tickets: Ticket[];
+}
+
+export interface TimesheetTask {
+  id: string;
+  description: string;
+  hours: number;
+  projectId?: string;
+  project?: { name: string };
+  ticketId?: string;
+  ticket?: { uid: number; subject: string };
+}
+
+export interface TimesheetEntry {
+  id: string;
+  date: string;
+  totalHours: number;
+  notes?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  user?: { fullname: string; email: string };
+  tasks: TimesheetTask[];
+  approvedBy?: { fullname: string };
+}
+
+export interface TimesheetReport {
+  totalHours: number;
+  approvedHours: number;
+  daysCount: number;
+  projectBreakdown: { name: string; hours: number }[];
+  entries: TimesheetEntry[];
+}
+
+export interface Candidate {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  cnic?: string;
+  address?: string;
+  linkedin?: string;
+  portfolio?: string;
+  github?: string;
+  projects?: string;
+  position: string;
+  resumeUrl?: string;
+  notes?: string;
+  objective?: string;
+  technicalSkills?: string;
+  workExperience?: string;
+  status: string;
+  _count?: { interviews: number };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InterviewPanelMember {
+  id: string;
+  user: {
+    id: string;
+    fullname: string;
+    image?: string;
+    email?: string;
+    role?: { name: string };
+  };
+}
+
+export interface InterviewFeedback {
+  id: string;
+  interviewId: string;
+  interviewerId: string;
+  interviewer: {
+    id: string;
+    fullname: string;
+    image?: string;
+  };
+  communicationRating: number;
+  technicalRating: number;
+  leadershipRating: number;
+  overallRating: number;
+  comments?: string;
+  recommendation: string;
+  createdAt: string;
+}
+
+export interface Interview {
+  id: string;
+  title: string;
+  scheduledAt: string;
+  duration: number;
+  location?: string;
+  status: string;
+  notes?: string;
+  candidate: {
+    id: string;
+    name: string;
+    email: string;
+    position: string;
+  };
+  scheduledBy: {
+    id: string;
+    fullname: string;
+    image?: string;
+  };
+  panelMembers: InterviewPanelMember[];
+  feedbacks?: InterviewFeedback[];
+  _count?: { feedbacks: number };
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Common Form & UI Types
+export interface MultiSelectOption {
+  value: string;
+  label: string;
+  sublabel?: string;
+  image?: string;
+}
+
+export interface RoleFormData {
+  name: string;
+  description: string;
+  isAdmin: boolean;
+  isAgent: boolean;
+  isCustomer: boolean;
+  isEmployee: boolean;
+  isHR: boolean;
+  permissions: any;
+}
+
+export interface InterviewFormData {
+  title: string;
+  candidateId: string;
+  scheduledAt: string;
+  duration: string;
+  location: string;
+  notes: string;
+  interviewerIds: string[];
+}
+
+export interface CandidateFormData {
+  name: string;
+  email: string;
+  phone: string;
+  position: string;
+  resumeUrl: string;
+  notes: string;
+  status: string;
+  countryCode: string;
+  cnic: string;
+  address: string;
+  linkedin: string;
+  portfolio: string;
+  github: string;
+  projects: string;
+}
+
+export interface TicketFormData {
+  subject: string;
+  issue: string;
+  priorityId: string;
+  groupId: string;
+  typeId: string;
+  assigneeId: string;
+}
+
+export interface UserFormData {
+  fullname: string;
+  email: string;
+  password?: string;
+  title: string;
+  roleId: string;
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Palette, Layout, Bell, Shield, User, Check, RefreshCcw, Sun, Moon } from 'lucide-react';
+import CustomIcon from "../../components/CustomIcon";
 import styles from './Settings.module.css';
 
 const Settings: React.FC = () => {
@@ -36,10 +36,10 @@ const Settings: React.FC = () => {
   };
 
   const tabs = [
-    { id: 'theme', label: 'Theme', icon: <Palette size={18} /> },
-    { id: 'profile', label: 'Profile', icon: <User size={18} /> },
-    { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
-    { id: 'security', label: 'Security', icon: <Shield size={18} /> },
+    { id: 'theme', label: 'Theme', icon: <CustomIcon name="Palette" size={18} /> },
+    { id: 'profile', label: 'Profile', icon: <CustomIcon name="User" size={18} /> },
+    { id: 'notifications', label: 'Notifications', icon: <CustomIcon name="Bell" size={18} /> },
+    { id: 'security', label: 'Security', icon: <CustomIcon name="Shield" size={18} /> },
   ];
 
   return (
@@ -67,7 +67,7 @@ const Settings: React.FC = () => {
           {activeTab === 'theme' && (
             <div className={styles.section}>
               <div className={styles.sectionHeader}>
-                <Palette size={24} color="var(--accent-primary)" />
+                <CustomIcon name="Palette" size={24} color="var(--accent-primary)" />
                 <div>
                   <h3>Theme Management</h3>
                   <p>Customize the look and feel of your dashboard</p>
@@ -81,14 +81,14 @@ const Settings: React.FC = () => {
                     className={`${styles.themeOption} ${theme === 'light' ? styles.themeOptionActive : ''}`}
                     onClick={() => setTheme('light')}
                   >
-                    <Sun size={20} />
+                    <CustomIcon name="Sun" size={20} />
                     <span>Light Mode</span>
                   </button>
                   <button 
                     className={`${styles.themeOption} ${theme === 'dark' ? styles.themeOptionActive : ''}`}
                     onClick={() => setTheme('dark')}
                   >
-                    <Moon size={20} />
+                    <CustomIcon name="Moon" size={20} />
                     <span>Dark Mode</span>
                   </button>
                 </div>
@@ -157,13 +157,13 @@ const Settings: React.FC = () => {
 
               <div className={styles.actions}>
                 <button className={styles.resetBtn} onClick={handleReset}>
-                  <RefreshCcw size={16} /> Reset Defaults
+                  <CustomIcon name="RefreshCcw" size={16} /> Reset Defaults
                 </button>
                 <button className={styles.saveBtn} onClick={() => {
                   setIsSaved(true);
                   setTimeout(() => setIsSaved(false), 2000);
                 }}>
-                  {isSaved ? <Check size={16} /> : null}
+                  {isSaved ? <CustomIcon name="Check" size={16} /> : null}
                   {isSaved ? 'Saved!' : 'Save Changes'}
                 </button>
               </div>
@@ -172,7 +172,7 @@ const Settings: React.FC = () => {
 
           {activeTab !== 'theme' && (
             <div className={styles.emptyState}>
-              <Layout size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
+              <CustomIcon name="Layout" size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
               <p>{tabs.find(t => t.id === activeTab)?.label} settings are coming soon.</p>
             </div>
           )}

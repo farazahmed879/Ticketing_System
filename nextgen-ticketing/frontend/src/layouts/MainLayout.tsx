@@ -1,27 +1,10 @@
 import React from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import {
-  LayoutDashboard,
-  Ticket,
-  LayoutGrid,
-  Users,
-  MessageSquare,
-  Bell,
-  Settings,
-  LogOut,
-  User as UserIcon,
-  Layers,
-  Users2,
-  ShieldCheck,
-  Shield,
-  ChevronLeft,
-  ChevronRight,
-  FileQuestion,
-} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
 import { socket } from "../services/socket";
+import CustomIcon from "../components/CustomIcon";
 import styles from "./MainLayout.module.css";
 
 const MainLayout: React.FC = () => {
@@ -32,7 +15,16 @@ const MainLayout: React.FC = () => {
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [notifications, setNotifications] = React.useState<any[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
+  const [scrolled, setScrolled] = React.useState(false);
   const notificationRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -108,16 +100,19 @@ const MainLayout: React.FC = () => {
   };
 
   const navItems = [
-    { icon: <LayoutDashboard size={20} />, label: "Dashboard", path: "/", permission: "dashboard.view" },
-    { icon: <Ticket size={20} />, label: "Tickets", path: "/tickets", permission: "tickets.view" },
-    { icon: <LayoutGrid size={20} />, label: "Ticket Board", path: "/tickets/board", permission: "tickets.view" },
-    { icon: <FileQuestion size={20} />, label: "Requests", path: "/requests", permission: "requests.view" },
-    { icon: <MessageSquare size={20} />, label: "Messages", path: "/messages", permission: "messages.view" },
-    { icon: <ShieldCheck size={20} />, label: "Teams", path: "/teams", permission: "teams.view" },
-    { icon: <Users2 size={20} />, label: "Departments", path: "/departments", permission: "departments.view" },
-    { icon: <Layers size={20} />, label: "Groups", path: "/groups", permission: "groups.view" },
-    { icon: <Users size={20} />, label: "Users", path: "/users", permission: "users.view" },
-    { icon: <Shield size={20} />, label: "Roles", path: "/roles", permission: "roles.view" },
+    { icon: <CustomIcon name="LayoutDashboard" size={20} />, label: "Dashboard", path: "/", permission: "dashboard.view" },
+    { icon: <CustomIcon name="Ticket" size={20} />, label: "Tickets", path: "/tickets", permission: "tickets.view" },
+    { icon: <CustomIcon name="LayoutGrid" size={20} />, label: "Ticket Board", path: "/tickets/board", permission: "tickets.view" },
+    { icon: <CustomIcon name="FileQuestion" size={20} />, label: "Requests", path: "/requests", permission: "requests.view" },
+    { icon: <CustomIcon name="MessageSquare" size={20} />, label: "Messages", path: "/messages", permission: "messages.view" },
+    { icon: <CustomIcon name="ShieldCheck" size={20} />, label: "Teams", path: "/teams", permission: "teams.view" },
+    { icon: <CustomIcon name="Users2" size={20} />, label: "Departments", path: "/departments", permission: "departments.view" },
+    { icon: <CustomIcon name="Layers" size={20} />, label: "Projects", path: "/groups", permission: "groups.view" },
+    { icon: <CustomIcon name="Users" size={20} />, label: "Users", path: "/users", permission: "users.view" },
+    { icon: <CustomIcon name="Shield" size={20} />, label: "Roles", path: "/roles", permission: "roles.view" },
+    { icon: <CustomIcon name="Clock" size={20} />, label: "Timesheet", path: "/timesheet", permission: "timesheets.view" },
+    { icon: <CustomIcon name="UserPlus" size={20} />, label: "Candidates", path: "/candidates", permission: "candidates.view" },
+    { icon: <CustomIcon name="CalendarCheck" size={20} />, label: "Interviews", path: "/interviews", permission: "interviews.view" },
   ];
 
   const filteredNavItems = navItems.filter(item => hasPermission(item.permission));
@@ -130,7 +125,7 @@ const MainLayout: React.FC = () => {
           onClick={() => setIsCollapsed(!isCollapsed)}
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
-          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {isCollapsed ? <CustomIcon name="ChevronRight" size={16} /> : <CustomIcon name="ChevronLeft" size={16} />}
         </button>
         <div className={styles.logo}>
           <img 
@@ -163,7 +158,7 @@ const MainLayout: React.FC = () => {
           style={{ cursor: 'pointer' }}
         >
           <div className={styles.avatar}>
-            <UserIcon size={20} color="var(--text-secondary)" />
+            <CustomIcon name="User" size={20} color="var(--text-secondary)" />
           </div>
           {!isCollapsed && <div style={{ flex: 1, minWidth: 0 }}>
             <div
@@ -185,13 +180,13 @@ const MainLayout: React.FC = () => {
             onClick={handleLogout}
             style={{ background: "transparent", color: "var(--text-muted)", flexShrink: 0 }}
           >
-            <LogOut size={18} />
+            <CustomIcon name="LogOut" size={18} />
           </button>
         </div>
       </aside>
 
       <main className={styles.mainContent}>
-        <header className={styles.topbar}>
+        <header className={`${styles.topbar} ${scrolled ? styles.topbarScrolled : ""}`}>
           <div style={{ fontSize: "1.2rem", fontWeight: 600 }}>Overview</div>
           <div style={{ display: "flex", gap: 20, alignItems: "center" }} ref={notificationRef}>
             <div style={{ position: "relative" }}>
@@ -200,7 +195,7 @@ const MainLayout: React.FC = () => {
                 style={{ padding: 8, borderRadius: 10, position: "relative", cursor: 'pointer' }}
                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
               >
-                <Bell size={20} color="var(--text-secondary)" />
+                <CustomIcon name="Bell" size={20} color="var(--text-secondary)" />
                 {unreadCount > 0 && (
                   <div
                     style={{
@@ -261,7 +256,7 @@ const MainLayout: React.FC = () => {
                     <div style={{ overflowY: 'auto', flex: 1 }}>
                       {notifications.length === 0 ? (
                         <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
-                          <Bell size={32} style={{ marginBottom: 12, opacity: 0.2 }} />
+                          <CustomIcon name="Bell" size={32} style={{ marginBottom: 12, opacity: 0.2 }} />
                           <p>No notifications yet</p>
                         </div>
                       ) : (
@@ -289,13 +284,21 @@ const MainLayout: React.FC = () => {
                                 width: 36, 
                                 height: 36, 
                                 borderRadius: 10, 
-                                background: n.type === 'assignment' ? 'rgba(33, 150, 243, 0.1)' : 'rgba(76, 175, 80, 0.1)',
+                                background: n.type === 'assignment' 
+                                  ? 'rgba(33, 150, 243, 0.1)' 
+                                  : n.type === 'interview'
+                                  ? 'rgba(156, 39, 176, 0.1)'
+                                  : 'rgba(76, 175, 80, 0.1)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 flexShrink: 0
                               }}>
-                                {n.type === 'assignment' ? <ShieldCheck size={18} color="#2196f3" /> : <MessageSquare size={18} color="#4caf50" />}
+                                {n.type === 'assignment' 
+                                  ? <CustomIcon name="ShieldCheck" size={18} color="#2196f3" /> 
+                                  : n.type === 'interview'
+                                  ? <CustomIcon name="CalendarCheck" size={18} color="#9c27b0" />
+                                  : <CustomIcon name="MessageSquare" size={18} color="#4caf50" />}
                               </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: 2 }}>{n.title}</div>
@@ -339,7 +342,7 @@ const MainLayout: React.FC = () => {
               style={{ padding: 8, borderRadius: 10, cursor: 'pointer' }}
               onClick={() => navigate('/settings')}
             >
-              <Settings size={20} color="var(--text-secondary)" />
+              <CustomIcon name="Settings" size={20} color="var(--text-secondary)" />
             </button>
           </div>
         </header>

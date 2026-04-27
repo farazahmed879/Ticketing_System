@@ -18,10 +18,18 @@ import DepartmentList from "./pages/departments/DepartmentList.tsx";
 import UserList from "./pages/users/UserList.tsx";
 import RoleList from "./pages/roles/RoleList.tsx";
 import MainLayout from "./layouts/MainLayout.tsx";
+import FullScreenLoader from "./components/FullScreenLoader.tsx";
 import Notifications from "./pages/notifications/Notifications.tsx";
 import Requests from "./pages/requests/Requests.tsx";
 import Settings from "./pages/settings/Settings.tsx";
 import Profile from "./pages/profile/Profile.tsx";
+import Timesheet from "./pages/timesheet/Timesheet.tsx";
+import TimesheetReview from "./pages/timesheet/TimesheetReview.tsx";
+import TimesheetReport from "./pages/timesheet/TimesheetReport.tsx";
+import CandidateList from "./pages/candidates/CandidateList.tsx";
+import CandidateDetail from "./pages/candidates/CandidateDetail.tsx";
+import InterviewList from "./pages/interviews/InterviewList.tsx";
+import InterviewDetail from "./pages/interviews/InterviewDetail.tsx";
 
 const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
   <div className="animate-fade-in">
@@ -41,7 +49,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <FullScreenLoader subMessage="Verifying Session..." />;
   if (!user) return <Navigate to="/login" />;
   return <>{children}</>;
 };
@@ -71,14 +79,21 @@ const App: React.FC = () => {
               <Route path="departments" element={<DepartmentList />} />
               <Route
                 path="groups"
-                element={<PlaceholderPage title="Groups" />}
+                element={<PlaceholderPage title="Projects" />}
               />
+              <Route path="timesheet" element={<Timesheet />} />
+              <Route path="timesheet/review" element={<TimesheetReview />} />
+              <Route path="timesheet/report" element={<TimesheetReport />} />
               <Route path="users" element={<UserList />} />
               <Route path="roles" element={<RoleList />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="requests" element={<Requests />} />
               <Route path="settings" element={<Settings />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="candidates" element={<CandidateList />} />
+              <Route path="candidates/:id" element={<CandidateDetail />} />
+              <Route path="interviews" element={<InterviewList />} />
+              <Route path="interviews/:id" element={<InterviewDetail />} />
             </Route>
           </Routes>
         </Router>

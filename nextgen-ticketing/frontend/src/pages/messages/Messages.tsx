@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Search, Send, User, MoreVertical, Plus, MessageSquare, X, ChevronDown, Users, Headset, Check } from 'lucide-react';
+import CustomIcon from "../../components/CustomIcon";
 import { useSearchParams } from 'react-router-dom';
 import api from "../../services/api";
 import { socket } from "../../services/socket";
@@ -7,13 +7,16 @@ import { useAuth } from "../../context/AuthContext";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import styles from "./Messages.module.css";
 import { format } from "date-fns";
-import Modal from "../../components/Modal";
 import CustomInput from "../../components/CustomInput";
+import NewChatModal from './components/NewChatModal';
+import NewGroupModal from './components/NewGroupModal';
 
 import type { Conversation, Message } from "../../types";
+import { ChatSkeleton } from '../../components/CustomSkeleton';
 
 const Messages: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeConv, setActiveConv] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -42,6 +45,8 @@ const Messages: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to fetch conversations', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -190,6 +195,14 @@ const Messages: React.FC = () => {
 
   const selectedConv = conversations.find(c => c.id === activeConv);
 
+  if (loading) {
+    return (
+      <div className={`${styles.container} animate-fade-in`}>
+        <ChatSkeleton />
+      </div>
+    );
+  }
+
   return (
     <div className={`${styles.container} animate-fade-in`}>
       <div className={styles.conversationList}>
@@ -203,7 +216,7 @@ const Messages: React.FC = () => {
                 onClick={() => setIsGroupModalOpen(true)}
                 title="New Group Chat"
               >
-                <Users size={18} />
+                <CustomIcon name="Users" size={18} />
               </button>
             )}
             <button
@@ -212,7 +225,7 @@ const Messages: React.FC = () => {
               onClick={() => setIsUserModalOpen(true)}
               title={isCustomer ? 'Contact Support' : 'New Chat'}
             >
-              {isCustomer ? <Headset size={18} /> : <Plus size={18} />}
+              {isCustomer ? <CustomIcon name="Headset" size={18} /> : <CustomIcon name="Plus" size={18} />}
             </button>
           </div>
         </div>
@@ -222,7 +235,7 @@ const Messages: React.FC = () => {
             placeholder="Search chats..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            icon={<Search size={16} />}
+            icon={<CustomIcon name="Search" size={16} />}
           />
         </div>
 
@@ -236,8 +249,8 @@ const Messages: React.FC = () => {
               >
                 <div className="glass-card" style={{ width: 44, height: 44, borderRadius: conv.isGroup ? 12 : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', background: conv.isGroup ? 'rgba(124,58,237,0.15)' : undefined }}>
                   {conv.isGroup 
-                    ? <Users size={20} color="var(--accent-primary)" />
-                    : (conv.partner?.image ? <img src={conv.partner.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={20} />)
+                    ? <CustomIcon name="Users" size={20} color="var(--accent-primary)" />
+                    : (conv.partner?.image ? <img src={conv.partner.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <CustomIcon name="User" size={20} />)
                   }
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -265,8 +278,8 @@ const Messages: React.FC = () => {
             <header className={styles.chatHeader}>
               <div className="glass-card" style={{ width: 40, height: 40, borderRadius: selectedConv?.isGroup ? 10 : '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', background: selectedConv?.isGroup ? 'rgba(124,58,237,0.15)' : undefined }}>
                 {selectedConv?.isGroup 
-                  ? <Users size={20} color="var(--accent-primary)" />
-                  : (selectedConv?.partner?.image ? <img src={selectedConv.partner.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={20} />)
+                  ? <CustomIcon name="Users" size={20} color="var(--accent-primary)" />
+                  : (selectedConv?.partner?.image ? <img src={selectedConv.partner.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <CustomIcon name="User" size={20} />)
                 }
               </div>
               <div style={{ flex: 1 }}>
@@ -277,7 +290,7 @@ const Messages: React.FC = () => {
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="glass-card" style={{ padding: 8, borderRadius: 10 }}>
-                  <MoreVertical size={20} color="var(--text-muted)" />
+                  <CustomIcon name="MoreVertical" size={20} color="var(--text-muted)" />
                 </button>
                 <button 
                   className="glass-card" 
@@ -285,7 +298,7 @@ const Messages: React.FC = () => {
                   onClick={() => setActiveConv(null)}
                   title="Close Chat"
                 >
-                  <X size={20} color="var(--text-muted)" />
+                  <CustomIcon name="X" size={20} color="var(--text-muted)" />
                 </button>
               </div>
             </header>
@@ -312,7 +325,7 @@ const Messages: React.FC = () => {
                   className={styles.scrollBottomBtn}
                   onClick={scrollToBottom}
                 >
-                  <ChevronDown size={20} />
+                  <CustomIcon name="ChevronDown" size={20} />
                 </button>
               )}
             </div>
@@ -332,7 +345,7 @@ const Messages: React.FC = () => {
                   style={{ width: 40, height: 40, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', cursor: 'pointer' }}
                   disabled={!newMessage.trim()}
                 >
-                  <Send size={18} />
+                  <CustomIcon name="Send" size={18} />
                 </button>
               </form>
             </div>
@@ -340,8 +353,8 @@ const Messages: React.FC = () => {
         ) : (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
             {isCustomer 
-              ? <Headset size={48} style={{ marginBottom: 16, opacity: 0.2 }} />
-              : <MessageSquare size={48} style={{ marginBottom: 16, opacity: 0.2 }} />
+              ? <CustomIcon name="Headset" size={48} style={{ marginBottom: 16, opacity: 0.2 }} />
+              : <CustomIcon name="MessageSquare" size={48} style={{ marginBottom: 16, opacity: 0.2 }} />
             }
             <p>{isCustomer ? 'Need help? Contact our support team.' : 'Select a conversation to start chatting'}</p>
             <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
@@ -350,7 +363,7 @@ const Messages: React.FC = () => {
                 style={{ padding: '10px 24px', borderRadius: 8, color: 'white', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
                 onClick={() => setIsUserModalOpen(true)}
               >
-                {isCustomer ? <><Headset size={16} /> Contact Support</> : <><Plus size={16} /> New Chat</>}
+                {isCustomer ? <><CustomIcon name="Headset" size={16} /> Contact Support</> : <><CustomIcon name="Plus" size={16} /> New Chat</>}
               </button>
               {isStaff && (
                 <button
@@ -358,7 +371,7 @@ const Messages: React.FC = () => {
                   style={{ padding: '10px 20px', borderRadius: 8, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}
                   onClick={() => setIsGroupModalOpen(true)}
                 >
-                  <Users size={16} /> New Group
+                  <CustomIcon name="Users" size={16} /> New Group
                 </button>
               )}
             </div>
@@ -366,77 +379,32 @@ const Messages: React.FC = () => {
         )}
       </div>
 
-      <Modal isOpen={isUserModalOpen} onClose={() => setIsUserModalOpen(false)} title={isCustomer ? 'Contact Support' : 'Start New Chat'} maxWidth="500px">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <CustomInput
-            placeholder="Search by name or email..."
-            value={userSearch}
-            onChange={(e) => setUserSearch(e.target.value)}
-            icon={<Search size={18} />}
-          />
-          <div style={{ maxHeight: '400px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {filteredUsers.length > 0 ? filteredUsers.map(u => (
-              <div key={u.id} className={styles.userSelectItem} onClick={() => startChatWithUser(u.id)}>
-                <div className="glass-card" style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: 'var(--text-primary)' }}>
-                  {u.image ? <img src={u.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={20} />}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {u.fullname}
-                    <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: 4, background: u.role?.isAdmin ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)', color: u.role?.isAdmin ? '#ef4444' : '#3b82f6', fontWeight: 700, textTransform: 'uppercase' }}>{u.role?.name}</span>
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{u.email}</div>
-                </div>
-              </div>
-            )) : <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)' }}>No users found</div>}
-          </div>
-        </div>
-      </Modal>
+      <NewChatModal
+        isOpen={isUserModalOpen}
+        onClose={() => setIsUserModalOpen(false)}
+        isCustomer={isCustomer}
+        userSearch={userSearch}
+        onUserSearchChange={setUserSearch}
+        filteredUsers={filteredUsers}
+        onStartChat={startChatWithUser}
+      />
 
-      <Modal isOpen={isGroupModalOpen} onClose={() => { setIsGroupModalOpen(false); setGroupName(''); setSelectedGroupMembers([]); }} title="Create Group Chat" maxWidth="520px">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <CustomInput
-            placeholder="Group name..."
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-            icon={<Users size={18} />}
-          />
-          <CustomInput
-            placeholder="Search members..."
-            value={userSearch}
-            onChange={(e) => setUserSearch(e.target.value)}
-            icon={<Search size={18} />}
-          />
-          {selectedGroupMembers.length > 0 && (
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{selectedGroupMembers.length} member{selectedGroupMembers.length > 1 ? 's' : ''} selected</div>
-          )}
-          <div style={{ maxHeight: '320px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {filteredUsers.length > 0 ? filteredUsers.map(u => {
-              const isSelected = selectedGroupMembers.includes(u.id);
-              return (
-                <div key={u.id} className={styles.userSelectItem} onClick={() => toggleGroupMember(u.id)} style={{ background: isSelected ? 'rgba(124,58,237,0.1)' : undefined, border: isSelected ? '1px solid rgba(124,58,237,0.3)' : '1px solid transparent', borderRadius: 12 }}>
-                  <div className="glass-card" style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: 'var(--text-primary)' }}>
-                    {u.image ? <img src={u.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={20} />}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600 }}>{u.fullname}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{u.role?.name}</div>
-                  </div>
-                  {isSelected && <Check size={18} color="var(--accent-primary)" />}
-                </div>
-              );
-            }) : <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)' }}>No users found</div>}
-          </div>
-          <button
-            className="bg-gradient"
-            style={{ padding: '12px', borderRadius: 10, color: 'white', fontWeight: 700, cursor: 'pointer', opacity: (!groupName.trim() || selectedGroupMembers.length === 0) ? 0.5 : 1 }}
-            onClick={createGroupChat}
-            disabled={!groupName.trim() || selectedGroupMembers.length === 0}
-          >
-            Create Group ({selectedGroupMembers.length} members)
-          </button>
-        </div>
-      </Modal>
+      <NewGroupModal
+        isOpen={isGroupModalOpen}
+        onClose={() => {
+          setIsGroupModalOpen(false);
+          setGroupName("");
+          setSelectedGroupMembers([]);
+        }}
+        groupName={groupName}
+        onGroupNameChange={setGroupName}
+        userSearch={userSearch}
+        onUserSearchChange={setUserSearch}
+        filteredUsers={filteredUsers}
+        selectedGroupMembers={selectedGroupMembers}
+        onToggleMember={toggleGroupMember}
+        onCreateGroup={createGroupChat}
+      />
     </div>
   );
 };

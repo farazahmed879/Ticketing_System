@@ -4,6 +4,7 @@ import { AuthRequest } from "../middleware/auth";
 import { io } from "../index";
 import { emitNotificationToUser } from "../socketio/events";
 import { RoleName, StatusName, ActionName, NotificationMessages } from "../utils/constants";
+import { startOfDay } from "date-fns";
 
 const prisma = new PrismaClient();
 
@@ -197,6 +198,35 @@ export const createTicket = async (req: AuthRequest, res: Response) => {
     io.emit("ticket:updated", { ticketId: ticket.id });
 
     res.status(201).json({ success: true, ticket });
+
+    // Auto-create timesheet task if status is "In Process" on creation
+    const isStaff =
+      req.user?.role === RoleName.ADMIN ||
+      req.user?.role === RoleName.AGENT ||
+      req.user?.role === RoleName.EMPLOYEE;
+
+    if (isStaff && ticket.status.name === StatusName.IN_PROCESS) {
+      const today = startOfDay(new Date());
+      try {
+        const entry = await prisma.timesheetEntry.upsert({
+          where: { userId_date: { userId: ownerId, date: today } },
+          update: {},
+          create: { userId: ownerId, date: today, totalHours: 0, status: StatusName.PENDING }
+        });
+
+        await prisma.timesheetTask.create({
+          data: {
+            description: `Working on Ticket #${ticket.uid}: ${ticket.subject}`,
+            hours: 0,
+            projectId: ticket.groupId,
+            ticketId: ticket.id,
+            entryId: entry.id
+          }
+        });
+      } catch (tsError) {
+        console.error("Failed to auto-create timesheet task on ticket creation:", tsError);
+      }
+    }
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -405,6 +435,7 @@ export const updateTicket = async (req: AuthRequest, res: Response) => {
         type: true,
         owner: true,
         assignee: true,
+        group: true,
       },
     });
 
@@ -424,6 +455,58 @@ export const updateTicket = async (req: AuthRequest, res: Response) => {
 
     // Emit real-time update to all clients
     io.emit("ticket:updated", { ticketId: ticket.id });
+
+    // Auto-create timesheet task if status changed to "In Process"
+    if (data.statusId) {
+      const isStaff =
+        req.user?.role === RoleName.ADMIN ||
+        req.user?.role === RoleName.AGENT ||
+        req.user?.role === RoleName.EMPLOYEE;
+
+      if (isStaff && ticket.status.name === StatusName.IN_PROCESS) {
+        const today = startOfDay(new Date());
+        try {
+          // 1. Ensure a TimesheetEntry exists for today
+          const entry = await prisma.timesheetEntry.upsert({
+            where: { userId_date: { userId: actorId, date: today } },
+            update: {},
+            create: { userId: actorId, date: today, totalHours: 0, status: StatusName.PENDING }
+          });
+
+          // 2. Check if task already exists for this ticket today
+          const existingTask = await prisma.timesheetTask.findFirst({
+            where: { entryId: entry.id, ticketId: ticket.id }
+          });
+
+          if (!existingTask) {
+            await prisma.timesheetTask.create({
+              data: {
+                description: `Working on Ticket #${ticket.uid}: ${ticket.subject}`,
+                hours: 0,
+                projectId: ticket.groupId,
+                ticketId: ticket.id,
+                entryId: entry.id
+              }
+            });
+            
+            // Add internal note
+            await prisma.comment.create({
+              data: {
+                comment: `[System] Ticket moved to "In Process". Automatically added to today's activity.`,
+                isNote: true,
+                authorId: actorId,
+                ticketId: ticket.id
+              }
+            });
+            
+            // Re-emit update since we added a comment
+            io.emit("ticket:updated", { ticketId: ticket.id });
+          }
+        } catch (tsError) {
+          console.error("Failed to auto-create timesheet task:", tsError);
+        }
+      }
+    }
 
     res.json({ success: true, ticket });
   } catch (error: any) {
@@ -450,6 +533,50 @@ export const batchUpdateTickets = async (req: AuthRequest, res: Response) => {
     });
 
     res.json({ success: true, updated: ticketIds.length });
+
+    // Auto-create timesheet tasks if status changed to "In Process"
+    if (statusId) {
+      const targetStatus = await prisma.status.findUnique({ where: { id: statusId } });
+      const isStaff =
+        req.user?.role === RoleName.ADMIN ||
+        req.user?.role === RoleName.AGENT ||
+        req.user?.role === RoleName.EMPLOYEE;
+
+      if (isStaff && targetStatus?.name === StatusName.IN_PROCESS) {
+        const today = startOfDay(new Date());
+        try {
+          const entry = await prisma.timesheetEntry.upsert({
+            where: { userId_date: { userId: actorId, date: today } },
+            update: {},
+            create: { userId: actorId, date: today, totalHours: 0, status: StatusName.PENDING }
+          });
+
+          const tickets = await prisma.ticket.findMany({
+            where: { id: { in: ticketIds } }
+          });
+
+          for (const ticket of tickets) {
+            const existingTask = await prisma.timesheetTask.findFirst({
+              where: { entryId: entry.id, ticketId: ticket.id }
+            });
+
+            if (!existingTask) {
+              await prisma.timesheetTask.create({
+                data: {
+                  description: `Working on Ticket #${ticket.uid}: ${ticket.subject}`,
+                  hours: 0,
+                  projectId: ticket.groupId,
+                  ticketId: ticket.id,
+                  entryId: entry.id
+                }
+              });
+            }
+          }
+        } catch (tsError) {
+          console.error("Failed to auto-create timesheet tasks in batch:", tsError);
+        }
+      }
+    }
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }

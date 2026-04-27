@@ -1,4 +1,4 @@
-import React from 'react';
+import type { Control, RegisterOptions } from 'react-hook-form';
 
 export interface Option {
   value: string;
@@ -10,14 +10,20 @@ export interface Option {
 
 export interface CustomSelectProps {
   options: Option[];
-  value: string;
-  onChange: (value: string) => void;
+  value?: string | string[];
+  onChange?: (value: any) => void;
   placeholder?: string;
   label?: string;
   className?: string;
   disabled?: boolean;
   required?: boolean;
   style?: React.CSSProperties;
+  name?: string;
+  control?: Control<any>;
+  rules?: RegisterOptions;
+  error?: string;
+  isMulti?: boolean;
+  icon?: React.ReactNode;
 }
 
 export interface CustomInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -26,12 +32,18 @@ export interface CustomInputProps extends React.InputHTMLAttributes<HTMLInputEle
   icon?: React.ReactNode;
   suffix?: React.ReactNode;
   containerStyle?: React.CSSProperties;
+  name?: string;
+  control?: Control<any>;
+  rules?: RegisterOptions;
 }
 
 export interface CustomTextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: React.ReactNode;
   error?: string;
   containerStyle?: React.CSSProperties;
+  name?: string;
+  control?: Control<any>;
+  rules?: RegisterOptions;
 }
 
 export interface TableColumn<T> {
@@ -81,6 +93,24 @@ export interface CustomButtonProps extends React.ButtonHTMLAttributes<HTMLButton
   containerStyle?: React.CSSProperties;
 }
 
+export interface CustomDatePickerProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
+  label?: string;
+  error?: string;
+  name?: string;
+  control?: Control<any>;
+  rules?: RegisterOptions;
+  containerStyle?: React.CSSProperties;
+  value?: string;
+  onChange?: (value: string) => void;
+}
 
-
-
+export interface CustomDateTimePickerProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
+  label?: string;
+  error?: string;
+  name?: string;
+  control?: Control<any>;
+  rules?: RegisterOptions;
+  containerStyle?: React.CSSProperties;
+  value?: string;
+  onChange?: (value: string) => void;
+}

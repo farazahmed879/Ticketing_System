@@ -1,0 +1,206 @@
+.skeleton {
+  background: var(--bg-skeleton);
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--bg-skeleton-shimmer),
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+  transform: translateX(-100%);
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.tableSkeleton {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.tableRow {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableCell {
+  flex: 1;
+  padding: 0 10px;
+}
+
+.circle {
+  border-radius: 50%;
+}
+
+.rect {
+  border-radius: 8px;
+}
+
+.text {
+  border-radius: 999px;
+}
+
+.calendarSkeleton {
+  width: 100%;
+}
+
+.calendarHeader {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 0 12px;
+}
+
+.headerCell {
+  display: flex;
+  justify-content: center;
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+}
+
+.calendarCell {
+  aspect-ratio: 1 / 1.1;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  display: flex;
+  flex-direction: column;
+}
+
+.cellHeader {
+  margin-bottom: 12px;
+}
+
+.cellContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.chatSkeleton {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  background: var(--bg-card);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.chatSidebar {
+  width: 320px;
+  border-right: 1px solid var(--border-glass);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.convItem {
+  display: flex;
+  align-items: center;
+}
+
+.chatMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chatHeader {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-glass);
+  display: flex;
+  align-items: center;
+}
+
+.messageList {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.messageWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.msgOther {
+  align-items: flex-start;
+}
+
+.msgOwn {
+  align-items: flex-end;
+}
+
+.msgBubble {
+  max-width: 70%;
+}
+
+.chatInput {
+  padding: 24px;
+  border-top: 1px solid var(--border-glass);
+}
+
+.boardSkeleton {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  height: calc(100vh - 200px);
+  overflow: hidden;
+}
+
+.boardColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.columnHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.cardList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cardSkeleton {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  padding: 20px;
+}

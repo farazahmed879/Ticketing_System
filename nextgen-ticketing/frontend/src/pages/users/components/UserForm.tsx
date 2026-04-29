@@ -4,6 +4,8 @@ import CustomInput from "../../../components/CustomInput";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
+import PhoneInput from "../../../components/PhoneInput";
+import { COUNTRY_CODES } from "../../../utils/constants";
 import type { User, Role, UserFormData } from "../../../types";
 
 interface UserFormProps {
@@ -20,6 +22,7 @@ const UserForm: React.FC<UserFormProps> = ({
   isLoading = false,
 }) => {
   const [step, setStep] = useState(1);
+  const [showPassword, setShowPassword] = useState(false);
   const { handleSubmit, control, reset, watch, trigger } = useForm<UserFormData>({
     defaultValues: {
       fullname: "",
@@ -29,7 +32,9 @@ const UserForm: React.FC<UserFormProps> = ({
       title: "",
       roleId: "",
       primaryContact: "",
+      primaryContactCode: "+92",
       secondaryContact: "",
+      secondaryContactCode: "+92",
       cnic: "",
       linkedInUrl: "",
       gitUrl: "",
@@ -48,6 +53,24 @@ const UserForm: React.FC<UserFormProps> = ({
 
   useEffect(() => {
     if (initialData) {
+      // Parse primary contact
+      let primaryPhone = initialData.primaryContact || "";
+      let primaryCode = "+92";
+      const primaryMatched = COUNTRY_CODES.find(c => primaryPhone.startsWith(c.value));
+      if (primaryMatched) {
+        primaryCode = primaryMatched.value;
+        primaryPhone = primaryPhone.replace(primaryMatched.value, "").trim();
+      }
+
+      // Parse secondary contact
+      let secondaryPhone = initialData.secondaryContact || "";
+      let secondaryCode = "+92";
+      const secondaryMatched = COUNTRY_CODES.find(c => secondaryPhone.startsWith(c.value));
+      if (secondaryMatched) {
+        secondaryCode = secondaryMatched.value;
+        secondaryPhone = secondaryPhone.replace(secondaryMatched.value, "").trim();
+      }
+
       reset({
         fullname: initialData.fullname,
         email: initialData.email,
@@ -55,8 +78,10 @@ const UserForm: React.FC<UserFormProps> = ({
         password: "",
         title: initialData.title || "",
         roleId: initialData.role.id,
-        primaryContact: initialData.primaryContact || "",
-        secondaryContact: initialData.secondaryContact || "",
+        primaryContact: primaryPhone,
+        primaryContactCode: primaryCode,
+        secondaryContact: secondaryPhone,
+        secondaryContactCode: secondaryCode,
         cnic: initialData.cnic || "",
         linkedInUrl: initialData.linkedInUrl || "",
         gitUrl: initialData.gitUrl || "",
@@ -78,7 +103,9 @@ const UserForm: React.FC<UserFormProps> = ({
         title: "",
         roleId: "",
         primaryContact: "",
+        primaryContactCode: "+92",
         secondaryContact: "",
+        secondaryContactCode: "+92",
         cnic: "",
         linkedInUrl: "",
         gitUrl: "",
@@ -134,7 +161,17 @@ const UserForm: React.FC<UserFormProps> = ({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit((data) => {
+        const payload = {
+          ...data,
+          primaryContact: data.primaryContact ? `${data.primaryContactCode} ${data.primaryContact.trim()}` : "",
+          secondaryContact: data.secondaryContact ? `${data.secondaryContactCode} ${data.secondaryContact.trim()}` : "",
+        };
+        // Remove code fields from payload before sending
+        delete payload.primaryContactCode;
+        delete payload.secondaryContactCode;
+        onSubmit(payload as UserFormData);
+      })}>
         {step === 1 && (
           <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
@@ -152,7 +189,13 @@ const UserForm: React.FC<UserFormProps> = ({
                 required
               />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <CustomInput name="username" control={control} label="Username" placeholder="johndoe" />
+                <CustomInput 
+                  name="username" 
+                  control={control} 
+                  label="Username" 
+                  placeholder="johndoe" 
+                  autoComplete="username"
+                />
                 <CustomInput name="cnic" control={control} label="CNIC" placeholder="42101-XXXXXXX-X" />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
@@ -167,20 +210,48 @@ const UserForm: React.FC<UserFormProps> = ({
                   type="email"
                   placeholder="email@example.com"
                   required
+                  autoComplete="email"
                 />
                 <CustomInput
                   name="password"
                   control={control}
                   rules={!initialData ? { required: "Password is required" } : {}}
                   label={`Password ${initialData ? "(Optional)" : ""}`}
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   required={!initialData}
+                  autoComplete="new-password"
+                  suffix={
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
+                      style={{ background: "transparent", display: "flex", alignItems: "center", cursor: "pointer", border: "none", padding: "4px" }}
+                    >
+                      <CustomIcon 
+                        name={showPassword ? "EyeOff" : "Eye"} 
+                        size={18} 
+                        color="var(--text-muted)" 
+                      />
+                    </button>
+                  }
                 />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <CustomInput name="primaryContact" control={control} label="Primary Contact" placeholder="+92 3XX XXXXXXX" />
-                <CustomInput name="secondaryContact" control={control} label="Secondary Contact" placeholder="+92 3XX XXXXXXX" />
+                <PhoneInput
+                  name="primaryContact"
+                  countryCodeName="primaryContactCode"
+                  control={control}
+                  label="Primary Contact"
+                  placeholder="3XX XXXXXXX"
+                />
+                <PhoneInput
+                  name="secondaryContact"
+                  countryCodeName="secondaryContactCode"
+                  control={control}
+                  label="Secondary Contact"
+                  placeholder="3XX XXXXXXX"
+                />
               </div>
             </div>
 

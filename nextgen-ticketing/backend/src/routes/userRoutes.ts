@@ -133,6 +133,7 @@ router.put('/profile', authMiddleware, userController.updateProfile);
  *         description: Password updated
  */
 router.post('/profile/password', authMiddleware, userController.updatePassword);
+router.post('/profile/phone', authMiddleware, userController.updatePhoneNumber);
 
 /**
  * @swagger

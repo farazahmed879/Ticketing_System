@@ -1,0 +1,54 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 10px 0;
+}
+
+.iconWrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.danger {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+.warning {
+  background: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+}
+
+.info {
+  background: rgba(33, 150, 243, 0.1);
+  color: #2196f3;
+}
+
+.success {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.message {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 30px;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.actions > button {
+  flex: 1;
+}

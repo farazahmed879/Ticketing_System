@@ -10,6 +10,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
 import CustomSelect from "../../components/CustomSelect";
 import { RoleName, StatusName, PriorityName, UIMessages } from "../../utils/constants";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 import type { TicketDetail as ITicketDetail } from "../../types";
 
@@ -25,6 +26,13 @@ const TicketDetail: React.FC = () => {
   const [statuses, setStatuses] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [pendingStatusId, setPendingStatusId] = useState<string | null>(null);
+  const [confirmConfig, setConfirmConfig] = useState<{ title: string; message: string; type: 'danger' | 'warning' }>({
+    title: "",
+    message: "",
+    type: "warning"
+  });
   const { user } = useAuth();
   const { showNotification, setIsLoading } = useNotification();
   const navigate = useNavigate();
@@ -156,6 +164,21 @@ const TicketDetail: React.FC = () => {
       return;
     }
 
+    if (statusName === StatusName.CANCELLED.toLowerCase() || statusName === StatusName.FAILED.toLowerCase()) {
+      setPendingStatusId(statusId);
+      setConfirmConfig({
+        title: statusName === StatusName.CANCELLED.toLowerCase() ? "Cancel Ticket" : "Mark as Failed",
+        message: `Are you sure you want to ${statusName} this ticket? This action may be final depending on your workflow.`,
+        type: "danger"
+      });
+      setIsConfirmModalOpen(true);
+      return;
+    }
+
+    executeStatusUpdate(statusId);
+  };
+
+  const executeStatusUpdate = async (statusId: string) => {
     try {
       setIsLoading(true, UIMessages.LOADING.UPDATING_STATUS);
       await api.put(API_ROUTES.TICKETS.BY_ID(id!), { statusId });
@@ -626,6 +649,19 @@ const TicketDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        onConfirm={() => {
+          if (pendingStatusId) executeStatusUpdate(pendingStatusId);
+          setIsConfirmModalOpen(false);
+        }}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        type={confirmConfig.type}
+        confirmText="Confirm"
+      />
     </div>
   );
 };

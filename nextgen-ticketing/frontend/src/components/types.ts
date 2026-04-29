@@ -119,3 +119,14 @@ export interface CustomDateTimePickerProps<T extends FieldValues = any> extends 
   value?: string;
   onChange?: (value: string) => void;
 }
+
+export interface CustomColorPickerProps<T extends FieldValues = any> extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
+  label?: React.ReactNode;
+  error?: string;
+  name?: Path<T>;
+  control?: Control<T>;
+  rules?: RegisterOptions<T, Path<T>>;
+  containerStyle?: React.CSSProperties;
+  value?: string;
+  onChange?: (value: string) => void;
+}

@@ -11,6 +11,7 @@ import CustomPagination from "../../components/CustomPagination";
 import type { TableColumn } from "../../components/types";
 import { RoleName, UIMessages } from "../../utils/constants";
 import RoleModal from "./components/RoleModal";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 const RoleList: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -20,6 +21,9 @@ const RoleList: React.FC = () => {
   const { showNotification, setIsLoading } = useNotification();
 
   const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
@@ -81,12 +85,18 @@ const RoleList: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this role?")) return;
-    setIsLoading(true, UIMessages.LOADING.DELETING);
+  const handleDelete = (id: string) => {
+    setRoleToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!roleToDelete) return;
+    setIsDeleting(true);
     try {
-      await api.delete(API_ROUTES.ROLES.BY_ID(id));
+      await api.delete(API_ROUTES.ROLES.BY_ID(roleToDelete));
       showNotification("success", "Role deleted successfully");
+      setIsDeleteModalOpen(false);
       fetchData();
     } catch (err: any) {
       showNotification(
@@ -94,7 +104,8 @@ const RoleList: React.FC = () => {
         err.response?.data?.error || "Failed to delete role",
       );
     } finally {
-      setIsLoading(false, "");
+      setIsDeleting(false);
+      setRoleToDelete(null);
     }
   };
 
@@ -244,6 +255,17 @@ const RoleList: React.FC = () => {
         role={editingRole}
         statuses={statuses}
         onSubmit={handleSubmit}
+      />
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Role"
+        message="Are you sure you want to delete this role? This will affect all users assigned to it."
+        confirmText="Delete Role"
+        loading={isDeleting}
+        type="danger"
       />
     </div>
   );

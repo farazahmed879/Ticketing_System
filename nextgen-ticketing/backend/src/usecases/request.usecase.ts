@@ -1,8 +1,20 @@
 import { requestRepository } from "../repositories/request.repository";
 
 export const requestUsecase = {
-  async getRequests() {
-    return requestRepository.findMany();
+  async getRequests(userId?: string) {
+    const where: any = {};
+    if (userId) where.userId = userId;
+    return requestRepository.findMany(where);
+  },
+
+  async createRequest(data: { type: string; userId: string; message?: string; data?: any }) {
+    return requestRepository.create({
+      type: data.type,
+      userId: data.userId,
+      message: data.message,
+      data: data.data,
+      status: "PENDING",
+    });
   },
 
   async updateRequestStatus(id: string, status: string, message: string) {

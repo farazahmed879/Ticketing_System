@@ -1,12 +1,22 @@
 import prisma from "../prisma";
 
 export const requestRepository = {
-  async findMany() {
+  async findMany(where: any = {}) {
     return prisma.userRequest.findMany({
+      where,
       include: {
         user: { select: { id: true, fullname: true, email: true, image: true } },
       },
       orderBy: { createdAt: "desc" },
+    });
+  },
+
+  async create(data: any) {
+    return prisma.userRequest.create({
+      data,
+      include: {
+        user: { select: { id: true, fullname: true, email: true, image: true } },
+      }
     });
   },
 

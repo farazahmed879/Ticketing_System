@@ -42,6 +42,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
         timesheets: { view: false, approve: false, report: false },
         candidates: { view: false, create: false, update: false, delete: false },
         interviews: { view: false, create: false, update: false, delete: false },
+        requests: { view: false, create: false, update: false, delete: false },
         boardStatuses: {},
       },
     },
@@ -76,6 +77,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
           timesheets: { view: false, approve: false, report: false },
           candidates: { view: false, create: false, update: false, delete: false },
           interviews: { view: false, create: false, update: false, delete: false },
+          requests: { view: false, create: false, update: false, delete: false },
           boardStatuses: {},
         },
       });
@@ -143,6 +145,7 @@ const RoleForm: React.FC<RoleFormProps> = ({
     { id: "timesheets", label: "Timesheet", actions: ["view", "approve", "report"] },
     { id: "candidates", label: "Candidates", actions: ["view", "create", "update", "delete"] },
     { id: "interviews", label: "Interviews", actions: ["view", "create", "update", "delete"] },
+    { id: "requests", label: "Requests", actions: ["view", "create", "update", "delete"] },
   ];
 
   return (

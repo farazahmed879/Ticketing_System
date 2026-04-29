@@ -86,4 +86,18 @@ export const userController = {
       res.status(status).json({ success: false, error: error.message });
     }
   },
+
+  async updatePhoneNumber(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const { currentPhone, newPhone } = req.body;
+      await userUsecase.updatePhoneNumber(userId, currentPhone, newPhone);
+      res.json({ success: true });
+    } catch (error: any) {
+      const status = error.message.includes("incorrect") ? 400 : 500;
+      res.status(status).json({ success: false, error: error.message });
+    }
+  },
 };

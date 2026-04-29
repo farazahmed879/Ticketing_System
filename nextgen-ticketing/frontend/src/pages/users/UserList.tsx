@@ -16,6 +16,7 @@ import CustomButton from "../../components/CustomButton";
 import CustomPagination from "../../components/CustomPagination";
 import type { TableColumn } from "../../components/types";
 import UserModal from "./components/UserModal";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 const UserList: React.FC = () => {
   const navigate = useNavigate();
@@ -33,6 +34,9 @@ const UserList: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -101,17 +105,24 @@ const UserList: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
-    setIsLoading(true, UIMessages.LOADING.DELETING);
+  const handleDelete = (id: string) => {
+    setUserToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
     try {
-      await api.delete(API_ROUTES.USERS.BY_ID(id));
+      await api.delete(API_ROUTES.USERS.BY_ID(userToDelete));
       showNotification("success", "User deleted successfully");
+      setIsDeleteModalOpen(false);
       fetchData();
     } catch (err: any) {
       showNotification("error", "Failed to delete user");
     } finally {
-      setIsLoading(false, "");
+      setIsDeleting(false);
+      setUserToDelete(null);
     }
   };
 
@@ -296,6 +307,17 @@ const UserList: React.FC = () => {
         user={editingUser}
         roles={roles}
         onSubmit={handleSubmit}
+      />
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete User"
+        message="Are you sure you want to delete this user? This will permanently remove their access."
+        confirmText="Delete User"
+        loading={isDeleting}
+        type="danger"
       />
     </div>
   );

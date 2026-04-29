@@ -359,7 +359,9 @@ export interface UserFormData {
   title: string;
   roleId: string;
   primaryContact?: string;
+  primaryContactCode?: string;
   secondaryContact?: string;
+  secondaryContactCode?: string;
   cnic?: string;
   linkedInUrl?: string;
   gitUrl?: string;

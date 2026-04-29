@@ -8,12 +8,34 @@ export const requestController = {
       const user = req.user;
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
+      let userIdFilter: string | undefined = undefined;
+      
+      // If user is not Admin or Agent, only show their own requests
       if (user.role !== "Admin" && user.role !== "Agent") {
-        return res.status(403).json({ message: "Access denied" });
+        userIdFilter = user.id;
       }
 
-      const requests = await requestUsecase.getRequests();
+      const requests = await requestUsecase.getRequests(userIdFilter);
       res.json({ success: true, requests });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  async createRequest(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const { type, message, data } = req.body;
+      const request = await requestUsecase.createRequest({
+        type,
+        userId,
+        message,
+        data,
+      });
+
+      res.status(201).json({ success: true, request });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }

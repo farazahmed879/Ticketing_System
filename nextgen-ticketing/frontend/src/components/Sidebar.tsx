@@ -2,11 +2,14 @@ import styles from "./Sidebar.module.css";
 import { useNavigate, useLocation } from "react-router-dom";
 import CustomIcon, { type IconName } from "./CustomIcon";
 import { useAuth } from "../context/AuthContext";
+import { useState } from "react";
+import ConfirmationModal from "./ConfirmationModal";
 
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   
   const menuItems: { icon: IconName; label: string; path: string; active?: boolean; permissions?: string[] }[] = [
     {
@@ -80,11 +83,24 @@ const Sidebar = () => {
       </nav>
 
       <div className={styles.footer}>
-        <button className={styles.navItem} onClick={() => navigate("/logout")}>
+        <button className={styles.navItem} onClick={() => setIsLogoutModalOpen(true)}>
           <CustomIcon name="LogOut" size={20} />
           <span>Logout</span>
         </button>
       </div>
+
+      <ConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={() => {
+          logout();
+          navigate("/login");
+        }}
+        title="Logout"
+        message="Are you sure you want to log out of your account?"
+        confirmText="Logout"
+        type="warning"
+      />
     </aside>
   );
 };

@@ -130,6 +130,18 @@ export const userUsecase = {
     await userRepository.update(id, { password: hashed });
   },
 
+  async updatePhoneNumber(id: string, currentPhone: string, newPhone: string) {
+    const user = await userRepository.findById(id);
+    if (!user) throw new Error("User not found");
+
+    // "Confirming previous one" - check if the provided current phone matches
+    if (user.mobileNumber && user.mobileNumber !== currentPhone) {
+      throw new Error("Current phone number is incorrect");
+    }
+
+    await userRepository.update(id, { mobileNumber: newPhone });
+  },
+
   async getUserById(id: string) {
     const user = await userRepository.findById(id);
     if (!user) throw new Error("User not found");

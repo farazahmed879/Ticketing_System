@@ -1,6 +1,161 @@
 import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import CustomIcon from "../../components/CustomIcon";
+import CustomInput from "../../components/CustomInput";
+import CustomButton from "../../components/CustomButton";
+import CustomColorPicker from "../../components/CustomColorPicker";
+import api from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
+import Profile from "../profile/Profile";
 import styles from './Settings.module.css';
+
+const PasswordSection = () => {
+  const { control, handleSubmit, watch, reset, formState: { isSubmitting } } = useForm();
+  const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  const onSubmit = async (data: any) => {
+    try {
+      setMsg(null);
+      await api.post('/users/profile/password', {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword
+      });
+      setMsg({ type: 'success', text: 'Password updated successfully!' });
+      reset();
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err.response?.data?.error || 'Failed to update password' });
+    }
+  };
+
+  const newPassword = watch("newPassword");
+
+  return (
+    <div className={styles.securityCard}>
+      <h4><CustomIcon name="Lock" size={18} /> Change Password</h4>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className={styles.formGrid}>
+          <CustomInput 
+            name="currentPassword"
+            control={control}
+            label="Current Password"
+            type="password"
+            placeholder="••••••••"
+            icon={<CustomIcon name="Key" size={16} />}
+            rules={{ required: "Current password is required" }}
+          />
+          <div></div>
+          
+          <CustomInput 
+            name="newPassword"
+            control={control}
+            label="New Password"
+            type="password"
+            placeholder="••••••••"
+            icon={<CustomIcon name="ShieldCheck" size={16} />}
+            rules={{ 
+              required: "New password is required",
+              minLength: { value: 6, message: "Password must be at least 6 characters" }
+            }}
+          />
+
+          <CustomInput 
+            name="confirmPassword"
+            control={control}
+            label="Confirm New Password"
+            type="password"
+            placeholder="••••••••"
+            icon={<CustomIcon name="ShieldCheck" size={16} />}
+            rules={{ 
+              required: "Please confirm your password",
+              validate: value => value === newPassword || "Passwords do not match"
+            }}
+          />
+        </div>
+
+        {msg && (
+          <div className={msg.type === 'success' ? styles.successMsg : styles.error} style={{ marginTop: 16 }}>
+            {msg.type === 'success' && <CustomIcon name="CheckCircle" size={16} />}
+            {msg.text}
+          </div>
+        )}
+
+        <CustomButton 
+          type="submit" 
+          loading={isSubmitting}
+          icon={<CustomIcon name="Lock" size={16} />}
+          style={{ marginTop: 24 }}
+        >
+          Update Password
+        </CustomButton>
+      </form>
+    </div>
+  );
+};
+
+const PhoneSection = () => {
+  const { user } = useAuth();
+  const { control, handleSubmit, reset, formState: { isSubmitting } } = useForm();
+  const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  const onSubmit = async (data: any) => {
+    try {
+      setMsg(null);
+      await api.post('/users/profile/phone', {
+        currentPhone: data.currentPhone,
+        newPhone: data.newPhone
+      });
+      setMsg({ type: 'success', text: 'Phone number updated successfully!' });
+      reset();
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err.response?.data?.error || 'Failed to update phone number' });
+    }
+  };
+
+  return (
+    <div className={styles.securityCard}>
+      <h4><CustomIcon name="Phone" size={18} /> Change Phone Number</h4>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className={styles.formGrid}>
+          <CustomInput 
+            name="currentPhone"
+            control={control}
+            label="Current Phone Number"
+            type="text"
+            placeholder={user?.mobileNumber || "Verify current number"}
+            icon={<CustomIcon name="Smartphone" size={16} />}
+            rules={{ required: "Current phone number is required" }}
+          />
+
+          <CustomInput 
+            name="newPhone"
+            control={control}
+            label="New Phone Number"
+            type="text"
+            placeholder="New phone number"
+            icon={<CustomIcon name="PhoneCall" size={16} />}
+            rules={{ required: "New phone number is required" }}
+          />
+        </div>
+
+        {msg && (
+          <div className={msg.type === 'success' ? styles.successMsg : styles.error} style={{ marginTop: 16 }}>
+            {msg.type === 'success' && <CustomIcon name="CheckCircle" size={16} />}
+            {msg.text}
+          </div>
+        )}
+
+        <CustomButton 
+          type="submit" 
+          loading={isSubmitting}
+          icon={<CustomIcon name="Phone" size={16} />}
+          style={{ marginTop: 24 }}
+        >
+          Update Phone
+        </CustomButton>
+      </form>
+    </div>
+  );
+};
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('theme');
@@ -52,18 +207,21 @@ const Settings: React.FC = () => {
       <div className={styles.container}>
         <aside className={`${styles.sidebar} glass-card`}>
           {tabs.map(tab => (
-            <button
+            <CustomButton
               key={tab.id}
+              variant={activeTab === tab.id ? 'secondary' : 'ghost'}
               className={`${styles.tabBtn} ${activeTab === tab.id ? styles.tabBtnActive : ''}`}
               onClick={() => setActiveTab(tab.id)}
+              icon={tab.icon}
+              fullWidth
+              style={{ justifyContent: 'flex-start' }}
             >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
+              {tab.label}
+            </CustomButton>
           ))}
         </aside>
 
-        <main className={`${styles.content} glass-card`}>
+        <main className={`${activeTab === 'profile' ? styles.profileContent : styles.content + ' glass-card'}`}>
           {activeTab === 'theme' && (
             <div className={styles.section}>
               <div className={styles.sectionHeader}>
@@ -77,37 +235,38 @@ const Settings: React.FC = () => {
               <div className={styles.settingGroup}>
                 <label>Appearance Mode</label>
                 <div className={styles.themeToggleGrid}>
-                  <button 
+                  <CustomButton 
+                    variant={theme === 'light' ? 'secondary' : 'ghost'}
                     className={`${styles.themeOption} ${theme === 'light' ? styles.themeOptionActive : ''}`}
                     onClick={() => setTheme('light')}
+                    icon={<CustomIcon name="Sun" size={20} />}
                   >
-                    <CustomIcon name="Sun" size={20} />
-                    <span>Light Mode</span>
-                  </button>
-                  <button 
+                    Light Mode
+                  </CustomButton>
+                  <CustomButton 
+                    variant={theme === 'dark' ? 'secondary' : 'ghost'}
                     className={`${styles.themeOption} ${theme === 'dark' ? styles.themeOptionActive : ''}`}
                     onClick={() => setTheme('dark')}
+                    icon={<CustomIcon name="Moon" size={20} />}
                   >
-                    <CustomIcon name="Moon" size={20} />
-                    <span>Dark Mode</span>
-                  </button>
+                    Dark Mode
+                  </CustomButton>
                 </div>
               </div>
 
               <div className={styles.settingGroup}>
                 <label>Primary Accent Color</label>
                 <div className={styles.colorPickerWrapper}>
-                  <input 
-                    type="color" 
+                  <CustomColorPicker 
                     value={primaryColor} 
-                    onChange={(e) => setPrimaryColor(e.target.value)} 
-                    className={styles.colorPicker}
+                    onChange={setPrimaryColor} 
                   />
-                  <input 
+                  <CustomInput 
                     type="text" 
                     value={primaryColor} 
                     onChange={(e) => setPrimaryColor(e.target.value)} 
                     className={styles.colorInput}
+                    containerStyle={{ flex: 1, maxWidth: 120 }}
                   />
                 </div>
               </div>
@@ -115,17 +274,16 @@ const Settings: React.FC = () => {
               <div className={styles.settingGroup}>
                 <label>Secondary Accent Color</label>
                 <div className={styles.colorPickerWrapper}>
-                  <input 
-                    type="color" 
+                  <CustomColorPicker 
                     value={secondaryColor} 
-                    onChange={(e) => setSecondaryColor(e.target.value)} 
-                    className={styles.colorPicker}
+                    onChange={setSecondaryColor} 
                   />
-                  <input 
+                  <CustomInput 
                     type="text" 
                     value={secondaryColor} 
                     onChange={(e) => setSecondaryColor(e.target.value)} 
                     className={styles.colorInput}
+                    containerStyle={{ flex: 1, maxWidth: 120 }}
                   />
                 </div>
               </div>
@@ -134,15 +292,19 @@ const Settings: React.FC = () => {
                 <label>Theme Presets</label>
                 <div className={styles.presetsGrid}>
                   {presets.map((preset, i) => (
-                    <button 
+                    <CustomButton 
                       key={i} 
+                      variant="ghost"
                       className={styles.presetCard}
                       onClick={() => {
                         setPrimaryColor(preset.primary);
                         setSecondaryColor(preset.secondary);
                       }}
                       style={{ 
-                        border: primaryColor === preset.primary ? '2px solid var(--accent-primary)' : '1px solid var(--border-glass)' 
+                        border: primaryColor === preset.primary ? '2px solid var(--accent-primary)' : '1px solid var(--border-glass)',
+                        flexDirection: 'column',
+                        height: 'auto',
+                        padding: '12px'
                       }}
                     >
                       <div className={styles.presetPreview}>
@@ -150,27 +312,54 @@ const Settings: React.FC = () => {
                         <div style={{ background: preset.secondary }}></div>
                       </div>
                       <span>{preset.name}</span>
-                    </button>
+                    </CustomButton>
                   ))}
                 </div>
               </div>
 
               <div className={styles.actions}>
-                <button className={styles.resetBtn} onClick={handleReset}>
-                  <CustomIcon name="RefreshCcw" size={16} /> Reset Defaults
-                </button>
-                <button className={styles.saveBtn} onClick={() => {
-                  setIsSaved(true);
-                  setTimeout(() => setIsSaved(false), 2000);
-                }}>
-                  {isSaved ? <CustomIcon name="Check" size={16} /> : null}
+                <CustomButton variant="outline" onClick={handleReset} icon={<CustomIcon name="RefreshCcw" size={16} />}>
+                  Reset Defaults
+                </CustomButton>
+                <CustomButton 
+                  variant="gradient" 
+                  onClick={() => {
+                    setIsSaved(true);
+                    setTimeout(() => setIsSaved(false), 2000);
+                  }}
+                  icon={isSaved ? <CustomIcon name="Check" size={16} /> : undefined}
+                >
                   {isSaved ? 'Saved!' : 'Save Changes'}
-                </button>
+                </CustomButton>
               </div>
             </div>
           )}
 
-          {activeTab !== 'theme' && (
+          {activeTab === 'security' && (
+            <div className={styles.securityGrid}>
+              <div className={styles.sectionHeader}>
+                <CustomIcon name="Shield" size={24} color="var(--accent-primary)" />
+                <div>
+                  <h3>Security Settings</h3>
+                  <p>Update your password and account security preferences</p>
+                </div>
+              </div>
+
+              {/* Change Password Card */}
+              <PasswordSection />
+
+              {/* Change Phone Number Card */}
+              <PhoneSection />
+            </div>
+          )}
+
+          {activeTab === 'profile' && (
+            <div className="animate-fade-in">
+              <Profile />
+            </div>
+          )}
+
+          {activeTab !== 'theme' && activeTab !== 'security' && activeTab !== 'profile' && (
             <div className={styles.emptyState}>
               <CustomIcon name="Layout" size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
               <p>{tabs.find(t => t.id === activeTab)?.label} settings are coming soon.</p>

@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Controller } from 'react-hook-form';
+import { useState, useRef, useEffect } from 'react';
+import { Controller, type FieldValues } from 'react-hook-form';
 import CustomIcon from './CustomIcon';
 import styles from './CustomSelect.module.css';
 
 import type { CustomSelectProps } from './types';
 
-const CustomSelect: React.FC<CustomSelectProps> = ({
+const CustomSelect = <T extends FieldValues>({
   options,
   value: manualValue,
   onChange: manualOnChange,
@@ -21,7 +21,10 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   error: manualError,
   isMulti = false,
   icon: triggerIcon,
-}) => {
+  showSearch = false,
+  onSearch,
+  serverSideSearch = false,
+}: CustomSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -73,6 +76,19 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
     const selectedOption = !isMulti ? options.find(opt => opt.value === value) : null;
     const selectedLabel = getSelectedLabel();
 
+    const [search, setSearch] = useState('');
+
+    const filteredOptions = serverSideSearch 
+      ? options 
+      : options.filter(opt =>
+          opt.label.toLowerCase().includes(search.toLowerCase()) ||
+          (opt.sublabel && opt.sublabel.toLowerCase().includes(search.toLowerCase()))
+        );
+
+    useEffect(() => {
+      if (!isOpen) setSearch('');
+    }, [isOpen]);
+
     return (
       <div className={`${styles.container} ${isOpen ? styles.containerActive : ''} ${className || ''}`} ref={containerRef} style={style}>
         {label && (
@@ -108,10 +124,28 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
         {isOpen && (
           <div className={`${styles.dropdown} glass-card animate-fade-in`}>
-            {options.length === 0 ? (
+            {showSearch && (
+              <div className={styles.searchWrapper}>
+                <CustomIcon name="Search" size={14} className={styles.searchIcon} />
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  placeholder="Search..."
+                  value={search}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSearch(val);
+                    onSearch?.(val);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  autoFocus
+                />
+              </div>
+            )}
+            {filteredOptions.length === 0 ? (
               <div className={styles.noOptions}>No options available</div>
             ) : (
-              options.map((option) => {
+              filteredOptions.map((option) => {
                 const selected = isSelected(option.value);
                 return (
                   <div 
@@ -126,7 +160,10 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
                     <div className={styles.optionContent}>
                       {option.image && <img src={option.image} alt="" className={styles.optionImage} />}
                       {option.icon && <span className={styles.optionIcon}>{option.icon}</span>}
-                      <span className={styles.text}>{option.label}</span>
+                      <div className={styles.optionText}>
+                        <span className={styles.text}>{option.label}</span>
+                        {option.sublabel && <span className={styles.subtext}>{option.sublabel}</span>}
+                      </div>
                     </div>
                     {selected && <CustomIcon name="Check" size={16} className={styles.checkIcon} />}
                     {option.disabled && <CustomIcon name="Lock" size={14} className={styles.lockIcon} />}

@@ -123,3 +123,24 @@
   font-size: 0.78rem;
   color: var(--text-muted);
 }
+
+.actionBtn {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+}
+
+.actionBtn:hover {
+  color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-glass);
+}
+

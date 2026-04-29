@@ -7,9 +7,12 @@ import CustomSelect from "../../../components/CustomSelect";
 import CustomButton from "../../../components/CustomButton";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
-import { RoleName, StatusName } from "../../../utils/constants";
+import { RoleName, StatusName, UIMessages } from "../../../utils/constants";
 import { useAuth } from "../../../context/AuthContext";
 import { useNotification } from "../../../context/NotificationContext";
+import CustomTextArea from "../../../components/CustomTextArea";
+import CustomDatePicker from "../../../components/CustomDatePicker";
+import CustomInput from "../../../components/CustomInput";
 
 interface TicketDetailModalProps {
   isOpen: boolean;
@@ -31,22 +34,20 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   onTicketUpdate,
 }) => {
   const { user } = useAuth();
-  const { showNotification } = useNotification();
+  const { showNotification, setIsLoading } = useNotification();
   const navigate = useNavigate();
   const [fullTicketData, setFullTicketData] = useState<any>(null);
   const [newComment, setNewComment] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [description, setDescription] = useState("");
 
   const fetchFullTicketData = useCallback(async () => {
     if (!ticket?.id) return;
     try {
-      setLoading(true);
       const res = await api.get(API_ROUTES.TICKETS.BY_ID(ticket.id));
       setFullTicketData(res.data.ticket);
+      setDescription(res.data.ticket.issue);
     } catch (err) {
       console.error("Failed to fetch full ticket data", err);
-    } finally {
-      setLoading(false);
     }
   }, [ticket?.id]);
 
@@ -60,34 +61,92 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   const handleUpdateStatus = async (statusId: string) => {
     try {
+      setIsLoading(true, UIMessages.LOADING.UPDATING_STATUS);
       await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), { statusId });
       showNotification("success", "Status updated successfully");
       onTicketUpdate();
       fetchFullTicketData();
     } catch (err) {
       showNotification("error", "Failed to update status");
+    } finally {
+      setIsLoading(false, "");
     }
   };
 
   const handleUpdatePriority = async (priorityId: string) => {
     try {
+      setIsLoading(true, UIMessages.LOADING.UPDATING_PRIORITY);
       await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), { priorityId });
       showNotification("success", "Priority updated successfully");
       onTicketUpdate();
       fetchFullTicketData();
     } catch (err) {
       showNotification("error", "Failed to update priority");
+    } finally {
+      setIsLoading(false, "");
     }
   };
 
   const handleAssignTicket = async (assigneeId: string) => {
     try {
-      await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), { assigneeId });
-      showNotification("success", "Ticket assigned successfully");
+      setIsLoading(true, UIMessages.LOADING.ASSIGNING_TICKET);
+      const updateData: any = { assigneeId };
+
+      // If assigning to someone (not unassigning), set status to Open
+      if (assigneeId) {
+        const openStatus = columns.find(
+          (c) => c.name.toLowerCase() === StatusName.OPEN.toLowerCase(),
+        );
+        if (openStatus && ticket.status.id !== openStatus.id) {
+          updateData.statusId = openStatus.id;
+        }
+      }
+
+      await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), updateData);
+      showNotification(
+        "success",
+        assigneeId
+          ? "Ticket assigned and status updated to Open"
+          : "Ticket unassigned",
+      );
       onTicketUpdate();
       fetchFullTicketData();
     } catch (err) {
       showNotification("error", "Failed to assign ticket");
+    } finally {
+      setIsLoading(false, "");
+    }
+  };
+
+  const handleUpdateDueDate = async (dueDate: string) => {
+    try {
+      setIsLoading(true, UIMessages.LOADING.UPDATING_DUE_DATE);
+      await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), {
+        dueDate: dueDate || null,
+      });
+      showNotification("success", "Due date updated successfully");
+      onTicketUpdate();
+      fetchFullTicketData();
+    } catch (err) {
+      showNotification("error", "Failed to update due date");
+    } finally {
+      setIsLoading(false, "");
+    }
+  };
+  const handleUpdateDescription = async () => {
+    if (description === fullTicketData?.issue) return;
+    try {
+      setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
+      await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), {
+        issue: description,
+      });
+      showNotification("success", "Description updated successfully");
+      onTicketUpdate();
+      fetchFullTicketData();
+    } catch (err) {
+      showNotification("error", "Failed to update description");
+    } finally {
+      setIsLoading(false, "");
     }
   };
 
@@ -114,12 +173,18 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   if (!ticket) return null;
 
+  const displayTicket = fullTicketData || ticket;
+
   const canAssign =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.tickets?.assign;
   const canUpdatePriority =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.tickets?.priority;
+  const canUpdate =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.permissions?.tickets?.update ||
+    user.id === displayTicket.owner.id;
   const canViewComments =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.comments?.view;
@@ -133,7 +198,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       onClose={onClose}
       maxWidth="1500px"
       minHeight="60vh"
-      title={`Ticket #${ticket.uid}: ${ticket.subject}`}
+      title={`Ticket #${displayTicket.uid}: ${displayTicket.subject}`}
     >
       <div
         style={{
@@ -150,7 +215,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             display: "flex",
             flexDirection: "column",
             gap: 24,
-            overflowY: "auto",
+            overflowY: "visible",
             paddingRight: 10,
           }}
         >
@@ -171,7 +236,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     label: p.name,
                     icon: <CustomIcon name="Tag" size={14} color={p.color} />,
                   }))}
-                  value={ticket.priority.id}
+                  value={displayTicket.priority.id}
                   onChange={handleUpdatePriority}
                   style={{
                     minWidth: 140,
@@ -182,8 +247,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 <span
                   className="badge"
                   style={{
-                    background: `${ticket.priority.color}15`,
-                    color: ticket.priority.color,
+                    background: `${displayTicket.priority.color}15`,
+                    color: displayTicket.priority.color,
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
@@ -193,7 +258,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     fontWeight: 600,
                   }}
                 >
-                  <CustomIcon name="Tag" size={16} /> {ticket.priority.name}
+                  <CustomIcon name="Tag" size={16} />{" "}
+                  {displayTicket.priority.name}
                 </span>
               )}
               <CustomSelect
@@ -204,7 +270,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   disabled: !(
                     user?.role?.name === RoleName.ADMIN ||
                     user?.role?.permissions?.boardStatuses?.[s.id] === true ||
-                    (ticket.owner.id === user?.id &&
+                    (displayTicket.owner.id === user?.id &&
                       (s.name.toLowerCase() === StatusName.OPEN.toLowerCase() ||
                         s.name.toLowerCase() ===
                           StatusName.CANCELLED.toLowerCase() ||
@@ -212,7 +278,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           StatusName.FAILED.toLowerCase()))
                   ),
                 }))}
-                value={ticket.status.id}
+                value={displayTicket.status.id}
                 onChange={handleUpdateStatus}
                 style={{
                   minWidth: 180,
@@ -236,7 +302,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 }}
               >
                 <CustomIcon name="Calendar" size={16} />{" "}
-                {format(new Date(ticket.createdAt), "MMM dd, yyyy")}
+                {format(new Date(displayTicket.createdAt), "MMM dd, yyyy")}
               </span>
             </div>
 
@@ -246,7 +312,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 size="sm"
                 onClick={() => {
                   onClose();
-                  navigate(`/tickets/${ticket.id}`);
+                  navigate(`/tickets/${displayTicket.id}`);
                 }}
                 icon={<CustomIcon name="Maximize2" size={16} />}
                 style={{
@@ -257,263 +323,299 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Description */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <label
-              style={{
-                fontSize: "0.9rem",
-                color: "var(--text-secondary)",
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <CustomIcon name="Info" size={16} color="var(--accent-primary)" />{" "}
-              Description
-            </label>
-            <div
-              className="glass-card"
-              style={{
-                padding: 16,
-                fontSize: "0.95rem",
-                lineHeight: 1.6,
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid var(--border-glass)",
-                borderRadius: 12,
-              }}
-            >
-              {ticket.issue}
-            </div>
-          </div>
-
-          {/* Reporter and Assignment Row */}
           <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 20,
-            }}
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}
           >
-            {/* Reporter */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <label
-                style={{
-                  fontSize: "0.9rem",
-                  color: "var(--text-secondary)",
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                <CustomIcon
-                  name="User"
-                  size={18}
-                  color="var(--accent-primary)"
-                />{" "}
-                Reporter
-              </label>
+            <CustomTextArea
+              label={
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <CustomIcon
+                    name="Info"
+                    size={16}
+                    color="var(--accent-primary)"
+                  />
+                  <span>Description</span>
+                </div>
+              }
+              value={description}
+              onChange={(e: any) => setDescription(e.target.value)}
+              onBlur={handleUpdateDescription}
+              disabled={!canUpdate}
+              placeholder={
+                canUpdate ? "Add a description..." : "No description provided"
+              }
+              rows={6}
+              containerStyle={{ height: "100%" }}
+              style={{
+                background: "rgba(255,255,255,0.02)",
+                fontSize: "0.95rem",
+                cursor: !canUpdate ? "not-allowed" : "text",
+                resize: !canUpdate ? "none" : "vertical",
+                height: "100%",
+              }}
+            />
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
+            >
               <div
-                className="glass-card"
-                style={{
-                  padding: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  minHeight: 64,
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid var(--border-glass)",
-                  borderRadius: 12,
-                }}
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
               >
-                <div
+                <label
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "50%",
-                    background: "rgba(124, 58, 237, 0.1)",
-                    color: "var(--accent-primary)",
+                    fontSize: "0.9rem",
+                    color: "var(--text-secondary)",
+                    fontWeight: 600,
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 700,
-                    fontSize: "1rem",
-                    flexShrink: 0,
+                    gap: 8,
                   }}
                 >
-                  {ticket.owner.fullname.charAt(0)}
-                </div>
-                <div>
+                  <CustomIcon
+                    name="User"
+                    size={18}
+                    color="var(--accent-primary)"
+                  />{" "}
+                  Reporter
+                </label>
+                <div
+                  className="glass-card"
+                  style={{
+                    padding: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    minHeight: 64,
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid var(--border-glass)",
+                    borderRadius: 12,
+                  }}
+                >
                   <div
                     style={{
-                      fontWeight: 600,
-                      fontSize: "0.9rem",
-                      color: "var(--text-primary)",
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      background: "rgba(124, 58, 237, 0.1)",
+                      color: "var(--accent-primary)",
                       display: "flex",
                       alignItems: "center",
-                      gap: 8,
+                      justifyContent: "center",
+                      fontWeight: 700,
+                      fontSize: "1rem",
+                      flexShrink: 0,
                     }}
                   >
-                    {ticket.owner.fullname}
-                    {ticket.owner.id !== user?.id &&
-                      (ticket.status.name.toLowerCase() ===
-                        StatusName.OPEN.toLowerCase() ||
-                        ticket.status.name.toLowerCase() ===
-                          StatusName.CANCELLED.toLowerCase()) && (
-                        <CustomButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleStartChat(ticket.owner.id)}
-                          icon={<CustomIcon name="MessageSquare" size={14} />}
-                          title="Chat with Reporter"
-                          style={{
-                            padding: 0,
-                            minHeight: "auto",
-                            color: "var(--accent-primary)",
-                          }}
-                        />
-                      )}
+                    {displayTicket.owner.fullname.charAt(0)}
                   </div>
-                  <div
-                    style={{
-                      fontSize: "0.75rem",
-                      color: "var(--text-muted)",
-                    }}
-                  >
-                    {fullTicketData?.owner?.title || "Staff Member"}
+                  <div>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: "0.9rem",
+                        color: "var(--text-primary)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      {displayTicket.owner.fullname}
+                      {displayTicket.owner.id !== user?.id &&
+                        (displayTicket.status.name.toLowerCase() ===
+                          StatusName.OPEN.toLowerCase() ||
+                          displayTicket.status.name.toLowerCase() ===
+                            StatusName.CANCELLED.toLowerCase()) && (
+                          <CustomButton
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleStartChat(displayTicket.owner.id)
+                            }
+                            icon={<CustomIcon name="MessageSquare" size={14} />}
+                            title="Chat with Reporter"
+                            style={{
+                              padding: 0,
+                              minHeight: "auto",
+                              color: "var(--accent-primary)",
+                            }}
+                          />
+                        )}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      {fullTicketData?.owner?.title || "Staff Member"}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Assignment */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <label
-                style={{
-                  fontSize: "0.9rem",
-                  color: "var(--text-secondary)",
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                <CustomIcon
-                  name="UserPlus"
-                  size={18}
-                  color="var(--accent-secondary)"
-                />{" "}
-                Assignee
-              </label>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12,
-                }}
-              >
-                {canAssign && (
-                  <CustomSelect
-                    options={[
-                      {
-                        value: "",
-                        label: "Unassigned",
-                        icon: <CustomIcon name="UserPlus" size={14} />,
-                      },
-                      ...agents.map((agent) => ({
-                        value: agent.id,
-                        label: agent.fullname,
-                        image: agent.image,
-                      })),
-                    ]}
-                    value={ticket.assignee?.id || ""}
-                    onChange={handleAssignTicket}
-                    disabled={!canAssign}
-                    placeholder="Assign ticket..."
-                  />
-                )}
-
-                {!canAssign && (
+              <CustomDatePicker
+                label={
                   <div
-                    className="glass-card"
-                    style={{
-                      padding: 12,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      minHeight: 64,
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid var(--border-glass)",
-                      borderRadius: 12,
-                    }}
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
                   >
-                    {ticket.assignee ? (
-                      <>
-                        <div
-                          style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: "50%",
-                            background: "rgba(6, 182, 212, 0.1)",
-                            color: "var(--accent-secondary)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontWeight: 700,
-                            fontSize: "1rem",
-                            flexShrink: 0,
-                          }}
-                        >
-                          {ticket.assignee.fullname.charAt(0)}
-                        </div>
-                        <div style={{ minWidth: 0 }}>
+                    <CustomIcon
+                      name="Clock"
+                      size={18}
+                      color="var(--accent-primary)"
+                    />
+                    <span>Due Date</span>
+                  </div>
+                }
+                value={
+                  displayTicket.dueDate
+                    ? new Date(displayTicket.dueDate)
+                        .toISOString()
+                        .split("T")[0]
+                    : ""
+                }
+                onChange={handleUpdateDueDate}
+                disabled={!canUpdate}
+              />
+
+              {/* Assignment */}
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
+              >
+                <label
+                  style={{
+                    fontSize: "0.9rem",
+                    color: "var(--text-secondary)",
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <CustomIcon
+                    name="UserPlus"
+                    size={18}
+                    color="var(--accent-secondary)"
+                  />{" "}
+                  Assignee
+                </label>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 12,
+                  }}
+                >
+                  {canAssign && (
+                    <CustomSelect
+                      options={[
+                        {
+                          value: "",
+                          label: "Unassigned",
+                          icon: <CustomIcon name="UserPlus" size={14} />,
+                        },
+                        ...agents.map((agent) => ({
+                          value: agent.id,
+                          label: agent.fullname,
+                          image: agent.image,
+                        })),
+                      ]}
+                      value={displayTicket.assignee?.id || ""}
+                      onChange={handleAssignTicket}
+                      disabled={!canAssign}
+                      placeholder="Assign ticket..."
+                    />
+                  )}
+
+                  {!canAssign && (
+                    <div
+                      className="glass-card"
+                      style={{
+                        padding: 12,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        minHeight: 64,
+                        background: "rgba(255,255,255,0.03)",
+                        border: "1px solid var(--border-glass)",
+                        borderRadius: 12,
+                      }}
+                    >
+                      {displayTicket.assignee ? (
+                        <>
                           <div
                             style={{
-                              fontWeight: 600,
-                              fontSize: "0.85rem",
-                              color: "var(--text-primary)",
+                              width: 36,
+                              height: 36,
+                              borderRadius: "50%",
+                              background: "rgba(6, 182, 212, 0.1)",
+                              color: "var(--accent-secondary)",
                               display: "flex",
                               alignItems: "center",
-                              gap: 8,
+                              justifyContent: "center",
+                              fontWeight: 700,
+                              fontSize: "1rem",
+                              flexShrink: 0,
                             }}
                           >
-                            {ticket.assignee.fullname}
-                            {ticket.assignee.id !== user?.id && (
-                              <CustomButton
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  handleStartChat(ticket.assignee.id)
-                                }
-                                icon={<CustomIcon name="MessageSquare" size={14} />}
-                                title="Chat with Assignee"
-                                style={{
-                                  padding: 0,
-                                  minHeight: "auto",
-                                  color: "var(--accent-secondary)",
-                                }}
-                              />
-                            )}
+                            {displayTicket.assignee.fullname.charAt(0)}
                           </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontWeight: 600,
+                                fontSize: "0.85rem",
+                                color: "var(--text-primary)",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 8,
+                              }}
+                            >
+                              {displayTicket.assignee.fullname}
+                              {displayTicket.assignee.id !== user?.id && (
+                                <CustomButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleStartChat(displayTicket.assignee.id)
+                                  }
+                                  icon={
+                                    <CustomIcon
+                                      name="MessageSquare"
+                                      size={14}
+                                    />
+                                  }
+                                  title="Chat with Assignee"
+                                  style={{
+                                    padding: 0,
+                                    minHeight: "auto",
+                                    color: "var(--accent-secondary)",
+                                  }}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div
+                          style={{
+                            color: "var(--text-muted)",
+                            fontSize: "0.85rem",
+                            fontStyle: "italic",
+                          }}
+                        >
+                          Unassigned
                         </div>
-                      </>
-                    ) : (
-                      <div
-                        style={{
-                          color: "var(--text-muted)",
-                          fontSize: "0.85rem",
-                          fontStyle: "italic",
-                        }}
-                      >
-                        Unassigned
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
+          {/* Description */}
         </div>
 
         {/* Right Column: Comments */}
@@ -642,20 +744,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         marginTop: "auto",
                       }}
                     >
-                      <input
-                        type="text"
+                      <CustomInput
                         placeholder="Add a comment..."
                         value={newComment}
-                        onChange={(e) => setNewComment(e.target.value)}
-                        style={{
-                          flex: 1,
-                          padding: "10px 14px",
-                          borderRadius: 10,
-                          background: "rgba(255,255,255,0.05)",
-                          border: "1px solid var(--border-glass)",
-                          color: "var(--text-primary)",
-                          fontSize: "0.9rem",
-                        }}
+                        onChange={(e: any) => setNewComment(e.target.value)}
+                        containerStyle={{ flex: 1 }}
                       />
                       <CustomButton
                         type="submit"

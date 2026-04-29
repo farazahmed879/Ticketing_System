@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getNotifications, markRead, clearNotifications, markAllRead } from '../controllers/notificationController';
+import { notificationController } from '../controllers/notification.controller';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
@@ -28,7 +28,7 @@ const router = Router();
  *       200:
  *         description: List of notifications with unread count
  */
-router.get('/', authMiddleware, getNotifications);
+router.get('/', authMiddleware, notificationController.getNotifications);
 
 /**
  * @swagger
@@ -48,8 +48,8 @@ router.get('/', authMiddleware, getNotifications);
  *       200:
  *         description: Notification marked read
  */
-router.put('/:id/read', authMiddleware, markRead);
-router.put('/read-all', authMiddleware, markAllRead);
+router.put('/:id/read', authMiddleware, notificationController.markRead);
+router.put('/read-all', authMiddleware, notificationController.markAllRead);
 
 /**
  * @swagger
@@ -63,6 +63,6 @@ router.put('/read-all', authMiddleware, markAllRead);
  *       200:
  *         description: Notifications cleared
  */
-router.delete('/clear', authMiddleware, clearNotifications);
+router.delete('/clear', authMiddleware, notificationController.clearNotifications);
 
 export default router;

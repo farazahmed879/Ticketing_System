@@ -1,8 +1,5 @@
 import { Router } from 'express';
-import {
-  getTickets, createTicket, getTicketById, updateTicket,
-  batchUpdateTickets, deleteTicket, addComment, getTicketHistory
-} from '../controllers/ticketController';
+import { ticketController } from '../controllers/ticket.controller';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
@@ -51,7 +48,7 @@ const router = Router();
  *       200:
  *         description: List of tickets with total count
  */
-router.get('/', authMiddleware, getTickets);
+router.get('/', authMiddleware, ticketController.getTickets);
 
 /**
  * @swagger
@@ -79,7 +76,7 @@ router.get('/', authMiddleware, getTickets);
  *       200:
  *         description: Historical/resolved tickets
  */
-router.get('/history', authMiddleware, getTicketHistory);
+router.get('/history', authMiddleware, ticketController.getTicketHistory);
 
 /**
  * @swagger
@@ -122,7 +119,7 @@ router.get('/history', authMiddleware, getTicketHistory);
  *       201:
  *         description: Ticket created
  */
-router.post('/', authMiddleware, createTicket);
+router.post('/', authMiddleware, ticketController.createTicket);
 
 /**
  * @swagger
@@ -156,7 +153,7 @@ router.post('/', authMiddleware, createTicket);
  *       200:
  *         description: Tickets updated
  */
-router.put('/batch', authMiddleware, batchUpdateTickets);
+router.put('/batch', authMiddleware, ticketController.batchUpdateTickets);
 
 /**
  * @swagger
@@ -176,7 +173,7 @@ router.put('/batch', authMiddleware, batchUpdateTickets);
  *       200:
  *         description: Full ticket details
  */
-router.get('/:id', authMiddleware, getTicketById);
+router.get('/:id', authMiddleware, ticketController.getTicketById);
 
 /**
  * @swagger
@@ -213,7 +210,7 @@ router.get('/:id', authMiddleware, getTicketById);
  *       200:
  *         description: Ticket updated
  */
-router.put('/:id', authMiddleware, updateTicket);
+router.put('/:id', authMiddleware, ticketController.updateTicket);
 
 /**
  * @swagger
@@ -233,7 +230,7 @@ router.put('/:id', authMiddleware, updateTicket);
  *       200:
  *         description: Ticket deleted
  */
-router.delete('/:id', authMiddleware, deleteTicket);
+router.delete('/:id', authMiddleware, ticketController.deleteTicket);
 
 /**
  * @swagger
@@ -265,6 +262,6 @@ router.delete('/:id', authMiddleware, deleteTicket);
  *       201:
  *         description: Comment added
  */
-router.post('/:id/comments', authMiddleware, addComment);
+router.post('/:id/comments', authMiddleware, ticketController.addComment);
 
 export default router;

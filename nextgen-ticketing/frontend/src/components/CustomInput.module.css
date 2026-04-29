@@ -24,12 +24,13 @@
   transition: var(--transition-fast);
   min-height: 48px;
   overflow: hidden;
+  box-shadow: none !important;
 }
 
 .inputWrapper:focus-within {
   border-color: var(--accent-primary);
   background: rgba(124, 58, 237, 0.05);
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+  box-shadow: none !important;
 }
 
 .inputWrapperError {

@@ -1,16 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 :root {
   /* Common Colors (can be overridden by theme management) */
-  --accent-primary: #7c3aed; 
-  --accent-secondary: #06b6d4; 
-  --accent-success: #10b981; 
-  --accent-warning: #f59e0b; 
-  --accent-danger: #ef4444; 
-  
+  --accent-primary: #7c3aed;
+  --accent-secondary: #06b6d4;
+  --accent-success: #10b981;
+  --accent-warning: #f59e0b;
+  --accent-danger: #ef4444;
+
   /* Transitions */
   --transition-fast: 0.2s ease;
   --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Gradients */
+  --primary-gradient: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  --primary-rgb: 124, 58, 237; /* RGB of #7c3aed */
 }
 
 [data-theme="dark"] {
@@ -18,14 +22,14 @@
   --bg-card: rgba(20, 21, 28, 0.6);
   --bg-sidebar: rgba(15, 16, 22, 0.95);
   --bg-input: #1a1b23;
-  
+
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
-  
+
   --border-glass: rgba(255, 255, 255, 0.08);
   --border-active: rgba(124, 58, 237, 0.5);
-  
+
   --bg-dropdown: #16171d;
   --blur-md: blur(12px);
   --blur-lg: blur(20px);
@@ -40,19 +44,20 @@
   --bg-main: #f8fafc;
   --bg-card: #ffffff;
   --bg-sidebar: #ffffff;
-  --bg-input: #f1f5f9;
-  
+  --bg-input: #ffffff;
+
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
-  
+
   --border-glass: #e2e8f0;
   --border-active: var(--accent-primary);
-  
+
   --bg-dropdown: #ffffff;
   --blur-md: none;
   --blur-lg: none;
-  --shadow-glass: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --shadow-glass:
+    0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
   --icon-bg: rgba(0, 0, 0, 0.04);
   --picker-icon-filter: none;
   --bg-skeleton: #e2e8f0;
@@ -66,7 +71,7 @@
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   background-color: var(--bg-main);
   color: var(--text-primary);
   overflow-x: hidden;
@@ -97,7 +102,7 @@ body {
   backdrop-filter: var(--blur-md);
   border: 1px solid var(--border-glass);
   border-radius: 16px;
-  box-shadow: var(--shadow-glass);
+  box-shadow: none;
 }
 
 .glass-card-hover:hover {
@@ -107,14 +112,22 @@ body {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  background: linear-gradient(
+    135deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .bg-gradient {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  background: linear-gradient(
+    135deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
 }
 
 button {
@@ -124,7 +137,9 @@ button {
   font-family: inherit;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   background: var(--bg-input);
   border: 1px solid var(--border-glass);
   color: var(--text-primary);
@@ -139,14 +154,22 @@ select option {
   color: var(--text-primary);
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
   border-color: var(--accent-primary);
   background: rgba(255, 255, 255, 0.05);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in {
@@ -154,5 +177,28 @@ input:focus, select:focus, textarea:focus {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
+@keyframes due-tomorrow-pulse {
+  0% {
+    border-color: rgba(128, 0, 0, 0.3);
+    box-shadow: 0 0 0 rgba(128, 0, 0, 0);
+  }
+  50% {
+    border-color: #ff4d4d;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+  }
+  100% {
+    border-color: rgba(128, 0, 0, 0.3);
+    box-shadow: 0 0 0 rgba(128, 0, 0, 0);
+  }
+}
+
+.due-tomorrow-card {
+  animation: due-tomorrow-pulse 2s infinite ease-in-out !important;
+  border-width: 1.5px !important;
+  border-style: solid !important;
+}
+

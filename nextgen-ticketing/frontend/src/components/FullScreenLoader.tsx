@@ -18,12 +18,13 @@ const FullScreenLoader: React.FC<FullScreenLoaderProps> = ({
         left: 0,
         width: "100vw",
         height: "100vh",
-        background: "var(--bg-main)",
+        background: "rgba(0, 0, 0, 0.6)",
+        backdropFilter: "blur(10px)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 9999,
+        zIndex: 99999,
       }}
     >
       <div

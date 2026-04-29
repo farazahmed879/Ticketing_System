@@ -57,6 +57,7 @@ export const ActionName = {
   TIMESHEET_UPDATED: "TIMESHEET_UPDATED",
   TIMESHEET_APPROVED: "TIMESHEET_APPROVED",
   TIMESHEET_REJECTED: "TIMESHEET_REJECTED",
+  DUE_DATE_CHANGED: "DUE_DATE_CHANGED",
 } as const;
 export type ActionName = (typeof ActionName)[keyof typeof ActionName];
 

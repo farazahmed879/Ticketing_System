@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDepartments, createDepartment, updateDepartment, deleteDepartment } from '../controllers/departmentController';
+import { departmentController } from '../controllers/department.controller';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
@@ -23,7 +23,7 @@ const router = Router();
  *       200:
  *         description: List of departments
  */
-router.get('/', authMiddleware, getDepartments);
+router.get('/', authMiddleware, departmentController.getDepartments);
 
 /**
  * @swagger
@@ -57,7 +57,7 @@ router.get('/', authMiddleware, getDepartments);
  *       201:
  *         description: Department created
  */
-router.post('/', authMiddleware, createDepartment);
+router.post('/', authMiddleware, departmentController.createDepartment);
 
 /**
  * @swagger
@@ -77,7 +77,7 @@ router.post('/', authMiddleware, createDepartment);
  *       200:
  *         description: Department updated
  */
-router.put('/:id', authMiddleware, updateDepartment);
+router.put('/:id', authMiddleware, departmentController.updateDepartment);
 
 /**
  * @swagger
@@ -97,6 +97,6 @@ router.put('/:id', authMiddleware, updateDepartment);
  *       200:
  *         description: Department deleted
  */
-router.delete('/:id', authMiddleware, deleteDepartment);
+router.delete('/:id', authMiddleware, departmentController.deleteDepartment);
 
 export default router;

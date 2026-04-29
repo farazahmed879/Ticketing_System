@@ -1,10 +1,9 @@
-import React from 'react';
-import styles from './CustomTextArea.module.css';
-import { Controller } from 'react-hook-form';
+import styles from "./CustomTextArea.module.css";
+import { Controller, type FieldValues } from "react-hook-form";
 
-import type { CustomTextAreaProps } from './types';
+import type { CustomTextAreaProps } from "./types";
 
-const CustomTextArea: React.FC<CustomTextAreaProps> = ({
+const CustomTextArea = <T extends FieldValues>({
   label,
   error: manualError,
   containerStyle,
@@ -13,16 +12,18 @@ const CustomTextArea: React.FC<CustomTextAreaProps> = ({
   control,
   rules,
   ...props
-}) => {
+}: CustomTextAreaProps<T>) => {
   const renderTextarea = (fieldProps: any = {}) => {
     const error = manualError || fieldProps.error;
-    
+
     return (
       <div className={styles.container} style={containerStyle}>
         {label && <label className={styles.label}>{label}</label>}
-        <div className={`${styles.inputWrapper} ${error ? styles.inputWrapperError : ''} glass-card`}>
+        <div
+          className={`${styles.inputWrapper} ${error ? styles.inputWrapperError : ""} glass-card`}
+        >
           <textarea
-            className={`${styles.textarea} ${className || ''}`}
+            className={`${styles.textarea} ${className || ""}`}
             {...props}
             {...fieldProps.field}
           />
@@ -38,7 +39,7 @@ const CustomTextArea: React.FC<CustomTextAreaProps> = ({
         name={name}
         control={control}
         rules={rules}
-        render={({ field, fieldState: { error } }) => 
+        render={({ field, fieldState: { error } }) =>
           renderTextarea({ field, error: error?.message })
         }
       />

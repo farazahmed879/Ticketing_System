@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import Modal from "../../components/Modal";
 import CustomInput from "../../components/CustomInput";
@@ -10,7 +10,13 @@ import CustomDateTimePicker from "../../components/CustomDateTimePicker";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
-import type { Interview, Candidate, InterviewFormData, MultiSelectOption } from "../../types";
+import { UIMessages } from "../../utils/constants";
+import type {
+  Interview,
+  Candidate,
+  InterviewFormData,
+  MultiSelectOption,
+} from "../../types";
 
 interface Props {
   isOpen: boolean;
@@ -67,6 +73,25 @@ const ScheduleInterviewModal: React.FC<Props> = ({
     }
   };
 
+  const debounceTimer = useRef<any>(null);
+
+  const handleCandidateSearch = (query: string) => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    debounceTimer.current = setTimeout(async () => {
+      try {
+        const res = await api.get(API_ROUTES.CANDIDATES.BASE, {
+          params: { search: query || undefined },
+        });
+        setCandidates(res.data.candidates);
+      } catch (err) {
+        console.error("Candidate search failed", err);
+      }
+    }, 500);
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchOptions();
@@ -106,7 +131,7 @@ const ScheduleInterviewModal: React.FC<Props> = ({
       return;
     }
 
-    setIsLoading(true);
+    setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
     try {
       const payload = {
         ...data,
@@ -130,7 +155,7 @@ const ScheduleInterviewModal: React.FC<Props> = ({
         err.response?.data?.error || err.message || "Operation failed",
       );
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 
@@ -167,9 +192,13 @@ const ScheduleInterviewModal: React.FC<Props> = ({
             rules={{ required: "Candidate is required" }}
             label="Candidate"
             placeholder="Select Candidate"
+            showSearch
+            serverSideSearch
+            onSearch={handleCandidateSearch}
             options={candidates.map((c) => ({
               value: c.id,
-              label: `${c.name} — ${c.position}`,
+              label: c.name,
+              sublabel: `${c.position} | ${c.email} | ${c.phone || "No phone"} | ${c.cnic || "No CNIC"}`,
             }))}
             required
           />

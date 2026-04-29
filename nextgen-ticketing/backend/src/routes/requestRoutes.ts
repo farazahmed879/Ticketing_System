@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { getRequests, updateRequestStatus, deleteRequest } from '../controllers/requestController';
+import { requestController } from '../controllers/request.controller';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
-router.get('/', authMiddleware, getRequests);
-router.patch('/:id', authMiddleware, updateRequestStatus);
-router.delete('/:id', authMiddleware, deleteRequest);
+router.get('/', authMiddleware, requestController.getRequests);
+router.patch('/:id', authMiddleware, requestController.updateRequestStatus);
+router.delete('/:id', authMiddleware, requestController.deleteRequest);
 
 export default router;

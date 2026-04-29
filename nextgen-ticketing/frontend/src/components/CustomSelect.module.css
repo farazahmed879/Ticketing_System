@@ -4,7 +4,7 @@
 }
 
 .containerActive {
-  z-index: 10001;
+  z-index: 11001;
 }
 
 .label {
@@ -28,6 +28,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   min-height: 48px;
+  box-shadow: none !important;
 }
 
 .trigger:hover {
@@ -38,7 +39,7 @@
 .triggerActive {
   border-color: var(--accent-primary) !important;
   background: rgba(124, 58, 237, 0.05) !important;
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+  box-shadow: none !important;
 }
 
 .disabled {
@@ -78,11 +79,11 @@
   top: calc(100% + 4px);
   left: 0;
   width: 100%;
-  z-index: 10002;
+  z-index: 11002;
   padding: 8px;
   max-height: 250px;
   overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: none !important;
   background: var(--bg-dropdown);
   border: 1px solid var(--border-glass);
   border-radius: 12px;
@@ -185,4 +186,48 @@
   color: var(--accent-danger);
   margin-left: 4px;
   margin-top: 4px;
+}
+
+.searchWrapper {
+  position: sticky;
+  top: -8px;
+  background: var(--bg-dropdown);
+  padding: 8px 4px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-glass);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+}
+
+.searchIcon {
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+
+.searchInput {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  padding: 4px 0;
+  outline: none;
+}
+
+.optionText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.subtext {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

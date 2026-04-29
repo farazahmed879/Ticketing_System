@@ -32,7 +32,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
   const { showNotification } = useNotification();
 
   // Form handling
-  const { handleSubmit, control, setValue, reset } = useForm<CandidateFormData>(
+  const { handleSubmit, control, setValue, getValues, reset } = useForm<CandidateFormData>(
     {
       defaultValues: {
         name: "",
@@ -49,6 +49,9 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         portfolio: "",
         github: "",
         projects: "",
+        dob: "",
+        nationality: "",
+        city: "",
       },
     },
   );
@@ -90,6 +93,9 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         portfolio: initialData.portfolio || "",
         github: initialData.github || "",
         projects: initialData.projects || "",
+        dob: initialData.dob ? new Date(initialData.dob).toISOString().split('T')[0] : "",
+        nationality: initialData.nationality || "",
+        city: initialData.city || "",
       });
 
       if (
@@ -130,6 +136,9 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         portfolio: "",
         github: "",
         projects: "",
+        dob: "",
+        nationality: "",
+        city: "",
       });
       setResumeData(null);
       setExpandedSections({});
@@ -162,6 +171,16 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
       if (parsed.github) setValue("github", parsed.github);
       if (parsed.projects && parsed.projects !== "No projects section found")
         setValue("projects", parsed.projects);
+      if (parsed.dob) {
+        try {
+          const date = new Date(parsed.dob);
+          if (!isNaN(date.getTime())) {
+            setValue("dob", date.toISOString().split('T')[0]);
+          }
+        } catch (e) {}
+      }
+      if (parsed.nationality) setValue("nationality", parsed.nationality);
+      if (parsed.city) setValue("city", parsed.city);
 
       if (parsed.phone) {
         const extractedPhone = parsed.phone;
@@ -191,6 +210,24 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         );
         if (uploadRes.data.success && uploadRes.data.driveUrl) {
           setValue("resumeUrl", uploadRes.data.driveUrl);
+          if (uploadRes.data.parsedData) {
+            const serverParsed = uploadRes.data.parsedData;
+            // Only populate if not already set by client-side parsing
+            const currentValues = getValues();
+            
+            if (serverParsed.dob && !currentValues.dob) {
+                const date = new Date(serverParsed.dob);
+                if (!isNaN(date.getTime())) {
+                  setValue("dob", date.toISOString().split('T')[0]);
+                }
+            }
+            if (serverParsed.nationality && !currentValues.nationality) {
+              setValue("nationality", serverParsed.nationality);
+            }
+            if (serverParsed.city && !currentValues.city) {
+              setValue("city", serverParsed.city);
+            }
+          }
           showNotification("success", "Resume uploaded to Google Drive");
         }
       } catch (uploadErr: any) {
@@ -209,10 +246,14 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
     }
   };
 
-  const handleFormSubmit = (data: CandidateFormData) => {
-    const fullPhone = data.phone
-      ? `${data.countryCode} ${data.phone.trim()}`
+  const handleFormSubmit = (formData: CandidateFormData) => {
+    const fullPhone = formData.phone
+      ? `${formData.countryCode} ${formData.phone.trim()}`
       : "";
+
+    // Remove countryCode from the data sent to the backend
+    const { countryCode, ...data } = formData;
+
     const payload = {
       ...data,
       phone: fullPhone,
@@ -240,18 +281,27 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(handleFormSubmit)}
-      style={{ display: "flex", gap: 24, maxHeight: "70vh" }}
-    >
+    <div style={{ width: "100%", maxHeight: "70vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <form
+        onSubmit={handleSubmit(handleFormSubmit)}
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+          gap: 24,
+          flex: 1,
+          width: "100%",
+          boxSizing: "border-box",
+          minHeight: 0,
+        }}
+      >
       {/* LEFT COLUMN - Candidate Details */}
       <div
         style={{
-          flex: 1,
           display: "flex",
           flexDirection: "column",
           gap: 16,
           overflowY: "auto",
+          minHeight: 0,
           paddingRight: 16,
           borderRight: "1px solid var(--border-glass)",
           minWidth: 0,
@@ -335,6 +385,32 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
           style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
         >
           <CustomInput
+            name="dob"
+            control={control}
+            label="Date of Birth"
+            type="date"
+          />
+          <CustomInput
+            name="nationality"
+            control={control}
+            label="Nationality"
+            type="text"
+            placeholder="e.g. Pakistani"
+          />
+        </div>
+
+        <CustomInput
+          name="city"
+          control={control}
+          label="City"
+          type="text"
+          placeholder="e.g. Islamabad"
+        />
+
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+        >
+          <CustomInput
             name="linkedin"
             control={control}
             label="LinkedIn Profile"
@@ -398,11 +474,13 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
       {/* RIGHT COLUMN - Resume Upload & Extracted Data */}
       <div
         style={{
-          flex: 1,
           display: "flex",
           flexDirection: "column",
           gap: 16,
           minWidth: 0,
+          minHeight: 0,
+          overflowY: "auto",
+          paddingRight: 16,
         }}
       >
         <div
@@ -504,8 +582,10 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
               >
                 {resumeFile.name}
               </span>
-              <button
+              <CustomButton
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   setResumeFile(null);
@@ -513,14 +593,12 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                   setValue("resumeUrl", "");
                   setExpandedSections({});
                 }}
+                icon={<CustomIcon name="X" size={16} />}
                 style={{
-                  background: "transparent",
                   color: "var(--accent-danger)",
                   padding: 4,
                 }}
-              >
-                <CustomIcon name="X" size={16} />
-              </button>
+              />
             </div>
           ) : (
             <div>
@@ -560,9 +638,6 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
               display: "flex",
               flexDirection: "column",
               gap: 10,
-              overflowY: "auto",
-              flex: 1,
-              paddingRight: 4,
             }}
           >
             {(
@@ -692,7 +767,8 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
           </div>
         )}
       </div>
-    </form>
+      </form>
+    </div>
   );
 };
 

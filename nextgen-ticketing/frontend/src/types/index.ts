@@ -2,6 +2,7 @@ export interface User {
   id: string;
   fullname: string;
   email: string;
+  username?: string;
   title?: string;
   role: {
     id: string;
@@ -15,6 +16,19 @@ export interface User {
   };
   workNumber?: string;
   mobileNumber?: string;
+  primaryContact?: string;
+  secondaryContact?: string;
+  cnic?: string;
+  linkedInUrl?: string;
+  gitUrl?: string;
+  address?: string;
+  emergencyContact?: string;
+  primaryResumeUrl?: string;
+  jpPatternResumeUrl?: string;
+  nationality?: string;
+  location?: string;
+  employeeType?: string;
+  branch?: string;
   image?: string;
   lastOnline?: string;
 }
@@ -23,10 +37,42 @@ export interface Department {
   id: string;
   name: string;
   description?: string;
+  teams?: Team[];
+  projects?: Project[];
   _count?: {
     users: number;
     teams: number;
+    projects: number;
   };
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  departmentId?: string;
+  department?: { id: string; name: string };
+  projectIds: string[];
+  projects?: { id: string; name: string }[];
+  memberIds: string[];
+  members?: User[];
+  _count?: {
+    members: number;
+    projects: number;
+  };
+  createdAt: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  departmentId?: string;
+  department?: { id: string; name: string };
+  teamIds: string[];
+  teams?: { id: string; name: string }[];
+  createdAt: string;
 }
 
 export interface Role {
@@ -43,6 +89,7 @@ export interface Role {
 }
 
 export interface Ticket {
+  dueDate: any;
   id: string;
   uid: number;
   subject: string;
@@ -61,7 +108,6 @@ export interface TicketDetail extends Ticket {
   comments: any[];
   history: any[];
   tags: string[];
-  dueDate?: string;
 }
 
 export interface Conversation {
@@ -149,7 +195,7 @@ export interface TimesheetEntry {
   date: string;
   totalHours: number;
   notes?: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: "PENDING" | "APPROVED" | "REJECTED";
   user?: { fullname: string; email: string };
   tasks: TimesheetTask[];
   approvedBy?: { fullname: string };
@@ -180,7 +226,11 @@ export interface Candidate {
   objective?: string;
   technicalSkills?: string;
   workExperience?: string;
+  dob?: string;
+  nationality?: string;
+  city?: string;
   status: string;
+  isConverted?: boolean;
   _count?: { interviews: number };
   createdAt: string;
   updatedAt: string;
@@ -285,6 +335,10 @@ export interface CandidateFormData {
   portfolio: string;
   github: string;
   projects: string;
+  dob: string;
+  nationality: string;
+  city: string;
+  isConverted?: boolean;
 }
 
 export interface TicketFormData {
@@ -294,12 +348,27 @@ export interface TicketFormData {
   groupId: string;
   typeId: string;
   assigneeId: string;
+  dueDate?: string;
 }
 
 export interface UserFormData {
   fullname: string;
   email: string;
   password?: string;
+  username?: string;
   title: string;
   roleId: string;
+  primaryContact?: string;
+  secondaryContact?: string;
+  cnic?: string;
+  linkedInUrl?: string;
+  gitUrl?: string;
+  address?: string;
+  emergencyContact?: string;
+  primaryResumeUrl?: string;
+  jpPatternResumeUrl?: string;
+  nationality?: string;
+  location?: string;
+  employeeType?: string;
+  branch?: string;
 }

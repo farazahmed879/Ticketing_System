@@ -61,7 +61,7 @@
 
 .content {
   padding: 24px;
-  overflow: visible; /* Allow dropdowns to go outside content area */
+  overflow: hidden; /* Prevent leakage */
   flex: 1;
   display: flex;
   flex-direction: column;

@@ -1,27 +1,22 @@
 import { Router } from 'express';
 import multer from 'multer';
-import {
-  getAllCandidates,
-  getCandidateById,
-  createCandidate,
-  updateCandidate,
-  deleteCandidate,
-  uploadResume,
-} from '../controllers/candidateController';
+import { candidateController } from '../controllers/candidate.controller';
 import { authMiddleware, checkRole } from '../middleware/auth';
 import { RoleName } from '../utils/constants';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB
 
-const allowedRoles = [RoleName.ADMIN, RoleName.AGENT, RoleName.EMPLOYEE];
+const allowedRoles = [RoleName.ADMIN, RoleName.AGENT, RoleName.HR];
 
-router.get('/', authMiddleware, checkRole(allowedRoles), getAllCandidates);
-router.get('/:id', authMiddleware, checkRole(allowedRoles), getCandidateById);
-router.post('/', authMiddleware, checkRole(allowedRoles), createCandidate);
-router.post('/upload-resume', authMiddleware, checkRole(allowedRoles), upload.single('resume'), uploadResume);
-router.put('/:id', authMiddleware, checkRole(allowedRoles), updateCandidate);
-router.delete('/:id', authMiddleware, checkRole(allowedRoles), deleteCandidate);
+router.get('/', authMiddleware, checkRole(allowedRoles), candidateController.getAllCandidates);
+router.get('/leaderboard', authMiddleware, checkRole(allowedRoles), candidateController.getLeaderboard);
+router.get('/:id', authMiddleware, checkRole(allowedRoles), candidateController.getCandidateById);
+router.post('/', authMiddleware, checkRole(allowedRoles), candidateController.createCandidate);
+router.post('/upload-resume', authMiddleware, checkRole(allowedRoles), upload.single('resume'), candidateController.uploadResume);
+router.post('/:id/convert', authMiddleware, checkRole(allowedRoles), candidateController.convertToUser);
+router.put('/:id', authMiddleware, checkRole(allowedRoles), candidateController.updateCandidate);
+router.delete('/:id', authMiddleware, checkRole(allowedRoles), candidateController.deleteCandidate);
 
 export default router;
 

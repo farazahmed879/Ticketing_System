@@ -1,9 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
+import path from 'path';
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
+const envPath = path.resolve(__dirname, `../${envFile}`);
+dotenv.config({ path: envPath });
+
 import http from 'http';
 import { Server } from 'socket.io';
-import { PrismaClient } from '@prisma/client';
+import prisma from './prisma';
 
 // Routes
 import authRoutes from './routes/authRoutes';
@@ -20,13 +26,11 @@ import requestRoutes from './routes/requestRoutes';
 import timesheetRoutes from './routes/timesheetRoutes';
 import candidateRoutes from './routes/candidateRoutes';
 import interviewRoutes from './routes/interviewRoutes';
+import projectRoutes from './routes/projectRoutes';
 
 // Swagger & Socket
 import { setupSwagger } from './swagger';
 import { setupSocketEvents } from './socketio/events';
-
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env';
-dotenv.config({ path: envFile });
 
 const app = express();
 const server = http.createServer(app);
@@ -39,7 +43,6 @@ const io = new Server(server, {
 
 app.set('io', io);
 
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
@@ -63,6 +66,7 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/timesheets', timesheetRoutes);
 app.use('/api/candidates', candidateRoutes);
 app.use('/api/interviews', interviewRoutes);
+app.use('/api/projects', projectRoutes);
 
 // Root → Swagger
 app.get('/', (req, res) => {

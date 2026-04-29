@@ -79,6 +79,34 @@ export const TableSkeleton: React.FC<TableSkeletonProps> = ({
   );
 };
 
+export const TableRowsSkeleton: React.FC<TableSkeletonProps> = ({
+  columns,
+  rows = 5,
+}) => {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <tr key={rowIndex}>
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <td key={colIndex}>
+              <CustomSkeleton
+                width={
+                  colIndex === 0
+                    ? "70%"
+                    : colIndex === columns - 1
+                      ? "40%"
+                      : "85%"
+                }
+                height="0.85rem"
+              />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+};
+
 interface CalendarSkeletonProps {
   rows?: number;
 }

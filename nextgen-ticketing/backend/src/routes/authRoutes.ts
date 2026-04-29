@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, getMe, register, loginHelp } from '../controllers/authController';
+import { authController } from '../controllers/auth.controller';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
@@ -24,8 +24,8 @@ const router = Router();
  *       200:
  *         description: Login successful
  */
-router.post('/login', login);
-router.post('/login-help', loginHelp);
+router.post('/login', authController.login);
+router.post('/login-help', authController.loginHelp);
 
 /**
  * @swagger
@@ -48,7 +48,7 @@ router.post('/login-help', loginHelp);
  *       201:
  *         description: User registered
  */
-router.post('/register', register);
+router.post('/register', authController.register);
 
 /**
  * @swagger
@@ -62,6 +62,6 @@ router.post('/register', register);
  *       200:
  *         description: User info retrieved
  */
-router.get('/me', authMiddleware, getMe);
+router.get('/me', authMiddleware, authController.getMe);
 
 export default router;

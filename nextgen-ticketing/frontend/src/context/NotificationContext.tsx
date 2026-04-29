@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import CustomIcon from '../components/CustomIcon';
-import styles from './Notification.module.css';
+import React, { createContext, useContext, useState, useCallback } from "react";
+import CustomIcon from "../components/CustomIcon";
+import styles from "./Notification.module.css";
+import FullScreenLoader from "../components/FullScreenLoader";
 
-type NotificationType = 'success' | 'error' | 'info' | 'warning';
+type NotificationType = "success" | "error" | "info" | "warning";
 
 interface Notification {
   id: string;
@@ -13,43 +14,68 @@ interface Notification {
 interface NotificationContextType {
   showNotification: (type: NotificationType, message: string) => void;
   isLoading: boolean;
-  setIsLoading: (loading: boolean) => void;
+  loadingMessage: string;
+  setIsLoading: (loading: boolean, message: string) => void;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined,
+);
 
-export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoadingState] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
 
-  const showNotification = useCallback((type: NotificationType, message: string) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    setNotifications((prev) => [...prev, { id, type, message }]);
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5000);
+  const setIsLoading = useCallback((loading: boolean, message: string = "") => {
+    setIsLoadingState(loading);
+    setLoadingMessage(message);
   }, []);
+
+  const showNotification = useCallback(
+    (type: NotificationType, message: string) => {
+      const id = Math.random().toString(36).substr(2, 9);
+      setNotifications((prev) => [...prev, { id, type, message }]);
+      setTimeout(() => {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      }, 5000);
+    },
+    [],
+  );
 
   const removeNotification = (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   return (
-    <NotificationContext.Provider value={{ showNotification, isLoading, setIsLoading }}>
+    <NotificationContext.Provider
+      value={{ showNotification, isLoading, loadingMessage, setIsLoading }}
+    >
       {children}
-      
+
       {/* Notifications Portal Area */}
       <div className={styles.container}>
         {notifications.map((n) => (
           <div key={n.id} className={`${styles.toast} ${styles[n.type]}`}>
             <div className={styles.icon}>
-              {n.type === 'success' && <CustomIcon name="CheckCircle" size={20} />}
-              {n.type === 'error' && <CustomIcon name="AlertCircle" size={20} />}
-              {n.type === 'info' && <CustomIcon name="Info" size={20} />}
-              {n.type === 'warning' && <CustomIcon name="AlertTriangle" size={20} />}
+              {n.type === "success" && (
+                <CustomIcon name="CheckCircle" size={20} />
+              )}
+              {n.type === "error" && (
+                <CustomIcon name="AlertCircle" size={20} />
+              )}
+              {n.type === "info" && <CustomIcon name="Info" size={20} />}
+              {n.type === "warning" && (
+                <CustomIcon name="AlertTriangle" size={20} />
+              )}
             </div>
             <div className={styles.message}>{n.message}</div>
-            <button className={styles.close} onClick={() => removeNotification(n.id)}>
+            <button
+              className={styles.close}
+              onClick={() => removeNotification(n.id)}
+            >
               <CustomIcon name="X" size={16} />
             </button>
           </div>
@@ -58,12 +84,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       {/* Full Screen Loader */}
       {isLoading && (
-        <div className={styles.loaderOverlay}>
-          <div className={styles.loaderContent}>
-            <div className={styles.spinner}></div>
-            <div className={styles.loaderText}>Processing...</div>
-          </div>
-        </div>
+        <FullScreenLoader subMessage={loadingMessage} />
+        // <div className={styles.loaderOverlay}>
+        //   <div className={styles.loaderContent}>
+        //     <div className={styles.spinner}></div>
+        //     <div className={styles.loaderText}>Processing...</div>
+        //   </div>
+        // </div>
       )}
     </NotificationContext.Provider>
   );
@@ -71,6 +98,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
 export const useNotification = () => {
   const context = useContext(NotificationContext);
-  if (!context) throw new Error('useNotification must be used within NotificationProvider');
+  if (!context)
+    throw new Error("useNotification must be used within NotificationProvider");
   return context;
 };

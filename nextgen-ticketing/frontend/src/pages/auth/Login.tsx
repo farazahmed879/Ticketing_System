@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import { useAuth } from "../../context/AuthContext";
+import { useNotification } from "../../context/NotificationContext";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import CustomInput from "../../components/CustomInput";
@@ -14,7 +15,7 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { isLoading, setIsLoading } = useNotification();
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSuccess, setForgotSuccess] = useState("");
@@ -28,7 +29,7 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setIsLoading(true);
+    setIsLoading(true, UIMessages.LOADING.LOGGING_IN);
 
     try {
       const res = await api.post(API_ROUTES.AUTH.LOGIN, { email, password });
@@ -37,7 +38,7 @@ const Login: React.FC = () => {
     } catch (err: any) {
       setError(err.response?.data?.message || UIMessages.LOGIN.FAILED);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 
@@ -45,7 +46,7 @@ const Login: React.FC = () => {
     e.preventDefault();
     setError("");
     setForgotSuccess("");
-    setIsLoading(true);
+    setIsLoading(true, UIMessages.LOADING.PROCESSING);
 
     try {
       const res = await api.post(API_ROUTES.AUTH.LOGIN_HELP, {
@@ -59,7 +60,7 @@ const Login: React.FC = () => {
     } catch (err: any) {
       setError(err.response?.data?.message || UIMessages.COMMON.ERROR);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 

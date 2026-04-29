@@ -14,10 +14,25 @@ model User {
   email         String    @unique
   password      String
   fullname      String
+  username      String?
   image         String?
   title         String?
   workNumber    String?
   mobileNumber  String?
+  
+  primaryContact    String?
+  secondaryContact  String?
+  cnic              String?
+  linkedInUrl       String?
+  gitUrl            String?
+  address           String?
+  emergencyContact  String?
+  primaryResumeUrl  String?
+  jpPatternResumeUrl String?
+  nationality       String?
+  location          String?
+  employeeType      String?   @default("Onsite") // Onsite, Remote
+  branch            String?
 
   roleId        String    @db.ObjectId
   role          Role      @relation(fields: [roleId], references: [id])
@@ -101,6 +116,9 @@ model Ticket {
   dueDate     DateTime?
   closedAt    DateTime?
 
+  interviewId String?  @db.ObjectId
+  interview   Interview? @relation(fields: [interviewId], references: [id])
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   deleted     Boolean  @default(false)
@@ -160,39 +178,54 @@ model Group {
   memberIds   String[] @db.ObjectId
   members     User[]   @relation(fields: [memberIds], references: [id])
   tickets     Ticket[]
-  timesheetTasks TimesheetTask[]
-
-  departmentIds String[] @db.ObjectId
-  departments   Department[] @relation(fields: [departmentIds], references: [id])
-
   createdAt   DateTime @default(now())
 }
 
 model Team {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
+  description String?
   memberIds   String[] @db.ObjectId
   members     User[]   @relation(fields: [memberIds], references: [id])
 
-  departmentIds String[] @db.ObjectId
-  departments   Department[] @relation(fields: [departmentIds], references: [id])
+  departmentId String? @db.ObjectId
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  projectIds  String[] @db.ObjectId
+  projects    Project[] @relation(fields: [projectIds], references: [id])
 
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Department {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
   description String?
-  allGroups   Boolean  @default(false)
+  
+  teams       Team[]
+  projects    Project[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Project {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String?
+  status      String   @default("Active") // Active, On Hold, Completed, Cancelled
+
+  departmentId String? @db.ObjectId
+  department   Department? @relation(fields: [departmentId], references: [id])
 
   teamIds     String[] @db.ObjectId
   teams       Team[]   @relation(fields: [teamIds], references: [id])
 
-  groupIds    String[] @db.ObjectId
-  groups      Group[]  @relation(fields: [groupIds], references: [id])
+  timesheetTasks TimesheetTask[]
 
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // ==================== NOTIFICATIONS ====================
@@ -286,7 +319,7 @@ model TimesheetTask {
   hours         Float
   
   projectId     String?  @db.ObjectId
-  project       Group?   @relation(fields: [projectId], references: [id])
+  project       Project? @relation(fields: [projectId], references: [id])
   
   ticketId      String?  @db.ObjectId
   ticket        Ticket?  @relation(fields: [ticketId], references: [id])
@@ -306,6 +339,7 @@ model Candidate {
   phone           String?
   cnic            String?
   address         String?
+  isConverted     Boolean  @default(false)
   position        String
   resumeUrl       String?
   notes           String?
@@ -317,6 +351,9 @@ model Candidate {
   github          String?
   projects        String?
   status          String   @default("Active") // Active, Hired, Rejected, On Hold
+  dob             DateTime?
+  nationality     String?
+  city            String?
   interviews      Interview[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -339,6 +376,7 @@ model Interview {
 
   panelMembers    InterviewPanel[]
   feedbacks       InterviewFeedback[]
+  tickets         Ticket[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

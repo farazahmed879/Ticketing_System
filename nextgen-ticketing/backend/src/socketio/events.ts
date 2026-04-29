@@ -1,9 +1,9 @@
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma';
 import { SocketEvent } from '../utils/constants';
 
-const prisma = new PrismaClient();
+// Using centralized prisma client
 
 interface OnlineUser {
   userId: string;

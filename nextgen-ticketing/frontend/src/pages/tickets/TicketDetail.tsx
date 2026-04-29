@@ -9,7 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
 import CustomSelect from "../../components/CustomSelect";
-import { RoleName, StatusName } from "../../utils/constants";
+import { RoleName, StatusName, PriorityName, UIMessages } from "../../utils/constants";
 
 import type { TicketDetail as ITicketDetail } from "../../types";
 
@@ -106,7 +106,7 @@ const TicketDetail: React.FC = () => {
 
   const handleAssign = async (assigneeId: string) => {
     try {
-      setIsLoading(true);
+      setIsLoading(true, UIMessages.LOADING.ASSIGNING_TICKET);
       await api.put(API_ROUTES.TICKETS.BY_ID(id!), { assigneeId });
       showNotification("success", "Ticket assigned successfully");
       fetchTicket();
@@ -114,7 +114,7 @@ const TicketDetail: React.FC = () => {
       console.error("Failed to assign ticket", err);
       showNotification("error", "Failed to assign ticket");
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 
@@ -157,7 +157,7 @@ const TicketDetail: React.FC = () => {
     }
 
     try {
-      setIsLoading(true);
+      setIsLoading(true, UIMessages.LOADING.UPDATING_STATUS);
       await api.put(API_ROUTES.TICKETS.BY_ID(id!), { statusId });
       showNotification("success", "Ticket status updated");
       fetchTicket();
@@ -168,7 +168,7 @@ const TicketDetail: React.FC = () => {
         err.response?.data?.error || "Failed to update ticket status",
       );
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 
@@ -184,7 +184,7 @@ const TicketDetail: React.FC = () => {
     }
 
     try {
-      setIsLoading(true);
+      setIsLoading(true, UIMessages.LOADING.UPDATING_PRIORITY);
       await api.put(API_ROUTES.TICKETS.BY_ID(id!), { priorityId });
       showNotification("success", "Ticket priority updated");
       fetchTicket();
@@ -192,7 +192,21 @@ const TicketDetail: React.FC = () => {
       console.error("Failed to update priority", err);
       showNotification("error", "Failed to update ticket priority");
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
+    }
+  };
+
+  const handleUpdateDueDate = async (dueDate: string) => {
+    try {
+      setIsLoading(true, UIMessages.LOADING.UPDATING_DUE_DATE);
+      await api.put(API_ROUTES.TICKETS.BY_ID(id!), { dueDate: dueDate || null });
+      showNotification("success", "Due date updated successfully");
+      fetchTicket();
+    } catch (err) {
+      console.error("Failed to update due date", err);
+      showNotification("error", "Failed to update due date");
+    } finally {
+      setIsLoading(false, "");
     }
   };
 
@@ -583,19 +597,30 @@ const TicketDetail: React.FC = () => {
               <div
                 style={{
                   display: "flex",
-                  alignItems: "center",
-                  gap: 10,
+                  flexDirection: "column",
+                  gap: 4,
                   fontSize: "0.85rem",
                   color: "var(--text-secondary)",
                 }}
               >
-                <CustomIcon name="Calendar" size={16} />
-                <span>
-                  Due:{" "}
-                  {ticket.dueDate
-                    ? new Date(ticket.dueDate).toLocaleDateString()
-                    : "No due date"}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <CustomIcon name="Calendar" size={16} />
+                  <span>Due Date</span>
+                </div>
+                <input
+                  type="date"
+                  className="glass-card"
+                  style={{
+                    padding: "8px 12px",
+                    width: "100%",
+                    fontSize: "0.85rem",
+                    color: "var(--text-primary)",
+                    marginTop: 4,
+                    border: "1px solid var(--border-glass)",
+                  }}
+                  value={ticket.dueDate ? new Date(ticket.dueDate).toISOString().split("T")[0] : ""}
+                  onChange={(e) => handleUpdateDueDate(e.target.value)}
+                />
               </div>
             </div>
           </div>

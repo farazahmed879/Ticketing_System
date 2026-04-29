@@ -3,13 +3,13 @@ import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
 import { API_ROUTES } from "../../utils/apiRoutes";
-import type { Role } from "../../types";
+import type { Role, RoleFormData } from "../../types";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
+import CustomPagination from "../../components/CustomPagination";
 import type { TableColumn } from "../../components/types";
-import { RoleName } from "../../utils/constants";
-import RoleForm, { type RoleFormData } from "./components/RoleForm";
+import { RoleName, UIMessages } from "../../utils/constants";
 import RoleModal from "./components/RoleModal";
 
 const RoleList: React.FC = () => {
@@ -21,13 +21,24 @@ const RoleList: React.FC = () => {
 
   const [editingRole, setEditingRole] = useState<Role | null>(null);
 
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const fetchData = async () => {
     try {
+      setLoading(true);
       const [rolesRes, statusRes] = await Promise.all([
-        api.get(API_ROUTES.ROLES.BASE),
+        api.get(API_ROUTES.ROLES.BASE, {
+          params: {
+            limit: itemsPerPage,
+            page: currentPage,
+          },
+        }),
         api.get(API_ROUTES.COMMON.STATUSES),
       ]);
       setRoles(rolesRes.data.roles);
+      setTotalItems(rolesRes.data.total);
       setStatuses(statusRes.data.statuses);
     } catch (err) {
       console.error("Failed to fetch data", err);
@@ -38,11 +49,12 @@ const RoleList: React.FC = () => {
   };
 
   useEffect(() => {
+    setLoading(true);
     fetchData();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const handleSubmit = async (data: RoleFormData) => {
-    setIsLoading(true);
+    setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
     try {
       if (editingRole) {
         await api.put(API_ROUTES.ROLES.BY_ID(editingRole.id), data);
@@ -60,7 +72,7 @@ const RoleList: React.FC = () => {
         err.response?.data?.error || "Operation failed",
       );
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 
@@ -71,7 +83,7 @@ const RoleList: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this role?")) return;
-    setIsLoading(true);
+    setIsLoading(true, UIMessages.LOADING.DELETING);
     try {
       await api.delete(API_ROUTES.ROLES.BY_ID(id));
       showNotification("success", "Role deleted successfully");
@@ -82,7 +94,7 @@ const RoleList: React.FC = () => {
         err.response?.data?.error || "Failed to delete role",
       );
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 
@@ -91,8 +103,21 @@ const RoleList: React.FC = () => {
       header: "Role Name",
       key: "name",
       render: (role) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 600 }}>
-          <CustomIcon name="Shield" size={18} color={role.isAdmin ? "var(--accent-danger)" : "var(--accent-primary)"} />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            fontWeight: 600,
+          }}
+        >
+          <CustomIcon
+            name="Shield"
+            size={18}
+            color={
+              role.isAdmin ? "var(--accent-danger)" : "var(--accent-primary)"
+            }
+          />
           {role.name}
         </div>
       ),
@@ -112,35 +137,23 @@ const RoleList: React.FC = () => {
       render: (role) => (
         <div style={{ display: "flex", gap: 8 }}>
           {role.isAdmin && (
-            <CustomBadge variant="danger">
-              {RoleName.ADMIN}
-            </CustomBadge>
+            <CustomBadge variant="danger">{RoleName.ADMIN}</CustomBadge>
           )}
           {role.isAgent && (
-            <CustomBadge variant="info">
-              {RoleName.AGENT}
-            </CustomBadge>
+            <CustomBadge variant="info">{RoleName.AGENT}</CustomBadge>
           )}
           {role.isCustomer && (
-            <CustomBadge variant="success">
-              {RoleName.CUSTOMER}
-            </CustomBadge>
+            <CustomBadge variant="success">{RoleName.CUSTOMER}</CustomBadge>
           )}
           {role.isEmployee && (
-            <CustomBadge variant="warning">
-              {RoleName.EMPLOYEE}
-            </CustomBadge>
+            <CustomBadge variant="warning">{RoleName.EMPLOYEE}</CustomBadge>
           )}
-          {role.isHR && (
-            <CustomBadge variant="info">
-              {RoleName.HR}
-            </CustomBadge>
-          )}
-          {!role.isAdmin && !role.isAgent && !role.isCustomer && !role.isEmployee && !role.isHR && (
-            <CustomBadge variant="neutral">
-              Other
-            </CustomBadge>
-          )}
+          {role.isHR && <CustomBadge variant="info">{RoleName.HR}</CustomBadge>}
+          {!role.isAdmin &&
+            !role.isAgent &&
+            !role.isCustomer &&
+            !role.isEmployee &&
+            !role.isHR && <CustomBadge variant="neutral">Other</CustomBadge>}
         </div>
       ),
     },
@@ -153,7 +166,7 @@ const RoleList: React.FC = () => {
       header: "Actions",
       key: "actions",
       render: (role) => (
-        <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ display: "flex", gap: 0 }}>
           <CustomButton
             variant="ghost"
             size="sm"
@@ -167,7 +180,7 @@ const RoleList: React.FC = () => {
             onClick={() => handleDelete(role.id)}
             title="Delete Role"
             icon={<CustomIcon name="Trash2" size={18} />}
-            style={{ background: 'transparent' }}
+            style={{ background: "transparent" }}
           />
         </div>
       ),
@@ -204,13 +217,26 @@ const RoleList: React.FC = () => {
         </CustomButton>
       </div>
 
-      <CustomTable
-        columns={columns}
-        data={roles}
-        loading={loading}
-        loadingMessage="Loading roles..."
-        emptyMessage="No roles found"
-      />
+      <div className="glass-card" style={{ padding: 0 }}>
+        <CustomTable
+          columns={columns}
+          data={roles}
+          loading={loading}
+          loadingMessage="Loading roles..."
+          emptyMessage="No roles found"
+        />
+        <CustomPagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(totalItems / itemsPerPage)}
+          onPageChange={setCurrentPage}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageSizeChange={(size) => {
+            setItemsPerPage(size);
+            setCurrentPage(0);
+          }}
+        />
+      </div>
 
       <RoleModal
         isOpen={isModalOpen}

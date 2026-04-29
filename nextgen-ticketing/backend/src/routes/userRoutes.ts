@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUsers, createUser, updateUser, deleteUser, updateProfile, updatePassword } from '../controllers/userController';
+import { userController } from '../controllers/user.controller';
 import { authMiddleware, checkRole } from '../middleware/auth';
 
 const router = Router();
@@ -37,7 +37,7 @@ const router = Router();
  *       200:
  *         description: List of users
  */
-router.get('/', authMiddleware, getUsers);
+router.get('/', authMiddleware, userController.getUsers);
 
 /**
  * @swagger
@@ -77,7 +77,7 @@ router.get('/', authMiddleware, getUsers);
  *       201:
  *         description: User created
  */
-router.post('/', authMiddleware, createUser);
+router.post('/', authMiddleware, userController.createUser);
 
 /**
  * @swagger
@@ -106,7 +106,7 @@ router.post('/', authMiddleware, createUser);
  *       200:
  *         description: Profile updated
  */
-router.put('/profile', authMiddleware, updateProfile);
+router.put('/profile', authMiddleware, userController.updateProfile);
 
 /**
  * @swagger
@@ -132,7 +132,27 @@ router.put('/profile', authMiddleware, updateProfile);
  *       200:
  *         description: Password updated
  */
-router.post('/profile/password', authMiddleware, updatePassword);
+router.post('/profile/password', authMiddleware, userController.updatePassword);
+
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   get:
+ *     summary: Get user by ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User details
+ */
+router.get('/:id', authMiddleware, userController.getUserById);
 
 /**
  * @swagger
@@ -165,7 +185,7 @@ router.post('/profile/password', authMiddleware, updatePassword);
  *       200:
  *         description: User updated
  */
-router.put('/:id', authMiddleware, updateUser);
+router.put('/:id', authMiddleware, userController.updateUser);
 
 /**
  * @swagger
@@ -185,6 +205,6 @@ router.put('/:id', authMiddleware, updateUser);
  *       200:
  *         description: User deleted
  */
-router.delete('/:id', authMiddleware, deleteUser);
+router.delete('/:id', authMiddleware, userController.deleteUser);
 
 export default router;

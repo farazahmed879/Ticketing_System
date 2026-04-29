@@ -21,12 +21,14 @@
   border: 1px solid var(--border-glass) !important;
   border-radius: 12px !important;
   transition: var(--transition-fast);
+  box-shadow: none !important;
+  flex: 1;
 }
 
 .inputWrapper:focus-within {
   border-color: var(--accent-primary);
   background: rgba(124, 58, 237, 0.05);
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+  box-shadow: none !important;
 }
 
 .inputWrapperError {

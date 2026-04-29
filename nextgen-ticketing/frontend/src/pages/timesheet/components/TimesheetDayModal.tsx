@@ -10,6 +10,7 @@ import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import { format } from "date-fns";
 import styles from "../Timesheet.module.css";
+import { UIMessages } from "../../../utils/constants";
 
 import type { TimesheetEntry } from "../../../types";
 
@@ -98,7 +99,7 @@ const TimesheetDayModal: React.FC<Props> = ({
   }, []);
 
   const handleSave = async (data: TimesheetFormData) => {
-    setIsLoading(true);
+    setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
     try {
       await api.post(API_ROUTES.TIMESHEETS.ENTRIES, {
         date: date.toISOString(),
@@ -115,7 +116,7 @@ const TimesheetDayModal: React.FC<Props> = ({
         err.response?.data?.error || "Failed to save timesheet",
       );
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 
@@ -124,7 +125,7 @@ const TimesheetDayModal: React.FC<Props> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={`Log Tasks - ${format(date, "MMMM dd, yyyy")}`}
-      maxWidth="800px"
+      maxWidth="1200px"
     >
       <form
         onSubmit={handleSubmit(handleSave)}
@@ -238,7 +239,7 @@ const TimesheetDayModal: React.FC<Props> = ({
                 style={{
                   padding: 16,
                   display: "grid",
-                  gridTemplateColumns: "2fr 1fr 1.5fr 1.5fr auto",
+                  gridTemplateColumns: "2fr .5fr 1.5fr 2fr auto",
                   gap: 12,
                   alignItems: "end",
                 }}
@@ -285,18 +286,17 @@ const TimesheetDayModal: React.FC<Props> = ({
                   disabled={isApproved}
                 />
                 {!isApproved && (
-                  <button
+                  <CustomButton
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => remove(index)}
+                    icon={<CustomIcon name="Trash2" size={20} />}
                     style={{
-                      background: "transparent",
                       color: "var(--accent-danger)",
-                      cursor: "pointer",
                       paddingBottom: 10,
                     }}
-                  >
-                    <CustomIcon name="Trash2" size={20} />
-                  </button>
+                  />
                 )}
               </div>
             ))}

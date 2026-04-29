@@ -15,6 +15,8 @@ import TicketBoard from "./pages/tickets/TicketBoard.tsx";
 import TicketDetail from "./pages/tickets/TicketDetail.tsx";
 import Messages from "./pages/messages/Messages.tsx";
 import DepartmentList from "./pages/departments/DepartmentList.tsx";
+import TeamList from "./pages/teams/TeamList.tsx";
+import ProjectList from "./pages/projects/ProjectList.tsx";
 import UserList from "./pages/users/UserList.tsx";
 import RoleList from "./pages/roles/RoleList.tsx";
 import MainLayout from "./layouts/MainLayout.tsx";
@@ -28,6 +30,7 @@ import TimesheetReview from "./pages/timesheet/TimesheetReview.tsx";
 import TimesheetReport from "./pages/timesheet/TimesheetReport.tsx";
 import CandidateList from "./pages/candidates/CandidateList.tsx";
 import CandidateDetail from "./pages/candidates/CandidateDetail.tsx";
+import CandidateLeaderboard from "./pages/candidates/CandidateLeaderboard.tsx";
 import InterviewList from "./pages/interviews/InterviewList.tsx";
 import InterviewDetail from "./pages/interviews/InterviewDetail.tsx";
 
@@ -75,12 +78,9 @@ const App: React.FC = () => {
               <Route path="tickets/board" element={<TicketBoard />} />
               <Route path="tickets/:id" element={<TicketDetail />} />
               <Route path="messages" element={<Messages />} />
-              <Route path="teams" element={<PlaceholderPage title="Teams" />} />
+              <Route path="teams" element={<TeamList />} />
               <Route path="departments" element={<DepartmentList />} />
-              <Route
-                path="groups"
-                element={<PlaceholderPage title="Projects" />}
-              />
+              <Route path="projects" element={<ProjectList />} />
               <Route path="timesheet" element={<Timesheet />} />
               <Route path="timesheet/review" element={<TimesheetReview />} />
               <Route path="timesheet/report" element={<TimesheetReport />} />
@@ -89,8 +89,9 @@ const App: React.FC = () => {
               <Route path="notifications" element={<Notifications />} />
               <Route path="requests" element={<Requests />} />
               <Route path="settings" element={<Settings />} />
-              <Route path="profile" element={<Profile />} />
+              <Route path="profile/:id?" element={<Profile />} />
               <Route path="candidates" element={<CandidateList />} />
+              <Route path="candidates/leaderboard" element={<CandidateLeaderboard />} />
               <Route path="candidates/:id" element={<CandidateDetail />} />
               <Route path="interviews" element={<InterviewList />} />
               <Route path="interviews/:id" element={<InterviewDetail />} />

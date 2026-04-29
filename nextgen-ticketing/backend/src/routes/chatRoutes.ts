@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getConversations, getConversation, startConversation, sendMessage, getChatPartners, createGroupChat, updateGroupMembers } from '../controllers/chatController';
+import { chatController } from '../controllers/chat.controller';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
@@ -23,10 +23,10 @@ const router = Router();
  *       200:
  *         description: List of conversations with recent messages
  */
-router.get('/conversations', authMiddleware, getConversations);
-router.get('/partners', authMiddleware, getChatPartners);
-router.post('/groups', authMiddleware, createGroupChat);
-router.patch('/groups/:id/members', authMiddleware, updateGroupMembers);
+router.get('/conversations', authMiddleware, chatController.getConversations);
+router.get('/partners', authMiddleware, chatController.getChatPartners);
+router.post('/groups', authMiddleware, chatController.createGroupChat);
+router.patch('/groups/:id/members', authMiddleware, chatController.updateGroupMembers);
 
 /**
  * @swagger
@@ -50,7 +50,7 @@ router.patch('/groups/:id/members', authMiddleware, updateGroupMembers);
  *       201:
  *         description: Conversation created or existing returned
  */
-router.post('/conversations', authMiddleware, startConversation);
+router.post('/conversations', authMiddleware, chatController.startConversation);
 
 /**
  * @swagger
@@ -70,7 +70,7 @@ router.post('/conversations', authMiddleware, startConversation);
  *       200:
  *         description: Conversation with messages
  */
-router.get('/conversations/:id', authMiddleware, getConversation);
+router.get('/conversations/:id', authMiddleware, chatController.getConversation);
 
 /**
  * @swagger
@@ -100,6 +100,6 @@ router.get('/conversations/:id', authMiddleware, getConversation);
  *       201:
  *         description: Message sent
  */
-router.post('/conversations/:id', authMiddleware, sendMessage);
+router.post('/conversations/:id', authMiddleware, chatController.sendMessage);
 
 export default router;

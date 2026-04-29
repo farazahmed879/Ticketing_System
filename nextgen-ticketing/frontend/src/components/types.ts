@@ -1,14 +1,15 @@
-import type { Control, RegisterOptions } from 'react-hook-form';
+import type { Control, RegisterOptions, FieldValues, Path } from 'react-hook-form';
 
 export interface Option {
   value: string;
   label: string;
+  sublabel?: string;
   icon?: React.ReactNode;
   image?: string;
   disabled?: boolean;
 }
 
-export interface CustomSelectProps {
+export interface CustomSelectProps<T extends FieldValues = any> {
   options: Option[];
   value?: string | string[];
   onChange?: (value: any) => void;
@@ -18,40 +19,44 @@ export interface CustomSelectProps {
   disabled?: boolean;
   required?: boolean;
   style?: React.CSSProperties;
-  name?: string;
-  control?: Control<any>;
-  rules?: RegisterOptions;
+  name?: Path<T>;
+  control?: Control<T>;
+  rules?: RegisterOptions<T, Path<T>>;
   error?: string;
   isMulti?: boolean;
   icon?: React.ReactNode;
+  showSearch?: boolean;
+  onSearch?: (query: string) => void;
+  serverSideSearch?: boolean;
 }
 
-export interface CustomInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface CustomInputProps<T extends FieldValues = any> extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: React.ReactNode;
   error?: string;
   icon?: React.ReactNode;
   suffix?: React.ReactNode;
   containerStyle?: React.CSSProperties;
-  name?: string;
-  control?: Control<any>;
-  rules?: RegisterOptions;
+  name?: Path<T>;
+  control?: Control<T>;
+  rules?: RegisterOptions<T, Path<T>>;
 }
 
-export interface CustomTextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface CustomTextAreaProps<T extends FieldValues = any> extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: React.ReactNode;
   error?: string;
   containerStyle?: React.CSSProperties;
-  name?: string;
-  control?: Control<any>;
-  rules?: RegisterOptions;
+  name?: Path<T>;
+  control?: Control<T>;
+  rules?: RegisterOptions<T, Path<T>>;
 }
 
 export interface TableColumn<T> {
   header: string;
   key: keyof T | string;
-  render?: (item: T) => React.ReactNode;
+  render?: (item: T, index: number) => React.ReactNode;
   style?: React.CSSProperties;
   className?: string;
+  width?: string;
 }
 
 export interface CustomTableProps<T> {
@@ -93,23 +98,23 @@ export interface CustomButtonProps extends React.ButtonHTMLAttributes<HTMLButton
   containerStyle?: React.CSSProperties;
 }
 
-export interface CustomDatePickerProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
-  label?: string;
+export interface CustomDatePickerProps<T extends FieldValues = any> extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
+  label?: React.ReactNode;
   error?: string;
-  name?: string;
-  control?: Control<any>;
-  rules?: RegisterOptions;
+  name?: Path<T>;
+  control?: Control<T>;
+  rules?: RegisterOptions<T, Path<T>>;
   containerStyle?: React.CSSProperties;
   value?: string;
   onChange?: (value: string) => void;
 }
 
-export interface CustomDateTimePickerProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
-  label?: string;
+export interface CustomDateTimePickerProps<T extends FieldValues = any> extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
+  label?: React.ReactNode;
   error?: string;
-  name?: string;
-  control?: Control<any>;
-  rules?: RegisterOptions;
+  name?: Path<T>;
+  control?: Control<T>;
+  rules?: RegisterOptions<T, Path<T>>;
   containerStyle?: React.CSSProperties;
   value?: string;
   onChange?: (value: string) => void;

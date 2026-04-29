@@ -7,7 +7,7 @@ import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import styles from "./TicketList.module.css";
-import { RoleName, StatusName, PriorityName } from "../../utils/constants";
+import { RoleName, StatusName, PriorityName, UIMessages } from "../../utils/constants";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { format } from "date-fns";
 
@@ -15,6 +15,7 @@ import type { Ticket, TicketFormData } from "../../types";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
+import CustomPagination from "../../components/CustomPagination";
 import CreateTicketModal from "./components/CreateTicketModal";
 
 const TicketList: React.FC = () => {
@@ -24,6 +25,7 @@ const TicketList: React.FC = () => {
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Create Ticket Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -61,7 +63,7 @@ const TicketList: React.FC = () => {
   const fetchTickets = async () => {
     try {
       const res = await api.get(API_ROUTES.TICKETS.BASE, {
-        params: { search, status, page, limit: 10 },
+        params: { search, status, page, limit: itemsPerPage },
       });
       setTickets(res.data.tickets);
       setTotalCount(res.data.totalCount);
@@ -73,11 +75,12 @@ const TicketList: React.FC = () => {
   };
 
   useEffect(() => {
+    setLoading(true);
     fetchTickets();
-  }, [search, status, page]);
+  }, [search, status, page, itemsPerPage]);
 
   const handleCreateTicket = async (data: TicketFormData) => {
-    setIsLoading(true);
+    setIsLoading(true, UIMessages.LOADING.CREATING_TICKET);
     try {
       await api.post(API_ROUTES.TICKETS.BASE, {
         ...data,
@@ -94,7 +97,7 @@ const TicketList: React.FC = () => {
         err.response?.data?.error || "Failed to create ticket",
       );
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 
@@ -208,9 +211,15 @@ const TicketList: React.FC = () => {
               render: (t) => t.group?.name || "-",
             },
             {
-              header: "Date",
+              header: "Created",
               key: "createdAt",
               render: (t) => format(new Date(t.createdAt), "MMM dd, yyyy"),
+            },
+            {
+              header: "Due Date",
+              key: "dueDate",
+              render: (t) =>
+                t.dueDate ? format(new Date(t.dueDate), "MMM dd, yyyy") : "-",
             },
           ]}
           data={tickets}
@@ -221,50 +230,18 @@ const TicketList: React.FC = () => {
           className="glass-card-hover"
         />
 
-        <div
-          className="glass-card"
-          style={{
-            marginTop: -20,
-            borderTopLeftRadius: 0,
-            borderTopRightRadius: 0,
-          }}
-        >
-          <div
-            style={{
-              padding: "16px 24px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+        <div className="glass-card" style={{ padding: 0 }}>
+          <CustomPagination
+            currentPage={page}
+            totalPages={Math.ceil(totalCount / itemsPerPage)}
+            onPageChange={setPage}
+            totalItems={totalCount}
+            itemsPerPage={itemsPerPage}
+            onPageSizeChange={(size) => {
+              setItemsPerPage(size);
+              setPage(0);
             }}
-          >
-            <div
-              style={{
-                color: "var(--text-secondary)",
-                fontSize: "0.95rem",
-                fontWeight: 500,
-              }}
-            >
-              Showing {tickets.length} of {totalCount} tickets
-            </div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <CustomButton
-                variant="secondary"
-                size="sm"
-                style={{ padding: 8, borderRadius: 10 }}
-                disabled={page === 0}
-                onClick={() => setPage(page - 1)}
-                icon={<CustomIcon name="ChevronLeft" size={20} />}
-              />
-              <CustomButton
-                variant="secondary"
-                size="sm"
-                style={{ padding: 8, borderRadius: 10 }}
-                disabled={(page + 1) * 10 >= totalCount}
-                onClick={() => setPage(page + 1)}
-                icon={<CustomIcon name="ChevronRight" size={20} />}
-              />
-            </div>
-          </div>
+          />
         </div>
       </div>
 

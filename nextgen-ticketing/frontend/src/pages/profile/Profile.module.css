@@ -101,6 +101,26 @@
   color: var(--text-primary);
 }
 
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.infoItem label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.infoItem span {
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
 @media (max-width: 992px) {
   .grid {
     grid-template-columns: 1fr;

@@ -6,7 +6,7 @@ import { useNotification } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import styles from "./InterviewDetail.module.css";
 import { API_ROUTES } from "../../utils/apiRoutes";
-import { InterviewStatus, Recommendation } from "../../utils/constants";
+import { InterviewStatus, Recommendation, UIMessages } from "../../utils/constants";
 
 import type { Interview, InterviewFeedback } from "../../types";
 import CustomBadge from "../../components/CustomBadge";
@@ -33,14 +33,14 @@ const StarRating: React.FC<{
     <span className={styles.ratingLabel}>{label}</span>
     <div className={styles.stars}>
       {[1, 2, 3, 4, 5].map((star) => (
-        <button
+        <CustomButton
           key={star}
           type="button"
+          variant="ghost"
           className={`${styles.star} ${star <= value ? styles.starFilled : ""}`}
           onClick={() => onChange(star)}
-        >
-          <CustomIcon name="Star" size={22} />
-        </button>
+          icon={<CustomIcon name="Star" size={22} />}
+        />
       ))}
     </div>
   </div>
@@ -102,7 +102,7 @@ const InterviewDetail: React.FC = () => {
   );
 
   const handleStatusChange = async (newStatus: string) => {
-    setIsLoading(true);
+    setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
     try {
       await api.put(API_ROUTES.INTERVIEWS.STATUS(id!), { status: newStatus });
       showNotification("success", `Interview marked as ${newStatus}`);
@@ -110,7 +110,7 @@ const InterviewDetail: React.FC = () => {
     } catch (err: any) {
       showNotification("error", "Failed to update status");
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 
@@ -122,7 +122,7 @@ const InterviewDetail: React.FC = () => {
     }
 
     setSubmittingFeedback(true);
-    setIsLoading(true);
+    setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
     try {
       await api.post(API_ROUTES.INTERVIEWS.FEEDBACK(id!), {
         communicationRating,
@@ -146,7 +146,7 @@ const InterviewDetail: React.FC = () => {
       );
     } finally {
       setSubmittingFeedback(false);
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 

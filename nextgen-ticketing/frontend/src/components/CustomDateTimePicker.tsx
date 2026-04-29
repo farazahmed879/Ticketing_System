@@ -1,10 +1,9 @@
-import React from 'react';
-import { Controller } from 'react-hook-form';
-import styles from './CustomInput.module.css';
-import CustomIcon from './CustomIcon';
-import type { CustomDateTimePickerProps } from './types';
+import { Controller, type FieldValues } from "react-hook-form";
+import styles from "./CustomInput.module.css";
+import CustomIcon from "./CustomIcon";
+import type { CustomDateTimePickerProps } from "./types";
 
-const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
+const CustomDateTimePicker = <T extends FieldValues>({
   label,
   error: manualError,
   containerStyle,
@@ -15,22 +14,24 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
   value: manualValue,
   onChange: manualOnChange,
   ...props
-}) => {
+}: CustomDateTimePickerProps<T>) => {
   const renderPicker = (fieldProps: any = {}) => {
     const error = manualError || fieldProps.error;
-    const value = manualValue || fieldProps.field?.value || '';
+    const value = manualValue || fieldProps.field?.value || "";
     const onChange = manualOnChange || fieldProps.field?.onChange;
 
     return (
       <div className={styles.container} style={containerStyle}>
         {label && <label className={styles.label}>{label}</label>}
-        <div className={`${styles.inputWrapper} ${error ? styles.inputWrapperError : ''} glass-card`}>
+        <div
+          className={`${styles.inputWrapper} ${error ? styles.inputWrapperError : ""} glass-card`}
+        >
           <span className={styles.icon}>
             <CustomIcon name="CalendarClock" size={18} />
           </span>
           <input
             type="datetime-local"
-            className={`${styles.input} ${className || ''}`}
+            className={`${styles.input} ${className || ""}`}
             value={value}
             onChange={(e) => onChange && onChange(e.target.value)}
             {...props}

@@ -27,16 +27,18 @@ const TicketForm: React.FC<TicketFormProps> = ({
   isLoading = false,
   showAssignee = false,
 }) => {
-  const { handleSubmit, control, reset, watch, setValue } = useForm<TicketFormData>({
-    defaultValues: {
-      subject: "",
-      issue: "",
-      priorityId: "",
-      groupId: "",
-      typeId: "",
-      assigneeId: "",
-    },
-  });
+  const { handleSubmit, control, reset, watch, setValue } =
+    useForm<TicketFormData>({
+      defaultValues: {
+        subject: "",
+        issue: "",
+        priorityId: "",
+        groupId: "",
+        typeId: "",
+        assigneeId: "",
+        dueDate: "",
+      },
+    });
 
   const selectedPriority = watch("priorityId");
 
@@ -49,6 +51,9 @@ const TicketForm: React.FC<TicketFormProps> = ({
         groupId: initialData.group?.id || "",
         typeId: initialData.type.id,
         assigneeId: initialData.assignee?.id || "",
+        dueDate: initialData.dueDate
+          ? new Date(initialData.dueDate).toISOString().split("T")[0]
+          : "",
       });
     } else {
       reset({
@@ -58,6 +63,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
         groupId: "",
         typeId: types.length > 0 ? types[0].id : "",
         assigneeId: "",
+        dueDate: "",
       });
     }
   }, [initialData, priorities, types, reset]);
@@ -99,7 +105,9 @@ const TicketForm: React.FC<TicketFormProps> = ({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <label style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>Priority</label>
+        <label style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+          Priority
+        </label>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           {priorities.map((p) => (
             <label
@@ -111,7 +119,10 @@ const TicketForm: React.FC<TicketFormProps> = ({
                 gap: 6,
                 padding: "6px 12px",
                 borderRadius: 8,
-                background: selectedPriority === p.id ? `${p.color}30` : "rgba(255,255,255,0.05)",
+                background:
+                  selectedPriority === p.id
+                    ? `${p.color}30`
+                    : "rgba(255,255,255,0.05)",
                 border: `1px solid ${selectedPriority === p.id ? p.color : "transparent"}`,
                 transition: "0.2s",
               }}
@@ -124,25 +135,43 @@ const TicketForm: React.FC<TicketFormProps> = ({
                 onChange={(e) => setValue("priorityId", e.target.value)}
                 style={{ display: "none" }}
               />
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: p.color }}></div>
-              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>{p.name}</span>
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: p.color,
+                }}
+              ></div>
+              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
+                {p.name}
+              </span>
             </label>
           ))}
         </div>
       </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        {showAssignee && (
+          <CustomSelect
+            name="assigneeId"
+            control={control}
+            label="Assign To (Optional)"
+            placeholder="Unassigned"
+            options={[
+              { value: "", label: "Unassigned" },
+              ...agents.map((a) => ({ value: a.id, label: a.fullname })),
+            ]}
+          />
+        )}
 
-      {showAssignee && (
-        <CustomSelect
-          name="assigneeId"
+        <CustomInput
+          name="dueDate"
           control={control}
-          label="Assign To (Optional)"
-          placeholder="Unassigned"
-          options={[
-            { value: "", label: "Unassigned" },
-            ...agents.map((a) => ({ value: a.id, label: a.fullname })),
-          ]}
+          label="Due Date (Optional)"
+          type="date"
+          placeholder="Select due date"
         />
-      )}
+      </div>
 
       <CustomTextArea
         name="issue"

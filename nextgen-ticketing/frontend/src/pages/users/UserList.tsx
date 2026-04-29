@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import CustomInput from "../../components/CustomInput";
@@ -6,40 +7,49 @@ import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
 import styles from "./UserList.module.css";
 import { API_ROUTES } from "../../utils/apiRoutes";
+import { UIMessages } from "../../utils/constants";
 
 import type { User, Role, UserFormData } from "../../types";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
+import CustomPagination from "../../components/CustomPagination";
 import type { TableColumn } from "../../components/types";
-import UserForm from "./components/UserForm";
 import UserModal from "./components/UserModal";
 
 const UserList: React.FC = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { showNotification, setIsLoading } = useNotification();
 
-  // Filter state
+  // Pagination & Filter state
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const [uRes, rRes] = await Promise.all([
         api.get(API_ROUTES.USERS.BASE, {
           params: {
             type: roleFilter === "all" ? "all" : roleFilter,
-            limit: -1,
+            limit: itemsPerPage,
+            page: currentPage,
+            search: searchTerm,
           },
         }),
         api.get(API_ROUTES.ROLES.BASE),
       ]);
       setUsers(uRes.data.accounts);
+      setTotalItems(uRes.data.total);
       setRoles(rRes.data.roles);
     } catch (err) {
       console.error("Failed to fetch data", err);
@@ -50,11 +60,21 @@ const UserList: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [roleFilter]);
+    setLoading(true);
+    const delayDebounceFn = setTimeout(() => {
+      fetchData();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [roleFilter, currentPage, searchTerm, itemsPerPage]);
 
   const handleSubmit = async (data: UserFormData) => {
-    setIsLoading(true);
+    setIsLoading(
+      true,
+      editingUser
+        ? UIMessages.LOADING.UPDATING_USER
+        : UIMessages.LOADING.CREATING_USER,
+    );
     try {
       if (editingUser) {
         await api.put(API_ROUTES.USERS.BY_ID(editingUser.id), data);
@@ -72,7 +92,7 @@ const UserList: React.FC = () => {
         err.response?.data?.error || err.message || "Operation failed",
       );
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 
@@ -83,7 +103,7 @@ const UserList: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
-    setIsLoading(true);
+    setIsLoading(true, UIMessages.LOADING.DELETING);
     try {
       await api.delete(API_ROUTES.USERS.BY_ID(id));
       showNotification("success", "User deleted successfully");
@@ -91,15 +111,9 @@ const UserList: React.FC = () => {
     } catch (err: any) {
       showNotification("error", "Failed to delete user");
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
-
-  const filteredUsers = users.filter(
-    (u) =>
-      u.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
 
   const columns: TableColumn<User>[] = [
     {
@@ -166,21 +180,31 @@ const UserList: React.FC = () => {
       header: "Actions",
       key: "actions",
       render: (u) => (
-        <div style={{ display: "flex", gap: 12 }}>
-          <button
-            onClick={() => handleEdit(u)}
-            style={{ background: "transparent", color: "var(--text-muted)" }}
+        <div style={{ display: "flex", gap: 0 }}>
+          <CustomButton
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+                e.stopPropagation();
+                handleEdit(u);
+            }}
             title="Edit User"
+            style={{ color: "var(--text-muted)", padding: "4px 8px" }}
           >
             <CustomIcon name="Edit2" size={18} />
-          </button>
-          <button
-            onClick={() => handleDelete(u.id)}
-            style={{ background: "transparent", color: "var(--accent-danger)" }}
+          </CustomButton>
+          <CustomButton
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(u.id);
+            }}
             title="Delete User"
+            style={{ color: "var(--accent-danger)", padding: "4px 8px" }}
           >
             <CustomIcon name="Trash2" size={18} />
-          </button>
+          </CustomButton>
         </div>
       ),
     },
@@ -220,13 +244,19 @@ const UserList: React.FC = () => {
         <CustomInput
           placeholder="Search users..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(0);
+          }}
           icon={<CustomIcon name="Search" size={18} />}
           containerStyle={{ flex: 1 }}
         />
         <CustomSelect
           value={roleFilter}
-          onChange={(val) => setRoleFilter(val)}
+          onChange={(val) => {
+            setRoleFilter(val);
+            setCurrentPage(0);
+          }}
           placeholder="All Roles"
           options={[
             { value: "all", label: "All Roles" },
@@ -238,13 +268,27 @@ const UserList: React.FC = () => {
         />
       </div>
 
-      <CustomTable
-        columns={columns}
-        data={filteredUsers}
-        loading={loading}
-        loadingMessage="Loading users..."
-        emptyMessage="No users found"
-      />
+      <div className="glass-card" style={{ padding: 0 }}>
+        <CustomTable
+          columns={columns}
+          data={users}
+          loading={loading}
+          loadingMessage="Loading users..."
+          emptyMessage="No users found"
+          onRowClick={(u) => navigate(`/profile/${u.id}`)}
+        />
+        <CustomPagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(totalItems / itemsPerPage)}
+          onPageChange={setCurrentPage}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageSizeChange={(size) => {
+            setItemsPerPage(size);
+            setCurrentPage(0);
+          }}
+        />
+      </div>
 
       <UserModal
         isOpen={isModalOpen}

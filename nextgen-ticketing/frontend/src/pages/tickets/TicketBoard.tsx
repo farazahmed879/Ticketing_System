@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
@@ -13,6 +12,7 @@ import type { Column, Ticket } from "../../types";
 import { BoardSkeleton } from "../../components/CustomSkeleton";
 import CustomButton from "../../components/CustomButton";
 import TicketDetailModal from "./components/TicketDetailModal";
+import { isTomorrow, isToday, parseISO, format } from "date-fns";
 
 const TicketBoard: React.FC = () => {
   const [columns, setColumns] = useState<Column[]>([]);
@@ -32,11 +32,6 @@ const TicketBoard: React.FC = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const { showNotification, setIsLoading } = useNotification();
   const { user } = useAuth();
-  const navigate = useNavigate();
-
-  const handleStartChat = (userId: string) => {
-    navigate(`/messages?userId=${userId}`);
-  };
 
   const toggleColumnCollapse = (columnId: string) => {
     setCollapsedColumns((prev) =>
@@ -116,7 +111,7 @@ const TicketBoard: React.FC = () => {
       showNotification("error", UIMessages.BOARD.LOAD_FAILED);
     } finally {
       setLoading(false);
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   }, [
     selectedAgentIds,
@@ -195,7 +190,7 @@ const TicketBoard: React.FC = () => {
 
   const handleUpdateStatus = async (ticketId: string, statusId: string) => {
     try {
-      setIsLoading(true);
+      setIsLoading(true, UIMessages.LOADING.UPDATING_STATUS);
       await api.put(API_ROUTES.TICKETS.BY_ID(ticketId), { statusId });
       showNotification("success", "Ticket status updated");
       fetchBoardData();
@@ -203,7 +198,7 @@ const TicketBoard: React.FC = () => {
       console.error("Failed to update status", err);
       showNotification("error", "Failed to update ticket status");
     } finally {
-      setIsLoading(false);
+      setIsLoading(false, "");
     }
   };
 
@@ -366,7 +361,13 @@ const TicketBoard: React.FC = () => {
                     {column.tickets.map((ticket) => (
                       <div
                         key={ticket.id}
-                        className={`${styles.card} ${isCollapsed ? styles.miniCard : "glass-card"}`}
+                        className={`${styles.card} ${isCollapsed ? styles.miniCard : "glass-card"} ${
+                          ticket.dueDate &&
+                          (isToday(parseISO(ticket.dueDate)) ||
+                            isTomorrow(parseISO(ticket.dueDate)))
+                            ? "due-tomorrow-card"
+                            : ""
+                        }`}
                         draggable={!isCollapsed}
                         onDragStart={(e) =>
                           !isCollapsed && handleDragStart(e, ticket.id)
@@ -400,6 +401,29 @@ const TicketBoard: React.FC = () => {
                             <div className={styles.cardUid}>#{ticket.uid}</div>
                             <div className={styles.cardSubject}>
                               {ticket.subject}
+                            </div>
+
+                            <div className={styles.cardMeta}>
+                              {ticket.group && (
+                                <div
+                                  className={styles.metaItem}
+                                  title="Project"
+                                >
+                                  <CustomIcon name="Folder" size={12} />
+                                  <span>{ticket.group.name}</span>
+                                </div>
+                              )}
+                              {ticket.dueDate && (
+                                <div
+                                  className={styles.metaItem}
+                                  title="Due Date"
+                                >
+                                  <CustomIcon name="Calendar" size={12} />
+                                  <span>
+                                    {format(parseISO(ticket.dueDate), "MMM dd")}
+                                  </span>
+                                </div>
+                              )}
                             </div>
 
                             <div className={styles.cardFooter}>

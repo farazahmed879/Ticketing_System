@@ -23,6 +23,7 @@ const UserModal: React.FC<UserModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={user ? "Edit User" : "Add New User"}
+      maxWidth="850px"
     >
       <UserForm
         initialData={user}

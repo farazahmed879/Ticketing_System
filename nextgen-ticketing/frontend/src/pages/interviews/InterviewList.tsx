@@ -5,22 +5,29 @@ import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
 import styles from "./InterviewList.module.css";
 import { API_ROUTES } from "../../utils/apiRoutes";
-import { InterviewStatus } from "../../utils/constants";
+import { InterviewStatus, RoleName, UIMessages } from "../../utils/constants";
+import { useAuth } from "../../context/AuthContext";
 
 import type { Interview } from "../../types";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
+import CustomFilterBar from "../../components/CustomFilterBar";
 import type { TableColumn } from "../../components/types";
 import CustomDatePicker from "../../components/CustomDatePicker";
 import ScheduleInterviewModal from "./ScheduleInterviewModal";
+import CustomPagination from "../../components/CustomPagination";
 
 const statusBadgeVariant = (status: string) => {
   switch (status) {
-    case InterviewStatus.SCHEDULED: return "info" as const;
-    case InterviewStatus.COMPLETED: return "success" as const;
-    case InterviewStatus.CANCELLED: return "danger" as const;
-    default: return "neutral" as const;
+    case InterviewStatus.SCHEDULED:
+      return "info" as const;
+    case InterviewStatus.COMPLETED:
+      return "success" as const;
+    case InterviewStatus.CANCELLED:
+      return "danger" as const;
+    default:
+      return "neutral" as const;
   }
 };
 
@@ -29,13 +36,34 @@ const InterviewList: React.FC = () => {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { showNotification } = useNotification();
+  const { showNotification, setIsLoading } = useNotification();
+  const { user } = useAuth();
 
-  // Filter state
+  const canUpdateInterviews =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.name === RoleName.HR ||
+    user?.role?.permissions?.interviews?.update;
+
+  const canDeleteInterviews =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.permissions?.interviews?.delete;
+
+  const canCreateInterviews =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.name === RoleName.HR ||
+    user?.role?.permissions?.interviews?.create;
+
+  // Pagination & Filter state
   const [activeFilter, setActiveFilter] = useState("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
+  const [editingInterview, setEditingInterview] = useState<Interview | null>(
+    null,
+  );
+
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const filters = [
     { value: "all", label: "All" },
@@ -48,7 +76,11 @@ const InterviewList: React.FC = () => {
   const fetchInterviews = async () => {
     setLoading(true);
     try {
-      const params: any = { filter: activeFilter };
+      const params: any = {
+        filter: activeFilter,
+        limit: itemsPerPage,
+        page: currentPage,
+      };
       if (startDate && endDate) {
         params.startDate = startDate;
         params.endDate = endDate;
@@ -57,6 +89,7 @@ const InterviewList: React.FC = () => {
 
       const res = await api.get(API_ROUTES.INTERVIEWS.BASE, { params });
       setInterviews(res.data.interviews);
+      setTotalItems(res.data.total);
     } catch (err) {
       console.error("Failed to fetch interviews", err);
       showNotification("error", "Failed to load interviews");
@@ -66,11 +99,13 @@ const InterviewList: React.FC = () => {
   };
 
   useEffect(() => {
+    setLoading(true);
     fetchInterviews();
-  }, [activeFilter]);
+  }, [activeFilter, currentPage, itemsPerPage]);
 
   const handleDateFilter = () => {
     if (startDate && endDate) {
+      setCurrentPage(0);
       fetchInterviews();
     }
   };
@@ -79,6 +114,24 @@ const InterviewList: React.FC = () => {
     setIsModalOpen(false);
     setEditingInterview(null);
     fetchInterviews();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this interview?"))
+      return;
+    setIsLoading(true, UIMessages.LOADING.DELETING);
+    try {
+      await api.delete(API_ROUTES.INTERVIEWS.BY_ID(id));
+      showNotification("success", "Interview deleted successfully");
+      fetchInterviews();
+    } catch (err: any) {
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to delete interview",
+      );
+    } finally {
+      setIsLoading(false, "");
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -119,9 +172,7 @@ const InterviewList: React.FC = () => {
     {
       header: "Interview",
       key: "title",
-      render: (i) => (
-        <span style={{ fontWeight: 500 }}>{i.title}</span>
-      ),
+      render: (i) => <span style={{ fontWeight: 500 }}>{i.title}</span>,
     },
     {
       header: "Date & Time",
@@ -183,18 +234,34 @@ const InterviewList: React.FC = () => {
       header: "Actions",
       key: "actions",
       render: (i) => (
-        <div style={{ display: "flex", gap: 10 }}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setEditingInterview(i);
-              setIsModalOpen(true);
-            }}
-            style={{ background: "transparent", color: "var(--text-muted)" }}
-            title="Edit Interview"
-          >
-            <CustomIcon name="Edit2" size={17} />
-          </button>
+        <div style={{ display: "flex", gap: 0 }}>
+          {canUpdateInterviews && (
+            <CustomButton
+              variant="ghost"
+              size="sm"
+              icon={<CustomIcon name="Edit2" size={17} />}
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingInterview(i);
+                setIsModalOpen(true);
+              }}
+              title="Edit Interview"
+            />
+          )}
+
+          {canDeleteInterviews && (
+            <CustomButton
+              variant="ghost"
+              size="sm"
+              icon={<CustomIcon name="Trash2" size={17} />}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(i.id);
+              }}
+              style={{ color: "var(--accent-danger)" }}
+              title="Delete Interview"
+            />
+          )}
         </div>
       ),
     },
@@ -211,23 +278,23 @@ const InterviewList: React.FC = () => {
         }}
       >
         <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
-            Interviews
-          </h1>
+          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Interviews</h1>
           <p style={{ color: "var(--text-muted)" }}>
             Schedule and manage candidate interviews
           </p>
         </div>
-        <CustomButton
-          variant="gradient"
-          icon={<CustomIcon name="Plus" size={20} />}
-          onClick={() => {
-            setEditingInterview(null);
-            setIsModalOpen(true);
-          }}
-        >
-          Schedule Interview
-        </CustomButton>
+        {canCreateInterviews && (
+          <CustomButton
+            variant="gradient"
+            icon={<CustomIcon name="Plus" size={20} />}
+            onClick={() => {
+              setEditingInterview(null);
+              setIsModalOpen(true);
+            }}
+          >
+            Schedule Interview
+          </CustomButton>
+        )}
       </div>
 
       {/* Filters */}
@@ -240,21 +307,16 @@ const InterviewList: React.FC = () => {
           alignItems: "center",
         }}
       >
-        <div className={styles.filterBar}>
-          {filters.map((f) => (
-            <button
-              key={f.value}
-              className={`${styles.filterBtn} ${activeFilter === f.value ? styles.filterBtnActive : ""}`}
-              onClick={() => {
-                setActiveFilter(f.value);
-                setStartDate("");
-                setEndDate("");
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        <CustomFilterBar
+          options={filters}
+          activeOption={activeFilter}
+          onChange={(val) => {
+            setActiveFilter(val);
+            setCurrentPage(0);
+            setStartDate("");
+            setEndDate("");
+          }}
+        />
 
         <div className={styles.dateFilter}>
           <CustomDatePicker
@@ -282,14 +344,27 @@ const InterviewList: React.FC = () => {
         </div>
       </div>
 
-      <CustomTable
-        columns={columns}
-        data={interviews}
-        loading={loading}
-        loadingMessage="Loading interviews..."
-        emptyMessage="No interviews found"
-        onRowClick={(i) => navigate(`/interviews/${i.id}`)}
-      />
+      <div className="glass-card" style={{ padding: 0 }}>
+        <CustomTable
+          columns={columns}
+          data={interviews}
+          loading={loading}
+          loadingMessage="Loading interviews..."
+          emptyMessage="No interviews found"
+          onRowClick={(i) => navigate(`/interviews/${i.id}`)}
+        />
+        <CustomPagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(totalItems / itemsPerPage)}
+          onPageChange={setCurrentPage}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageSizeChange={(size) => {
+            setItemsPerPage(size);
+            setCurrentPage(0);
+          }}
+        />
+      </div>
 
       <ScheduleInterviewModal
         isOpen={isModalOpen}

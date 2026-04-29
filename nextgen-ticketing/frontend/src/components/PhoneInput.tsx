@@ -2,9 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import styles from './PhoneInput.module.css';
 import CustomIcon from './CustomIcon';
 import { COUNTRY_CODES } from '../utils/constants';
-import { Controller, type Control } from 'react-hook-form';
+import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
 
-interface PhoneInputProps {
+interface PhoneInputProps<T extends FieldValues = any> {
   label?: string;
   countryCode?: string;
   onCountryCodeChange?: (code: string) => void;
@@ -13,12 +13,12 @@ interface PhoneInputProps {
   placeholder?: string;
   error?: string;
   required?: boolean;
-  name?: string;
-  countryCodeName?: string;
-  control?: Control<any>;
+  name?: Path<T>;
+  countryCodeName?: Path<T>;
+  control?: Control<T>;
 }
 
-const PhoneInput: React.FC<PhoneInputProps> = ({
+const PhoneInput = <T extends FieldValues>({
   label,
   countryCode: manualCountryCode,
   onCountryCodeChange: manualOnCountryCodeChange,
@@ -30,7 +30,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   name,
   countryCodeName,
   control
-}) => {
+}: PhoneInputProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

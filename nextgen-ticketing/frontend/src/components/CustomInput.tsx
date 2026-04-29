@@ -1,10 +1,9 @@
-import React from "react";
 import styles from "./CustomInput.module.css";
 import { Controller } from "react-hook-form";
 
 import type { CustomInputProps } from "./types";
 
-const CustomInput: React.FC<CustomInputProps> = ({
+const CustomInput = <T extends any>({
   label,
   error: manualError,
   icon,
@@ -15,7 +14,7 @@ const CustomInput: React.FC<CustomInputProps> = ({
   control,
   rules,
   ...props
-}) => {
+}: CustomInputProps<T>) => {
   const renderInput = (fieldProps: any = {}) => {
     const error = manualError || fieldProps.error;
 

@@ -20,6 +20,9 @@ export interface ResumeData {
   portfolio?: string;
   github?: string;
   projects?: string;
+  dob?: string;
+  nationality?: string;
+  city?: string;
 }
 
 /**
@@ -79,7 +82,6 @@ async function extractFromDOCX(file: File): Promise<string> {
  */
 export function parseResumeData(text: string): ResumeData {
   const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-
   const objective = extractSection(normalized, [
     "objective",
     "career objective",
@@ -89,6 +91,9 @@ export function parseResumeData(text: string): ResumeData {
     "profile",
     "about me",
     "about",
+    "career highlights",
+    "professional profile",
+    "personal summary",
   ]);
 
   const workExperience = extractSection(normalized, [
@@ -99,6 +104,8 @@ export function parseResumeData(text: string): ResumeData {
     "employment",
     "work history",
     "career history",
+    "professional work history",
+    "relevant experience",
   ]);
 
   const technicalSkills = extractSection(normalized, [
@@ -112,6 +119,9 @@ export function parseResumeData(text: string): ResumeData {
     "tools and technologies",
     "tech stack",
     "areas of expertise",
+    "technical proficiencies",
+    "skills & abilities",
+    "professional skills",
   ]);
 
   const projects = extractSection(normalized, [
@@ -156,53 +166,102 @@ function extractContactInfo(text: string): {
   linkedin?: string;
   portfolio?: string;
   github?: string;
+  dob?: string;
+  nationality?: string;
+  city?: string;
 } {
-  const result: ReturnType<typeof extractContactInfo> = {};
+  const result: any = {};
 
-  // --- Name: usually the first meaningful non-empty line ---
-  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const toTitleCase = (str: string) => {
+    return str
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
+      .trim();
+  };
+
+  const unspace = (str: string) => {
+    const trimmed = str.trim();
+    if (trimmed.length < 4) return trimmed;
+    // Detect if it's spaced out: mostly single or double characters separated by spaces
+    const parts = trimmed.split(/\s+/);
+    const shortParts = parts.filter((p) => p.length <= 2).length;
+    if (parts.length >= 3 && shortParts / parts.length > 0.6) {
+      return trimmed.replace(/(\w)\s(?=\w)/g, "$1").replace(/\s+/g, " ");
+    }
+    return trimmed;
+  };
+
   if (lines.length > 0) {
-    // First line is usually the candidate name
-    // Skip if it looks like a label/header
-    const firstLine = lines[0];
-    const labelPattern = /^(resume|curriculum vitae|cv|name|contact|personal)\s*[:\-]/i;
-    if (!labelPattern.test(firstLine) && firstLine.length < 60 && firstLine.length > 2) {
-      result.name = firstLine;
+    const firstLine = unspace(lines[0]);
+    const labelPattern =
+      /^(resume|curriculum vitae|cv|name|contact|personal)\s*[:\-]/i;
+    if (
+      !labelPattern.test(firstLine) &&
+      firstLine.length < 60 &&
+      firstLine.length > 2
+    ) {
+      result.name = toTitleCase(firstLine);
     } else {
-      // Try to find "Name:" label
       const nameMatch = text.match(/(?:name|full\s*name)\s*[:\-–]\s*(.+)/i);
-      if (nameMatch) result.name = nameMatch[1].trim();
+      if (nameMatch) result.name = toTitleCase(unspace(nameMatch[1]));
     }
   }
 
   // --- Email ---
-  const emailMatch = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+  const emailMatch = text.match(
+    /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/,
+  );
   if (emailMatch) result.email = emailMatch[0];
 
   // --- Phone ---
-  // Match various formats: +92-300-1234567, (021) 123-4567, +1 234 567 8901, etc.
   const phonePatterns = [
     /(?:phone|mobile|cell|contact|tel|ph)[:\s\-–]*([+]?\d[\d\s\-().]{7,18}\d)/i,
     /([+]\d{1,3}[\s\-]?\(?\d{2,4}\)?[\s\-]?\d{3,4}[\s\-]?\d{3,4})/,
     /(\(\d{3,5}\)\s*\d{3,4}[\s\-]?\d{3,4})/,
+    /(\d{4}[\s\-]?\d{7})/, // Standard 03xx-xxxxxxx
   ];
   for (const pattern of phonePatterns) {
     const match = text.match(pattern);
     if (match) {
-      result.phone = (match[1] || match[0]).trim();
+      let rawPhone = (match[1] || match[0]).trim();
+      // Remove all non-digits
+      let digits = rawPhone.replace(/\D/g, "");
+
+      // Remove Pakistan country code if present (92 or 0092)
+      if (digits.startsWith("0092")) {
+        digits = digits.slice(4);
+      } else if (digits.startsWith("92") && digits.length > 10) {
+        digits = digits.slice(2);
+      }
+
+      // If it starts with 0 and has 11 digits, it's a local number, keep it as is or remove leading 0 if requested?
+      // Usually keeping the 0 for local or removing it for consistency.
+      // User said "remove country code", usually implying they want the core number.
+      // If it starts with 0, it's 0300... let's keep it if it's 11 digits, otherwise standard is 10 digits.
+      if (digits.startsWith("0") && digits.length === 11) {
+        // Keep as is or normalize? Let's just return the digits as requested.
+      }
+
+      result.phone = digits;
       break;
     }
   }
 
-  // --- CNIC (Pakistani format: 12345-1234567-1) ---
+  // --- CNIC ---
   const cnicMatch = text.match(/\b\d{5}[\-\s]?\d{7}[\-\s]?\d{1}\b/);
   if (cnicMatch) {
     result.cnic = cnicMatch[0].replace(/\s/g, "-");
-    // Normalize to xxxxx-xxxxxxx-x format
     if (!result.cnic.includes("-")) {
       const digits = result.cnic.replace(/\D/g, "");
       if (digits.length === 13) {
-        result.cnic = `${digits.slice(0,5)}-${digits.slice(5,12)}-${digits.slice(12)}`;
+        result.cnic = `${digits.slice(0, 5)}-${digits.slice(5, 12)}-${digits.slice(12)}`;
       }
     }
   }
@@ -215,16 +274,28 @@ function extractContactInfo(text: string): {
   for (const pattern of addressPatterns) {
     const match = text.match(pattern);
     if (match && match[1]?.trim().length > 5) {
-      // Grab up to 2 subsequent lines for multi-line addresses
       const addrStart = text.indexOf(match[0]);
       const afterAddr = text.substring(addrStart + match[0].length);
       const extraLines = afterAddr.split("\n").slice(0, 2);
+      const collapse = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
       let fullAddr = match[1].trim();
       for (const line of extraLines) {
         const trimmed = line.trim();
-        // Stop if next line is a section header or label
         if (!trimmed || /^[a-z\s]{3,}[:\-]/i.test(trimmed)) break;
-        if (ALL_SECTION_HEADERS.some(h => trimmed.toLowerCase().startsWith(h))) break;
+
+        const trimmedCollapsed = collapse(trimmed);
+        if (
+          ALL_SECTION_HEADERS.some((h) => {
+            const hCollapsed = collapse(h);
+            return (
+              trimmedCollapsed === hCollapsed ||
+              (trimmedCollapsed.startsWith(hCollapsed) &&
+                trimmedCollapsed.length < hCollapsed.length + 5)
+            );
+          })
+        )
+          break;
         fullAddr += ", " + trimmed;
       }
       result.address = fullAddr;
@@ -233,109 +304,192 @@ function extractContactInfo(text: string): {
   }
 
   // --- LinkedIn ---
-  const linkedinMatch = text.match(/(?:linkedin\.com\/in\/|linkedin\.com\/pub\/)([a-zA-Z0-9\-_%]+)/i);
-  if (linkedinMatch) result.linkedin = `https://www.linkedin.com/in/${linkedinMatch[1]}`;
+  const linkedinMatch = text.match(
+    /(?:linkedin\.com\/in\/|linkedin\.com\/pub\/)([a-zA-Z0-9\-_%]+)/i,
+  );
+  if (linkedinMatch)
+    result.linkedin = `https://www.linkedin.com/in/${linkedinMatch[1]}`;
 
   // --- GitHub ---
   const githubMatch = text.match(/(?:github\.com\/)([a-zA-Z0-9\-_%]+)/i);
   if (githubMatch) result.github = `https://github.com/${githubMatch[1]}`;
 
   // --- Portfolio / Website ---
-  const portfolioMatch = text.match(/(?:portfolio|website|site|web|link)\s*[:\-–]\s*(https?:\/\/[^\s\n]+)/i);
-  if (portfolioMatch) {
-    result.portfolio = portfolioMatch[1].trim();
-  } else {
-    // Look for generic URLs that aren't email/linkedin/github
-    const urlMatch = text.match(/https?:\/\/(?:www\.)?([^\s\n\/]+)\.[a-z]{2,}(?:\/[^\s\n]*)?/ig);
-    if (urlMatch) {
-      const uniqueUrls = urlMatch.filter(u => !u.includes("linkedin.com") && !u.includes("github.com"));
-      if (uniqueUrls.length > 0) result.portfolio = uniqueUrls[0];
-    }
+  const urlMatch = text.match(
+    /https?:\/\/(?:www\.)?([^\s\n\/]+)\.[a-z]{2,}(?:\/[^\s\n]*)?/gi,
+  );
+  if (urlMatch) {
+    const uniqueUrls = urlMatch.filter(
+      (u) => !u.includes("linkedin.com") && !u.includes("github.com"),
+    );
+    if (uniqueUrls.length > 0) result.portfolio = uniqueUrls[0];
   }
+
+  // --- Date of Birth ---
+  const dobMatch = text.match(
+    /(?:dob|date\s*of\s*birth|birth|born)\s*[:\-–]\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|\w+\s+\d{1,2},?\s+\d{4})/i,
+  );
+  if (dobMatch) result.dob = dobMatch[1].trim();
+
+  // --- Nationality ---
+  const nationalityMatch = text.match(
+    /(?:nationality|citizenship)\s*[:\-–]\s*([a-z\s]+)(?:\n|$)/i,
+  );
+  if (nationalityMatch) result.nationality = nationalityMatch[1].trim();
+
+  // --- City ---
+  const cityMatch = text.match(
+    /(?:city|location|residing\s*in)\s*[:\-–]\s*([a-z\s]+)(?:\n|$)/i,
+  );
+  if (cityMatch) result.city = cityMatch[1].trim();
 
   return result;
 }
 
 // All known section headers for boundary detection
 const ALL_SECTION_HEADERS = [
-  "objective", "career objective", "professional summary", "summary",
-  "profile summary", "profile", "about me", "about",
-  "work experience", "professional experience", "experience",
-  "employment history", "employment", "work history", "career history",
-  "technical skills", "skills", "core competencies", "key skills",
-  "competencies", "technologies", "tools & technologies",
-  "tools and technologies", "tech stack", "areas of expertise",
-  "education", "academic background", "qualifications", "academic credentials",
-  "certifications", "certificates", "awards", "honors",
-  "projects", "personal projects", "key projects", "relevant projects", "technical projects", "project experience",
-  "references", "interests", "hobbies",
-  "languages", "publications", "achievements", "honors",
-  "contact", "contact information", "personal information", "personal details",
-  "declaration", "additional information", "social", "social links",
+  "objective",
+  "career objective",
+  "professional summary",
+  "summary",
+  "profile summary",
+  "profile",
+  "about me",
+  "about",
+  "career highlights",
+  "professional profile",
+  "personal summary",
+  "work experience",
+  "professional experience",
+  "experience",
+  "employment history",
+  "employment",
+  "work history",
+  "career history",
+  "professional work history",
+  "relevant experience",
+  "technical skills",
+  "skills",
+  "core competencies",
+  "key skills",
+  "competencies",
+  "technologies",
+  "tools & technologies",
+  "tools and technologies",
+  "tech stack",
+  "areas of expertise",
+  "technical proficiencies",
+  "skills & abilities",
+  "professional skills",
+  "education",
+  "academic background",
+  "qualifications",
+  "academic credentials",
+  "certifications",
+  "certificates",
+  "awards",
+  "honors",
+  "projects",
+  "personal projects",
+  "key projects",
+  "relevant projects",
+  "technical projects",
+  "project experience",
+  "references",
+  "interests",
+  "hobbies",
+  "languages",
+  "publications",
+  "achievements",
+  "honors",
+  "contact",
+  "contact information",
+  "personal information",
+  "personal details",
+  "declaration",
+  "additional information",
+  "social",
+  "social links",
 ];
 
-/**
- * Extract a section from text based on header keywords.
- * Uses flexible matching: headers can appear at start of a line,
- * possibly followed by a colon or dash. Captures until the next section header.
- */
 function extractSection(text: string, headers: string[]): string {
   const lines = text.split("\n");
+  const collapse = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 
   for (const header of headers) {
-    // Find the line index where this header appears
+    const headerCollapsed = collapse(header);
     const headerIndex = lines.findIndex((line) => {
-      const cleaned = line.trim().toLowerCase().replace(/[:\-–—]/g, "").trim();
-      // Exact match or starts-with match for the header
-      return cleaned === header || cleaned.startsWith(header + " ");
+      const lineRaw = line.trim();
+      if (!lineRaw) return false;
+
+      const cleaned = lineRaw
+        .toLowerCase()
+        .replace(/[:\-–—]/g, "")
+        .trim();
+
+      // Standard match
+      if (cleaned === header || cleaned.startsWith(header + " ")) return true;
+
+      // Collapsed match for spaced-out headers (e.g., K E Y S K I L L S)
+      const lineCollapsed = collapse(lineRaw);
+      if (lineCollapsed === headerCollapsed) return true;
+      if (
+        lineCollapsed.startsWith(headerCollapsed) &&
+        lineCollapsed.length < headerCollapsed.length + 10
+      ) {
+        return true;
+      }
+
+      return false;
     });
 
     if (headerIndex === -1) continue;
 
-    // Check if header is alone on the line (section title)
-    // or has content after it on the same line
     const headerLine = lines[headerIndex];
     const escapedHeader = header.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const inlineMatch = headerLine.match(
-      new RegExp(`${escapedHeader}\\s*[:\\-–—]?\\s*(.+)`, "i")
+      new RegExp(`${escapedHeader}\\s*[:\\-–—]?\\s*(.+)`, "i"),
     );
 
     const contentLines: string[] = [];
-
-    // If there's inline content after the header on the same line
-    if (inlineMatch && inlineMatch[1]?.trim()) {
+    if (inlineMatch && inlineMatch[1]?.trim())
       contentLines.push(inlineMatch[1].trim());
-    }
 
-    // Collect lines until the next section header
     for (let i = headerIndex + 1; i < lines.length; i++) {
       const lineRaw = lines[i].trim();
       if (!lineRaw) continue;
 
-      const lineCleaned = lineRaw.toLowerCase().replace(/[:\-–—]/g, "").trim();
+      const lineCleaned = lineRaw
+        .toLowerCase()
+        .replace(/[:\-–—]/g, "")
+        .trim();
+      const lineCollapsed = collapse(lineRaw);
 
-      // Check if this line is another section header
-      // It must be a short line or exactly match a header to be considered a new section
-      const isNextSection = ALL_SECTION_HEADERS.some(
-        (h) => {
-          if (lineCleaned === h) return true;
-          // If it starts with a header, it must be followed by a boundary
-          // and be relatively short (not a full sentence)
-          if (lineCleaned.startsWith(h) && lineRaw.length < h.length + 5) {
-             return true;
-          }
-          return false;
+      const isNextSection = ALL_SECTION_HEADERS.some((h) => {
+        // Standard match
+        if (lineCleaned === h) return true;
+        if (lineCleaned.startsWith(h) && lineRaw.length < h.length + 5)
+          return true;
+
+        // Collapsed match
+        const hCollapsed = collapse(h);
+        if (lineCollapsed === hCollapsed) return true;
+        if (
+          lineCollapsed.startsWith(hCollapsed) &&
+          lineCollapsed.length < hCollapsed.length + 5
+        ) {
+          return true;
         }
-      );
+
+        return false;
+      });
 
       if (isNextSection) break;
-
       contentLines.push(lineRaw);
     }
 
     const result = contentLines.join("\n").trim();
     if (result.length > 5) return result;
   }
-
   return "";
 }

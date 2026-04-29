@@ -63,6 +63,18 @@ export const API_ROUTES = {
     BY_ID: (id: string) => `/departments/${id}`,
   },
 
+  // Teams
+  TEAMS: {
+    BASE: '/teams',
+    BY_ID: (id: string) => `/teams/${id}`,
+  },
+
+  // Projects
+  PROJECTS: {
+    BASE: '/projects',
+    BY_ID: (id: string) => `/projects/${id}`,
+  },
+
   // Notifications
   NOTIFICATIONS: {
     BASE: '/notifications',
@@ -84,6 +96,8 @@ export const API_ROUTES = {
     BASE: '/candidates',
     BY_ID: (id: string) => `/candidates/${id}`,
     UPLOAD_RESUME: '/candidates/upload-resume',
+    CONVERT: (id: string) => `/candidates/${id}/convert`,
+    LEADERBOARD: '/candidates/leaderboard',
   },
 
   // Interviews

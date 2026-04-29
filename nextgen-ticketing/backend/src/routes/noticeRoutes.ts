@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getNotices, createNotice, updateNotice, activateNotice, clearNotices, deleteNotice } from '../controllers/noticeController';
+import { noticeController } from '../controllers/notice.controller';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
@@ -23,7 +23,7 @@ const router = Router();
  *       200:
  *         description: List of notices
  */
-router.get('/', authMiddleware, getNotices);
+router.get('/', authMiddleware, noticeController.getNotices);
 
 /**
  * @swagger
@@ -53,7 +53,7 @@ router.get('/', authMiddleware, getNotices);
  *       201:
  *         description: Notice created
  */
-router.post('/', authMiddleware, createNotice);
+router.post('/', authMiddleware, noticeController.createNotice);
 
 /**
  * @swagger
@@ -73,7 +73,7 @@ router.post('/', authMiddleware, createNotice);
  *       200:
  *         description: Notice updated
  */
-router.put('/:id', authMiddleware, updateNotice);
+router.put('/:id', authMiddleware, noticeController.updateNotice);
 
 /**
  * @swagger
@@ -93,7 +93,7 @@ router.put('/:id', authMiddleware, updateNotice);
  *       200:
  *         description: Notice activated
  */
-router.put('/:id/activate', authMiddleware, activateNotice);
+router.put('/:id/activate', authMiddleware, noticeController.activateNotice);
 
 /**
  * @swagger
@@ -107,7 +107,7 @@ router.put('/:id/activate', authMiddleware, activateNotice);
  *       200:
  *         description: All notices deactivated
  */
-router.get('/clear', authMiddleware, clearNotices);
+router.get('/clear', authMiddleware, noticeController.clearNotices);
 
 /**
  * @swagger
@@ -127,6 +127,6 @@ router.get('/clear', authMiddleware, clearNotices);
  *       200:
  *         description: Notice deleted
  */
-router.delete('/:id', authMiddleware, deleteNotice);
+router.delete('/:id', authMiddleware, noticeController.deleteNotice);
 
 export default router;

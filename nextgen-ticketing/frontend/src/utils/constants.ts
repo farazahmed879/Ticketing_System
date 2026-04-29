@@ -51,6 +51,24 @@ export const UIMessages = {
     ERROR: "An error occurred. Please try again.",
     SUCCESS: "Success!",
   },
+  LOADING: {
+    PROCESSING: "Processing...",
+    CREATING_TICKET: "Creating Ticket...",
+    UPDATING_TICKET: "Updating Ticket...",
+    ASSIGNING_TICKET: "Assigning Ticket...",
+    UPDATING_STATUS: "Updating Status...",
+    UPDATING_PRIORITY: "Updating Priority...",
+    UPDATING_DUE_DATE: "Updating Due Date...",
+    SAVING_CHANGES: "Saving Changes...",
+    CREATING_DEPARTMENT: "Creating Department...",
+    UPDATING_DEPARTMENT: "Updating Department...",
+    CREATING_USER: "Creating User...",
+    UPDATING_USER: "Updating User...",
+    DELETING: "Deleting...",
+    VERIFYING: "Verifying Session...",
+    LOGGING_IN: "Logging in...",
+    ADDING_COMMENT: "Adding Comment...",
+  },
 } as const;
 
 export const InterviewStatus = {

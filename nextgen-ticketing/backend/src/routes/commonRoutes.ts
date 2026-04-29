@@ -1,9 +1,5 @@
 import { Router } from 'express';
-import {
-  getStatuses, getPriorities, getTypes, getRoles,
-  getGroups, createGroup, updateGroup, deleteGroup,
-  getDashboardStats
-} from '../controllers/commonController';
+import { commonController } from '../controllers/common.controller';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
@@ -25,7 +21,7 @@ const router = Router();
  *       200:
  *         description: List of statuses
  */
-router.get('/statuses', getStatuses);
+router.get('/statuses', commonController.getStatuses);
 
 /**
  * @swagger
@@ -37,7 +33,7 @@ router.get('/statuses', getStatuses);
  *       200:
  *         description: List of priorities
  */
-router.get('/priorities', getPriorities);
+router.get('/priorities', commonController.getPriorities);
 
 /**
  * @swagger
@@ -49,7 +45,7 @@ router.get('/priorities', getPriorities);
  *       200:
  *         description: List of types
  */
-router.get('/types', getTypes);
+router.get('/types', commonController.getTypes);
 
 /**
  * @swagger
@@ -61,7 +57,7 @@ router.get('/types', getTypes);
  *       200:
  *         description: List of roles
  */
-router.get('/roles', getRoles);
+router.get('/roles', commonController.getRoles);
 
 /**
  * @swagger
@@ -75,7 +71,7 @@ router.get('/roles', getRoles);
  *       200:
  *         description: Dashboard stats with recent tickets
  */
-router.get('/dashboard', authMiddleware, getDashboardStats);
+router.get('/dashboard', authMiddleware, commonController.getDashboardStats);
 
 /**
  * @swagger
@@ -95,7 +91,7 @@ router.get('/dashboard', authMiddleware, getDashboardStats);
  *       200:
  *         description: List of groups
  */
-router.get('/groups', authMiddleware, getGroups);
+router.get('/groups', authMiddleware, commonController.getGroups);
 
 /**
  * @swagger
@@ -125,7 +121,7 @@ router.get('/groups', authMiddleware, getGroups);
  *       201:
  *         description: Group created
  */
-router.post('/groups', authMiddleware, createGroup);
+router.post('/groups', authMiddleware, commonController.createGroup);
 
 /**
  * @swagger
@@ -145,7 +141,7 @@ router.post('/groups', authMiddleware, createGroup);
  *       200:
  *         description: Group updated
  */
-router.put('/groups/:id', authMiddleware, updateGroup);
+router.put('/groups/:id', authMiddleware, commonController.updateGroup);
 
 /**
  * @swagger
@@ -165,6 +161,6 @@ router.put('/groups/:id', authMiddleware, updateGroup);
  *       200:
  *         description: Group deleted
  */
-router.delete('/groups/:id', authMiddleware, deleteGroup);
+router.delete('/groups/:id', authMiddleware, commonController.deleteGroup);
 
 export default router;

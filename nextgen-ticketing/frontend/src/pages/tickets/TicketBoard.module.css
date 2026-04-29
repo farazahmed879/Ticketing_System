@@ -337,6 +337,26 @@
   color: var(--text-primary);
 }
 
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.metaItem span {
+  white-space: nowrap;
+}
+
 .cardFooter {
   display: flex;
   justify-content: space-between;

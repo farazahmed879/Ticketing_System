@@ -3,6 +3,9 @@ import { useForm } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
 import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
+import { useAuth } from "../../../context/AuthContext";
+import { RoleName, AnnouncementType } from "../../../utils/constants";
+
 
 interface AnnouncementFormProps {
   initialData?: any;
@@ -11,12 +14,17 @@ interface AnnouncementFormProps {
 
 const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
   ({ initialData, onSubmit }, ref) => {
+    const { user } = useAuth();
+    const isCustomer = user?.role?.name === RoleName.CUSTOMER;
+    const isEmployee = user?.role?.name === RoleName.EMPLOYEE;
+    const isRestricted = isCustomer || isEmployee;
+
     const { handleSubmit, control, reset } = useForm({
       defaultValues: {
         title: "",
         description: "",
         date: "",
-        type: "event",
+        type: isCustomer ? AnnouncementType.REVIEW : isEmployee ? AnnouncementType.MOMENT : AnnouncementType.EVENT,
       },
     });
 
@@ -28,14 +36,14 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
           date: initialData.date
             ? new Date(initialData.date).toISOString().split("T")[0]
             : "",
-          type: initialData.type,
+          type: isCustomer ? AnnouncementType.REVIEW : isEmployee ? AnnouncementType.MOMENT : initialData.type,
         });
       } else {
         reset({
           title: "",
           description: "",
           date: "",
-          type: "event",
+          type: isCustomer ? AnnouncementType.REVIEW : isEmployee ? AnnouncementType.MOMENT : AnnouncementType.EVENT,
         });
       }
     };
@@ -84,10 +92,13 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
             control={control}
             label="Type"
             options={[
-              { value: "event", label: "Event" },
-              { value: "important", label: "Important" },
-              { value: "info", label: "Info" },
+              { value: AnnouncementType.EVENT, label: "Event" },
+              { value: AnnouncementType.IMPORTANT, label: "Important" },
+              { value: AnnouncementType.INFO, label: "Info" },
+              { value: AnnouncementType.REVIEW, label: "Review" },
+              { value: AnnouncementType.MOMENT, label: "Moment" },
             ]}
+            disabled={isRestricted}
           />
         </div>
       </form>

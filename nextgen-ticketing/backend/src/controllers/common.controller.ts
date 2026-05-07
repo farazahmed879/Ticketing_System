@@ -86,7 +86,7 @@ export const commonController = {
 
   async getDashboardStats(req: AuthRequest, res: Response) {
     try {
-      const result = await commonUsecase.getDashboardStats();
+      const result = await commonUsecase.getDashboardStats(req.user);
       res.json({ success: true, ...result });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

@@ -18,20 +18,20 @@ const Login: React.FC = () => {
   const { control, handleSubmit } = useForm({
     defaultValues: {
       email: "",
-      password: ""
-    }
+      password: "",
+    },
   });
 
-  const { 
-    control: helpControl, 
-    handleSubmit: handleHelpSubmit, 
-    reset: resetHelp 
+  const {
+    control: helpControl,
+    handleSubmit: handleHelpSubmit,
+    reset: resetHelp,
   } = useForm({
     defaultValues: {
       email: "",
       type: "FORGOT_PASSWORD",
-      query: ""
-    }
+      query: "",
+    },
   });
 
   const [error, setError] = useState("");
@@ -84,15 +84,15 @@ const Login: React.FC = () => {
       <div className={`${styles.loginCard} glass-card`}>
         <div className={styles.header}>
           <div className={styles.logoWrapper}>
-            <CustomImage 
-              src="/logo-sq.png" 
-              alt="Logo" 
-              width={60} 
-              height={60}
+            <CustomImage
+              src="/logo-full.png"
+              alt="Logo"
+              width={48}
+              height={48}
               className={styles.logo}
             />
           </div>
-          <h1 className="text-gradient">Jami Partners</h1>
+          {/* <h1 className="text-gradient">Jami Partners</h1> */}
           <p>{showForgot ? "Help Center" : "Welcome back! Please sign in"}</p>
         </div>
 
@@ -119,33 +119,36 @@ const Login: React.FC = () => {
               type="email"
               placeholder="name@company.com"
               icon={<CustomIcon name="Mail" size={18} />}
-              rules={{ 
+              rules={{
                 required: "Email is required",
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Invalid email address"
-                }
+                  message: "Invalid email address",
+                },
               }}
             />
 
-            <div style={{ position: "relative" }}>
-              <CustomInput
-                name="password"
-                control={control}
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                icon={<CustomIcon name="Lock" size={18} />}
-                rules={{ required: "Password is required" }}
-              />
-              <button
-                type="button"
-                className={styles.passwordToggle}
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                <CustomIcon name={showPassword ? "EyeOff" : "Eye"} size={18} />
-              </button>
-            </div>
+            <CustomInput
+              name="password"
+              control={control}
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              icon={<CustomIcon name="Lock" size={18} />}
+              rules={{ required: "Password is required" }}
+              suffix={
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <CustomIcon
+                    name={showPassword ? "EyeOff" : "Eye"}
+                    size={18}
+                  />
+                </button>
+              }
+            />
 
             <div className={styles.forgotRow}>
               <button
@@ -179,7 +182,10 @@ const Login: React.FC = () => {
             </div>
           </form>
         ) : (
-          <form className={styles.form} onSubmit={handleHelpSubmit(onHelpSubmit)}>
+          <form
+            className={styles.form}
+            onSubmit={handleHelpSubmit(onHelpSubmit)}
+          >
             <CustomSelect
               name="type"
               control={helpControl}
@@ -187,7 +193,10 @@ const Login: React.FC = () => {
               options={[
                 { value: "FORGOT_PASSWORD", label: "I forgot my password" },
                 { value: "ACCOUNT_LOCKED", label: "My account is locked" },
-                { value: "TECHNICAL_ISSUE", label: "I'm having technical issues" },
+                {
+                  value: "TECHNICAL_ISSUE",
+                  label: "I'm having technical issues",
+                },
                 { value: "OTHER", label: "Something else" },
               ]}
               rules={{ required: "Please select an option" }}
@@ -200,12 +209,12 @@ const Login: React.FC = () => {
               type="email"
               placeholder="name@company.com"
               icon={<CustomIcon name="Mail" size={18} />}
-              rules={{ 
+              rules={{
                 required: "Email is required",
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Invalid email address"
-                }
+                  message: "Invalid email address",
+                },
               }}
             />
 

@@ -7,6 +7,9 @@ import { API_ROUTES } from "../../utils/apiRoutes";
 import CustomInput from "../../components/CustomInput";
 import styles from "./Register.module.css";
 import CustomButton from "../../components/CustomButton";
+import CustomIcon from "../../components/CustomIcon";
+import CustomImage from "../../components/CustomImage";
+
 
 const Register: React.FC = () => {
   const { control, handleSubmit } = useForm({
@@ -20,6 +23,8 @@ const Register: React.FC = () => {
 
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -48,6 +53,15 @@ const Register: React.FC = () => {
 
       <div className={`${styles.loginCard} glass-card`}>
         <div className={styles.header}>
+          <div className={styles.logoWrapper}>
+            <CustomImage 
+              src="/logo-sq.png" 
+              alt="Logo" 
+              width={48} 
+              height={48}
+              className={styles.logo}
+            />
+          </div>
           <h1 className="text-gradient">Jami Partners</h1>
           <p>Create your account</p>
         </div>
@@ -92,7 +106,7 @@ const Register: React.FC = () => {
             name="password"
             control={control}
             label="Password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="••••••••"
             rules={{ 
               required: "Password is required",
@@ -101,6 +115,15 @@ const Register: React.FC = () => {
                 message: "Password must be at least 6 characters"
               }
             }}
+            suffix={
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                <CustomIcon name={showPassword ? "EyeOff" : "Eye"} size={18} />
+              </button>
+            }
           />
 
           <CustomButton

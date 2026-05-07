@@ -52,13 +52,14 @@ export const commonUsecase = {
     return commonRepository.deleteGroup(id);
   },
 
-  async getDashboardStats() {
-    const [totalTickets, openTickets, resolvedTickets, users, recentTickets] =
-      await commonRepository.getDashboardStats();
+  async getDashboardStats(user?: any) {
+    const [totalTickets, openTickets, resolvedTickets, users, recentTickets, newHires] =
+      await commonRepository.getDashboardStats(user);
 
     return {
       stats: { totalTickets, openTickets, resolvedTickets, users },
       recentTickets,
+      newHires,
     };
   },
 };

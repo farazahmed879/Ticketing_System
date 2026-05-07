@@ -3,6 +3,7 @@ import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
 import { API_ROUTES } from "../../utils/apiRoutes";
+import { AnnouncementType } from "../../utils/constants";
 import type { TableColumn } from "../../components/types";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
@@ -110,11 +111,20 @@ const AnnouncementList: React.FC = () => {
     {
       header: "Type",
       key: "type",
-      render: (ann) => (
-        <CustomBadge variant={ann.type === "event" ? "info" : "warning"}>
-          {ann.type.toUpperCase()}
-        </CustomBadge>
-      ),
+      render: (ann) => {
+        let variant: "info" | "warning" | "success" | "danger" | "neutral" | "primary" = "neutral";
+        if (ann.type === AnnouncementType.EVENT) variant = "info";
+        else if (ann.type === AnnouncementType.IMPORTANT) variant = "danger";
+        else if (ann.type === AnnouncementType.REVIEW) variant = "success";
+        else if (ann.type === AnnouncementType.INFO) variant = "warning";
+        else if (ann.type === AnnouncementType.MOMENT) variant = "primary";
+        
+        return (
+          <CustomBadge variant={variant}>
+            {ann.type.toUpperCase()}
+          </CustomBadge>
+        );
+      },
     },
     {
       header: "Scheduled Date",

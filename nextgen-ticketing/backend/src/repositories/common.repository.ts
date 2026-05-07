@@ -1,4 +1,5 @@
 import prisma from "../prisma";
+import { RoleName } from "../utils/constants";
 
 export const commonRepository = {
   async findStatuses() {
@@ -84,18 +85,33 @@ export const commonRepository = {
     return prisma.ticket.count({ where: { groupId } });
   },
 
-  async getDashboardStats() {
+  async getDashboardStats(user?: any) {
+    const isCustomer =
+      user?.role.toLowerCase() === RoleName.CUSTOMER.toLowerCase();
+
+    const isEmployee =
+      user?.role.toLowerCase() === RoleName.EMPLOYEE.toLowerCase();
+    const userId = user?.id;
+    const ticketWhere: any = { deleted: false };
+    if (isCustomer) {
+      ticketWhere.ownerId = userId;
+    } else if (isEmployee) {
+      ticketWhere.OR = [{ ownerId: userId }, { assigneeId: userId }];
+    }
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     return Promise.all([
-      prisma.ticket.count({ where: { deleted: false } }),
+      prisma.ticket.count({ where: ticketWhere }),
       prisma.ticket.count({
-        where: { deleted: false, status: { isResolved: false } },
+        where: { ...ticketWhere, status: { isResolved: false } },
       }),
       prisma.ticket.count({
-        where: { deleted: false, status: { isResolved: true } },
+        where: { ...ticketWhere, status: { isResolved: true } },
       }),
       prisma.user.count({ where: { deleted: false } }),
       prisma.ticket.findMany({
-        where: { deleted: false },
+        where: ticketWhere,
         orderBy: { createdAt: "desc" },
         take: 10,
         include: {
@@ -103,6 +119,20 @@ export const commonRepository = {
           priority: true,
           owner: { select: { id: true, fullname: true, image: true } },
           assignee: { select: { id: true, fullname: true, image: true } },
+        },
+      }),
+      prisma.user.findMany({
+        where: {
+          deleted: false,
+          createdAt: { gte: sevenDaysAgo },
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          fullname: true,
+          image: true,
+          title: true,
+          createdAt: true,
         },
       }),
     ]);

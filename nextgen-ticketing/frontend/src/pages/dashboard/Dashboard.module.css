@@ -1,32 +1,83 @@
-.grid {
+.statsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 24px;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
-.statCard {
+.premiumStatCard {
   padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.statHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--text-secondary);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border-radius: 20px;
 }
 
-.statValue {
-  font-size: 2rem;
-  font-weight: 700;
+.premiumStatCard:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.premiumStatCard:hover .statGlow {
+  opacity: 1;
+}
+
+.statInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1;
 }
 
 .statLabel {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statValueWrapper {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.statValue {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1;
+}
+
+.statIconWrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  transition: transform 0.3s ease;
+}
+
+.premiumStatCard:hover .statIconWrapper {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.statGlow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
 }
 
 .sectionHeader {
@@ -255,21 +306,107 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 14px;
   border: 1px solid var(--border-glass);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-.newHireInfo h4 {
-  font-size: 1rem;
+.newHireCard:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(var(--primary-rgb), 0.3);
+  transform: translateX(4px);
+}
+
+.featuredNewHire {
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.08) 0%, rgba(16, 185, 129, 0.04) 100%);
+  border-color: rgba(var(--primary-rgb), 0.2);
+  padding: 16px;
+}
+
+.avatarWrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.hireAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 2px solid var(--border-glass);
+}
+
+.avatarPlaceholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.newBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--accent-success);
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 6px;
+  border: 2px solid #0a0b10;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.newHireInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.hireName {
+  font-size: 0.95rem;
   font-weight: 600;
+  color: var(--text-primary);
   margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.newHireInfo p {
-  font-size: 0.85rem;
+.hireTitle {
+  font-size: 0.8rem;
+  color: var(--accent-primary);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.hireMeta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
   color: var(--text-muted);
+}
+
+.popperIcon {
+  margin-left: auto;
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+}
+
+.newHireCard:hover .popperIcon {
+  opacity: 1;
+  transform: scale(1.2) rotate(15deg);
 }
 
 .expandBtn {
@@ -287,56 +424,259 @@
   justify-content: center;
 }
 
-.reviewCard {
-  padding: 20px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-glass);
-  position: relative;
+.announcementDesc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 12px;
 }
 
-.quoteIcon {
-  position: absolute;
-  top: 15px;
-  right: 20px;
-  opacity: 0.1;
-  color: var(--accent-primary);
+/* Reviews Section Styles */
+.reviewsSection {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Premium Review Card Styles */
+.premiumReviewCard {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 1px solid var(--border-glass);
+}
+
+.premiumReviewCard:hover {
+  transform: translateY(-8px);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  border-color: var(--accent-warning);
+}
+
+.quoteIconWrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(251, 191, 36, 0.1);
+  color: var(--accent-warning);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.reviewContent {
+  flex: 1;
+}
+
+.reviewTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
 }
 
 .reviewText {
   font-size: 0.95rem;
   line-height: 1.6;
   color: var(--text-secondary);
-  font-style: italic;
-  margin-bottom: 20px;
-  position: relative;
-  z-index: 1;
+  font-style: normal; /* Premium usually doesn't need italic if typography is good */
 }
 
-.reviewer {
+.reviewDivider {
+  height: 1px;
+  background: linear-gradient(90deg, var(--border-glass) 0%, rgba(255,255,255,0.02) 100%);
+  width: 100%;
+}
+
+.reviewerSection {
   display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.reviewerAvatarWrapper {
+  position: relative;
+}
+
+.reviewerAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  object-fit: cover;
+  border: 2px solid var(--border-glass);
+}
+
+.reviewerAvatarPlaceholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--accent-warning);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.verifiedBadge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: white;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.reviewerMeta {
+  flex: 1;
+}
+
+.reviewerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.reviewerName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.reviewStars {
+  display: flex;
+  gap: 2px;
+  color: #fbbf24;
+}
+
+.reviewerRole {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.premiumStar {
+  filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.4));
+}
+
+.emptyReviews {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+}
+
+/* Moments Section Styles */
+.momentsSection {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.momentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.momentCard {
+  background: rgba(var(--primary-rgb), 0.05);
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  transition: var(--transition-fast);
+}
+
+.momentCard:hover {
+  background: rgba(var(--primary-rgb), 0.08);
+  transform: scale(1.01);
+}
+
+.momentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.momentAuthor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.momentAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.momentAuthorName {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.momentDate {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.momentTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-secondary);
+  margin-bottom: 6px;
+}
+
+.momentText {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.emptyMoments {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 12px;
 }
 
-.reviewerInfo h5 {
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin: 0;
+.sparklesIcon {
+  font-size: 2rem;
+  animation: bounce 2s infinite ease-in-out;
 }
 
-.reviewerInfo span {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.rating {
-  display: flex;
-  gap: 2px;
-  margin-top: 4px;
-}
-
-.star {
-  color: #fbbf24;
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 .mainGrid {

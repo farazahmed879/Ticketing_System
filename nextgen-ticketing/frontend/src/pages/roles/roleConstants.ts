@@ -80,7 +80,7 @@ export const AGENT_PERMISSIONS = {
   candidates: { view: true, create: true, update: true, delete: false },
   interviews: { view: true, create: true, update: true, delete: false },
   requests: { view: true, create: true, update: true, delete: false },
-  announcements: { view: true, create: true, update: true, delete: false },
+  announcements: { view: true, create: true, update: true, delete: true },
   boardStatuses: {
     new: true,
     open: true,
@@ -116,7 +116,7 @@ export const EMPLOYEE_PERMISSIONS = {
   candidates: { view: false, create: false, update: false, delete: false },
   interviews: { view: true, create: false, update: false, delete: false },
   requests: { view: true, create: false, update: false, delete: false },
-  announcements: { view: false, create: false, update: false, delete: false },
+  announcements: { view: true, create: true, update: true, delete: true },
   boardStatuses: {
     new: false,
     open: false,
@@ -152,7 +152,7 @@ export const CUSTOMER_PERMISSIONS = {
   candidates: { view: false, create: false, update: false, delete: false },
   interviews: { view: false, create: false, update: false, delete: false },
   requests: { view: false, create: false, update: false, delete: false },
-  announcements: { view: false, create: false, update: false, delete: false },
+  announcements: { view: true, create: true, update: true, delete: true },
   boardStatuses: {
     new: true,
     open: false,
@@ -188,7 +188,7 @@ export const HR_PERMISSIONS = {
   candidates: { view: true, create: true, update: true, delete: false },
   interviews: { view: true, create: true, update: true, delete: false },
   requests: { view: true, create: true, update: true, delete: false },
-  announcements: { view: true, create: true, update: true, delete: false },
+  announcements: { view: true, create: true, update: true, delete: true },
   boardStatuses: {
     new: false,
     open: false,

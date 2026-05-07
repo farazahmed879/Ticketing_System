@@ -21,6 +21,16 @@ export const StatusName = {
 
 export type StatusName = (typeof StatusName)[keyof typeof StatusName];
 
+export const AnnouncementType = {
+  EVENT: "event",
+  IMPORTANT: "important",
+  INFO: "info",
+  REVIEW: "review",
+  MOMENT: "moment",
+} as const;
+
+export type AnnouncementType = (typeof AnnouncementType)[keyof typeof AnnouncementType];
+
 export const PriorityName = {
   LOW: "Low",
   NORMAL: "Normal",

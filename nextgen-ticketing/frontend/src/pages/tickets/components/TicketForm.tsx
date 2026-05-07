@@ -3,7 +3,6 @@ import { useForm } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
 import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
-import CustomButton from "../../../components/CustomButton";
 import type { Ticket, TicketFormData } from "../../../types";
 
 interface TicketFormProps {
@@ -24,7 +23,6 @@ const TicketForm: React.FC<TicketFormProps> = ({
   types,
   agents,
   onSubmit,
-  isLoading = false,
   showAssignee = false,
 }) => {
   const { handleSubmit, control, reset, watch, setValue } =
@@ -49,7 +47,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
         issue: initialData.issue,
         priorityId: initialData.priority.id,
         groupId: initialData.group?.id || "",
-        typeId: initialData.type.id,
+        typeId: initialData.type?.id || "",
         assigneeId: initialData.assignee?.id || "",
         dueDate: initialData.dueDate
           ? new Date(initialData.dueDate).toISOString().split("T")[0]
@@ -70,6 +68,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
 
   return (
     <form
+      id="ticket-form"
       onSubmit={handleSubmit(onSubmit)}
       style={{ display: "flex", flexDirection: "column", gap: 20 }}
     >
@@ -183,16 +182,6 @@ const TicketForm: React.FC<TicketFormProps> = ({
         required
         style={{ resize: "none" }}
       />
-
-      <CustomButton
-        type="submit"
-        variant="gradient"
-        fullWidth
-        loading={isLoading}
-        style={{ marginTop: 10 }}
-      >
-        {initialData ? "Update Ticket" : "Create Ticket"}
-      </CustomButton>
     </form>
   );
 };

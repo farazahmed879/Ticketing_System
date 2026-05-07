@@ -196,8 +196,8 @@ const UserList: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={(e) => {
-                e.stopPropagation();
-                handleEdit(u);
+              e.stopPropagation();
+              handleEdit(u);
             }}
             title="Edit User"
             style={{ color: "var(--text-muted)", padding: "4px 8px" }}
@@ -207,12 +207,24 @@ const UserList: React.FC = () => {
           <CustomButton
             variant="ghost"
             size="sm"
+            disabled={u.role.isAdmin}
             onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(u.id);
+              e.stopPropagation();
+              handleDelete(u.id);
             }}
-            title="Delete User"
-            style={{ color: "var(--accent-danger)", padding: "4px 8px" }}
+            title={
+              u.role.isAdmin
+                ? "Admin accounts cannot be deleted"
+                : "Delete User"
+            }
+            style={{
+              color: u.role.isAdmin
+                ? "var(--text-muted)"
+                : "var(--accent-danger)",
+              padding: "4px 8px",
+              opacity: u.role.isAdmin ? 0.5 : 1,
+              cursor: u.role.isAdmin ? "not-allowed" : "pointer",
+            }}
           >
             <CustomIcon name="Trash2" size={18} />
           </CustomButton>
@@ -255,7 +267,7 @@ const UserList: React.FC = () => {
         <CustomInput
           placeholder="Search users..."
           value={searchTerm}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             setSearchTerm(e.target.value);
             setCurrentPage(0);
           }}

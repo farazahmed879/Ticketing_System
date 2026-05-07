@@ -27,6 +27,7 @@ import timesheetRoutes from './routes/timesheetRoutes';
 import candidateRoutes from './routes/candidateRoutes';
 import interviewRoutes from './routes/interviewRoutes';
 import projectRoutes from './routes/projectRoutes';
+import announcementRoutes from './routes/announcementRoutes';
 
 // Swagger & Socket
 import { setupSwagger } from './swagger';
@@ -67,6 +68,7 @@ app.use('/api/timesheets', timesheetRoutes);
 app.use('/api/candidates', candidateRoutes);
 app.use('/api/interviews', interviewRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // Root → Swagger
 app.get('/', (req, res) => {
@@ -82,3 +84,4 @@ server.listen(PORT, () => {
 });
 
 export { app, io, prisma };
+ 

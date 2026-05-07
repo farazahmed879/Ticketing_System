@@ -1,0 +1,68 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "tickets": "Tickets",
+    "ticketBoard": "Ticket Board",
+    "chat": "Chat",
+    "history": "History",
+    "departments": "Departments",
+    "teams": "Teams",
+    "projects": "Projects",
+    "candidates": "Candidates",
+    "leaderboard": "Leaderboard",
+    "interviews": "Interviews",
+    "announcements": "Announcements",
+    "settings": "Settings",
+    "timesheet": "Timesheet",
+    "logout": "Logout",
+    "requests": "Requests",
+    "messages": "Messages",
+    "users": "Users",
+    "roles": "Roles"
+  },
+  "topbar": {
+    "overview": "Overview",
+    "notifications": "Notifications",
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications yet",
+    "seeAll": "See All Notifications",
+    "verifyingSession": "Verifying Session..."
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your application preferences and theme",
+    "theme": "Theme",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "security": "Security",
+    "language": "Language",
+    "appearance": "Appearance Mode",
+    "light": "Light Mode",
+    "dark": "Dark Mode",
+    "primaryColor": "Primary Accent Color",
+    "secondaryColor": "Secondary Accent Color",
+    "presets": "Theme Presets",
+    "reset": "Reset Defaults",
+    "save": "Save Changes",
+    "saved": "Saved!",
+    "selectLanguage": "Select Language",
+    "securityTitle": "Security Settings",
+    "securitySubtitle": "Update your password and account security preferences",
+    "comingSoon": "settings are coming soon."
+  },
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "warning": "Warning",
+    "logoutMessage": "Are you sure you want to log out of your account?"
+  },
+  "languages": {
+    "en": "English",
+    "ar": "Arabic",
+    "ur": "Urdu"
+  },
+  "dashboard": {
+    "announcements": "Announcements",
+    "welcomeNewHires": "Welcome New Hires"
+  }
+}

@@ -1,32 +1,35 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
+import { API_ROUTES } from "../../utils/apiRoutes";
 import CustomInput from "../../components/CustomInput";
 import styles from "./Register.module.css";
 import CustomButton from "../../components/CustomButton";
 
 const Register: React.FC = () => {
-  const [fullname, setFullname] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { control, handleSubmit } = useForm({
+    defaultValues: {
+      fullname: "",
+      email: "",
+      username: "",
+      password: ""
+    }
+  });
+
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onRegisterSubmit = async (data: any) => {
     setError("");
     setIsLoading(true);
 
     try {
-      const res = await api.post("/auth/register", {
-        fullname,
-        email,
-        password,
-      });
+      const res = await api.post(API_ROUTES.AUTH.REGISTER, data);
       login(res.data.token, res.data.user);
       navigate("/");
     } catch (err: any) {
@@ -51,32 +54,53 @@ const Register: React.FC = () => {
 
         {error && <div className={styles.error}>{error}</div>}
 
-        <form className={styles.form} onSubmit={handleSubmit}>
+        <form className={styles.form} onSubmit={handleSubmit(onRegisterSubmit)}>
           <CustomInput
+            name="fullname"
+            control={control}
             label="Full Name"
             type="text"
             placeholder="John Doe"
-            value={fullname}
-            onChange={(e) => setFullname(e.target.value)}
-            required
+            rules={{ required: "Full name is required" }}
           />
 
           <CustomInput
+            name="email"
+            control={control}
             label="Email Address"
             type="email"
             placeholder="john@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
+            rules={{ 
+              required: "Email is required",
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: "Invalid email address"
+              }
+            }}
           />
 
           <CustomInput
+            name="username"
+            control={control}
+            label="Username"
+            type="text"
+            placeholder="johndoe"
+            rules={{ required: "Username is required" }}
+          />
+
+          <CustomInput
+            name="password"
+            control={control}
             label="Password"
             type="password"
             placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
+            rules={{ 
+              required: "Password is required",
+              minLength: {
+                value: 6,
+                message: "Password must be at least 6 characters"
+              }
+            }}
           />
 
           <CustomButton

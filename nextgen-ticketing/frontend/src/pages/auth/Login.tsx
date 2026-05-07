@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import CustomIcon from "../../components/CustomIcon";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
@@ -8,31 +9,46 @@ import { API_ROUTES } from "../../utils/apiRoutes";
 import CustomInput from "../../components/CustomInput";
 import CustomTextArea from "../../components/CustomTextArea";
 import CustomSelect from "../../components/CustomSelect";
+import CustomButton from "../../components/CustomButton";
+import CustomImage from "../../components/CustomImage";
 import { UIMessages } from "../../utils/constants";
 import styles from "./Login.module.css";
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { control, handleSubmit } = useForm({
+    defaultValues: {
+      email: "",
+      password: ""
+    }
+  });
+
+  const { 
+    control: helpControl, 
+    handleSubmit: handleHelpSubmit, 
+    reset: resetHelp 
+  } = useForm({
+    defaultValues: {
+      email: "",
+      type: "FORGOT_PASSWORD",
+      query: ""
+    }
+  });
+
   const [error, setError] = useState("");
   const { isLoading, setIsLoading } = useNotification();
   const [showForgot, setShowForgot] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState("");
   const [forgotSuccess, setForgotSuccess] = useState("");
-  const [helpType, setHelpType] = useState("FORGOT_PASSWORD");
-  const [helpQuery, setHelpQuery] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onLoginSubmit = async (data: any) => {
     setError("");
     setIsLoading(true, UIMessages.LOADING.LOGGING_IN);
 
     try {
-      const res = await api.post(API_ROUTES.AUTH.LOGIN, { email, password });
+      const res = await api.post(API_ROUTES.AUTH.LOGIN, data);
       login(res.data.token, res.data.user);
       navigate("/");
     } catch (err: any) {
@@ -42,23 +58,17 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleForgotSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onHelpSubmit = async (data: any) => {
     setError("");
     setForgotSuccess("");
     setIsLoading(true, UIMessages.LOADING.PROCESSING);
 
     try {
-      const res = await api.post(API_ROUTES.AUTH.LOGIN_HELP, {
-        email: forgotEmail,
-        type: helpType,
-        query: helpQuery,
-      });
+      const res = await api.post(API_ROUTES.AUTH.LOGIN_HELP, data);
       setForgotSuccess(res.data.message);
-      setForgotEmail("");
-      setHelpQuery("");
+      resetHelp();
     } catch (err: any) {
-      setError(err.response?.data?.message || UIMessages.COMMON.ERROR);
+      setError(err.response?.data?.message || "Failed to process request");
     } finally {
       setIsLoading(false, "");
     }
@@ -66,147 +76,168 @@ const Login: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      {/* Background Blobs */}
       <div className={`${styles.blob} ${styles.blob1}`}></div>
       <div className={`${styles.blob} ${styles.blob2}`}></div>
+      <div className={`${styles.blob} ${styles.blob3}`}></div>
 
       <div className={`${styles.loginCard} glass-card`}>
         <div className={styles.header}>
-          <img
-            src="/logo-full.png"
-            alt="Jami Partners Logo"
-            style={{ width: "100%", maxWidth: 220, marginBottom: 12 }}
-          />
-          <p>Ticketing System Management</p>
+          <div className={styles.logoWrapper}>
+            <CustomImage 
+              src="/logo-sq.png" 
+              alt="Logo" 
+              width={60} 
+              height={60}
+              className={styles.logo}
+            />
+          </div>
+          <h1 className="text-gradient">Jami Partners</h1>
+          <p>{showForgot ? "Help Center" : "Welcome back! Please sign in"}</p>
         </div>
 
-        {error && <div className={styles.error}>{error}</div>}
-        {forgotSuccess && <div className={styles.success}>{forgotSuccess}</div>}
-
-        {!showForgot ? (
-          <form className={styles.form} onSubmit={handleSubmit}>
-            <CustomInput
-              label="Email Address"
-              type="email"
-              placeholder="admin@nextgen.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-
-            <CustomInput
-              label={
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                  <span>Password</span>
-                  <button
-                    type="button"
-                    onClick={() => setShowForgot(true)}
-                    tabIndex={-1}
-                    style={{
-                      background: "transparent",
-                      color: "var(--accent-primary)",
-                      fontSize: "0.8rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Help me login
-                  </button>
-                </div>
-              }
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              suffix={
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ background: 'transparent', display: 'flex', alignItems: 'center' }}
-                >
-                  {showPassword ? <CustomIcon name="EyeOff" size={18} color="var(--text-muted)" /> : <CustomIcon name="Eye" size={18} color="var(--text-muted)" />}
-                </button>
-              }
-            />
-
-            <button
-              type="submit"
-              className={styles.submitBtn}
-              disabled={isLoading}
-            >
-              {isLoading ? "Signing in..." : "Sign In"}
-            </button>
-          </form>
-        ) : (
-          <form className={styles.form} onSubmit={handleForgotSubmit}>
-              <CustomSelect
-                label="How can we help?"
-                value={helpType}
-                onChange={(val) => setHelpType(val)}
-                options={[
-                  { value: "FORGOT_PASSWORD", label: "Forgot Password" },
-                  { value: "UNABLE_TO_LOGIN", label: "Unable to Login" },
-                  { value: "OTHER", label: "Other Query" },
-                ]}
-                style={{ marginBottom: '12px' }}
-              />
-
-              <CustomInput
-                label="Email Address"
-                type="email"
-                placeholder="your@email.com"
-                value={forgotEmail}
-                onChange={(e) => setForgotEmail(e.target.value)}
-                required
-                containerStyle={{ marginBottom: "12px" }}
-              />
-
-              <CustomTextArea
-                label="Message / Query"
-                placeholder="Describe your issue..."
-                value={helpQuery}
-                onChange={(e) => setHelpQuery(e.target.value)}
-                rows={3}
-                style={{ resize: "none" }}
-              />
-
-            <button
-              type="submit"
-              className={styles.submitBtn}
-              disabled={isLoading}
-            >
-              {isLoading ? "Sending request..." : "Submit Request"}
-            </button>
-
-            <button
-              type="button"
-              className={styles.submitBtn}
-              style={{
-                marginTop: 12,
-                background: "rgba(255,255,255,0.05)",
-                color: "white",
-              }}
-              onClick={() => {
-                setShowForgot(false);
-                setError("");
-                setForgotSuccess("");
-              }}
-            >
-              Back to Login
-            </button>
-          </form>
+        {error && (
+          <div className={`${styles.error} animate-shake`}>
+            <CustomIcon name="AlertCircle" size={18} />
+            {error}
+          </div>
         )}
 
-        <div
-          style={{
-            marginTop: 24,
-            textAlign: "center",
-            fontSize: "0.8rem",
-            color: "var(--text-muted)",
-          }}
-        >
-          Contact your administrator if you need an account.
-        </div>
+        {forgotSuccess && (
+          <div className={styles.success}>
+            <CustomIcon name="CheckCircle" size={18} />
+            {forgotSuccess}
+          </div>
+        )}
+
+        {!showForgot ? (
+          <form className={styles.form} onSubmit={handleSubmit(onLoginSubmit)}>
+            <CustomInput
+              name="email"
+              control={control}
+              label="Email Address"
+              type="email"
+              placeholder="name@company.com"
+              icon={<CustomIcon name="Mail" size={18} />}
+              rules={{ 
+                required: "Email is required",
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: "Invalid email address"
+                }
+              }}
+            />
+
+            <div style={{ position: "relative" }}>
+              <CustomInput
+                name="password"
+                control={control}
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                icon={<CustomIcon name="Lock" size={18} />}
+                rules={{ required: "Password is required" }}
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                <CustomIcon name={showPassword ? "EyeOff" : "Eye"} size={18} />
+              </button>
+            </div>
+
+            <div className={styles.forgotRow}>
+              <button
+                type="button"
+                className={styles.forgotLink}
+                onClick={() => setShowForgot(true)}
+              >
+                Forgot Password?
+              </button>
+            </div>
+
+            <CustomButton
+              type="submit"
+              variant="gradient"
+              loading={isLoading}
+              fullWidth
+              size="lg"
+            >
+              Sign In
+            </CustomButton>
+
+            <div className={styles.footer}>
+              <span>Don't have an account?</span>
+              <button
+                type="button"
+                onClick={() => navigate("/register")}
+                className={styles.registerLink}
+              >
+                Create Account
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form className={styles.form} onSubmit={handleHelpSubmit(onHelpSubmit)}>
+            <CustomSelect
+              name="type"
+              control={helpControl}
+              label="How can we help?"
+              options={[
+                { value: "FORGOT_PASSWORD", label: "I forgot my password" },
+                { value: "ACCOUNT_LOCKED", label: "My account is locked" },
+                { value: "TECHNICAL_ISSUE", label: "I'm having technical issues" },
+                { value: "OTHER", label: "Something else" },
+              ]}
+              rules={{ required: "Please select an option" }}
+            />
+
+            <CustomInput
+              name="email"
+              control={helpControl}
+              label="Your Registered Email"
+              type="email"
+              placeholder="name@company.com"
+              icon={<CustomIcon name="Mail" size={18} />}
+              rules={{ 
+                required: "Email is required",
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: "Invalid email address"
+                }
+              }}
+            />
+
+            <CustomTextArea
+              name="query"
+              control={helpControl}
+              label="Message / Description"
+              placeholder="Describe your issue..."
+              rows={4}
+              rules={{ required: "Message is required" }}
+            />
+
+            <div className={styles.buttonGroup}>
+              <CustomButton
+                type="submit"
+                variant="gradient"
+                loading={isLoading}
+                fullWidth
+              >
+                Submit Request
+              </CustomButton>
+              <CustomButton
+                type="button"
+                variant="ghost"
+                fullWidth
+                onClick={() => setShowForgot(false)}
+              >
+                Back to Login
+              </CustomButton>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

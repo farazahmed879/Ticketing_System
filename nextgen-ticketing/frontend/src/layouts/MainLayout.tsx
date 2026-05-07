@@ -1,14 +1,17 @@
 import React from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
 import { socket } from "../services/socket";
 import CustomIcon from "../components/CustomIcon";
 import styles from "./MainLayout.module.css";
+import Sidebar from "../components/Sidebar";
 
 const MainLayout: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const { t } = useTranslation();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
@@ -85,109 +88,16 @@ const MainLayout: React.FC = () => {
     setUnreadCount(0);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
-  const hasPermission = (permPath: string) => {
-    if (!user || !user.role || !user.role.permissions) return false;
-    // Admins always have access
-    if (user.role.name === 'Admin') return true;
-    
-    const [module, action] = permPath.split('.');
-    return user.role.permissions?.[module]?.[action] === true;
-  };
-
-  const navItems = [
-    { icon: <CustomIcon name="LayoutDashboard" size={20} />, label: "Dashboard", path: "/", permission: "dashboard.view" },
-    { icon: <CustomIcon name="Ticket" size={20} />, label: "Tickets", path: "/tickets", permission: "tickets.view" },
-    { icon: <CustomIcon name="LayoutGrid" size={20} />, label: "Ticket Board", path: "/tickets/board", permission: "tickets.view" },
-    { icon: <CustomIcon name="FileQuestion" size={20} />, label: "Requests", path: "/requests", permission: "requests.view" },
-    { icon: <CustomIcon name="MessageSquare" size={20} />, label: "Messages", path: "/messages", permission: "messages.view" },
-    { icon: <CustomIcon name="ShieldCheck" size={20} />, label: "Teams", path: "/teams", permission: "teams.view" },
-    { icon: <CustomIcon name="Users2" size={20} />, label: "Departments", path: "/departments", permission: "departments.view" },
-    { icon: <CustomIcon name="Layers" size={20} />, label: "Projects", path: "/groups", permission: "groups.view" },
-    { icon: <CustomIcon name="Users" size={20} />, label: "Users", path: "/users", permission: "users.view" },
-    { icon: <CustomIcon name="Shield" size={20} />, label: "Roles", path: "/roles", permission: "roles.view" },
-    { icon: <CustomIcon name="Clock" size={20} />, label: "Timesheet", path: "/timesheet", permission: "timesheets.view" },
-    { icon: <CustomIcon name="UserPlus" size={20} />, label: "Candidates", path: "/candidates", permission: "candidates.view" },
-    { icon: <CustomIcon name="CalendarCheck" size={20} />, label: "Interviews", path: "/interviews", permission: "interviews.view" },
-  ];
-
-  const filteredNavItems = navItems.filter(item => hasPermission(item.permission));
-
   return (
     <div className={`${styles.layout} ${isCollapsed ? styles.layoutCollapsed : ""}`}>
-      <aside className={`${styles.sidebar} ${isCollapsed ? styles.sidebarCollapsed : ""}`}>
-        <button 
-          className={styles.collapseToggle} 
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-        >
-          {isCollapsed ? <CustomIcon name="ChevronRight" size={16} /> : <CustomIcon name="ChevronLeft" size={16} />}
-        </button>
-        <div className={styles.logo}>
-          <img 
-            src="/logo-sq.png" 
-            alt="Logo" 
-            style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0 }} 
-          />
-          {!isCollapsed && <span className="text-gradient">Jami Partners</span>}
-        </div>
-
-        <nav className={styles.nav}>
-          {filteredNavItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/tickets'}
-              className={({ isActive }) =>
-                `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`
-              }
-            >
-              {item.icon}
-              {!isCollapsed && <span>{item.label}</span>}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div 
-          className={styles.userProfile} 
-          onClick={() => navigate('/profile')}
-          style={{ cursor: 'pointer' }}
-        >
-          <div className={styles.avatar}>
-            <CustomIcon name="User" size={20} color="var(--text-secondary)" />
-          </div>
-          {!isCollapsed && <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                fontWeight: 600,
-                fontSize: "0.9rem",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {user?.fullname}
-            </div>
-            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-              {user?.title || user?.role?.name}
-            </div>
-          </div>}
-          <button
-            onClick={handleLogout}
-            style={{ background: "transparent", color: "var(--text-muted)", flexShrink: 0 }}
-          >
-            <CustomIcon name="LogOut" size={18} />
-          </button>
-        </div>
-      </aside>
+      <Sidebar 
+        isCollapsed={isCollapsed} 
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)} 
+      />
 
       <main className={styles.mainContent}>
         <header className={`${styles.topbar} ${scrolled ? styles.topbarScrolled : ""}`}>
-          <div style={{ fontSize: "1.2rem", fontWeight: 600 }}>Overview</div>
+          <div style={{ fontSize: "1.2rem", fontWeight: 600 }}>{t("topbar.overview")}</div>
           <div style={{ display: "flex", gap: 20, alignItems: "center" }} ref={notificationRef}>
             <div style={{ position: "relative" }}>
               <button
@@ -239,7 +149,7 @@ const MainLayout: React.FC = () => {
                     borderRadius: 16
                   }}>
                     <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-glass)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 700, fontSize: '1rem' }}>Notifications</span>
+                      <span style={{ fontWeight: 700, fontSize: '1rem' }}>{t("topbar.notifications")}</span>
                       {unreadCount > 0 && (
                         <span 
                           style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', cursor: 'pointer', fontWeight: 600 }}
@@ -248,7 +158,7 @@ const MainLayout: React.FC = () => {
                             handleMarkAllRead();
                           }}
                         >
-                          Mark all as read
+                          {t("topbar.markAllRead")}
                         </span>
                       )}
                     </div>
@@ -257,7 +167,7 @@ const MainLayout: React.FC = () => {
                       {notifications.length === 0 ? (
                         <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>
                           <CustomIcon name="Bell" size={32} style={{ marginBottom: 12, opacity: 0.2 }} />
-                          <p>No notifications yet</p>
+                          <p>{t("topbar.noNotifications")}</p>
                         </div>
                       ) : (
                         notifications.slice(0, 10).map((n) => (
@@ -332,7 +242,7 @@ const MainLayout: React.FC = () => {
                         setIsNotificationOpen(false);
                       }}
                     >
-                      See All Notifications
+                      {t("topbar.seeAll")}
                     </button>
                   </div>
               )}

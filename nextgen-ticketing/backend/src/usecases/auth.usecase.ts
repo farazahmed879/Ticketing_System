@@ -5,7 +5,7 @@ import { RoleName, LoginHelpType } from "../utils/constants";
 
 export const authUsecase = {
   async login(email: string, passwordPlain: string) {
-    const user = await authRepository.findUserByEmail(email);
+    const user = await authRepository.findUserByEmailOrUsername(email);
 
     if (!user) {
       throw new Error("Invalid credentials");
@@ -56,10 +56,17 @@ export const authUsecase = {
     };
   },
 
-  async register(email: string, passwordPlain: string, fullname: string) {
-    const existingUser = await authRepository.findUserByEmail(email);
-    if (existingUser) {
-      throw new Error("User already exists");
+  async register(email: string, passwordPlain: string, fullname: string, username?: string) {
+    const existingEmail = await authRepository.findUserByEmail(email);
+    if (existingEmail) {
+      throw new Error("Email already exists");
+    }
+
+    if (username) {
+      const existingUsername = await authRepository.findUserByUsername(username);
+      if (existingUsername) {
+        throw new Error("Username already taken");
+      }
     }
 
     const hashedPassword = await bcrypt.hash(passwordPlain, 10);
@@ -75,6 +82,7 @@ export const authUsecase = {
 
     const user = await authRepository.createUser({
       email,
+      username,
       password: hashedPassword,
       fullname,
       roleId: role.id,

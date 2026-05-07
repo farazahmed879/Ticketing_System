@@ -1,5 +1,6 @@
 import React from "react";
 import Modal from "../../../components/Modal";
+import CustomButton from "../../../components/CustomButton";
 import CandidateForm from "./CandidateForm";
 import type { Candidate } from "../../../types";
 
@@ -8,6 +9,7 @@ interface CandidateModalProps {
   onClose: () => void;
   candidate: Candidate | null | undefined;
   onSubmit: (payload: any) => Promise<void>;
+  isSubmitting?: boolean;
 }
 
 const CandidateModal: React.FC<CandidateModalProps> = ({
@@ -15,13 +17,43 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
   onClose,
   candidate,
   onSubmit,
+  isSubmitting = false,
 }) => {
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={candidate ? "Edit Candidate" : "Add New Candidate"}
-      maxWidth="1000px"
+      maxWidth="1400px"
+      footer={
+        <>
+          <div style={{ marginRight: "auto" }}>
+            <CustomButton
+              variant="outline"
+              type="reset"
+              form="candidate-form"
+              disabled={isSubmitting}
+            >
+              Reset Form
+            </CustomButton>
+          </div>
+          <CustomButton
+            variant="secondary"
+            onClick={onClose}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </CustomButton>
+          <CustomButton
+            variant="gradient"
+            type="submit"
+            form="candidate-form"
+            loading={isSubmitting}
+          >
+            {candidate ? "Update Candidate" : "Create Candidate"}
+          </CustomButton>
+        </>
+      }
     >
       <CandidateForm
         initialData={candidate}

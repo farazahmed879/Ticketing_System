@@ -4,7 +4,7 @@ import { InterviewStatus } from "../utils/constants";
 export const interviewRepository = {
   async findMany(where: any, skip?: number, take?: number) {
     return prisma.interview.findMany({
-      where,
+      where: { ...where, deleted: false },
       include: {
         candidate: {
           select: { id: true, name: true, email: true, position: true },
@@ -31,12 +31,12 @@ export const interviewRepository = {
   },
 
   async count(where: any) {
-    return prisma.interview.count({ where });
+    return prisma.interview.count({ where: { ...where, deleted: false } });
   },
 
   async findById(id: string) {
-    return prisma.interview.findUnique({
-      where: { id },
+    return prisma.interview.findFirst({
+      where: { id, deleted: false },
       include: {
         candidate: true,
         scheduledBy: { select: { id: true, fullname: true, image: true } },
@@ -90,7 +90,11 @@ export const interviewRepository = {
     });
   },
 
-  async updateInterviewWithPanel(id: string, data: any, interviewerIds?: string[]) {
+  async updateInterviewWithPanel(
+    id: string,
+    data: any,
+    interviewerIds?: string[]
+  ) {
     return prisma.$transaction(async (tx) => {
       const updated = await tx.interview.update({
         where: { id },
@@ -122,7 +126,10 @@ export const interviewRepository = {
   },
 
   async deleteInterview(id: string) {
-    return prisma.interview.delete({ where: { id } });
+    return prisma.interview.update({
+      where: { id },
+      data: { deleted: true },
+    });
   },
 
   async createFeedback(data: any) {

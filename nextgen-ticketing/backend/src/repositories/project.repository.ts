@@ -3,7 +3,7 @@ import prisma from "../prisma";
 export const projectRepository = {
   async findMany(params: any = {}) {
     const { departmentId, teamId, status } = params;
-    const where: any = {};
+    const where: any = { deleted: false };
     
     if (departmentId) where.departmentId = departmentId;
     if (teamId) where.teamIds = { has: teamId };
@@ -20,8 +20,8 @@ export const projectRepository = {
   },
 
   async findById(id: string) {
-    return prisma.project.findUnique({
-      where: { id },
+    return prisma.project.findFirst({
+      where: { id, deleted: false },
       include: {
         department: { select: { id: true, name: true } },
         teams: { select: { id: true, name: true } },
@@ -51,6 +51,9 @@ export const projectRepository = {
   },
 
   async delete(id: string) {
-    return prisma.project.delete({ where: { id } });
+    return prisma.project.update({
+      where: { id },
+      data: { deleted: true },
+    });
   },
 };

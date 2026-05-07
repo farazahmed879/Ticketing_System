@@ -8,7 +8,7 @@
   width: 260px;
   background: var(--bg-sidebar);
   backdrop-filter: var(--blur-lg);
-  border-right: 1px solid var(--border-glass);
+  border-inline-end: 1px solid var(--border-glass);
   display: flex;
   flex-direction: column;
   padding: 24px;
@@ -25,20 +25,20 @@
 
 .mainContent {
   flex: 1;
-  margin-left: 260px;
+  margin-inline-start: 260px;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: margin-inline-start 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .layoutCollapsed .mainContent {
-  margin-left: 80px;
+  margin-inline-start: 80px;
 }
 
 .collapseToggle {
   position: absolute;
-  right: -12px;
+  inset-inline-end: -12px;
   top: 32px;
   width: 24px;
   height: 24px;

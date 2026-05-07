@@ -25,9 +25,9 @@ export const authController = {
   },
 
   async register(req: Request, res: Response) {
-    const { email, password, fullname } = req.body;
+    const { email, password, fullname, username } = req.body;
     try {
-      const result = await authUsecase.register(email, password, fullname);
+      const result = await authUsecase.register(email, password, fullname, username);
       res.status(201).json(result);
     } catch (error: any) {
       const status = error.message === "User already exists" ? 400 : 500;

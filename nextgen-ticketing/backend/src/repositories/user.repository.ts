@@ -40,7 +40,7 @@ export const userRepository = {
   },
 
   async findById(id: string) {
-    return prisma.user.findUnique({ where: { id } });
+    return prisma.user.findUnique({ where: { id }, include: { role: true } });
   },
 
   async create(data: any) {
@@ -61,5 +61,46 @@ export const userRepository = {
 
   async count(where: any) {
     return prisma.user.count({ where });
+  },
+
+  async findAdmins() {
+    return prisma.user.findMany({
+      where: {
+        role: {
+          name: "Admin"
+        },
+        deleted: false
+      },
+    });
+  },
+
+  async findUserWithTeams(id: string) {
+    return prisma.user.findUnique({
+      where: { id },
+      include: {
+        teams: {
+          include: {
+            manager: {
+              select: { id: true, fullname: true, email: true }
+            },
+            members: {
+              where: { deleted: false },
+              include: { role: true }
+            }
+          }
+        },
+        managedTeams: {
+          include: {
+            manager: {
+              select: { id: true, fullname: true, email: true }
+            },
+            members: {
+              where: { deleted: false },
+              include: { role: true }
+            }
+          }
+        }
+      }
+    });
   },
 };

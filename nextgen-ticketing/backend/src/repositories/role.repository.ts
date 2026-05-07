@@ -11,11 +11,17 @@ export const roleRepository = {
   },
 
   async count() {
-    return prisma.role.count();
+    return prisma.role.count({ where: { deleted: false } as any });
   },
   
   async findByName(name: string) {
-    return prisma.role.findUnique({ where: { name } });
+    return prisma.role.findFirst({ where: { name, deleted: false } as any });
+  },
+
+  async findById(id: string) {
+    return prisma.role.findFirst({
+      where: { id, deleted: false } as any,
+    });
   },
 
   async create(data: any) {
@@ -24,7 +30,7 @@ export const roleRepository = {
 
   async update(id: string, data: any) {
     return prisma.role.update({
-      where: { id },
+      where: { id } as any,
       data,
     });
   },
@@ -34,6 +40,9 @@ export const roleRepository = {
   },
 
   async delete(id: string) {
-    return prisma.role.delete({ where: { id } });
+    return prisma.role.update({
+      where: { id } as any,
+      data: { deleted: true } as any,
+    });
   },
 };

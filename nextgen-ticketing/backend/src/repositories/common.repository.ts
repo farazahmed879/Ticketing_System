@@ -18,7 +18,8 @@ export const commonRepository = {
   },
 
   async findGroups(skip: number, take: number, userId?: string) {
-    const where = userId ? { memberIds: { has: userId } } : {};
+    const where: any = { deleted: false };
+    if (userId) where.memberIds = { has: userId };
     return prisma.group.findMany({
       where,
       skip,
@@ -30,6 +31,23 @@ export const commonRepository = {
         _count: { select: { tickets: true } },
       },
     });
+  },
+
+  async findGroupById(id: string) {
+    return prisma.group.findFirst({
+      where: { id, deleted: false } as any,
+      include: {
+        members: {
+          select: { id: true, fullname: true, email: true, image: true },
+        },
+      },
+    });
+  },
+
+  async countGroups(userId?: string) {
+    const where: any = { deleted: false };
+    if (userId) where.memberIds = { has: userId };
+    return prisma.group.count({ where });
   },
 
   async createGroup(data: any) {
@@ -56,7 +74,10 @@ export const commonRepository = {
   },
 
   async deleteGroup(id: string) {
-    return prisma.group.delete({ where: { id } });
+    return prisma.group.update({
+      where: { id },
+      data: { deleted: true } as any,
+    });
   },
 
   async countTicketsInGroup(groupId: string) {

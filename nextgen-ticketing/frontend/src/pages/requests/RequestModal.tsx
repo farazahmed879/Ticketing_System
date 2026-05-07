@@ -79,7 +79,6 @@ const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, onSuccess 
             control={control}
             type="date"
             label="End Date"
-            rules={{ required: "End date is required" }}
           />
         </div>
 

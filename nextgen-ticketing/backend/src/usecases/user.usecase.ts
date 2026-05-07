@@ -105,6 +105,13 @@ export const userUsecase = {
   },
 
   async deleteUser(id: string) {
+    const user = await userRepository.findById(id);
+    if (!user) throw new Error("User not found");
+
+    if (user.role?.name === RoleName.ADMIN) {
+      throw new Error("Admin accounts cannot be deleted");
+    }
+
     return userRepository.update(id, { deleted: true });
   },
 

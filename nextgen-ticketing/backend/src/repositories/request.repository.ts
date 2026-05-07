@@ -3,11 +3,20 @@ import prisma from "../prisma";
 export const requestRepository = {
   async findMany(where: any = {}) {
     return prisma.userRequest.findMany({
-      where,
+      where: { ...where, deleted: false },
       include: {
         user: { select: { id: true, fullname: true, email: true, image: true } },
       },
       orderBy: { createdAt: "desc" },
+    });
+  },
+
+  async findById(id: string) {
+    return prisma.userRequest.findFirst({
+      where: { id, deleted: false },
+      include: {
+        user: { select: { id: true, fullname: true, email: true, image: true } },
+      },
     });
   },
 
@@ -16,7 +25,7 @@ export const requestRepository = {
       data,
       include: {
         user: { select: { id: true, fullname: true, email: true, image: true } },
-      }
+      },
     });
   },
 
@@ -29,7 +38,10 @@ export const requestRepository = {
   },
 
   async delete(id: string) {
-    return prisma.userRequest.delete({ where: { id } });
+    return prisma.userRequest.update({
+      where: { id },
+      data: { deleted: true },
+    });
   },
 
   async createNotification(data: any) {

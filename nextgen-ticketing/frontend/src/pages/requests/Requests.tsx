@@ -13,11 +13,13 @@ import { API_ROUTES } from "../../utils/apiRoutes";
 import type { TableColumn } from "../../components/types";
 
 import { useAuth } from "../../context/AuthContext";
+import { useNotification } from "../../context/NotificationContext";
 import RequestModal from "./RequestModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
 const Requests: React.FC = () => {
   const { user } = useAuth();
+  const { showNotification } = useNotification();
   const [requests, setRequests] = useState<UserRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("PENDING");
@@ -47,8 +49,13 @@ const Requests: React.FC = () => {
       setRequests((prev) =>
         prev.map((r) => (r.id === id ? { ...r, status } : r)),
       );
+      showNotification(
+        "success",
+        `Request ${status === "APPROVED" ? "approved" : "rejected"} successfully`,
+      );
     } catch (err) {
       console.error("Failed to update request status", err);
+      showNotification("error", "Failed to update request status");
     }
   };
 
@@ -64,8 +71,10 @@ const Requests: React.FC = () => {
       await api.delete(API_ROUTES.REQUESTS.BY_ID(requestToDelete));
       setRequests((prev) => prev.filter((r) => r.id !== requestToDelete));
       setIsDeleteModalOpen(false);
+      showNotification("success", "Request deleted successfully");
     } catch (err) {
       console.error("Failed to delete request", err);
+      showNotification("error", "Failed to delete request");
     } finally {
       setIsDeleting(false);
       setRequestToDelete(null);
@@ -75,6 +84,13 @@ const Requests: React.FC = () => {
   const filteredRequests = requests.filter(
     (r) => filter === "ALL" || r.status === filter,
   );
+
+  const hasPermission = (permPath: string) => {
+    if (!user || !user.role || !user.role.permissions) return false;
+    if (user.role.name === "Admin") return true;
+    const [module, action] = permPath.split(".");
+    return (user.role.permissions as any)?.[module]?.[action] === true;
+  };
 
   const columns: TableColumn<UserRequest>[] = [
     {
@@ -129,28 +145,27 @@ const Requests: React.FC = () => {
       key: "actions",
       render: (r) => (
         <div className={styles.actions}>
-          {r.status === "PENDING" &&
-            (user?.role?.isAdmin || user?.role?.isAgent) && (
-              <>
-                <CustomButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleUpdateStatus(r.id, "APPROVED")}
-                  title="Approve"
-                  style={{ color: "var(--accent-success)" }}
-                  icon={<CustomIcon name="CheckCircle2" size={18} />}
-                />
-                <CustomButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleUpdateStatus(r.id, "REJECTED")}
-                  title="Reject"
-                  style={{ color: "var(--accent-danger)" }}
-                  icon={<CustomIcon name="XCircle" size={18} />}
-                />
-              </>
-            )}
-          {(user?.role?.isAdmin || r.userId === user?.id) && (
+          {r.status === "PENDING" && hasPermission("requests.update") && (
+            <>
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                onClick={() => handleUpdateStatus(r.id, "APPROVED")}
+                title="Approve"
+                style={{ color: "var(--accent-success)" }}
+                icon={<CustomIcon name="CheckCircle2" size={18} />}
+              />
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                onClick={() => handleUpdateStatus(r.id, "REJECTED")}
+                title="Reject"
+                style={{ color: "var(--accent-danger)" }}
+                icon={<CustomIcon name="XCircle" size={18} />}
+              />
+            </>
+          )}
+          {(r.userId === user?.id || hasPermission("requests.delete")) && (
             <CustomButton
               variant="ghost"
               size="sm"
@@ -166,6 +181,7 @@ const Requests: React.FC = () => {
 
   const handleRequestSuccess = (newRequest: any) => {
     setRequests((prev) => [newRequest, ...prev]);
+    showNotification("success", "Request submitted successfully");
   };
 
   return (

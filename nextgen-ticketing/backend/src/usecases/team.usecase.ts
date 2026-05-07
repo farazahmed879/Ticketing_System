@@ -12,6 +12,7 @@ export const teamUsecase = {
   async createTeam(data: any) {
     const teamData = {
       name: data.name,
+      managerId: data.managerId,
       memberIds: data.memberIds || [],
     };
     return teamRepository.create(teamData);
@@ -20,6 +21,7 @@ export const teamUsecase = {
   async updateTeam(id: string, data: any) {
     const updateData: any = {};
     if (data.name) updateData.name = data.name;
+    if (data.managerId !== undefined) updateData.managerId = data.managerId;
     if (data.memberIds) updateData.memberIds = data.memberIds;
 
     return teamRepository.update(id, updateData);

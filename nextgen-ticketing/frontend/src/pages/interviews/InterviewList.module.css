@@ -49,44 +49,6 @@
   border-color: var(--accent-primary);
 }
 
-.panelAvatars {
-  display: flex;
-  align-items: center;
-}
-
-.panelAvatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: white;
-  border: 2px solid var(--bg-card);
-  margin-left: -8px;
-  position: relative;
-  cursor: default;
-}
-
-.panelAvatar:first-child {
-  margin-left: 0;
-}
-
-.panelAvatar img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.panelAvatarMore {
-  background: var(--bg-input);
-  color: var(--text-muted);
-  font-size: 0.7rem;
-}
 
 .candidateInfo {
   display: flex;

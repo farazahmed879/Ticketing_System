@@ -9,6 +9,26 @@ export const authRepository = {
     });
   },
 
+  async findUserByUsername(username: string) {
+    return prisma.user.findFirst({
+      where: { username, deleted: false },
+      include: { role: true },
+    });
+  },
+
+  async findUserByEmailOrUsername(identifier: string) {
+    return prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { username: identifier },
+        ],
+        deleted: false,
+      },
+      include: { role: true },
+    });
+  },
+
   async findUserById(id: string) {
     return prisma.user.findUnique({
       where: { id },

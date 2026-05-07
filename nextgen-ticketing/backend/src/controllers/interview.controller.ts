@@ -62,11 +62,19 @@ export const interviewController = {
       const user = req.user;
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-      const interview = await interviewUsecase.updateInterview(
+      const { interview, notifications } = await interviewUsecase.updateInterview(
         req.params.id as string,
         req.body,
         user
       );
+
+      const io = req.app.get("io");
+      if (io && notifications) {
+        for (const n of notifications) {
+          emitNotificationToUser(io, n.userId, n.notification);
+        }
+      }
+
       res.json({ success: true, interview });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

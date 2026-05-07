@@ -24,6 +24,7 @@ const RoleList: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
@@ -58,6 +59,7 @@ const RoleList: React.FC = () => {
   }, [currentPage, itemsPerPage]);
 
   const handleSubmit = async (data: RoleFormData) => {
+    setIsSaving(true);
     setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
     try {
       if (editingRole) {
@@ -76,6 +78,7 @@ const RoleList: React.FC = () => {
         err.response?.data?.error || "Operation failed",
       );
     } finally {
+      setIsSaving(false);
       setIsLoading(false, "");
     }
   };
@@ -255,6 +258,7 @@ const RoleList: React.FC = () => {
         role={editingRole}
         statuses={statuses}
         onSubmit={handleSubmit}
+        isLoading={isSaving}
       />
 
       <ConfirmationModal

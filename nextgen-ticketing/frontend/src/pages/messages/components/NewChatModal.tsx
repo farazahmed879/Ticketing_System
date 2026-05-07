@@ -34,7 +34,9 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
         <CustomInput
           placeholder="Search by name or email..."
           value={userSearch}
-          onChange={(e) => onUserSearchChange(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            onUserSearchChange(e.target.value)
+          }
           icon={<CustomIcon name="Search" size={18} />}
         />
         <div
@@ -116,7 +118,11 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
             ))
           ) : (
             <div
-              style={{ textAlign: "center", padding: 20, color: "var(--text-muted)" }}
+              style={{
+                textAlign: "center",
+                padding: 20,
+                color: "var(--text-muted)",
+              }}
             >
               No users found
             </div>

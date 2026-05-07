@@ -18,10 +18,12 @@ import { API_ROUTES } from "../../utils/apiRoutes";
 import styles from "./Timesheet.module.css";
 import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
-import TimesheetDayModal from './components/TimesheetDayModal';
+import TimesheetDayModal from "./components/TimesheetDayModal";
 import { useAuth } from "../../context/AuthContext";
 
 import type { TimesheetEntry } from "../../types";
+import CustomSkeleton from "../../components/CustomSkeleton";
+import { CalendarSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 
 // Mock Google Calendar Events
 const MOCK_GOOGLE_EVENTS = [
@@ -29,10 +31,6 @@ const MOCK_GOOGLE_EVENTS = [
   { date: addDays(new Date(), 1), title: "Project Alpha Sync" },
   { date: addDays(new Date(), -2), title: "Client Review Meeting" },
 ];
-
-import CustomSkeleton, {
-  CalendarSkeleton,
-} from "../../components/CustomSkeleton";
 
 const Timesheet: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -110,7 +108,7 @@ const Timesheet: React.FC = () => {
     const endDate = endOfWeek(monthEnd);
 
     const dateFormat = "d";
-    const grid = [];
+    const grid: any[] = [];
 
     let days = eachDayOfInterval({ start: startDate, end: endDate });
 

@@ -3,9 +3,20 @@ import prisma from "../prisma";
 export const departmentRepository = {
   async findMany() {
     return prisma.department.findMany({
+      where: { deleted: false },
       include: {
-        teams: { select: { id: true, name: true } },
-        projects: { select: { id: true, name: true } },
+        teams: { select: { id: true, name: true }, where: { deleted: false } },
+        projects: { select: { id: true, name: true }, where: { deleted: false } },
+      },
+    });
+  },
+
+  async findById(id: string) {
+    return prisma.department.findFirst({
+      where: { id, deleted: false },
+      include: {
+        teams: { select: { id: true, name: true }, where: { deleted: false } },
+        projects: { select: { id: true, name: true }, where: { deleted: false } },
       },
     });
   },
@@ -26,6 +37,9 @@ export const departmentRepository = {
   },
 
   async delete(id: string) {
-    return prisma.department.delete({ where: { id } });
+    return prisma.department.update({
+      where: { id },
+      data: { deleted: true },
+    });
   },
 };

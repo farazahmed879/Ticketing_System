@@ -54,6 +54,8 @@ export interface Team {
   department?: { id: string; name: string };
   projectIds: string[];
   projects?: { id: string; name: string }[];
+  managerId?: string;
+  manager?: { id: string; fullname: string; image?: string };
   memberIds: string[];
   members?: User[];
   _count?: {
@@ -229,6 +231,7 @@ export interface Candidate {
   dob?: string;
   nationality?: string;
   city?: string;
+  observingSkills?: string;
   status: string;
   isConverted?: boolean;
   _count?: { interviews: number };
@@ -338,6 +341,7 @@ export interface CandidateFormData {
   dob: string;
   nationality: string;
   city: string;
+  observingSkills?: string;
   isConverted?: boolean;
 }
 

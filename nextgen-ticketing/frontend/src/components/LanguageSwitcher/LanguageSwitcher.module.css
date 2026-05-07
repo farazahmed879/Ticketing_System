@@ -1,0 +1,26 @@
+.switcher:hover {
+  background: var(--icon-bg);
+  color: var(--accent-primary);
+  border: 1px solid var(--border-active);
+}
+
+.switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: start;
+}
+
+.switcher svg {
+  flex-shrink: 0;
+}

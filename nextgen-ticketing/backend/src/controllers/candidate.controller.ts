@@ -5,7 +5,9 @@ import { candidateUsecase } from "../usecases/candidate.usecase";
 export const candidateController = {
   async getAllCandidates(req: AuthRequest, res: Response) {
     try {
-      const { candidates, total } = await candidateUsecase.getAllCandidates(req.query);
+      const { candidates, total } = await candidateUsecase.getAllCandidates(
+        req.query,
+      );
       res.json({ success: true, candidates, total });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
@@ -15,7 +17,7 @@ export const candidateController = {
   async getCandidateById(req: AuthRequest, res: Response) {
     try {
       const candidate = await candidateUsecase.getCandidateById(
-        req.params.id as string
+        req.params.id as string,
       );
       res.json({ success: true, candidate });
     } catch (error: any) {
@@ -32,7 +34,10 @@ export const candidateController = {
       if (error.code === "P2002") {
         return res
           .status(400)
-          .json({ success: false, error: "A candidate with this email already exists" });
+          .json({
+            success: false,
+            error: "A candidate with this email already exists",
+          });
       }
       res.status(500).json({ success: false, error: error.message });
     }
@@ -42,14 +47,17 @@ export const candidateController = {
     try {
       const candidate = await candidateUsecase.updateCandidate(
         req.params.id as string,
-        req.body
+        req.body,
       );
       res.json({ success: true, candidate });
     } catch (error: any) {
       if (error.code === "P2002") {
         return res
           .status(400)
-          .json({ success: false, error: "A candidate with this email already exists" });
+          .json({
+            success: false,
+            error: "A candidate with this email already exists",
+          });
       }
       res.status(500).json({ success: false, error: error.message });
     }
@@ -68,10 +76,13 @@ export const candidateController = {
     try {
       const file = (req as any).file;
       if (!file) {
-        return res.status(400).json({ success: false, error: "No file uploaded" });
+        return res
+          .status(400)
+          .json({ success: false, error: "No file uploaded" });
       }
 
-      const { driveUrl, parsedData } = await candidateUsecase.uploadResume(file);
+      const { driveUrl, parsedData } =
+        await candidateUsecase.uploadResume(file);
       res.json({ success: true, driveUrl, parsedData });
     } catch (error: any) {
       const status =
@@ -82,10 +93,12 @@ export const candidateController = {
       res.status(status).json({ success: false, error: error.message });
     }
   },
-  
+
   async convertToUser(req: AuthRequest, res: Response) {
     try {
-      const result = await candidateUsecase.convertToUser(req.params.id as string);
+      const result = await candidateUsecase.convertToUser(
+        req.params.id as string,
+      );
       res.json({ success: true, ...result });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

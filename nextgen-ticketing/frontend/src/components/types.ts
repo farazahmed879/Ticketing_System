@@ -9,6 +9,8 @@ export interface Option {
   disabled?: boolean;
 }
 
+export type MultiSelectOption = Option;
+
 export interface CustomSelectProps<T extends FieldValues = any> {
   options: Option[];
   value?: string | string[];
@@ -128,5 +130,17 @@ export interface CustomColorPickerProps<T extends FieldValues = any> extends Omi
   rules?: RegisterOptions<T, Path<T>>;
   containerStyle?: React.CSSProperties;
   value?: string;
+  onChange?: (value: string) => void;
+}
+export interface CustomChipInputProps<T extends FieldValues = any> {
+  label?: React.ReactNode;
+  placeholder?: string;
+  error?: string;
+  icon?: React.ReactNode;
+  containerStyle?: React.CSSProperties;
+  name?: Path<T>;
+  control?: Control<T>;
+  rules?: RegisterOptions<T, Path<T>>;
+  value?: string; // Comma separated
   onChange?: (value: string) => void;
 }

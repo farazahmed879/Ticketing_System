@@ -39,6 +39,11 @@ export const candidateUsecase = {
     let candidates: any[];
     let total: number;
 
+    console.log("where", where);
+    console.log("aiPrompt", aiPrompt);
+    console.log("take", take);
+    console.log("skip", skip);
+
     if (aiPrompt) {
       // For AI prompt, we need all matching candidates to score them
       candidates = await candidateRepository.findMany(where);
@@ -81,8 +86,10 @@ export const candidateUsecase = {
         return { ...c, matchScore: Math.min(score, 100) };
       });
 
-      scoredCandidates.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
-      
+      scoredCandidates.sort(
+        (a, b) => (b.matchScore || 0) - (a.matchScore || 0),
+      );
+
       // Manually paginate the scored results
       if (take !== undefined && skip !== undefined) {
         candidates = scoredCandidates.slice(skip, skip + take);
@@ -162,13 +169,15 @@ export const candidateUsecase = {
     ];
 
     if (!allowedTypes.includes(file.mimetype)) {
-      throw new Error("Invalid file type. Only PDF and DOCX files are allowed.");
+      throw new Error(
+        "Invalid file type. Only PDF and DOCX files are allowed.",
+      );
     }
 
     const driveUrl = await uploadToGoogleDrive(
       file.buffer,
       file.originalname,
-      file.mimetype
+      file.mimetype,
     );
 
     if (!driveUrl) {
@@ -178,7 +187,10 @@ export const candidateUsecase = {
     // Parse Resume Data
     let parsedData = { dob: null, nationality: null, city: null };
     try {
-      const text = await resumeParserService.extractText(file.buffer, file.mimetype);
+      const text = await resumeParserService.extractText(
+        file.buffer,
+        file.mimetype,
+      );
       parsedData = resumeParserService.parseData(text);
     } catch (parseError) {
       console.error("Failed to parse resume text:", parseError);
@@ -190,7 +202,8 @@ export const candidateUsecase = {
   async convertToUser(id: string) {
     const candidate = await candidateRepository.findById(id);
     if (!candidate) throw new Error("Candidate not found");
-    if (candidate.isConverted) throw new Error("Candidate already converted to user");
+    if (candidate.isConverted)
+      throw new Error("Candidate already converted to user");
 
     // Default role for converted candidates
     const role = await roleRepository.findByName(RoleName.EMPLOYEE);
@@ -235,20 +248,22 @@ export const candidateUsecase = {
   async getLeaderboard() {
     const rawCandidates = await candidateRepository.getLeaderboard();
 
-    const leaderboard = rawCandidates.map(candidate => {
+    const leaderboard = rawCandidates.map((candidate) => {
       let totalScore = 0;
       let totalFeedbacks = 0;
       const recommendations: Record<string, number> = {};
 
-      candidate.interviews.forEach(interview => {
-        interview.feedbacks.forEach(feedback => {
+      candidate.interviews.forEach((interview) => {
+        interview.feedbacks.forEach((feedback) => {
           totalScore += feedback.overallRating;
           totalFeedbacks++;
-          recommendations[feedback.recommendation] = (recommendations[feedback.recommendation] || 0) + 1;
+          recommendations[feedback.recommendation] =
+            (recommendations[feedback.recommendation] || 0) + 1;
         });
       });
 
-      const averageRating = totalFeedbacks > 0 ? (totalScore / totalFeedbacks) : 0;
+      const averageRating =
+        totalFeedbacks > 0 ? totalScore / totalFeedbacks : 0;
 
       return {
         id: candidate.id,
@@ -258,8 +273,13 @@ export const candidateUsecase = {
         averageRating: Number(averageRating.toFixed(2)),
         interviewCount: candidate.interviews.length,
         feedbackCount: totalFeedbacks,
-        topRecommendation: Object.entries(recommendations).sort((a, b) => b[1] - a[1])[0]?.[0] || "None",
-        lastInterviewDate: candidate.interviews.sort((a, b) => b.scheduledAt.getTime() - a.scheduledAt.getTime())[0]?.scheduledAt || null
+        topRecommendation:
+          Object.entries(recommendations).sort((a, b) => b[1] - a[1])[0]?.[0] ||
+          "None",
+        lastInterviewDate:
+          candidate.interviews.sort(
+            (a, b) => b.scheduledAt.getTime() - a.scheduledAt.getTime(),
+          )[0]?.scheduledAt || null,
       };
     });
 

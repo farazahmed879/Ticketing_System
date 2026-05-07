@@ -1,0 +1,68 @@
+{
+  "sidebar": {
+    "dashboard": "ڈیش بورڈ",
+    "tickets": "ٹکٹ",
+    "ticketBoard": "ٹکٹ بورڈ",
+    "chat": "چیٹ",
+    "history": "ہسٹری",
+    "departments": "محکمے",
+    "teams": "ٹیمیں",
+    "projects": "پروجیکٹس",
+    "candidates": "امیدوار",
+    "leaderboard": "لیڈر بورڈ",
+    "interviews": "انٹرویوز",
+    "announcements": "اعلانات",
+    "settings": "ترتیبات",
+    "timesheet": "ٹائم شیٹ",
+    "logout": "لاگ آؤٹ",
+    "requests": "درخواستیں",
+    "messages": "پیغامات",
+    "users": "صارفین",
+    "roles": "کردار"
+  },
+  "topbar": {
+    "overview": "جائزہ",
+    "notifications": "اطلاعات",
+    "markAllRead": "سب کو پڑھا ہوا نشان زد کریں",
+    "noNotifications": "ابھی تک کوئی اطلاع نہیں ہے",
+    "seeAll": "تمام اطلاعات دیکھیں",
+    "verifyingSession": "سیشن کی تصدیق ہو رہی ہے..."
+  },
+  "settings": {
+    "title": "ترتیبات",
+    "subtitle": "اپنی درخواست کی ترجیحات اور تھیم کا نظم کریں",
+    "theme": "تھیم",
+    "profile": "پروفائل",
+    "notifications": "اطلاعات",
+    "security": "سیکیورٹی",
+    "language": "زبان",
+    "appearance": "ظاہری وضع",
+    "light": "لائٹ موڈ",
+    "dark": "ڈارک موڈ",
+    "primaryColor": "بنیادی لہجہ رنگ",
+    "secondaryColor": "ثانوی لہجہ رنگ",
+    "presets": "تھیم پری سیٹ",
+    "reset": "ڈیفالٹ پر ری سیٹ کریں",
+    "save": "تبدیلیاں محفوظ کریں",
+    "saved": "محفوظ ہو گیا!",
+    "selectLanguage": "زبان منتخب کریں",
+    "securityTitle": "سیکیورٹی کی ترتیبات",
+    "securitySubtitle": "اپنا پاس ورڈ اور اکاؤنٹ سیکیورٹی ترجیحات اپ ڈیٹ کریں",
+    "comingSoon": "ترتیبات جلد آرہی ہیں۔"
+  },
+  "common": {
+    "confirm": "تصدیق کریں",
+    "cancel": "منسوخ کریں",
+    "warning": "وارننگ",
+    "logoutMessage": "کیا آپ واقعی اپنے اکاؤنٹ سے لاگ آؤٹ کرنا چاہتے ہیں؟"
+  },
+  "languages": {
+    "en": "انگریزی",
+    "ar": "عربی",
+    "ur": "اردو"
+  },
+  "dashboard": {
+    "announcements": "اعلانات",
+    "welcomeNewHires": "نئے ملازمین کو خوش آمدید"
+  }
+}

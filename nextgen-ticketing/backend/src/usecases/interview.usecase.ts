@@ -63,12 +63,12 @@ export const interviewUsecase = {
   },
 
   async getInterviewById(id: string, user: any) {
-    const interview = await interviewRepository.findById(id);
+    const interview = (await interviewRepository.findById(id)) as any;
     if (!interview) throw new Error("Interview not found");
 
     if (user.role !== RoleName.ADMIN && user.role !== RoleName.HR) {
       const isPanelMember = interview.panelMembers.some(
-        (pm) => pm.userId === user.id
+        (pm: any) => pm.userId === user.id
       );
       if (!isPanelMember)
         throw new Error("Access denied. You are not a panel member.");
@@ -100,12 +100,12 @@ export const interviewUsecase = {
     for (const targetUserId of notifyUserIds) {
       const notification = await ticketRepository.createNotification({
         title: "Interview Scheduled",
-        message: `Interview "${fullInterview.title}" scheduled for ${fullInterview.candidate.name}`,
+        message: `Interview "${(fullInterview as any).title}" scheduled for ${(fullInterview as any).candidate.name}`,
         type: "interview",
         userId: targetUserId,
         data: {
-          interviewId: fullInterview.id,
-          candidateId: fullInterview.candidate.id,
+          interviewId: (fullInterview as any).id,
+          candidateId: (fullInterview as any).candidate.id,
         },
       });
       notifications.push({ userId: targetUserId, notification });
@@ -125,6 +125,8 @@ export const interviewUsecase = {
 
   async updateInterview(id: string, data: any, user: any) {
     const { interviewerIds, scheduledAt } = data;
+    const notifications: any[] = [];
+    let toAddTickets: string[] = [];
 
     const interview = await interviewRepository.updateInterviewWithPanel(
       id,
@@ -133,8 +135,6 @@ export const interviewUsecase = {
     );
 
     if (scheduledAt) {
-      await ticketRepository.updateMany([id], { dueDate: new Date(scheduledAt) }); // Wait, this should be where interviewId = id.
-      // I'll use prisma directly for this specific batch update or add it to repository.
       await (prisma as any).ticket.updateMany({
         where: { interviewId: id },
         data: { dueDate: new Date(scheduledAt) },
@@ -150,7 +150,7 @@ export const interviewUsecase = {
         .map((t: any) => t.assigneeId)
         .filter(Boolean) as string[];
 
-      const toAddTickets = interviewerIds.filter(
+      toAddTickets = interviewerIds.filter(
         (uid: string) => !currentTicketUserIds.includes(uid)
       );
       const toRemoveTickets = currentTicketUserIds.filter(
@@ -178,7 +178,7 @@ export const interviewUsecase = {
       }
 
       if (data.title || data.candidateId) {
-        const fullInterview = await interviewRepository.findById(id);
+        const fullInterview = (await interviewRepository.findById(id)) as any;
         if (fullInterview) {
           const subject = `Interview: ${fullInterview.candidate.name} - ${
             fullInterview.title || "Technical Round"
@@ -199,9 +199,31 @@ export const interviewUsecase = {
           });
         }
       }
+
+      const fullInterview = (await interviewRepository.findById(id)) as any;
+      if (!fullInterview) throw new Error("Failed to update interview");
+
+      if (toAddTickets.length > 0) {
+        for (const targetUserId of toAddTickets) {
+          const notification = await ticketRepository.createNotification({
+            title: "Added to Interview Panel",
+            message: `You have been added to the panel for interview "${fullInterview.title}" with candidate ${fullInterview.candidate.name}`,
+            type: "interview",
+            userId: targetUserId,
+            data: {
+              interviewId: fullInterview.id,
+              candidateId: fullInterview.candidate.id,
+            },
+          });
+          notifications.push({ userId: targetUserId, notification });
+        }
+      }
     }
 
-    return interviewRepository.findById(id);
+    const fullInterview = await interviewRepository.findById(id);
+    if (!fullInterview) throw new Error("Failed to update interview");
+
+    return { interview: fullInterview, notifications };
   },
 
   async updateInterviewStatus(id: string, status: string) {

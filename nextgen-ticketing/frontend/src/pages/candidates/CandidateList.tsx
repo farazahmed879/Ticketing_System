@@ -16,6 +16,7 @@ import type { TableColumn } from "../../components/types";
 
 import CandidateModal from "./components/CandidateModal";
 import CustomPagination from "../../components/CustomPagination";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 const statusBadgeVariant = (status: string) => {
   switch (status) {
@@ -36,6 +37,7 @@ const CandidateList: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { showNotification, setIsLoading } = useNotification();
   const navigate = useNavigate();
 
@@ -51,6 +53,11 @@ const CandidateList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [candidateToDelete, setCandidateToDelete] = useState<string | null>(
+    null,
+  );
 
   const fetchData = async () => {
     setLoading(true);
@@ -87,6 +94,7 @@ const CandidateList: React.FC = () => {
   };
 
   const handleFormSubmit = async (payload: any) => {
+    setIsSubmitting(true);
     try {
       if (currentEditingId) {
         await api.put(API_ROUTES.CANDIDATES.BY_ID(currentEditingId), payload);
@@ -103,21 +111,29 @@ const CandidateList: React.FC = () => {
         "error",
         err.response?.data?.error || "Failed to save candidate",
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this candidate?"))
-      return;
+  const handleDelete = (id: string) => {
+    setCandidateToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!candidateToDelete) return;
     setIsLoading(true, UIMessages.LOADING.DELETING);
     try {
-      await api.delete(API_ROUTES.CANDIDATES.BY_ID(id));
+      await api.delete(API_ROUTES.CANDIDATES.BY_ID(candidateToDelete));
       showNotification("success", "Candidate deleted successfully");
+      setIsDeleteModalOpen(false);
       fetchData();
     } catch (err: any) {
       showNotification("error", "Failed to delete candidate");
     } finally {
       setIsLoading(false, "");
+      setCandidateToDelete(null);
     }
   };
 
@@ -205,7 +221,7 @@ const CandidateList: React.FC = () => {
     {
       header: "Resume",
       key: "resumeUrl",
-      render: (c) => (
+      render: (c) =>
         c.resumeUrl ? (
           <CustomButton
             variant="ghost"
@@ -219,9 +235,10 @@ const CandidateList: React.FC = () => {
             title="View Resume"
           />
         ) : (
-          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>No Resume</span>
-        )
-      ),
+          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
+            No Resume
+          </span>
+        ),
     },
     {
       header: "Actions",
@@ -372,8 +389,12 @@ const CandidateList: React.FC = () => {
                 label="AI Natural Language Query"
                 placeholder="e.g., Senior React developer with strong communication skills..."
                 value={aiPrompt}
-                onChange={(e) => setAiPrompt(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setAiPrompt(e.target.value)
+                }
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                  e.key === "Enter" && handleSearch()
+                }
                 icon={<CustomIcon name="Search" size={18} />}
               />
             </div>
@@ -398,23 +419,35 @@ const CandidateList: React.FC = () => {
               label="Search Name/Email"
               placeholder="e.g. John Doe"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearchTerm(e.target.value)
+              }
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                e.key === "Enter" && handleSearch()
+              }
               icon={<CustomIcon name="Search" size={18} />}
             />
             <CustomInput
               label="Position"
               placeholder="e.g. Frontend Dev"
               value={positionFilter}
-              onChange={(e) => setPositionFilter(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setPositionFilter(e.target.value)
+              }
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                e.key === "Enter" && handleSearch()
+              }
             />
             <CustomInput
               label="Technical Skills"
               placeholder="e.g. React, Node.js"
               value={skillsFilter}
-              onChange={(e) => setSkillsFilter(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSkillsFilter(e.target.value)
+              }
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                e.key === "Enter" && handleSearch()
+              }
             />
             <CustomSelect
               label="Status"
@@ -471,6 +504,17 @@ const CandidateList: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         candidate={candidates.find((c) => c.id === currentEditingId)}
         onSubmit={handleFormSubmit}
+        isSubmitting={isSubmitting}
+      />
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Candidate"
+        message="Are you sure you want to delete this candidate? This action cannot be undone."
+        confirmText="Delete"
+        type="danger"
       />
     </div>
   );

@@ -37,9 +37,10 @@ const DepartmentList: React.FC = () => {
   }, []);
 
   const filteredDepartments = useMemo(() => {
-    return departments.filter(d => 
-      d.name.toLowerCase().includes(search.toLowerCase()) || 
-      d.description?.toLowerCase().includes(search.toLowerCase())
+    return departments.filter(
+      (d) =>
+        d.name.toLowerCase().includes(search.toLowerCase()) ||
+        d.description?.toLowerCase().includes(search.toLowerCase()),
     );
   }, [departments, search]);
 
@@ -49,21 +50,28 @@ const DepartmentList: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this department?")) return;
+    if (!window.confirm("Are you sure you want to delete this department?"))
+      return;
     setIsLoading(true, UIMessages.LOADING.DELETING);
     try {
       await api.delete(API_ROUTES.DEPARTMENTS.BY_ID(id));
       showNotification("success", "Department deleted successfully");
       fetchDepts();
     } catch (err: any) {
-      showNotification("error", err.response?.data?.error || "Failed to delete department");
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to delete department",
+      );
     } finally {
       setIsLoading(false, "");
     }
   };
 
   const handleSubmit = async (data: any) => {
-    setIsLoading(true, editingDept ? "Updating department..." : "Creating department...");
+    setIsLoading(
+      true,
+      editingDept ? "Updating department..." : "Creating department...",
+    );
     try {
       if (editingDept) {
         await api.put(API_ROUTES.DEPARTMENTS.BY_ID(editingDept.id), data);
@@ -76,7 +84,10 @@ const DepartmentList: React.FC = () => {
       setEditingDept(null);
       fetchDepts();
     } catch (err: any) {
-      showNotification("error", err.response?.data?.error || "Operation failed");
+      showNotification(
+        "error",
+        err.response?.data?.error || "Operation failed",
+      );
     } finally {
       setIsLoading(false, "");
     }
@@ -88,12 +99,29 @@ const DepartmentList: React.FC = () => {
       key: "name",
       render: (d) => (
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div className="glass-card" style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(124, 58, 237, 0.1)' }}>
-            <CustomIcon name="Building2" size={18} color="var(--accent-primary)" />
+          <div
+            className="glass-card"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 8,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "rgba(124, 58, 237, 0.1)",
+            }}
+          >
+            <CustomIcon
+              name="Building2"
+              size={18}
+              color="var(--accent-primary)"
+            />
           </div>
           <div>
             <div style={{ fontWeight: 600 }}>{d.name}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{d.description || "No description"}</div>
+            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              {d.description || "No description"}
+            </div>
           </div>
         </div>
       ),
@@ -103,9 +131,25 @@ const DepartmentList: React.FC = () => {
       key: "teams",
       render: (d) => (
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-          {d.teams?.length ? d.teams.map(t => (
-            <span key={t.id} style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: 4 }}>{t.name}</span>
-          )) : <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>No teams</span>}
+          {d.teams?.length ? (
+            d.teams.map((t) => (
+              <span
+                key={t.id}
+                style={{
+                  fontSize: "0.75rem",
+                  background: "rgba(255,255,255,0.05)",
+                  padding: "2px 8px",
+                  borderRadius: 4,
+                }}
+              >
+                {t.name}
+              </span>
+            ))
+          ) : (
+            <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
+              No teams
+            </span>
+          )}
         </div>
       ),
     },
@@ -113,7 +157,9 @@ const DepartmentList: React.FC = () => {
       header: "Projects",
       key: "projects",
       render: (d) => (
-        <span style={{ fontSize: "0.9rem" }}>{d.projects?.length || 0} Projects</span>
+        <span style={{ fontSize: "0.9rem" }}>
+          {d.projects?.length || 0} Projects
+        </span>
       ),
     },
     {
@@ -121,8 +167,19 @@ const DepartmentList: React.FC = () => {
       key: "actions",
       render: (d) => (
         <div style={{ display: "flex", gap: 8 }}>
-          <CustomButton variant="ghost" size="sm" onClick={() => handleEdit(d)} icon={<CustomIcon name="Edit2" size={16} />} />
-          <CustomButton variant="ghost" size="sm" onClick={() => handleDelete(d.id)} icon={<CustomIcon name="Trash2" size={16} />} style={{ color: "var(--accent-danger)" }} />
+          <CustomButton
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(d)}
+            icon={<CustomIcon name="Edit2" size={16} />}
+          />
+          <CustomButton
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(d.id)}
+            icon={<CustomIcon name="Trash2" size={16} />}
+            style={{ color: "var(--accent-danger)" }}
+          />
         </div>
       ),
     },
@@ -130,10 +187,19 @@ const DepartmentList: React.FC = () => {
 
   return (
     <div className="animate-fade-in">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 24,
+        }}
+      >
         <div>
           <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Departments</h1>
-          <p style={{ color: "var(--text-muted)" }}>Manage organizational departments</p>
+          <p style={{ color: "var(--text-muted)" }}>
+            Manage organizational departments
+          </p>
         </div>
         <CustomButton
           variant="gradient"
@@ -147,11 +213,20 @@ const DepartmentList: React.FC = () => {
         </CustomButton>
       </div>
 
-      <div style={{ marginBottom: 20, display: 'flex', gap: 16, alignItems: 'center' }}>
+      <div
+        style={{
+          marginBottom: 20,
+          display: "flex",
+          gap: 16,
+          alignItems: "center",
+        }}
+      >
         <CustomInput
           placeholder="Search departments..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setSearch(e.target.value)
+          }
           icon={<CustomIcon name="Search" size={18} />}
           containerStyle={{ maxWidth: "350px" }}
         />

@@ -59,10 +59,13 @@ model User {
   timesheetEntries   TimesheetEntry[] @relation("UserTimesheets")
   approvedTimesheets TimesheetEntry[] @relation("TimesheetApprover")
 
+  announcements    Announcement[]
+
   scheduledInterviews  Interview[]          @relation("InterviewScheduler")
   interviewPanels      InterviewPanel[]
   interviewFeedbacks   InterviewFeedback[]  @relation("InterviewFeedbackGiver")
 
+  managedTeams   Team[]    @relation("TeamManager")
   lastOnline    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -80,6 +83,7 @@ model Role {
   isHR        Boolean  @default(false)
   permissions Json
   users       User[]
+  deleted     Boolean  @default(false)
 }
 
 // ==================== TICKETS ====================
@@ -179,6 +183,7 @@ model Group {
   members     User[]   @relation(fields: [memberIds], references: [id])
   tickets     Ticket[]
   createdAt   DateTime @default(now())
+  deleted     Boolean  @default(false)
 }
 
 model Team {
@@ -191,11 +196,15 @@ model Team {
   departmentId String? @db.ObjectId
   department   Department? @relation(fields: [departmentId], references: [id])
 
+  managerId    String? @db.ObjectId
+  manager      User?   @relation("TeamManager", fields: [managerId], references: [id])
+
   projectIds  String[] @db.ObjectId
   projects    Project[] @relation(fields: [projectIds], references: [id])
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deleted     Boolean  @default(false)
 }
 
 model Department {
@@ -208,6 +217,7 @@ model Department {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deleted     Boolean  @default(false)
 }
 
 model Project {
@@ -226,6 +236,7 @@ model Project {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deleted     Boolean  @default(false)
 }
 
 // ==================== NOTIFICATIONS ====================
@@ -251,6 +262,20 @@ model Notice {
   active      Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deleted     Boolean  @default(false)
+}
+
+model Announcement {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  date        DateTime
+  type        String   @default("event") // event, important, info
+  authorId    String   @db.ObjectId
+  author      User     @relation(fields: [authorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deleted     Boolean  @default(false)
 }
 
 // ==================== CHAT ====================
@@ -289,6 +314,7 @@ model UserRequest {
   data        Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deleted     Boolean  @default(false)
 }
 // ==================== TIMESHEET ====================
 
@@ -350,6 +376,7 @@ model Candidate {
   portfolio       String?
   github          String?
   projects        String?
+  observingSkills String?
   status          String   @default("Active") // Active, Hired, Rejected, On Hold
   dob             DateTime?
   nationality     String?
@@ -357,6 +384,7 @@ model Candidate {
   interviews      Interview[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  deleted         Boolean  @default(false)
 }
 
 model Interview {
@@ -380,6 +408,7 @@ model Interview {
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  deleted         Boolean  @default(false)
 }
 
 model InterviewPanel {

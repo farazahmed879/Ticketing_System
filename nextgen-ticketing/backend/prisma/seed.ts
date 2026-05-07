@@ -43,7 +43,7 @@ async function main() {
           deactivate: true,
         },
         reports: { view: true },
-        requests: { view: true },
+        requests: { view: true, update: true, delete: true },
       },
     },
   });
@@ -68,7 +68,7 @@ async function main() {
         groups: { view: true, create: false, update: false, delete: false },
         teams: { view: true, create: false, update: false, delete: false },
         notices: { view: true, create: false, update: false, delete: false },
-        requests: { view: true },
+        requests: { view: true, update: true },
       },
     },
   });

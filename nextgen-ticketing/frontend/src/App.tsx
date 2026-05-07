@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { useTranslation } from "react-i18next";
 import Login from "./pages/auth/Login.tsx";
 // import Register from "./pages/auth/Register.tsx";
 import Dashboard from "./pages/dashboard/Dashboard.tsx";
@@ -20,7 +21,7 @@ import ProjectList from "./pages/projects/ProjectList.tsx";
 import UserList from "./pages/users/UserList.tsx";
 import RoleList from "./pages/roles/RoleList.tsx";
 import MainLayout from "./layouts/MainLayout.tsx";
-import FullScreenLoader from "./components/FullScreenLoader.tsx";
+import FullScreenLoader from "./components/FullScreenLoader";
 import Notifications from "./pages/notifications/Notifications.tsx";
 import Requests from "./pages/requests/Requests.tsx";
 import Settings from "./pages/settings/Settings.tsx";
@@ -33,26 +34,16 @@ import CandidateDetail from "./pages/candidates/CandidateDetail.tsx";
 import CandidateLeaderboard from "./pages/candidates/CandidateLeaderboard.tsx";
 import InterviewList from "./pages/interviews/InterviewList.tsx";
 import InterviewDetail from "./pages/interviews/InterviewDetail.tsx";
-
-const PlaceholderPage: React.FC<{ title: string }> = ({ title }) => (
-  <div className="animate-fade-in">
-    <h1 style={{ fontSize: "1.8rem", fontWeight: 700, marginBottom: 24 }}>
-      {title}
-    </h1>
-    <div
-      className="glass-card"
-      style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}
-    >
-      {title} management module is under construction.
-    </div>
-  </div>
-);
+import AnnouncementList from "./pages/announcements/AnnouncementList.tsx";
+import NotFound from "./pages/NotFound.tsx";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { user, loading } = useAuth();
-  if (loading) return <FullScreenLoader subMessage="Verifying Session..." />;
+  const { t } = useTranslation();
+  if (loading)
+    return <FullScreenLoader subMessage={t("topbar.verifyingSession")} />;
   if (!user) return <Navigate to="/login" />;
   return <>{children}</>;
 };
@@ -91,11 +82,16 @@ const App: React.FC = () => {
               <Route path="settings" element={<Settings />} />
               <Route path="profile/:id?" element={<Profile />} />
               <Route path="candidates" element={<CandidateList />} />
-              <Route path="candidates/leaderboard" element={<CandidateLeaderboard />} />
+              <Route
+                path="candidates/leaderboard"
+                element={<CandidateLeaderboard />}
+              />
               <Route path="candidates/:id" element={<CandidateDetail />} />
               <Route path="interviews" element={<InterviewList />} />
               <Route path="interviews/:id" element={<InterviewDetail />} />
+              <Route path="announcements" element={<AnnouncementList />} />
             </Route>
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
       </AuthProvider>

@@ -184,7 +184,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const canUpdate =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.tickets?.update ||
-    user.id === displayTicket.owner.id;
+    user?.id === displayTicket.owner.id;
   const canViewComments =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.comments?.view;

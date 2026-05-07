@@ -17,6 +17,7 @@ import type { TableColumn } from "../../components/types";
 import CustomDatePicker from "../../components/CustomDatePicker";
 import ScheduleInterviewModal from "./ScheduleInterviewModal";
 import CustomPagination from "../../components/CustomPagination";
+import CustomAvatarStack from "../../components/CustomAvatarStack";
 
 const statusBadgeVariant = (status: string) => {
   switch (status) {
@@ -190,26 +191,15 @@ const InterviewList: React.FC = () => {
       header: "Panel",
       key: "panel",
       render: (i) => (
-        <div className={styles.panelAvatars}>
-          {i.panelMembers.slice(0, 4).map((pm) => (
-            <div
-              key={pm.id}
-              className={styles.panelAvatar}
-              title={pm.user.fullname}
-            >
-              {pm.user.image ? (
-                <img src={pm.user.image} alt={pm.user.fullname} />
-              ) : (
-                pm.user.fullname.charAt(0)
-              )}
-            </div>
-          ))}
-          {i.panelMembers.length > 4 && (
-            <div className={`${styles.panelAvatar} ${styles.panelAvatarMore}`}>
-              +{i.panelMembers.length - 4}
-            </div>
-          )}
-        </div>
+        <CustomAvatarStack
+          items={i.panelMembers.map((pm) => ({
+            id: pm.id,
+            name: pm.user.fullname,
+            image: pm.user.image,
+          }))}
+          limit={4}
+          size={28}
+        />
       ),
     },
     {
@@ -321,14 +311,14 @@ const InterviewList: React.FC = () => {
         <div className={styles.dateFilter}>
           <CustomDatePicker
             value={startDate}
-            onChange={(val) => setStartDate(val)}
+            onChange={(val: string) => setStartDate(val)}
             placeholder="Start Date"
             className={styles.dateInput}
           />
           <span style={{ color: "var(--text-muted)", marginTop: 4 }}>to</span>
           <CustomDatePicker
             value={endDate}
-            onChange={(val) => setEndDate(val)}
+            onChange={(val: string) => setEndDate(val)}
             placeholder="End Date"
             className={styles.dateInput}
           />

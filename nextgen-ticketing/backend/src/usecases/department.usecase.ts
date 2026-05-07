@@ -9,9 +9,6 @@ export const departmentUsecase = {
     const deptData = {
       name: data.name,
       description: data.description,
-      teamIds: data.teamIds || [],
-      groupIds: data.groupIds || [],
-      allGroups: data.allGroups || false,
     };
     return departmentRepository.create(deptData);
   },
@@ -19,9 +16,7 @@ export const departmentUsecase = {
   async updateDepartment(id: string, data: any) {
     const updateData: any = {};
     if (data.name) updateData.name = data.name;
-    if (data.teamIds) updateData.teamIds = data.teamIds;
-    if (data.groupIds) updateData.groupIds = data.groupIds;
-    if (typeof data.allGroups === "boolean") updateData.allGroups = data.allGroups;
+    if (data.description !== undefined) updateData.description = data.description;
 
     return departmentRepository.update(id, updateData);
   },

@@ -1,0 +1,68 @@
+{
+  "sidebar": {
+    "dashboard": "لوحة القيادة",
+    "tickets": "التذاكر",
+    "ticketBoard": "لوحة التذاكر",
+    "chat": "المحادثة",
+    "history": "السجل",
+    "departments": "الأقسام",
+    "teams": "الفرق",
+    "projects": "المشاريع",
+    "candidates": "المرشحون",
+    "leaderboard": "لوحة المتصدرين",
+    "interviews": "المقابلات",
+    "announcements": "الإعلانات",
+    "settings": "الإعدادات",
+    "timesheet": "ورقة العمل",
+    "logout": "تسجيل الخروج",
+    "requests": "الطلبات",
+    "messages": "الرسائل",
+    "users": "المستخدمون",
+    "roles": "الأدوار"
+  },
+  "topbar": {
+    "overview": "نظرة عامة",
+    "notifications": "التنبيهات",
+    "markAllRead": "تحديد الكل كمقروء",
+    "noNotifications": "لا توجد تنبيهات بعد",
+    "seeAll": "عرض كل التنبيهات",
+    "verifyingSession": "جاري التحقق من الجلسة..."
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "subtitle": "إدارة تفضيلات التطبيق والمظهر",
+    "theme": "المظهر",
+    "profile": "الملف الشخصي",
+    "notifications": "التنبيهات",
+    "security": "الأمان",
+    "language": "اللغة",
+    "appearance": "وضع المظهر",
+    "light": "الوضع الفاتح",
+    "dark": "الوضع الداكن",
+    "primaryColor": "لون التمييز الأساسي",
+    "secondaryColor": "لون التمييز الثانوي",
+    "presets": "القوالب الجاهزة",
+    "reset": "إعادة تعيين الافتراضيات",
+    "save": "حفظ التغييرات",
+    "saved": "تم الحفظ!",
+    "selectLanguage": "اختر اللغة",
+    "securityTitle": "إعدادات الأمان",
+    "securitySubtitle": "تحديث كلمة المرور وتفضيلات أمان الحساب",
+    "comingSoon": "الإعدادات ستتوفر قريباً."
+  },
+  "common": {
+    "confirm": "تأكيد",
+    "cancel": "إلغاء",
+    "warning": "تحذير",
+    "logoutMessage": "هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟"
+  },
+  "languages": {
+    "en": "الإنجليزية",
+    "ar": "العربية",
+    "ur": "الأردية"
+  },
+  "dashboard": {
+    "announcements": "الإعلانات",
+    "welcomeNewHires": "نرحب بالموظفين الجدد"
+  }
+}

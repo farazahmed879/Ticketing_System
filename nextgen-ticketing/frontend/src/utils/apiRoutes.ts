@@ -7,6 +7,7 @@ export const API_ROUTES = {
   // Auth
   AUTH: {
     LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
     LOGIN_HELP: '/auth/login-help',
   },
 
@@ -106,5 +107,11 @@ export const API_ROUTES = {
     BY_ID: (id: string) => `/interviews/${id}`,
     STATUS: (id: string) => `/interviews/${id}/status`,
     FEEDBACK: (id: string) => `/interviews/${id}/feedback`,
+  },
+  
+  // Announcements
+  ANNOUNCEMENTS: {
+    BASE: '/announcements',
+    BY_ID: (id: string) => `/announcements/${id}`,
   },
 };

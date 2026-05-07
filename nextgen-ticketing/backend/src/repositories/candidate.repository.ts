@@ -3,7 +3,7 @@ import prisma from "../prisma";
 export const candidateRepository = {
   async findMany(where: any, skip?: number, take?: number) {
     return prisma.candidate.findMany({
-      where,
+      where: { ...where, deleted: false },
       include: {
         _count: { select: { interviews: true } },
       },
@@ -14,14 +14,15 @@ export const candidateRepository = {
   },
 
   async count(where: any) {
-    return prisma.candidate.count({ where });
+    return prisma.candidate.count({ where: { ...where, deleted: false } });
   },
 
   async findById(id: string) {
-    return prisma.candidate.findUnique({
-      where: { id },
+    return prisma.candidate.findFirst({
+      where: { id, deleted: false },
       include: {
         interviews: {
+          where: { deleted: false },
           include: {
             scheduledBy: { select: { id: true, fullname: true } },
             panelMembers: {
@@ -32,10 +33,12 @@ export const candidateRepository = {
             _count: { select: { feedbacks: true } },
             feedbacks: {
               include: {
-                interviewer: { select: { id: true, fullname: true, image: true } }
+                interviewer: {
+                  select: { id: true, fullname: true, image: true },
+                },
               },
-              orderBy: { createdAt: "asc" }
-            }
+              orderBy: { createdAt: "asc" },
+            },
           },
           orderBy: { scheduledAt: "asc" },
         },
@@ -55,23 +58,28 @@ export const candidateRepository = {
   },
 
   async delete(id: string) {
-    return prisma.candidate.delete({ where: { id } });
+    return prisma.candidate.update({
+      where: { id },
+      data: { deleted: true },
+    });
   },
 
   async getLeaderboard() {
     return prisma.candidate.findMany({
+      where: { deleted: false },
       include: {
         interviews: {
+          where: { deleted: false },
           include: {
             feedbacks: {
               include: {
-                interviewer: { select: { fullname: true, image: true } }
-              }
-            }
-          }
-        }
+                interviewer: { select: { fullname: true, image: true } },
+              },
+            },
+          },
+        },
       },
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
     });
   },
 };

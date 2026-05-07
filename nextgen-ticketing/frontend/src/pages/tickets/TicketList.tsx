@@ -7,7 +7,12 @@ import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import styles from "./TicketList.module.css";
-import { RoleName, StatusName, PriorityName, UIMessages } from "../../utils/constants";
+import {
+  RoleName,
+  StatusName,
+  PriorityName,
+  UIMessages,
+} from "../../utils/constants";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { format } from "date-fns";
 
@@ -126,7 +131,9 @@ const TicketList: React.FC = () => {
             <CustomInput
               placeholder="Search by subject or ID..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearch(e.target.value)
+              }
               icon={<CustomIcon name="Search" size={18} />}
               containerStyle={{ minWidth: "300px" }}
             />

@@ -8,7 +8,7 @@ import CustomButton from "../../components/CustomButton";
 import CustomBadge from "../../components/CustomBadge";
 import type { Candidate } from "../../types";
 import { format } from "date-fns";
-import { DetailSkeleton } from "../../components/CustomSkeleton";
+import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 
 const CandidateDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -237,9 +237,26 @@ const CandidateDetail: React.FC = () => {
             </div>
 
             {/* Social Icons - Now with text fallback */}
-            {(candidate.linkedin || candidate.github || candidate.portfolio) && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16 }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600 }}>Professional Links:</span>
+            {(candidate.linkedin ||
+              candidate.github ||
+              candidate.portfolio) && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  marginTop: 16,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "0.85rem",
+                    color: "var(--text-muted)",
+                    fontWeight: 600,
+                  }}
+                >
+                  Professional Links:
+                </span>
                 <div style={{ display: "flex", gap: 12 }}>
                   {candidate.linkedin && (
                     <a
@@ -247,7 +264,18 @@ const CandidateDetail: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="hover-glow"
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#0077b5', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'none', background: 'rgba(0,119,181,0.1)', padding: '4px 10px', borderRadius: 6 }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        color: "#0077b5",
+                        fontSize: "0.9rem",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                        background: "rgba(0,119,181,0.1)",
+                        padding: "4px 10px",
+                        borderRadius: 6,
+                      }}
                     >
                       <CustomIcon name="Linkedin" size={16} />
                       LinkedIn
@@ -259,7 +287,18 @@ const CandidateDetail: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="hover-glow"
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'none', background: 'rgba(255,255,255,0.05)', padding: '4px 10px', borderRadius: 6 }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        color: "var(--text-primary)",
+                        fontSize: "0.9rem",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                        background: "rgba(255,255,255,0.05)",
+                        padding: "4px 10px",
+                        borderRadius: 6,
+                      }}
                     >
                       <CustomIcon name="Github" size={16} />
                       GitHub
@@ -271,7 +310,18 @@ const CandidateDetail: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="hover-glow"
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent-primary)', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'none', background: 'rgba(124, 58, 237, 0.1)', padding: '4px 10px', borderRadius: 6 }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        color: "var(--accent-primary)",
+                        fontSize: "0.9rem",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                        background: "rgba(124, 58, 237, 0.1)",
+                        padding: "4px 10px",
+                        borderRadius: 6,
+                      }}
                     >
                       <CustomIcon name="Globe" size={16} />
                       Portfolio
@@ -423,6 +473,54 @@ const CandidateDetail: React.FC = () => {
                   >
                     {candidate.objective || "No objective provided."}
                   </p>
+                </div>
+
+                <div
+                  style={{ height: "1px", background: "var(--border-glass)" }}
+                />
+
+                <div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      marginBottom: 12,
+                    }}
+                  >
+                    <CustomIcon
+                      name="Zap"
+                      size={20}
+                      color="var(--accent-primary)"
+                    />
+                    <h3 style={{ margin: 0, fontSize: "1.1rem" }}>
+                      Observing Skills
+                    </h3>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 8,
+                    }}
+                  >
+                    {candidate.observingSkills ? (
+                      candidate.observingSkills.split(",").map((skill, i) => (
+                        <CustomBadge key={i} variant="secondary">
+                          {skill.trim()}
+                        </CustomBadge>
+                      ))
+                    ) : (
+                      <span
+                        style={{
+                          color: "var(--text-muted)",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        No observing skills recorded.
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div

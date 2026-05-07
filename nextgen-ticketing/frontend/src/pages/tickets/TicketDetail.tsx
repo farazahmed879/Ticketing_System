@@ -9,7 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
 import CustomSelect from "../../components/CustomSelect";
-import { RoleName, StatusName, PriorityName, UIMessages } from "../../utils/constants";
+import { RoleName, StatusName, UIMessages } from "../../utils/constants";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
 import type { TicketDetail as ITicketDetail } from "../../types";

@@ -9,10 +9,10 @@ import { useAuth } from "../../context/AuthContext";
 import { socket } from "../../services/socket";
 import CustomSelect from "../../components/CustomSelect";
 import type { Column, Ticket } from "../../types";
-import { BoardSkeleton } from "../../components/CustomSkeleton";
 import CustomButton from "../../components/CustomButton";
 import TicketDetailModal from "./components/TicketDetailModal";
 import { isTomorrow, isToday, parseISO, format } from "date-fns";
+import { BoardSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 
 const TicketBoard: React.FC = () => {
   const [columns, setColumns] = useState<Column[]>([]);

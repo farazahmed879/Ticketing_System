@@ -41,13 +41,17 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({
         <CustomInput
           placeholder="Group name..."
           value={groupName}
-          onChange={(e) => onGroupNameChange(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            onGroupNameChange(e.target.value)
+          }
           icon={<CustomIcon name="Users" size={18} />}
         />
         <CustomInput
           placeholder="Search members..."
           value={userSearch}
-          onChange={(e) => onUserSearchChange(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            onUserSearchChange(e.target.value)
+          }
           icon={<CustomIcon name="Search" size={18} />}
         />
         {selectedGroupMembers.length > 0 && (
@@ -110,7 +114,9 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600 }}>{u.fullname}</div>
-                    <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                    <div
+                      style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}
+                    >
                       {u.role?.name}
                     </div>
                   </div>
@@ -126,7 +132,11 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({
             })
           ) : (
             <div
-              style={{ textAlign: "center", padding: 20, color: "var(--text-muted)" }}
+              style={{
+                textAlign: "center",
+                padding: 20,
+                color: "var(--text-muted)",
+              }}
             >
               No users found
             </div>

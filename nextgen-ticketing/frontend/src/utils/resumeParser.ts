@@ -145,10 +145,10 @@ export function parseResumeData(text: string): ResumeData {
   const contactInfo = extractContactInfo(normalized);
 
   return {
-    objective: objective || "No objective section found",
-    workExperience: workExperience || "No work experience section found",
-    technicalSkills: technicalSkills || "No technical skills section found",
-    projects: projects || "No projects section found",
+    objective: objective || "",
+    workExperience: workExperience || "",
+    technicalSkills: technicalSkills || "",
+    projects: projects || "",
     rawText: normalized,
     ...contactInfo,
   };

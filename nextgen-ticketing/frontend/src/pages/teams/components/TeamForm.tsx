@@ -11,6 +11,7 @@ interface TeamFormData {
   name: string;
   description: string;
   departmentId: string;
+  managerId: string;
   projectIds: string[];
   memberIds: string[];
 }
@@ -39,6 +40,7 @@ const TeamForm: React.FC<TeamFormProps> = ({
       name: "",
       description: "",
       departmentId: "",
+      managerId: "",
       projectIds: [],
       memberIds: [],
     },
@@ -50,6 +52,7 @@ const TeamForm: React.FC<TeamFormProps> = ({
         name: initialData.name,
         description: initialData.description || "",
         departmentId: initialData.departmentId || "",
+        managerId: initialData.managerId || "",
         projectIds: initialData.projectIds || [],
         memberIds: initialData.memberIds || [],
       });
@@ -58,6 +61,7 @@ const TeamForm: React.FC<TeamFormProps> = ({
         name: "",
         description: "",
         departmentId: "",
+        managerId: "",
         projectIds: [],
         memberIds: [],
       });
@@ -76,6 +80,15 @@ const TeamForm: React.FC<TeamFormProps> = ({
     image: u.image,
   }));
 
+  const agentOptions = users
+    .filter((u) => u.role.isAgent || u.role.isAdmin)
+    .map((u) => ({
+      value: u.id,
+      label: u.fullname,
+      sublabel: u.role.name,
+      image: u.image,
+    }));
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -90,13 +103,22 @@ const TeamForm: React.FC<TeamFormProps> = ({
         required
       />
 
-      <CustomSelect
-        name="departmentId"
-        control={control}
-        label="Department"
-        placeholder="Select Department"
-        options={departmentOptions}
-      />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <CustomSelect
+          name="departmentId"
+          control={control}
+          label="Department"
+          placeholder="Select Department"
+          options={departmentOptions}
+        />
+        <CustomSelect
+          name="managerId"
+          control={control}
+          label="Team Manager"
+          placeholder="Select Manager"
+          options={agentOptions}
+        />
+      </div>
 
       <CustomMultiSelect
         name="projectIds"

@@ -1,9 +1,7 @@
 import React from "react";
 import CustomIcon from "../CustomIcon";
 
-interface FullScreenLoaderProps {
-  subMessage?: string;
-}
+import type { FullScreenLoaderProps } from "../types";
 
 const FullScreenLoader: React.FC<FullScreenLoaderProps> = ({
   subMessage = "Ticketing System",

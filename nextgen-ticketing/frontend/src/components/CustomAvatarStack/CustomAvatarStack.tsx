@@ -2,18 +2,7 @@ import React from "react";
 import styles from "./CustomAvatarStack.module.css";
 import CustomImage from "../CustomImage";
 
-export interface AvatarItem {
-  id: string;
-  name: string;
-  image?: string;
-}
-
-interface CustomAvatarStackProps {
-  items: AvatarItem[];
-  limit?: number;
-  size?: number;
-  className?: string;
-}
+import type { AvatarItem, CustomAvatarStackProps } from "../types";
 
 const CustomAvatarStack: React.FC<CustomAvatarStackProps> = ({
   items = [],

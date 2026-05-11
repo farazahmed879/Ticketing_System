@@ -12,7 +12,7 @@ import Login from "./pages/auth/Login.tsx";
 // import Register from "./pages/auth/Register.tsx";
 import Dashboard from "./pages/dashboard/Dashboard.tsx";
 import TicketList from "./pages/tickets/TicketList.tsx";
-import TicketBoard from "./pages/tickets/TicketBoard.tsx";
+import TicketBoard from "./pages/tickets/kanbanBoard/TicketBoard.tsx";
 import TicketDetail from "./pages/tickets/TicketDetail.tsx";
 import Messages from "./pages/messages/Messages.tsx";
 import DepartmentList from "./pages/departments/DepartmentList.tsx";

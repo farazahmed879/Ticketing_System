@@ -23,8 +23,8 @@ export const TicketType = {
 export type TicketType = (typeof TicketType)[keyof typeof TicketType];
 
 export const StatusName = {
-  NEW: "New",
-  OPEN: "Open",
+  NEW: "Unassigned",
+  OPEN: "Assigned",
   CANCELLED: "Cancelled",
   FAILED: "Failed",
   IN_PROCESS: "In Process",
@@ -86,7 +86,8 @@ export const InterviewStatus = {
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
 } as const;
-export type InterviewStatus = (typeof InterviewStatus)[keyof typeof InterviewStatus];
+export type InterviewStatus =
+  (typeof InterviewStatus)[keyof typeof InterviewStatus];
 
 export const CandidateStatus = {
   ACTIVE: "Active",
@@ -94,7 +95,8 @@ export const CandidateStatus = {
   REJECTED: "Rejected",
   ON_HOLD: "On Hold",
 } as const;
-export type CandidateStatus = (typeof CandidateStatus)[keyof typeof CandidateStatus];
+export type CandidateStatus =
+  (typeof CandidateStatus)[keyof typeof CandidateStatus];
 
 export const Recommendation = {
   STRONG_HIRE: "Strong Hire",
@@ -103,7 +105,8 @@ export const Recommendation = {
   NO_HIRE: "No Hire",
   STRONG_NO_HIRE: "Strong No Hire",
 } as const;
-export type Recommendation = (typeof Recommendation)[keyof typeof Recommendation];
+export type Recommendation =
+  (typeof Recommendation)[keyof typeof Recommendation];
 
 export const NotificationMessages = {
   TICKET_CREATED: (subject: string) =>

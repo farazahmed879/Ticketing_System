@@ -8,7 +8,7 @@ import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomBadge from "../../components/CustomBadge";
 import CustomInput from "../../components/CustomInput";
-import type { Project, Department, Team } from "../../types";
+import type { Project, Department } from "../../types";
 import type { TableColumn } from "../../components/types";
 import ProjectModal from "./components/ProjectModal";
 
@@ -37,21 +37,22 @@ const ProjectList: React.FC = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
-
+  const [clients, setClients] = useState<any[]>([]);
   const { showNotification, setIsLoading } = useNotification();
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [projectsRes, deptsRes, teamsRes] = await Promise.all([
+      const [projectsRes, deptsRes, clientsRes] = await Promise.all([
         api.get(API_ROUTES.PROJECTS.BASE),
         api.get(API_ROUTES.DEPARTMENTS.BASE),
-        api.get(API_ROUTES.TEAMS.BASE),
+        api.get(API_ROUTES.USERS.BASE, {
+          params: { type: "customers", limit: -1 },
+        }),
       ]);
       setProjects(projectsRes.data.projects);
       setDepartments(deptsRes.data.departments);
-      setTeams(teamsRes.data.teams);
+      setClients(clientsRes.data.accounts);
     } catch (err) {
       console.error("Failed to fetch projects data", err);
       showNotification("error", "Failed to load projects data");
@@ -70,7 +71,10 @@ const ProjectList: React.FC = () => {
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.description?.toLowerCase().includes(search.toLowerCase()) ||
         p.status.toLowerCase().includes(search.toLowerCase()) ||
-        p.department?.name?.toLowerCase().includes(search.toLowerCase()),
+        p.department?.name?.toLowerCase().includes(search.toLowerCase()) ||
+        p.clients?.some((c) =>
+          c.fullname.toLowerCase().includes(search.toLowerCase()),
+        ),
     );
   }, [projects, search]);
 
@@ -166,14 +170,14 @@ const ProjectList: React.FC = () => {
       ),
     },
     {
-      header: "Teams Involved",
-      key: "teams",
+      header: "Clients",
+      key: "clients",
       render: (p) => (
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-          {p.teams?.length ? (
-            p.teams.map((t) => (
+          {p.clients?.length ? (
+            p.clients.map((c) => (
               <span
-                key={t.id}
+                key={c.id}
                 style={{
                   fontSize: "0.75rem",
                   background: "rgba(255,255,255,0.05)",
@@ -181,12 +185,12 @@ const ProjectList: React.FC = () => {
                   borderRadius: 4,
                 }}
               >
-                {t.name}
+                {c.fullname}
               </span>
             ))
           ) : (
             <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
-              No teams assigned
+              No clients assigned
             </span>
           )}
         </div>
@@ -283,7 +287,7 @@ const ProjectList: React.FC = () => {
         onSubmit={handleSubmit}
         project={editingProject}
         departments={departments}
-        teams={teams}
+        clients={clients}
       />
     </>
   );

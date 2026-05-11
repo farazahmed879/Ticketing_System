@@ -1,9 +1,7 @@
 import React from "react";
 import styles from "../Dashboard.module.css";
 
-interface StatsCardsProps {
-  cards: any[];
-}
+import type { StatsCardsProps } from "../../../types";
 
 const StatsCards: React.FC<StatsCardsProps> = ({ cards }) => {
   return (

@@ -1,8 +1,8 @@
-import React from 'react';
-import { TableRowsSkeleton } from '../CustomSkeleton';
-import tableStyles from './CustomTable.module.css';
+import React from "react";
+import { TableRowsSkeleton } from "../CustomSkeleton";
+import tableStyles from "./CustomTable.module.css";
 
-import type { CustomTableProps } from '../types';
+import type { CustomTableProps } from "../types";
 
 const CustomTable = <T extends { id: string | number }>({
   columns,
@@ -14,10 +14,7 @@ const CustomTable = <T extends { id: string | number }>({
   style,
 }: CustomTableProps<T>) => {
   return (
-    <div
-      className={`glass-card ${className}`}
-      style={{ padding: 0, ...style }}
-    >
+    <div className={`glass-card ${className}`} style={{ padding: 0, ...style }}>
       <table className={tableStyles.table}>
         <thead>
           <tr>
@@ -33,22 +30,31 @@ const CustomTable = <T extends { id: string | number }>({
             <TableRowsSkeleton columns={columns.length} rows={6} />
           ) : data.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} style={{ textAlign: 'center', padding: 40 }}>
-                <div style={{ color: 'var(--text-muted)' }}>{emptyMessage}</div>
+              <td
+                colSpan={columns.length}
+                style={{ textAlign: "center", padding: 40 }}
+              >
+                <div style={{ color: "var(--text-muted)" }}>{emptyMessage}</div>
               </td>
             </tr>
           ) : (
             data.map((item, rowIndex) => (
-              <tr 
-                key={item.id} 
+              <tr
+                key={item.id}
                 onClick={() => onRowClick?.(item)}
-                style={{ cursor: onRowClick ? 'pointer' : 'default' }}
+                style={{ cursor: onRowClick ? "pointer" : "default" }}
               >
                 {columns.map((column, colIndex) => (
-                  <td key={colIndex} style={{ ...column.style, width: column.width }} className={column.className}>
-                    {column.render 
-                      ? column.render(item, rowIndex) 
-                      : (item[column.key as keyof T] as unknown as React.ReactNode)}
+                  <td
+                    key={colIndex}
+                    style={{ ...column.style, width: column.width }}
+                    className={column.className}
+                  >
+                    {column.render
+                      ? column.render(item, rowIndex)
+                      : (item[
+                          column.key as keyof T
+                        ] as unknown as React.ReactNode)}
                   </td>
                 ))}
               </tr>

@@ -1,4 +1,11 @@
 import type { Control, RegisterOptions, FieldValues, Path } from 'react-hook-form';
+import * as Icons from 'lucide-react';
+
+export type IconName = keyof typeof Icons;
+
+export interface CustomIconProps extends Omit<Icons.LucideProps, "ref"> {
+  name: IconName | string;
+}
 
 export interface Option {
   value: string;
@@ -7,6 +14,19 @@ export interface Option {
   icon?: React.ReactNode;
   image?: string;
   disabled?: boolean;
+}
+
+export interface AvatarItem {
+  id: string;
+  name: string;
+  image?: string;
+}
+
+export interface CustomAvatarStackProps {
+  items: AvatarItem[];
+  limit?: number;
+  size?: number;
+  className?: string;
 }
 
 export type MultiSelectOption = Option;
@@ -30,6 +50,22 @@ export interface CustomSelectProps<T extends FieldValues = any> {
   showSearch?: boolean;
   onSearch?: (query: string) => void;
   serverSideSearch?: boolean;
+}
+
+export interface CustomMultiSelectProps<T extends FieldValues = any> {
+  options: MultiSelectOption[];
+  value?: string[];
+  onChange?: (values: string[]) => void;
+  placeholder?: string;
+  label?: string;
+  className?: string;
+  disabled?: boolean;
+  required?: boolean;
+  style?: React.CSSProperties;
+  name?: Path<T>;
+  control?: Control<T>;
+  rules?: RegisterOptions<T, Path<T>>;
+  error?: string;
 }
 
 export interface CustomInputProps<T extends FieldValues = any> extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -144,4 +180,86 @@ export interface CustomChipInputProps<T extends FieldValues = any> {
   rules?: RegisterOptions<T, Path<T>>;
   value?: string; // Comma separated
   onChange?: (value: string) => void;
+}
+
+export interface CustomPaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  totalItems?: number;
+  itemsPerPage?: number;
+  onPageSizeChange?: (size: number) => void;
+  pageSizeOptions?: number[] | readonly number[];
+}
+
+export interface PhoneInputProps<T extends FieldValues = any> {
+  label?: string;
+  countryCode?: string;
+  onCountryCodeChange?: (code: string) => void;
+  phone?: string;
+  onPhoneChange?: (phone: string) => void;
+  placeholder?: string;
+  error?: string;
+  required?: boolean;
+  name?: Path<T>;
+  countryCodeName?: Path<T>;
+  control?: Control<T>;
+}
+
+export interface CustomImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  fallback?: string;
+  containerStyle?: React.CSSProperties;
+  borderRadius?: string | number;
+  showSkeleton?: boolean;
+}
+
+export interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  maxWidth?: string;
+  minHeight?: string;
+  headerAction?: React.ReactNode;
+}
+
+export interface ConfirmationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  type?: 'danger' | 'warning' | 'info' | 'success';
+  loading?: boolean;
+}
+
+export interface DropdownMenuItem {
+  label: string;
+  icon?: string;
+  onClick: () => void;
+  danger?: boolean;
+  divider?: boolean;
+}
+
+export interface CustomDropdownMenuProps {
+  items: DropdownMenuItem[];
+  triggerIcon?: string;
+  triggerSize?: number;
+  position?: "left" | "right";
+  style?: React.CSSProperties;
+}
+
+export interface FullScreenLoaderProps {
+  subMessage?: string;
+}
+
+export interface StandardListLayoutProps {
+  header?: React.ReactNode;
+  filters?: React.ReactNode;
+  children: React.ReactNode; // Usually the scrollable table area
+  pagination?: React.ReactNode;
+  height?: string;
 }

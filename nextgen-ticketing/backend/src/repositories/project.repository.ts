@@ -2,18 +2,18 @@ import prisma from "../prisma";
 
 export const projectRepository = {
   async findMany(params: any = {}) {
-    const { departmentId, teamId, status } = params;
+    const { departmentId, clientId, status } = params;
     const where: any = { deleted: false };
     
     if (departmentId) where.departmentId = departmentId;
-    if (teamId) where.teamIds = { has: teamId };
+    if (clientId) where.clientIds = { has: clientId };
     if (status) where.status = status;
 
     return prisma.project.findMany({
       where,
       include: {
         department: { select: { id: true, name: true } },
-        teams: { select: { id: true, name: true } },
+        clients: { select: { id: true, fullname: true, image: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -24,7 +24,7 @@ export const projectRepository = {
       where: { id, deleted: false },
       include: {
         department: { select: { id: true, name: true } },
-        teams: { select: { id: true, name: true } },
+        clients: { select: { id: true, fullname: true, image: true } },
       },
     });
   },
@@ -34,7 +34,7 @@ export const projectRepository = {
       data,
       include: {
         department: true,
-        teams: true,
+        clients: true,
       },
     });
   },
@@ -45,7 +45,7 @@ export const projectRepository = {
       data,
       include: {
         department: true,
-        teams: true,
+        clients: true,
       },
     });
   },

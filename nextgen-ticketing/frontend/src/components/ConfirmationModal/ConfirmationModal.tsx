@@ -4,17 +4,7 @@ import CustomButton from '../CustomButton';
 import CustomIcon from '../CustomIcon';
 import styles from './ConfirmationModal.module.css';
 
-interface ConfirmationModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  title: string;
-  message: string;
-  confirmText?: string;
-  cancelText?: string;
-  type?: 'danger' | 'warning' | 'info' | 'success';
-  loading?: boolean;
-}
+import type { ConfirmationModalProps } from '../types';
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   isOpen,

@@ -1,7 +1,7 @@
 import prisma from "../prisma";
 
 export const announcementRepository = {
-  async findMany(where: any) {
+  async findMany(where: any, skip?: number, take?: number) {
     try {
       if (!(prisma as any).announcement) {
         console.error("Prisma Error: 'announcement' model not found on prisma client. Please run 'prisma generate'.");
@@ -23,9 +23,25 @@ export const announcementRepository = {
           },
         },
         orderBy: { date: "desc" },
+        skip,
+        take: take === -1 ? undefined : take,
       });
     } catch (error) {
       console.error("AnnouncementRepository.findMany Error:", error);
+      throw error;
+    }
+  },
+
+  async count(where: any) {
+    try {
+      if (!(prisma as any).announcement) {
+        return 0;
+      }
+      return await (prisma as any).announcement.count({
+        where: { ...where, deleted: false },
+      });
+    } catch (error) {
+      console.error("AnnouncementRepository.count Error:", error);
       throw error;
     }
   },

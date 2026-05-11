@@ -1,12 +1,5 @@
 import React from "react";
-
-interface StandardListLayoutProps {
-  header?: React.ReactNode;
-  filters?: React.ReactNode;
-  children: React.ReactNode; // Usually the scrollable table area
-  pagination?: React.ReactNode;
-  height?: string;
-}
+import type { StandardListLayoutProps } from "../types";
 
 const StandardListLayout: React.FC<StandardListLayoutProps> = ({
   header,
@@ -27,8 +20,16 @@ const StandardListLayout: React.FC<StandardListLayoutProps> = ({
     >
       {header && <div style={{ marginBottom: 24 }}>{header}</div>}
       {filters && <div style={{ marginBottom: 24 }}>{filters}</div>}
-      
-      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", marginBottom: pagination ? "20px" : 0 }}>
+
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          marginBottom: pagination ? "20px" : 0,
+        }}
+      >
         {children}
       </div>
 

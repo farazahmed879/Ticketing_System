@@ -3,15 +3,7 @@ import CustomIcon from '../CustomIcon';
 import styles from './CustomPagination.module.css';
 import { PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE } from '../../utils/constants';
 
-interface CustomPaginationProps {
-  currentPage: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
-  totalItems?: number;
-  itemsPerPage?: number;
-  onPageSizeChange?: (size: number) => void;
-  pageSizeOptions?: number[] | readonly number[];
-}
+import type { CustomPaginationProps } from '../types';
 
 const CustomPagination: React.FC<CustomPaginationProps> = ({
   currentPage,

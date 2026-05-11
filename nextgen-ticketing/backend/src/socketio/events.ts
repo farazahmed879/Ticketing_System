@@ -5,12 +5,7 @@ import { SocketEvent } from '../utils/constants';
 
 // Using centralized prisma client
 
-interface OnlineUser {
-  userId: string;
-  fullname: string;
-  socketIds: string[];
-  status: 'active' | 'idle';
-}
+import { OnlineUser } from '../types';
 
 const onlineUsers: Map<string, OnlineUser> = new Map();
 

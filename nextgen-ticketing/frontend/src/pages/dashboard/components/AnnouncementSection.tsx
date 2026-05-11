@@ -4,10 +4,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import { AnnouncementType } from "../../../utils/constants";
 import styles from "../Dashboard.module.css";
 
-interface AnnouncementSectionProps {
-  announcements: any[];
-  t: (key: string) => string;
-}
+import type { AnnouncementSectionProps } from "../../../types";
 
 const AnnouncementSection: React.FC<AnnouncementSectionProps> = ({ announcements, t }) => {
   return (

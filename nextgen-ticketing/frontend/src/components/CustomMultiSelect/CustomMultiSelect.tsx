@@ -2,23 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Controller, type Control, type RegisterOptions, type FieldValues, type Path } from 'react-hook-form';
 import CustomIcon from '../CustomIcon';
 import styles from './CustomMultiSelect.module.css';
-import type { MultiSelectOption } from '../types';
-
-interface CustomMultiSelectProps<T extends FieldValues = any> {
-  options: MultiSelectOption[];
-  value?: string[];
-  onChange?: (values: string[]) => void;
-  placeholder?: string;
-  label?: string;
-  className?: string;
-  disabled?: boolean;
-  required?: boolean;
-  style?: React.CSSProperties;
-  name?: Path<T>;
-  control?: Control<T>;
-  rules?: RegisterOptions<T, Path<T>>;
-  error?: string;
-}
+import type { MultiSelectOption, CustomMultiSelectProps } from '../types';
 
 const CustomMultiSelect = <T extends FieldValues = any>({
   options,

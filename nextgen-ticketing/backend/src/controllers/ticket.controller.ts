@@ -20,7 +20,7 @@ export const ticketController = {
 
       const { ticket, notifications } = await ticketUsecase.createTicket(
         req.body,
-        user
+        user,
       );
 
       const io = req.app.get("io");
@@ -49,13 +49,14 @@ export const ticketController = {
 
   async updateTicket(req: AuthRequest, res: Response) {
     try {
+      debugger;
       const user = req.user;
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
       const { ticket, notifications } = await ticketUsecase.updateTicket(
         req.params.id as string,
         req.body,
-        user
+        user,
       );
 
       const io = req.app.get("io");
@@ -68,7 +69,11 @@ export const ticketController = {
 
       res.json({ success: true, ticket });
     } catch (error: any) {
-      const status = error.message.includes("permission") || error.message.includes("You can only update") ? 403 : 500;
+      const status =
+        error.message.includes("permission") ||
+        error.message.includes("You can only update")
+          ? 403
+          : 500;
       res.status(status).json({ success: false, error: error.message });
     }
   },
@@ -79,7 +84,7 @@ export const ticketController = {
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
       const result = await ticketUsecase.batchUpdateTickets(req.body, user);
-      
+
       const io = req.app.get("io");
       if (io) {
         io.emit("ticket:updated", { batch: true });
@@ -111,7 +116,7 @@ export const ticketController = {
       const { comment, notifications } = await ticketUsecase.addComment(
         req.params.id as string,
         req.body,
-        user
+        user,
       );
 
       const io = req.app.get("io");

@@ -34,7 +34,7 @@ const Dashboard: React.FC = () => {
       try {
         const [statsRes, annRes] = await Promise.all([
           api.get(API_ROUTES.DASHBOARD.STATS),
-          api.get(API_ROUTES.ANNOUNCEMENTS.BASE),
+          api.get(API_ROUTES.ANNOUNCEMENTS.BASE, { params: { limit: -1 } }),
         ]);
         setStats(statsRes.data.stats);
         setNewHires(statsRes.data.newHires || []);

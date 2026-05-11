@@ -1,10 +1,18 @@
 import { Request, Response } from "express";
 import { projectRepository } from "../repositories/project.repository";
+import { RoleName } from "../utils/constants";
 
 export const projectController = {
   async getAll(req: Request, res: Response) {
     try {
-      const projects = await projectRepository.findMany(req.query);
+      const user = (req as any).user;
+      const query: any = { ...req.query };
+
+      if (user.role === RoleName.CUSTOMER) {
+        query.clientId = user.id;
+      }
+
+      const projects = await projectRepository.findMany(query);
       res.json({ success: true, projects });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });

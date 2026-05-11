@@ -5,24 +5,8 @@ import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomMultiSelect from "../../../components/CustomMultiSelect";
 import CustomButton from "../../../components/CustomButton";
-import type { Project, Department, Team } from "../../../types";
-
-interface ProjectFormData {
-  name: string;
-  description: string;
-  status: string;
-  departmentId: string;
-  teamIds: string[];
-}
-
-interface ProjectFormProps {
-  initialData?: Project | null;
-  onSubmit: (data: ProjectFormData) => Promise<void>;
-  onCancel: () => void;
-  isLoading?: boolean;
-  departments: Department[];
-  teams: Team[];
-}
+import type { ProjectFormData, ProjectFormProps } from "../../../types";
+import { PROJECT_STATUS_OPTIONS } from "../../../utils/constants";
 
 const ProjectForm: React.FC<ProjectFormProps> = ({
   initialData,
@@ -30,7 +14,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   onCancel,
   isLoading = false,
   departments,
-  teams,
+  clients,
 }) => {
   const { handleSubmit, control, reset } = useForm<ProjectFormData>({
     defaultValues: {
@@ -38,7 +22,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
       description: "",
       status: "Active",
       departmentId: "",
-      teamIds: [],
+      clientIds: [],
     },
   });
 
@@ -49,7 +33,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         description: initialData.description || "",
         status: initialData.status,
         departmentId: initialData.departmentId || "",
-        teamIds: initialData.teamIds || [],
+        clientIds: initialData.clientIds || [],
       });
     } else {
       reset({
@@ -57,7 +41,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         description: "",
         status: "Active",
         departmentId: "",
-        teamIds: [],
+        clientIds: [],
       });
     }
   }, [initialData, reset]);
@@ -66,13 +50,10 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
     value: d.id,
     label: d.name,
   }));
-  const teamOptions = teams.map((t) => ({ value: t.id, label: t.name }));
-  const statusOptions = [
-    { value: "Active", label: "Active" },
-    { value: "On Hold", label: "On Hold" },
-    { value: "Completed", label: "Completed" },
-    { value: "Cancelled", label: "Cancelled" },
-  ];
+  const clientOptions = clients.map((c) => ({
+    value: c.id,
+    label: c.fullname,
+  }));
 
   return (
     <form
@@ -101,16 +82,16 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
           control={control}
           label="Status"
           placeholder="Select Status"
-          options={statusOptions}
+          options={PROJECT_STATUS_OPTIONS}
         />
       </div>
 
       <CustomMultiSelect
-        name="teamIds"
+        name="clientIds"
         control={control}
-        label="Assigned Teams"
-        placeholder="Select teams..."
-        options={teamOptions}
+        label="Clients"
+        placeholder="Select Clients..."
+        options={clientOptions}
       />
 
       <CustomTextArea

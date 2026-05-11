@@ -1,16 +1,7 @@
 import React from "react";
 import Modal from "../../../components/Modal";
 import ProjectForm from "./ProjectForm";
-import type { Project, Department, Team } from "../../../types";
-
-interface ProjectModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: any) => Promise<void>;
-  project?: Project | null;
-  departments: Department[];
-  teams: Team[];
-}
+import type { ProjectModalProps } from "../../../types";
 
 const ProjectModal: React.FC<ProjectModalProps> = ({
   isOpen,
@@ -18,7 +9,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   onSubmit,
   project,
   departments,
-  teams,
+  clients,
 }) => {
   return (
     <Modal
@@ -31,7 +22,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
         onSubmit={onSubmit}
         onCancel={onClose}
         departments={departments}
-        teams={teams}
+        clients={clients}
       />
     </Modal>
   );

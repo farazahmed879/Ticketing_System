@@ -3,21 +3,7 @@ import CustomButton from "../CustomButton";
 import CustomIcon from "../CustomIcon";
 import styles from "./CustomDropdownMenu.module.css";
 
-export interface DropdownMenuItem {
-  label: string;
-  icon?: string;
-  onClick: () => void;
-  danger?: boolean;
-  divider?: boolean;
-}
-
-interface CustomDropdownMenuProps {
-  items: DropdownMenuItem[];
-  triggerIcon?: string;
-  triggerSize?: number;
-  position?: "left" | "right";
-  style?: React.CSSProperties;
-}
+import type { DropdownMenuItem, CustomDropdownMenuProps } from "../types";
 
 const CustomDropdownMenu: React.FC<CustomDropdownMenuProps> = ({
   items,

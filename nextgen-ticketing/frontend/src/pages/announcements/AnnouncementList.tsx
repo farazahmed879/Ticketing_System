@@ -11,6 +11,8 @@ import CustomButton from "../../components/CustomButton";
 import { format } from "date-fns";
 import AnnouncementModal from "./components/AnnouncementModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import CustomPagination from "../../components/CustomPagination";
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../../utils/constants";
 
 interface Announcement {
   id: string;
@@ -36,13 +38,24 @@ const AnnouncementList: React.FC = () => {
     string | null
   >(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const { showNotification, setIsLoading } = useNotification();
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await api.get(API_ROUTES.ANNOUNCEMENTS.BASE);
+      const response = await api.get(API_ROUTES.ANNOUNCEMENTS.BASE, {
+        params: {
+          page: page + 1,
+          limit: limit,
+        },
+      });
       setAnnouncements(response.data.announcements);
+      setTotalItems(response.data.pagination.total);
+      setTotalPages(response.data.pagination.totalPages);
     } catch (err) {
       console.error("Failed to fetch announcements", err);
       showNotification("error", "Failed to load announcements");
@@ -53,7 +66,7 @@ const AnnouncementList: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [page, limit]);
 
   const handleSubmit = async (data: any) => {
     setIsSaving(true);
@@ -191,9 +204,7 @@ const AnnouncementList: React.FC = () => {
             }}
           >
             <div>
-              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
-                Shoutouts
-              </h1>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Shoutouts</h1>
               <p style={{ color: "var(--text-muted)" }}>
                 Manage company-wide announcements and events
               </p>
@@ -209,6 +220,20 @@ const AnnouncementList: React.FC = () => {
               Create Shoutout
             </CustomButton>
           </div>
+        }
+        pagination={
+          <CustomPagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={limit}
+            onPageChange={setPage}
+            onPageSizeChange={(newLimit) => {
+              setLimit(newLimit);
+              setPage(0);
+            }}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+          />
         }
       >
         <CustomTable

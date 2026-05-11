@@ -1,21 +1,20 @@
 import React, { useEffect, useState, useCallback } from "react";
-import CustomIcon from "../../components/CustomIcon";
-import api from "../../services/api";
-import { API_ROUTES } from "../../utils/apiRoutes";
-import { useNotification } from "../../context/NotificationContext";
+import CustomIcon from "../../../components/CustomIcon";
+import api from "../../../services/api";
+import { API_ROUTES } from "../../../utils/apiRoutes";
+import { useNotification } from "../../../context/NotificationContext";
 import styles from "./TicketBoard.module.css";
-import { RoleName, StatusName, UIMessages } from "../../utils/constants";
-import { useAuth } from "../../context/AuthContext";
-import { socket } from "../../services/socket";
-import CustomSelect from "../../components/CustomSelect";
-import type { Column, Ticket, TicketFormData } from "../../types";
-import CustomButton from "../../components/CustomButton";
-import TicketDetailModal from "./components/TicketDetailModal";
-import CreateTicketModal from "./components/CreateTicketModal";
-import ConfirmationModal from "../../components/ConfirmationModal";
-import { isTomorrow, isToday, parseISO, format } from "date-fns";
-import { BoardSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
-import CustomDropdownMenu from "../../components/CustomDropdownMenu";
+import { RoleName, UIMessages } from "../../../utils/constants";
+import { useAuth } from "../../../context/AuthContext";
+import { socket } from "../../../services/socket";
+import CustomSelect from "../../../components/CustomSelect";
+import type { Column, Ticket, TicketFormData } from "../../../types";
+import CustomButton from "../../../components/CustomButton";
+import TicketDetailModal from "../components/TicketDetailModal";
+import CreateTicketModal from "../components/CreateTicketModal";
+import ConfirmationModal from "../../../components/ConfirmationModal";
+import { BoardSkeleton } from "../../../components/CustomSkeleton/CustomSkeleton";
+import ColumnStatus from "./ColumnStatus";
 
 const TicketBoard: React.FC = () => {
   const [columns, setColumns] = useState<Column[]>([]);
@@ -180,23 +179,22 @@ const TicketBoard: React.FC = () => {
       if (ticket) break;
     }
 
-    const isOwner = ticket?.owner?.id === user?.id;
+    // const isOwner = ticket?.owner?.id === user?.id;
     // const canUpdate =
     //   user?.role?.name === RoleName.ADMIN ||
     //   user?.role?.permissions?.tickets?.update ||
     //   isOwner;
 
     const targetColumn = columns.find((c) => c.id === statusId);
-    const statusName = targetColumn?.name.toLowerCase();
-    const isBasicAction =
-      statusName === StatusName.OPEN.toLowerCase() ||
-      statusName === StatusName.CANCELLED.toLowerCase() ||
-      statusName === StatusName.FAILED.toLowerCase();
+    // const statusName = targetColumn?.name.toLowerCase();
+    // const isBasicAction =
+    //   statusName === StatusName.OPEN.toLowerCase() ||
+    //   statusName === StatusName.CANCELLED.toLowerCase() ||
+    //   statusName === StatusName.FAILED.toLowerCase();
 
     const isStatusAllowed =
       user?.role?.name === RoleName.ADMIN ||
-      user?.role?.permissions?.boardStatuses?.[statusId] === true ||
-      (isOwner && isBasicAction);
+      user?.role?.permissions?.boardStatuses?.[statusId] === true;
 
     // if (!canUpdate) {
     //   showNotification("error", UIMessages.BOARD.PERMISSION_DENIED);
@@ -406,209 +404,21 @@ const TicketBoard: React.FC = () => {
                 user?.role?.permissions?.boardStatuses?.[column.id] === true;
 
               return (
-                <div
+                <ColumnStatus
                   key={column.id}
-                  className={`${styles.column} ${isCollapsed ? styles.columnCollapsed : ""} ${!isStatusAllowed ? styles.columnDisabled : ""}`}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, column.id)}
-                >
-                  {!isStatusAllowed && !isCollapsed && (
-                    <CustomIcon name="Lock" className={styles.bgLockIcon} />
-                  )}
-                  <div className={styles.columnHeader}>
-                    <div className={styles.statusInfo}>
-                      <div
-                        className={styles.statusDot}
-                        style={{ background: column.color }}
-                      ></div>
-                      <h3>{column.name}</h3>
-                      {!isStatusAllowed && (
-                        <CustomIcon
-                          name="Lock"
-                          size={14}
-                          style={{ marginLeft: 8, color: "var(--text-muted)" }}
-                        />
-                      )}
-                    </div>
-                    {!isCollapsed && (
-                      <div className={styles.columnActions}>
-                        <span className={styles.count}>
-                          {column.tickets.length}
-                        </span>
-                        <button
-                          className={styles.columnToggle}
-                          onClick={() => toggleColumnCollapse(column.id)}
-                          title="Collapse Column"
-                        >
-                          <CustomIcon name="ChevronLeft" size={20} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={styles.cardList}>
-                    {column.tickets.map((ticket) => (
-                      <div
-                        key={ticket.id}
-                        className={`${styles.card} ${isCollapsed ? styles.miniCard : "glass-card"} ${
-                          ticket.dueDate &&
-                          (isToday(parseISO(ticket.dueDate)) ||
-                            isTomorrow(parseISO(ticket.dueDate)))
-                            ? "due-tomorrow-card"
-                            : ""
-                        }`}
-                        draggable={!isCollapsed}
-                        onDragStart={(e) =>
-                          !isCollapsed && handleDragStart(e, ticket.id)
-                        }
-                        onClick={() => openTicketDetail(ticket)}
-                      >
-                        {isCollapsed ? (
-                          <div
-                            className={styles.miniCardContent}
-                            title={ticket.subject}
-                          >
-                            <div
-                              className={styles.miniPriorityDot}
-                              style={{ background: ticket.priority.color }}
-                            ></div>
-                            <span className={styles.miniUid}>
-                              #{ticket.uid}
-                            </span>
-                          </div>
-                        ) : (
-                          <>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                              <div
-                                className={styles.cardPriority}
-                                style={{
-                                  background: `${ticket.priority.color}20`,
-                                  color: ticket.priority.color,
-                                }}
-                              >
-                                {ticket.priority.name}
-                              </div>
-                              <div onClick={(e) => e.stopPropagation()}>
-                                <CustomDropdownMenu
-                                  items={[
-                                    {
-                                      label: "Copy Ticket ID",
-                                      icon: "Hash",
-                                      onClick: () => {
-                                        navigator.clipboard.writeText(String(ticket.uid));
-                                        showNotification("success", "Ticket ID copied");
-                                      },
-                                    },
-                                    {
-                                      label: "Copy Ticket URL",
-                                      icon: "Link",
-                                      onClick: () => {
-                                        const url = `${window.location.origin}/tickets/${ticket.id}`;
-                                        navigator.clipboard.writeText(url);
-                                        showNotification("success", "Ticket URL copied");
-                                      },
-                                    },
-                                    ...(user?.role?.name === RoleName.ADMIN ? [{
-                                      label: "Delete Ticket",
-                                      icon: "Trash2",
-                                      onClick: () => {
-                                        setTicketToDelete(ticket.id);
-                                        setIsDeleteModalOpen(true);
-                                      },
-                                      danger: true,
-                                    }] : []),
-                                  ]}
-                                  triggerSize={16}
-                                />
-                              </div>
-                            </div>
-                            <div className={styles.cardUid}>#{ticket.uid}</div>
-                            <div className={styles.cardSubject}>
-                              {ticket.subject}
-                            </div>
-
-                            <div className={styles.cardMeta}>
-                              {ticket.group && (
-                                <div
-                                  className={styles.metaItem}
-                                  title="Project"
-                                >
-                                  <CustomIcon name="Folder" size={12} />
-                                  <span>{ticket.group.name}</span>
-                                </div>
-                              )}
-                              {ticket.dueDate && (
-                                <div
-                                  className={styles.metaItem}
-                                  title="Due Date"
-                                >
-                                  <CustomIcon name="Calendar" size={12} />
-                                  <span>
-                                    Due: {format(parseISO(ticket.dueDate), "MMM dd")}
-                                  </span>
-                                </div>
-                              )}
-                              <div
-                                className={styles.metaItem}
-                                title="Created Date"
-                              >
-                                <CustomIcon name="Clock" size={12} />
-                                <span>
-                                  Created: {format(new Date(ticket.createdAt), "MMM dd")}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className={styles.cardFooter}>
-                              <div className={styles.owner}>
-                                <div className={styles.miniAvatar}>
-                                  {ticket.owner.fullname.charAt(0)}
-                                </div>
-                                <span>
-                                  {ticket.owner.fullname.split(" ")[0]}
-                                </span>
-                              </div>
-
-                              {ticket.assignee && (
-                                <div
-                                  className={styles.assignee}
-                                  title={`Assigned to ${ticket.assignee.fullname}`}
-                                >
-                                  <CustomIcon
-                                    name="UserPlus"
-                                    size={14}
-                                    color="var(--accent-secondary)"
-                                  />
-                                  <span>
-                                    {ticket.assignee.fullname.split(" ")[0]}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                    {column.tickets.length === 0 && !isCollapsed && (
-                      <div className={styles.emptyColumn}>No tickets</div>
-                    )}
-                  </div>
-
-                  {isCollapsed && (
-                    <div className={styles.collapsedActions}>
-                      <span className={styles.count}>
-                        {column.tickets.length}
-                      </span>
-                      <button
-                        className={styles.columnToggle}
-                        onClick={() => toggleColumnCollapse(column.id)}
-                        title="Expand Column"
-                      >
-                        <CustomIcon name="ChevronRight" size={20} />
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  column={column}
+                  handleDragStart={handleDragStart}
+                  handleDragOver={handleDragOver}
+                  handleDrop={handleDrop}
+                  toggleColumnCollapse={toggleColumnCollapse}
+                  openTicketDetail={openTicketDetail}
+                  isCollapsed={isCollapsed}
+                  isStatusAllowed={isStatusAllowed}
+                  setTicketToDelete={setTicketToDelete}
+                  setIsDeleteModalOpen={setIsDeleteModalOpen}
+                  showNotification={showNotification}
+                  user={user}
+                />
               );
             })}
           </div>

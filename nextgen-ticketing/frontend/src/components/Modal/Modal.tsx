@@ -3,16 +3,7 @@ import ReactDOM from 'react-dom';
 import CustomIcon from '../CustomIcon';
 import styles from './Modal.module.css';
 
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-  maxWidth?: string;
-  minHeight?: string;
-  headerAction?: React.ReactNode;
-}
+import type { ModalProps } from '../types';
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer, maxWidth, minHeight, headerAction }) => {
   if (!isOpen) return null;

@@ -2,21 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import styles from './PhoneInput.module.css';
 import CustomIcon from '../CustomIcon';
 import { COUNTRY_CODES } from '../../utils/constants';
-import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
-
-interface PhoneInputProps<T extends FieldValues = any> {
-  label?: string;
-  countryCode?: string;
-  onCountryCodeChange?: (code: string) => void;
-  phone?: string;
-  onPhoneChange?: (phone: string) => void;
-  placeholder?: string;
-  error?: string;
-  required?: boolean;
-  name?: Path<T>;
-  countryCodeName?: Path<T>;
-  control?: Control<T>;
-}
+import { Controller, type FieldValues } from 'react-hook-form';
+import type { PhoneInputProps } from '../types';
 
 const PhoneInput = <T extends FieldValues>({
   label,

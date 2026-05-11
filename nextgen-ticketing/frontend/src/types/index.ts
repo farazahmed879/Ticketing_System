@@ -72,8 +72,8 @@ export interface Project {
   status: string;
   departmentId?: string;
   department?: { id: string; name: string };
-  teamIds: string[];
-  teams?: { id: string; name: string }[];
+  clientIds: string[];
+  clients?: { id: string; fullname: string; image?: string }[];
   createdAt: string;
 }
 
@@ -377,4 +377,48 @@ export interface UserFormData {
   location?: string;
   employeeType?: string;
   branch?: string;
+}
+
+export interface ProjectFormData {
+  name: string;
+  description: string;
+  status: string;
+  departmentId: string;
+  clientIds: string[];
+}
+
+export interface ProjectFormProps {
+  initialData?: Project | null;
+  onSubmit: (data: ProjectFormData) => Promise<void>;
+  onCancel: () => void;
+  isLoading?: boolean;
+  departments: Department[];
+  clients: any[]; // Using any for now to avoid circular dependency or complex imports if needed, but User is preferred
+}
+
+export interface ProjectModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: any) => Promise<void>;
+  project?: Project | null;
+  departments: Department[];
+  clients: any[];
+}
+
+export interface SidebarProps {
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+}
+
+export interface CustomerDashboardProps {
+  stats: any;
+}
+
+export interface StatsCardsProps {
+  cards: any[];
+}
+
+export interface AnnouncementSectionProps {
+  announcements: any[];
+  t: (key: string) => string;
 }

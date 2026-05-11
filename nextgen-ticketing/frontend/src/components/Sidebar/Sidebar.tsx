@@ -5,10 +5,7 @@ import CustomIcon from "../CustomIcon";
 import { useAuth } from "../../context/AuthContext";
 import styles from "./Sidebar.module.css";
 
-interface SidebarProps {
-  isCollapsed: boolean;
-  onToggleCollapse: () => void;
-}
+import type { SidebarProps } from "../../types";
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
   const { user, logout } = useAuth();
@@ -38,15 +35,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
     },
     {
       icon: <CustomIcon name="Ticket" size={20} />,
-      label: t("sidebar.tickets"),
+      label: "Ticket",
       path: "/tickets",
       permission: "tickets.view",
-    },
-    {
-      icon: <CustomIcon name="LayoutGrid" size={20} />,
-      label: t("sidebar.ticketBoard"),
-      path: "/tickets/board",
-      permission: "tickets.view",
+      children: [
+        {
+          label: "Ticket List",
+          path: "/tickets",
+        },
+        {
+          label: "Ticket Board",
+          path: "/tickets/board",
+        },
+      ],
     },
     {
       icon: <CustomIcon name="FileQuestion" size={20} />,
@@ -151,17 +152,40 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
 
       <nav className={styles.nav}>
         {filteredNavItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            end={item.path === "/tickets"}
-            className={({ isActive }) =>
-              `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`
-            }
-          >
-            {item.icon}
-            {!isCollapsed && <span>{item.label}</span>}
-          </NavLink>
+          <div key={item.path} className={styles.navItemWrapper}>
+            <NavLink
+              to={item.path}
+              end={item.path === "/tickets"}
+              className={({ isActive }) =>
+                `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`
+              }
+            >
+              {item.icon}
+              {!isCollapsed && <span>{item.label}</span>}
+              {item.children && !isCollapsed && (
+                <CustomIcon name="ChevronRight" size={14} style={{ marginLeft: "auto", opacity: 0.5 }} />
+              )}
+            </NavLink>
+
+            {item.children && (
+              <div className={styles.submenu}>
+                <div className={styles.submenuHeader}>
+                  {item.label}
+                </div>
+                {item.children.map((child) => (
+                  <NavLink
+                    key={child.path}
+                    to={child.path}
+                    className={({ isActive }) =>
+                      `${styles.submenuLink} ${isActive ? styles.submenuLinkActive : ""}`
+                    }
+                  >
+                    {child.label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </div>
         ))}
       </nav>
 

@@ -9,8 +9,8 @@ export const RoleName = {
 export type RoleName = (typeof RoleName)[keyof typeof RoleName];
 
 export const StatusName = {
-  NEW: "New",
-  OPEN: "Open",
+  NEW: "Unassigned",
+  OPEN: "Assigned",
   CANCELLED: "Cancelled",
   FAILED: "Failed",
   IN_PROCESS: "In Process",
@@ -29,7 +29,8 @@ export const AnnouncementType = {
   MOMENT: "moment",
 } as const;
 
-export type AnnouncementType = (typeof AnnouncementType)[keyof typeof AnnouncementType];
+export type AnnouncementType =
+  (typeof AnnouncementType)[keyof typeof AnnouncementType];
 
 export const PriorityName = {
   LOW: "Low",
@@ -87,7 +88,8 @@ export const InterviewStatus = {
   CANCELLED: "Cancelled",
 } as const;
 
-export type InterviewStatus = (typeof InterviewStatus)[keyof typeof InterviewStatus];
+export type InterviewStatus =
+  (typeof InterviewStatus)[keyof typeof InterviewStatus];
 
 export const CandidateStatus = {
   ACTIVE: "Active",
@@ -96,7 +98,8 @@ export const CandidateStatus = {
   ON_HOLD: "On Hold",
 } as const;
 
-export type CandidateStatus = (typeof CandidateStatus)[keyof typeof CandidateStatus];
+export type CandidateStatus =
+  (typeof CandidateStatus)[keyof typeof CandidateStatus];
 
 export const Recommendation = {
   STRONG_HIRE: "Strong Hire",
@@ -106,7 +109,8 @@ export const Recommendation = {
   STRONG_NO_HIRE: "Strong No Hire",
 } as const;
 
-export type Recommendation = (typeof Recommendation)[keyof typeof Recommendation];
+export type Recommendation =
+  (typeof Recommendation)[keyof typeof Recommendation];
 
 export const ProjectStatus = {
   ACTIVE: "Active",
@@ -137,3 +141,10 @@ export const COUNTRY_CODES = [
   { value: "+90", label: "🇹🇷 +90" },
   { value: "+20", label: "🇪🇬 +20" },
 ] as const;
+
+export const PROJECT_STATUS_OPTIONS = [
+  { value: "Active", label: "Active" },
+  { value: "On Hold", label: "On Hold" },
+  { value: "Completed", label: "Completed" },
+  { value: "Cancelled", label: "Cancelled" },
+];

@@ -1,12 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "./CustomImage.module.css";
 
-interface CustomImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
-  fallback?: string;
-  containerStyle?: React.CSSProperties;
-  borderRadius?: string | number;
-  showSkeleton?: boolean;
-}
+import type { CustomImageProps } from "../types";
 
 const CustomImage: React.FC<CustomImageProps> = ({
   src,

@@ -183,23 +183,23 @@ export const ticketUsecase = {
       user.role === RoleName.AGENT ||
       user.role === RoleName.EMPLOYEE;
 
-    // RBAC for non-staff
-    if (!isStaff && data.statusId) {
-      const targetStatus = await ticketRepository.findStatusById(data.statusId);
-      const statusName = targetStatus?.name.toLowerCase();
-      const isBasicAction =
-        statusName === StatusName.CANCELLED.toLowerCase() ||
-        statusName === StatusName.OPEN.toLowerCase() ||
-        statusName === StatusName.FAILED.toLowerCase();
+    // // RBAC for non-staff
+    // if (!isStaff && data.statusId) {
+    //   const targetStatus = await ticketRepository.findStatusById(data.statusId);
+    //   const statusName = targetStatus?.name.toLowerCase();
+    //   const isBasicAction =
+    //     statusName === StatusName.CANCELLED.toLowerCase() ||
+    //     statusName === StatusName.OPEN.toLowerCase() ||
+    //     statusName === StatusName.FAILED.toLowerCase();
 
-      if (!isBasicAction) {
-        throw new Error("You can only update tickets to Failed or Cancelled");
-      }
+    //   if (!isBasicAction) {
+    //     throw new Error("You can only update tickets to Failed or Cancelled");
+    //   }
 
-      if (existingTicket.ownerId !== user.id) {
-        throw new Error("You can only update your own tickets");
-      }
-    }
+    //   if (existingTicket.ownerId !== user.id) {
+    //     throw new Error("You can only update your own tickets");
+    //   }
+    // }
 
     // RBAC for Priority
     if (data.priorityId && data.priorityId !== existingTicket.priorityId) {

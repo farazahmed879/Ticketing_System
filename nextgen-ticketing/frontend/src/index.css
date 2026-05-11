@@ -13,7 +13,11 @@
   --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Gradients */
-  --primary-gradient: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  --primary-gradient: linear-gradient(
+    135deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
   --primary-rgb: 124, 58, 237; /* RGB of #7c3aed */
 }
 
@@ -101,7 +105,7 @@ body {
   background: var(--bg-card);
   backdrop-filter: var(--blur-md);
   border: 1px solid var(--border-glass);
-  border-radius: 16px;
+  border-radius: 16px 16px 0 0;
   box-shadow: none;
 }
 

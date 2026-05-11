@@ -17,6 +17,8 @@ import { useNotification } from "../../context/NotificationContext";
 import RequestModal from "./RequestModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
+import StandardListLayout from "../../components/StandardListLayout";
+
 const Requests: React.FC = () => {
   const { user } = useAuth();
   const { showNotification } = useNotification();
@@ -185,19 +187,30 @@ const Requests: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in">
-      <div className={styles.header}>
-        <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
-            Management Requests
-          </h1>
-          <p style={{ color: "var(--text-muted)" }}>
-            {user?.role?.isAdmin || user?.role?.isAgent
-              ? "Review and manage user requests"
-              : "Manage your leave and vacation requests"}
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+    <>
+      <StandardListLayout
+        header={
+          <div className={styles.header}>
+            <div>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+                Management Requests
+              </h1>
+              <p style={{ color: "var(--text-muted)" }}>
+                {user?.role?.isAdmin || user?.role?.isAgent
+                  ? "Review and manage user requests"
+                  : "Manage your leave and vacation requests"}
+              </p>
+            </div>
+            <CustomButton
+              variant="gradient"
+              onClick={() => setIsModalOpen(true)}
+              icon={<CustomIcon name="Plus" size={18} />}
+            >
+              New Request
+            </CustomButton>
+          </div>
+        }
+        filters={
           <CustomFilterBar
             activeOption={filter}
             onChange={setFilter}
@@ -208,27 +221,21 @@ const Requests: React.FC = () => {
               { value: "ALL", label: "All" },
             ]}
           />
-          <CustomButton
-            variant="gradient"
-            onClick={() => setIsModalOpen(true)}
-            icon={<CustomIcon name="Plus" size={18} />}
-          >
-            New Request
-          </CustomButton>
-        </div>
-      </div>
+        }
+      >
+        <CustomTable
+          style={{ flex: 1, overflowY: "auto" }}
+          columns={columns}
+          data={filteredRequests}
+          loading={loading}
+          loadingMessage="Loading requests..."
+          emptyMessage={`No ${filter.toLowerCase()} requests found.`}
+        />
+      </StandardListLayout>
 
-      <CustomTable
-        columns={columns}
-        data={filteredRequests}
-        loading={loading}
-        loadingMessage="Loading requests..."
-        emptyMessage={`No ${filter.toLowerCase()} requests found.`}
-      />
-
-      <RequestModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <RequestModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         onSuccess={handleRequestSuccess}
       />
 
@@ -242,7 +249,7 @@ const Requests: React.FC = () => {
         loading={isDeleting}
         type="danger"
       />
-    </div>
+    </>
   );
 };
 

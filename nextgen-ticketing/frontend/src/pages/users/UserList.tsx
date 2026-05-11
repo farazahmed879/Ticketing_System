@@ -18,6 +18,8 @@ import type { TableColumn } from "../../components/types";
 import UserModal from "./components/UserModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
+import StandardListLayout from "../../components/StandardListLayout";
+
 const UserList: React.FC = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
@@ -234,65 +236,81 @@ const UserList: React.FC = () => {
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
+    <>
+      <StandardListLayout
+        header={
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+                User Management
+              </h1>
+              <p style={{ color: "var(--text-muted)" }}>
+                Manage your team and their access levels
+              </p>
+            </div>
+            <CustomButton
+              variant="gradient"
+              icon={<CustomIcon name="Plus" size={20} />}
+              onClick={() => {
+                setEditingUser(null);
+                setIsModalOpen(true);
+              }}
+            >
+              Add New User
+            </CustomButton>
+          </div>
+        }
+        filters={
+          <div style={{ display: "flex", gap: 16 }}>
+            <CustomInput
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(0);
+              }}
+              icon={<CustomIcon name="Search" size={18} />}
+              containerStyle={{ flex: 1 }}
+            />
+            <CustomSelect
+              value={roleFilter}
+              onChange={(val) => {
+                setRoleFilter(val);
+                setCurrentPage(0);
+              }}
+              placeholder="All Roles"
+              options={[
+                { value: "all", label: "All Roles" },
+                { value: "agents", label: "Agents" },
+                { value: "admins", label: "Admins" },
+                { value: "customers", label: "Customers" },
+              ]}
+              style={{ width: 200 }}
+            />
+          </div>
+        }
+        pagination={
+          <CustomPagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(totalItems / itemsPerPage)}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageSizeChange={(size) => {
+              setItemsPerPage(size);
+              setCurrentPage(0);
+            }}
+          />
+        }
       >
-        <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
-            User Management
-          </h1>
-          <p style={{ color: "var(--text-muted)" }}>
-            Manage your team and their access levels
-          </p>
-        </div>
-        <CustomButton
-          variant="gradient"
-          icon={<CustomIcon name="Plus" size={20} />}
-          onClick={() => {
-            setEditingUser(null);
-            setIsModalOpen(true);
-          }}
-        >
-          Add New User
-        </CustomButton>
-      </div>
-
-      <div style={{ display: "flex", gap: 16, marginBottom: 20 }}>
-        <CustomInput
-          placeholder="Search users..."
-          value={searchTerm}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setSearchTerm(e.target.value);
-            setCurrentPage(0);
-          }}
-          icon={<CustomIcon name="Search" size={18} />}
-          containerStyle={{ flex: 1 }}
-        />
-        <CustomSelect
-          value={roleFilter}
-          onChange={(val) => {
-            setRoleFilter(val);
-            setCurrentPage(0);
-          }}
-          placeholder="All Roles"
-          options={[
-            { value: "all", label: "All Roles" },
-            { value: "agents", label: "Agents" },
-            { value: "admins", label: "Admins" },
-            { value: "customers", label: "Customers" },
-          ]}
-          style={{ width: 200 }}
-        />
-      </div>
-
-      <div className="glass-card" style={{ padding: 0 }}>
         <CustomTable
+          style={{ flex: 1, overflowY: "auto" }}
           columns={columns}
           data={users}
           loading={loading}
@@ -300,18 +318,7 @@ const UserList: React.FC = () => {
           emptyMessage="No users found"
           onRowClick={(u) => navigate(`/profile/${u.id}`)}
         />
-        <CustomPagination
-          currentPage={currentPage}
-          totalPages={Math.ceil(totalItems / itemsPerPage)}
-          onPageChange={setCurrentPage}
-          totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
-          onPageSizeChange={(size) => {
-            setItemsPerPage(size);
-            setCurrentPage(0);
-          }}
-        />
-      </div>
+      </StandardListLayout>
 
       <UserModal
         isOpen={isModalOpen}
@@ -331,7 +338,7 @@ const UserList: React.FC = () => {
         loading={isDeleting}
         type="danger"
       />
-    </div>
+    </>
   );
 };
 

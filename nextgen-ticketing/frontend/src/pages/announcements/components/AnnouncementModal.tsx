@@ -27,8 +27,19 @@ const AnnouncementModal: React.FC<AnnouncementModalProps> = ({
   };
 
   const footer = (
-    <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", width: "100%" }}>
-      <CustomButton variant="outline" onClick={handleReset} disabled={isLoading}>
+    <div
+      style={{
+        display: "flex",
+        gap: 12,
+        justifyContent: "flex-end",
+        width: "100%",
+      }}
+    >
+      <CustomButton
+        variant="outline"
+        onClick={handleReset}
+        disabled={isLoading}
+      >
         Reset
       </CustomButton>
       <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
@@ -41,7 +52,7 @@ const AnnouncementModal: React.FC<AnnouncementModalProps> = ({
           variant="gradient"
           loading={isLoading}
         >
-          {announcement ? "Update Announcement" : "Create Announcement"}
+          {announcement ? "Update Shoutout" : "Create Shoutout"}
         </CustomButton>
       </div>
     </div>
@@ -51,11 +62,15 @@ const AnnouncementModal: React.FC<AnnouncementModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={announcement ? "Edit Announcement" : "Create Announcement"}
+      title={announcement ? "Edit Shoutout" : "Create Shoutout"}
       maxWidth="600px"
       footer={footer}
     >
-      <AnnouncementForm ref={formRef} initialData={announcement} onSubmit={onSubmit} />
+      <AnnouncementForm
+        ref={formRef}
+        initialData={announcement}
+        onSubmit={onSubmit}
+      />
     </Modal>
   );
 };

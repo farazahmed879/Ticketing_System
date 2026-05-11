@@ -3,7 +3,7 @@ import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
-import { UIMessages } from "../../utils/constants";
+import { UIMessages, ProjectStatus } from "../../utils/constants";
 import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomBadge from "../../components/CustomBadge";
@@ -14,18 +14,20 @@ import ProjectModal from "./components/ProjectModal";
 
 const statusBadgeVariant = (status: string) => {
   switch (status) {
-    case "Active":
+    case ProjectStatus.ACTIVE:
       return "success";
-    case "Completed":
+    case ProjectStatus.COMPLETED:
       return "info";
-    case "On Hold":
+    case ProjectStatus.ON_HOLD:
       return "warning";
-    case "Cancelled":
+    case ProjectStatus.CANCELLED:
       return "danger";
     default:
       return "neutral";
   }
 };
+
+import StandardListLayout from "../../components/StandardListLayout";
 
 const ProjectList: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -223,61 +225,57 @@ const ProjectList: React.FC = () => {
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
+    <>
+      <StandardListLayout
+        header={
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Projects</h1>
+              <p style={{ color: "var(--text-muted)" }}>
+                Manage client and internal projects
+              </p>
+            </div>
+            <CustomButton
+              variant="gradient"
+              icon={<CustomIcon name="Plus" size={20} />}
+              onClick={() => {
+                setEditingProject(null);
+                setIsModalOpen(true);
+              }}
+            >
+              Add Project
+            </CustomButton>
+          </div>
+        }
+        filters={
+          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+            <CustomInput
+              placeholder="Search projects..."
+              value={search}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearch(e.target.value)
+              }
+              icon={<CustomIcon name="Search" size={18} />}
+              containerStyle={{ maxWidth: "350px" }}
+            />
+          </div>
+        }
       >
-        <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Projects</h1>
-          <p style={{ color: "var(--text-muted)" }}>
-            Manage client and internal projects
-          </p>
-        </div>
-        <CustomButton
-          variant="gradient"
-          icon={<CustomIcon name="Plus" size={20} />}
-          onClick={() => {
-            setEditingProject(null);
-            setIsModalOpen(true);
-          }}
-        >
-          Add Project
-        </CustomButton>
-      </div>
-
-      <div
-        style={{
-          marginBottom: 20,
-          display: "flex",
-          gap: 16,
-          alignItems: "center",
-        }}
-      >
-        <CustomInput
-          placeholder="Search projects..."
-          value={search}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setSearch(e.target.value)
-          }
-          icon={<CustomIcon name="Search" size={18} />}
-          containerStyle={{ maxWidth: "350px" }}
-        />
-      </div>
-
-      <div className="glass-card" style={{ padding: 0 }}>
         <CustomTable
+          style={{ flex: 1, overflowY: "auto" }}
           columns={columns}
           data={filteredProjects}
           loading={loading}
           loadingMessage="Loading projects..."
           emptyMessage="No projects found"
         />
-      </div>
+      </StandardListLayout>
 
       <ProjectModal
         isOpen={isModalOpen}
@@ -287,7 +285,7 @@ const ProjectList: React.FC = () => {
         departments={departments}
         teams={teams}
       />
-    </div>
+    </>
   );
 };
 

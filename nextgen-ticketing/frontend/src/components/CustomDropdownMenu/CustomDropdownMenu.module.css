@@ -1,0 +1,63 @@
+.container {
+  position: relative;
+}
+
+.menu {
+  position: absolute;
+  top: 100%;
+  margin-top: 4px;
+  background: var(--bg-dropdown);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  padding: 6px 0;
+  min-width: 200px;
+  z-index: 100;
+  box-shadow: var(--shadow-glass);
+  animation: dropdownFadeIn 0.15s ease;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  width: 100%;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border: none;
+  font-family: inherit;
+}
+
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.danger {
+  color: var(--accent-danger);
+}
+
+.danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--accent-danger);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-glass);
+  margin: 4px 0;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -2,28 +2,31 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
-  background: var(--icon-bg);
-  border-top: 1px solid var(--border-color);
+  padding: 16px 24px;
+  background: var(--bg-card);
+  backdrop-filter: var(--blur-md);
+  border-top: 1px solid var(--border-glass);
   margin-top: -1px;
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
   gap: 20px;
   flex-wrap: wrap;
+  transition: var(--transition-fast);
 }
 
 .leftSection {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 28px;
 }
 
 .pageSize {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
+  gap: 12px;
+  font-size: 0.85rem;
   color: var(--text-muted);
+  font-weight: 500;
 }
 
 .customSelectWrapper {
@@ -36,25 +39,26 @@
   align-items: center;
   gap: 8px;
   background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-glass);
   color: var(--text-primary);
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  min-width: 54px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 64px;
   justify-content: space-between;
 }
 
 .sizeTrigger:hover {
-  border-color: var(--primary-color);
+  border-color: var(--accent-primary);
   background: var(--icon-bg);
+  transform: translateY(-1px);
 }
 
 .selectArrow {
-  transition: transform 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--text-muted);
 }
 
@@ -67,96 +71,111 @@
   bottom: 100%;
   left: 0;
   width: 100%;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   background: var(--bg-dropdown);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
   overflow: hidden;
   z-index: 100;
   box-shadow: var(--shadow-glass);
 }
 
 .sizeOption {
-  padding: 8px 12px;
+  padding: 10px 12px;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 0.9rem;
-  color: var(--text-primary);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
   text-align: center;
+  font-weight: 500;
 }
 
 .sizeOption:hover {
   background: var(--icon-bg);
-  color: var(--primary-color);
+  color: var(--accent-primary);
 }
 
 .sizeOptionActive {
-  background: rgba(var(--primary-rgb), 0.1);
-  color: var(--primary-color);
-  font-weight: 600;
+  background: rgba(var(--primary-rgb), 0.08);
+  color: var(--accent-primary);
+  font-weight: 700;
 }
 
 .info {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
+  letter-spacing: 0.2px;
 }
 
 .info span {
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 700;
+  margin: 0 2px;
 }
 
 .controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .pageBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 34px;
-  height: 34px;
-  padding: 0 8px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  font-weight: 500;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-glass);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .pageBtn:hover:not(:disabled) {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  background: rgba(var(--primary-rgb), 0.05);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: var(--bg-card);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .pageBtn.active {
   background: var(--primary-gradient);
-  color: #fff;
+  color: #ffffff;
   border-color: transparent;
-  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.35);
+  transform: translateY(-2px);
 }
 
 .pageBtn:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
+  filter: grayscale(1);
 }
 
 .ellipsis {
   color: var(--text-muted);
-  padding: 0 4px;
+  padding: 0 6px;
+  font-weight: 700;
+  font-size: 0.8rem;
 }
 
 @media (max-width: 768px) {
   .paginationContainer {
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
     align-items: center;
     text-align: center;
+    padding: 24px 20px;
+  }
+  
+  .leftSection {
+    flex-direction: column;
+    gap: 16px;
   }
 }

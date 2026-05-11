@@ -8,12 +8,16 @@ const CustomTable = <T extends { id: string | number }>({
   columns,
   data,
   loading = false,
-  emptyMessage = 'No data found',
+  emptyMessage = "No data found",
   onRowClick,
-  className = '',
+  className = "",
+  style,
 }: CustomTableProps<T>) => {
   return (
-    <div className={`glass-card ${className}`} style={{ padding: 0, overflow: 'hidden' }}>
+    <div
+      className={`glass-card ${className}`}
+      style={{ padding: 0, ...style }}
+    >
       <table className={tableStyles.table}>
         <thead>
           <tr>

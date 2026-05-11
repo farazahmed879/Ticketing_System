@@ -23,6 +23,8 @@ interface Announcement {
   };
 }
 
+import StandardListLayout from "../../components/StandardListLayout";
+
 const AnnouncementList: React.FC = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,17 +114,21 @@ const AnnouncementList: React.FC = () => {
       header: "Type",
       key: "type",
       render: (ann) => {
-        let variant: "info" | "warning" | "success" | "danger" | "neutral" | "primary" = "neutral";
+        let variant:
+          | "info"
+          | "warning"
+          | "success"
+          | "danger"
+          | "neutral"
+          | "primary" = "neutral";
         if (ann.type === AnnouncementType.EVENT) variant = "info";
         else if (ann.type === AnnouncementType.IMPORTANT) variant = "danger";
         else if (ann.type === AnnouncementType.REVIEW) variant = "success";
         else if (ann.type === AnnouncementType.INFO) variant = "warning";
         else if (ann.type === AnnouncementType.MOMENT) variant = "primary";
-        
+
         return (
-          <CustomBadge variant={variant}>
-            {ann.type.toUpperCase()}
-          </CustomBadge>
+          <CustomBadge variant={variant}>{ann.type.toUpperCase()}</CustomBadge>
         );
       },
     },
@@ -135,9 +141,11 @@ const AnnouncementList: React.FC = () => {
       header: "Author",
       key: "author",
       render: (ann) => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{ann.author.fullname}</span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
+            {ann.author.fullname}
+          </span>
+          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
             {(ann.author as any).title || (ann.author as any).role?.name}
           </span>
         </div>
@@ -172,41 +180,45 @@ const AnnouncementList: React.FC = () => {
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
+    <>
+      <StandardListLayout
+        header={
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+                Shoutouts
+              </h1>
+              <p style={{ color: "var(--text-muted)" }}>
+                Manage company-wide announcements and events
+              </p>
+            </div>
+            <CustomButton
+              variant="gradient"
+              icon={<CustomIcon name="Plus" size={20} />}
+              onClick={() => {
+                setEditingAnnouncement(null);
+                setIsModalOpen(true);
+              }}
+            >
+              Create Shoutout
+            </CustomButton>
+          </div>
+        }
       >
-        <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Announcements</h1>
-          <p style={{ color: "var(--text-muted)" }}>
-            Manage company-wide announcements and events
-          </p>
-        </div>
-        <CustomButton
-          variant="gradient"
-          icon={<CustomIcon name="Plus" size={20} />}
-          onClick={() => {
-            setEditingAnnouncement(null);
-            setIsModalOpen(true);
-          }}
-        >
-          Create Announcement
-        </CustomButton>
-      </div>
-
-      <div className="glass-card" style={{ padding: 0 }}>
         <CustomTable
+          style={{ flex: 1, overflowY: "auto" }}
           columns={columns}
           data={announcements}
           loading={loading}
           emptyMessage="No announcements found"
         />
-      </div>
+      </StandardListLayout>
 
       <AnnouncementModal
         isOpen={isModalOpen}
@@ -225,7 +237,7 @@ const AnnouncementList: React.FC = () => {
         confirmText="Delete"
         type="danger"
       />
-    </div>
+    </>
   );
 };
 

@@ -17,6 +17,7 @@ const CustomInput = <T extends FieldValues>({
 }: CustomInputProps<T>) => {
   const renderInput = (fieldProps: any = {}) => {
     const error = manualError || fieldProps.error;
+    const hasValue = fieldProps?.field?.value || props.value;
 
     return (
       <div className={styles.container} style={containerStyle}>
@@ -26,7 +27,7 @@ const CustomInput = <T extends FieldValues>({
         >
           {icon && <span className={styles.icon}>{icon}</span>}
           <input
-            className={`${styles.input} ${className || ""}`}
+            className={`${styles.input} ${className || ""} ${hasValue ? styles.hasValue : ""}`}
             {...props}
             {...fieldProps.field}
           />

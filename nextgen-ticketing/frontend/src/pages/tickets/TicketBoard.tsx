@@ -8,11 +8,14 @@ import { RoleName, StatusName, UIMessages } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
 import { socket } from "../../services/socket";
 import CustomSelect from "../../components/CustomSelect";
-import type { Column, Ticket } from "../../types";
+import type { Column, Ticket, TicketFormData } from "../../types";
 import CustomButton from "../../components/CustomButton";
 import TicketDetailModal from "./components/TicketDetailModal";
+import CreateTicketModal from "./components/CreateTicketModal";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import { isTomorrow, isToday, parseISO, format } from "date-fns";
 import { BoardSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
+import CustomDropdownMenu from "../../components/CustomDropdownMenu";
 
 const TicketBoard: React.FC = () => {
   const [columns, setColumns] = useState<Column[]>([]);
@@ -27,9 +30,16 @@ const TicketBoard: React.FC = () => {
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
+  const [types, setTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Delete State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [ticketToDelete, setTicketToDelete] = useState<string | null>(null);
+
   const { showNotification, setIsLoading } = useNotification();
   const { user } = useAuth();
 
@@ -49,6 +59,19 @@ const TicketBoard: React.FC = () => {
     }
   };
 
+  const hasActiveFilters =
+    selectedAgentIds.length > 0 ||
+    selectedPriorityNames.length > 0 ||
+    selectedProjectIds.length > 0 ||
+    selectedCustomerIds.length > 0;
+
+  const handleResetFilters = () => {
+    setSelectedAgentIds([]);
+    setSelectedPriorityNames([]);
+    setSelectedProjectIds([]);
+    setSelectedCustomerIds([]);
+  };
+
   const fetchBoardData = useCallback(async () => {
     try {
       const [
@@ -58,6 +81,7 @@ const TicketBoard: React.FC = () => {
         priorityRes,
         groupsRes,
         customersRes,
+        typesRes,
       ] = await Promise.all([
         api.get(API_ROUTES.TICKETS.BASE, {
           params: {
@@ -89,6 +113,7 @@ const TicketBoard: React.FC = () => {
         api.get(API_ROUTES.USERS.BASE, {
           params: { type: "customers", limit: -1 },
         }),
+        api.get(API_ROUTES.COMMON.TYPES),
       ]);
 
       const allTickets = ticketsRes.data.tickets;
@@ -97,6 +122,7 @@ const TicketBoard: React.FC = () => {
       setPriorities(priorityRes.data.priorities);
       setProjects(groupsRes.data.groups);
       setCustomers(customersRes.data.accounts);
+      setTypes(typesRes.data.types);
 
       const boardColumns: Column[] = allStatuses.map((s: any) => ({
         id: s.id,
@@ -206,6 +232,48 @@ const TicketBoard: React.FC = () => {
     e.dataTransfer.setData("ticketId", ticketId);
   };
 
+  const handleCreateTicket = async (data: TicketFormData) => {
+    setIsLoading(true, UIMessages.LOADING.CREATING_TICKET);
+    try {
+      await api.post(API_ROUTES.TICKETS.BASE, {
+        ...data,
+        groupId: data.groupId || null,
+        assigneeId: data.assigneeId || null,
+      });
+      setIsCreateModalOpen(false);
+      fetchBoardData();
+      showNotification("success", "Ticket created successfully!");
+    } catch (err: any) {
+      console.error("Failed to create ticket", err);
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to create ticket",
+      );
+    } finally {
+      setIsLoading(false, "");
+    }
+  };
+
+  const handleDeleteTicket = async () => {
+    if (!ticketToDelete) return;
+    setIsLoading(true, UIMessages.LOADING.DELETING);
+    try {
+      await api.delete(API_ROUTES.TICKETS.BY_ID(ticketToDelete));
+      showNotification("success", "Ticket deleted successfully!");
+      setIsDeleteModalOpen(false);
+      setTicketToDelete(null);
+      fetchBoardData();
+    } catch (err: any) {
+      console.error("Failed to delete ticket", err);
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to delete ticket",
+      );
+    } finally {
+      setIsLoading(false, "");
+    }
+  };
+
   return (
     <div className={styles.boardContainer}>
       {loading ? (
@@ -219,6 +287,15 @@ const TicketBoard: React.FC = () => {
             </div>
 
             <div className={styles.headerActions}>
+              <CustomButton
+                variant="gradient"
+                size="sm"
+                icon={<CustomIcon name="Plus" size={18} />}
+                onClick={() => setIsCreateModalOpen(true)}
+                style={{ minHeight: 48, borderRadius: 12 }}
+              >
+                Create Ticket
+              </CustomButton>
               <CustomButton
                 variant="gradient"
                 size="sm"
@@ -305,6 +382,18 @@ const TicketBoard: React.FC = () => {
                   icon={<CustomIcon name="UserCheck" size={18} />}
                   style={{ width: 200 }}
                 />
+
+                {hasActiveFilters && (
+                  <CustomButton
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetFilters}
+                    icon={<CustomIcon name="RotateCcw" size={16} />}
+                    style={{ minHeight: 48, borderRadius: 12 }}
+                  >
+                    Reset
+                  </CustomButton>
+                )}
               </div>
             </div>
           </div>
@@ -389,14 +478,49 @@ const TicketBoard: React.FC = () => {
                           </div>
                         ) : (
                           <>
-                            <div
-                              className={styles.cardPriority}
-                              style={{
-                                background: `${ticket.priority.color}20`,
-                                color: ticket.priority.color,
-                              }}
-                            >
-                              {ticket.priority.name}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                              <div
+                                className={styles.cardPriority}
+                                style={{
+                                  background: `${ticket.priority.color}20`,
+                                  color: ticket.priority.color,
+                                }}
+                              >
+                                {ticket.priority.name}
+                              </div>
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <CustomDropdownMenu
+                                  items={[
+                                    {
+                                      label: "Copy Ticket ID",
+                                      icon: "Hash",
+                                      onClick: () => {
+                                        navigator.clipboard.writeText(String(ticket.uid));
+                                        showNotification("success", "Ticket ID copied");
+                                      },
+                                    },
+                                    {
+                                      label: "Copy Ticket URL",
+                                      icon: "Link",
+                                      onClick: () => {
+                                        const url = `${window.location.origin}/tickets/${ticket.id}`;
+                                        navigator.clipboard.writeText(url);
+                                        showNotification("success", "Ticket URL copied");
+                                      },
+                                    },
+                                    ...(user?.role?.name === RoleName.ADMIN ? [{
+                                      label: "Delete Ticket",
+                                      icon: "Trash2",
+                                      onClick: () => {
+                                        setTicketToDelete(ticket.id);
+                                        setIsDeleteModalOpen(true);
+                                      },
+                                      danger: true,
+                                    }] : []),
+                                  ]}
+                                  triggerSize={16}
+                                />
+                              </div>
                             </div>
                             <div className={styles.cardUid}>#{ticket.uid}</div>
                             <div className={styles.cardSubject}>
@@ -420,10 +544,19 @@ const TicketBoard: React.FC = () => {
                                 >
                                   <CustomIcon name="Calendar" size={12} />
                                   <span>
-                                    {format(parseISO(ticket.dueDate), "MMM dd")}
+                                    Due: {format(parseISO(ticket.dueDate), "MMM dd")}
                                   </span>
                                 </div>
                               )}
+                              <div
+                                className={styles.metaItem}
+                                title="Created Date"
+                              >
+                                <CustomIcon name="Clock" size={12} />
+                                <span>
+                                  Created: {format(new Date(ticket.createdAt), "MMM dd")}
+                                </span>
+                              </div>
                             </div>
 
                             <div className={styles.cardFooter}>
@@ -490,6 +623,30 @@ const TicketBoard: React.FC = () => {
         priorities={priorities}
         columns={columns}
         onTicketUpdate={fetchBoardData}
+      />
+
+      <CreateTicketModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        priorities={priorities}
+        projects={projects}
+        types={types}
+        agents={agents}
+        user={user}
+        onSubmit={handleCreateTicket}
+      />
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setTicketToDelete(null);
+        }}
+        onConfirm={handleDeleteTicket}
+        title="Delete Ticket"
+        message="Are you sure you want to delete this ticket? This action cannot be undone."
+        confirmText="Delete"
+        type="danger"
       />
     </div>
   );

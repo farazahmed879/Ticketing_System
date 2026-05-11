@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
 import CustomTextArea from "../../../components/CustomTextArea";
@@ -39,6 +39,25 @@ const TicketForm: React.FC<TicketFormProps> = ({
     });
 
   const selectedPriority = watch("priorityId");
+  const subjectValue = watch("subject");
+  const issueValue = watch("issue");
+
+  const [subjectLen, setSubjectLen] = useState(0);
+  const [issueLen, setIssueLen] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSubjectLen(subjectValue?.length || 0);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [subjectValue]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIssueLen(issueValue?.length || 0);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [issueValue]);
 
   useEffect(() => {
     if (initialData) {
@@ -75,10 +94,36 @@ const TicketForm: React.FC<TicketFormProps> = ({
       <CustomInput
         name="subject"
         control={control}
-        rules={{ required: "Subject is required" }}
-        label="Subject"
+        rules={{
+          required: "Subject is required",
+          maxLength: {
+            value: 255,
+            message: "Subject cannot exceed 255 characters",
+          },
+        }}
+        label={
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              width: "100%",
+            }}
+          >
+            <span>Subject</span>
+            <span
+              style={{
+                fontSize: "0.75rem",
+                opacity: 0.6,
+                color: subjectLen > 240 ? "var(--accent-danger)" : "inherit",
+              }}
+            >
+              {subjectLen} / 255
+            </span>
+          </div>
+        }
         placeholder="Brief summary of the issue"
         required
+        maxLength={255}
       />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
@@ -175,11 +220,37 @@ const TicketForm: React.FC<TicketFormProps> = ({
       <CustomTextArea
         name="issue"
         control={control}
-        rules={{ required: "Description is required" }}
-        label="Description"
+        rules={{
+          required: "Description is required",
+          maxLength: {
+            value: 500,
+            message: "Description cannot exceed 500 characters",
+          },
+        }}
+        label={
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              width: "100%",
+            }}
+          >
+            <span>Description</span>
+            <span
+              style={{
+                fontSize: "0.75rem",
+                opacity: 0.6,
+                color: issueLen > 480 ? "var(--accent-danger)" : "inherit",
+              }}
+            >
+              {issueLen} / 500
+            </span>
+          </div>
+        }
         placeholder="Detailed explanation..."
         rows={5}
         required
+        maxLength={500}
         style={{ resize: "none" }}
       />
     </form>

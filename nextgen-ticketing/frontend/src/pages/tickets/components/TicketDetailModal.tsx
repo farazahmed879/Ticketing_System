@@ -13,6 +13,8 @@ import { useNotification } from "../../../context/NotificationContext";
 import CustomTextArea from "../../../components/CustomTextArea";
 import CustomDatePicker from "../../../components/CustomDatePicker";
 import CustomInput from "../../../components/CustomInput";
+import CustomDropdownMenu from "../../../components/CustomDropdownMenu";
+import ConfirmationModal from "../../../components/ConfirmationModal";
 
 interface TicketDetailModalProps {
   isOpen: boolean;
@@ -39,6 +41,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const [fullTicketData, setFullTicketData] = useState<any>(null);
   const [newComment, setNewComment] = useState("");
   const [description, setDescription] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const fetchFullTicketData = useCallback(async () => {
     if (!ticket?.id) return;
@@ -171,6 +174,25 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     navigate(`/messages?userId=${userId}`);
   };
 
+  const handleDeleteTicket = async () => {
+    setIsLoading(true, UIMessages.LOADING.DELETING);
+    try {
+      await api.delete(API_ROUTES.TICKETS.BY_ID(ticket.id));
+      showNotification("success", "Ticket deleted successfully!");
+      setIsDeleteModalOpen(false);
+      onClose();
+      onTicketUpdate();
+    } catch (err: any) {
+      console.error("Failed to delete ticket", err);
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to delete ticket",
+      );
+    } finally {
+      setIsLoading(false, "");
+    }
+  };
+
   if (!ticket) return null;
 
   const displayTicket = fullTicketData || ticket;
@@ -193,22 +215,110 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     user?.role?.permissions?.comments?.create;
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="1500px"
       minHeight="60vh"
       title={`Ticket #${displayTicket.uid}: ${displayTicket.subject}`}
+      headerAction={
+        <CustomDropdownMenu
+          items={[
+            {
+              label: "Copy Ticket ID",
+              icon: "Hash",
+              onClick: () => {
+                navigator.clipboard.writeText(String(displayTicket.uid));
+                showNotification("success", "Ticket ID copied");
+              },
+            },
+            {
+              label: "Copy Ticket URL",
+              icon: "Link",
+              onClick: () => {
+                const url = `${window.location.origin}/tickets/${displayTicket.id}`;
+                navigator.clipboard.writeText(url);
+                showNotification("success", "Ticket URL copied");
+              },
+            },
+            {
+              label: "Open Full Page",
+              icon: "ExternalLink",
+              onClick: () => {
+                navigate(`/tickets/${displayTicket.id}`);
+              },
+            },
+            ...(user?.role?.name === RoleName.ADMIN ? [{
+              label: "Delete Ticket",
+              icon: "Trash2",
+              onClick: () => {
+                setIsDeleteModalOpen(true);
+              },
+              danger: true,
+            }] : []),
+          ]}
+        />
+      }
     >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.6fr 1fr",
-          gap: 30,
-          padding: "10px 0",
-          flex: 1,
-        }}
-      >
+      {!fullTicketData ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.6fr 1fr",
+            gap: 30,
+            padding: "10px 0",
+            flex: 1,
+          }}
+        >
+          {/* Left Skeleton */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div className="skeleton-pulse" style={{ width: 140, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.06)" }} />
+              <div className="skeleton-pulse" style={{ width: 180, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.06)" }} />
+              <div className="skeleton-pulse" style={{ width: 160, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.06)" }} />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div className="skeleton-pulse" style={{ width: 100, height: 14, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
+                <div className="skeleton-pulse" style={{ width: "100%", height: 120, borderRadius: 12, background: "rgba(255,255,255,0.04)" }} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div className="skeleton-pulse" style={{ width: 80, height: 14, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
+                <div className="skeleton-pulse" style={{ width: "100%", height: 64, borderRadius: 12, background: "rgba(255,255,255,0.04)" }} />
+                <div className="skeleton-pulse" style={{ width: 80, height: 14, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
+                <div className="skeleton-pulse" style={{ width: "100%", height: 40, borderRadius: 12, background: "rgba(255,255,255,0.04)" }} />
+                <div className="skeleton-pulse" style={{ width: 80, height: 14, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
+                <div className="skeleton-pulse" style={{ width: "100%", height: 64, borderRadius: 12, background: "rgba(255,255,255,0.04)" }} />
+              </div>
+            </div>
+          </div>
+          {/* Right Skeleton (Comments) */}
+          <div style={{ borderLeft: "1px solid var(--border-glass)", paddingLeft: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+            <div className="skeleton-pulse" style={{ width: 140, height: 18, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} style={{ padding: 12, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-glass)", display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <div className="skeleton-pulse" style={{ width: 100, height: 12, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
+                  <div className="skeleton-pulse" style={{ width: 60, height: 10, borderRadius: 6, background: "rgba(255,255,255,0.04)" }} />
+                </div>
+                <div className="skeleton-pulse" style={{ width: "90%", height: 14, borderRadius: 6, background: "rgba(255,255,255,0.04)" }} />
+              </div>
+            ))}
+            <div className="skeleton-pulse" style={{ width: "100%", height: 40, borderRadius: 10, background: "rgba(255,255,255,0.04)", marginTop: "auto" }} />
+          </div>
+        </div>
+      ) : (
+        <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.6fr 1fr",
+              gap: 30,
+              padding: "10px 0",
+              flex: 1,
+            }}
+          >
         {/* Left Column: Details */}
         <div
           style={{
@@ -302,7 +412,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 }}
               >
                 <CustomIcon name="Calendar" size={16} />{" "}
-                {format(new Date(displayTicket.createdAt), "MMM dd, yyyy")}
+                Created: {format(new Date(displayTicket.createdAt), "MMM dd, yyyy")}
               </span>
             </div>
 
@@ -779,7 +889,19 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           </div>
         )}
       </div>
+    </div>
+  )}
     </Modal>
+    <ConfirmationModal
+      isOpen={isDeleteModalOpen}
+      onClose={() => setIsDeleteModalOpen(false)}
+      onConfirm={handleDeleteTicket}
+      title="Delete Ticket"
+      message="Are you sure you want to delete this ticket? This action cannot be undone."
+      confirmText="Delete"
+      type="danger"
+    />
+  </>
   );
 };
 

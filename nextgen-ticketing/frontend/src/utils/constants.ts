@@ -108,6 +108,19 @@ export const Recommendation = {
 
 export type Recommendation = (typeof Recommendation)[keyof typeof Recommendation];
 
+export const ProjectStatus = {
+  ACTIVE: "Active",
+  COMPLETED: "Completed",
+  ON_HOLD: "On Hold",
+  CANCELLED: "Cancelled",
+} as const;
+
+export type ProjectStatus = (typeof ProjectStatus)[keyof typeof ProjectStatus];
+
+export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+
+export const DEFAULT_PAGE_SIZE = 10;
+
 export const COUNTRY_CODES = [
   { value: "+1", label: "🇺🇸 +1" },
   { value: "+44", label: "🇬🇧 +44" },

@@ -11,6 +11,8 @@ import type { Department } from "../../types";
 import type { TableColumn } from "../../components/types";
 import DepartmentModal from "./components/DepartmentModal";
 
+import StandardListLayout from "../../components/StandardListLayout";
+
 const DepartmentList: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,61 +188,59 @@ const DepartmentList: React.FC = () => {
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
+    <>
+      <StandardListLayout
+        header={
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+                Departments
+              </h1>
+              <p style={{ color: "var(--text-muted)" }}>
+                Manage organizational departments
+              </p>
+            </div>
+            <CustomButton
+              variant="gradient"
+              icon={<CustomIcon name="Plus" size={20} />}
+              onClick={() => {
+                setEditingDept(null);
+                setIsModalOpen(true);
+              }}
+            >
+              Add Department
+            </CustomButton>
+          </div>
+        }
+        filters={
+          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+            <CustomInput
+              placeholder="Search departments..."
+              value={search}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearch(e.target.value)
+              }
+              icon={<CustomIcon name="Search" size={18} />}
+              containerStyle={{ maxWidth: "350px" }}
+            />
+          </div>
+        }
       >
-        <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Departments</h1>
-          <p style={{ color: "var(--text-muted)" }}>
-            Manage organizational departments
-          </p>
-        </div>
-        <CustomButton
-          variant="gradient"
-          icon={<CustomIcon name="Plus" size={20} />}
-          onClick={() => {
-            setEditingDept(null);
-            setIsModalOpen(true);
-          }}
-        >
-          Add Department
-        </CustomButton>
-      </div>
-
-      <div
-        style={{
-          marginBottom: 20,
-          display: "flex",
-          gap: 16,
-          alignItems: "center",
-        }}
-      >
-        <CustomInput
-          placeholder="Search departments..."
-          value={search}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setSearch(e.target.value)
-          }
-          icon={<CustomIcon name="Search" size={18} />}
-          containerStyle={{ maxWidth: "350px" }}
-        />
-      </div>
-
-      <div className="glass-card" style={{ padding: 0 }}>
         <CustomTable
+          style={{ flex: 1, overflowY: "auto" }}
           columns={columns}
           data={filteredDepartments}
           loading={loading}
           loadingMessage="Loading departments..."
           emptyMessage="No departments found"
         />
-      </div>
+      </StandardListLayout>
 
       <DepartmentModal
         isOpen={isModalOpen}
@@ -248,7 +248,7 @@ const DepartmentList: React.FC = () => {
         onSubmit={handleSubmit}
         department={editingDept}
       />
-    </div>
+    </>
   );
 };
 

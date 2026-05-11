@@ -5,7 +5,7 @@ import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
 import styles from "./InterviewList.module.css";
 import { API_ROUTES } from "../../utils/apiRoutes";
-import { InterviewStatus, RoleName, UIMessages } from "../../utils/constants";
+import { InterviewStatus, RoleName, UIMessages, DEFAULT_PAGE_SIZE } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
 
 import type { Interview } from "../../types";
@@ -18,6 +18,8 @@ import CustomDatePicker from "../../components/CustomDatePicker";
 import ScheduleInterviewModal from "./ScheduleInterviewModal";
 import CustomPagination from "../../components/CustomPagination";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
+
+import StandardListLayout from "../../components/StandardListLayout";
 
 const statusBadgeVariant = (status: string) => {
   switch (status) {
@@ -64,7 +66,7 @@ const InterviewList: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
 
   const filters = [
     { value: "all", label: "All" },
@@ -258,84 +260,102 @@ const InterviewList: React.FC = () => {
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
-        <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Interviews</h1>
-          <p style={{ color: "var(--text-muted)" }}>
-            Schedule and manage candidate interviews
-          </p>
-        </div>
-        {canCreateInterviews && (
-          <CustomButton
-            variant="gradient"
-            icon={<CustomIcon name="Plus" size={20} />}
-            onClick={() => {
-              setEditingInterview(null);
-              setIsModalOpen(true);
+    <>
+      <StandardListLayout
+        header={
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            Schedule Interview
-          </CustomButton>
-        )}
-      </div>
-
-      {/* Filters */}
-      <div
-        style={{
-          display: "flex",
-          gap: 16,
-          marginBottom: 20,
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
-        <CustomFilterBar
-          options={filters}
-          activeOption={activeFilter}
-          onChange={(val) => {
-            setActiveFilter(val);
-            setCurrentPage(0);
-            setStartDate("");
-            setEndDate("");
-          }}
-        />
-
-        <div className={styles.dateFilter}>
-          <CustomDatePicker
-            value={startDate}
-            onChange={(val: string) => setStartDate(val)}
-            placeholder="Start Date"
-            className={styles.dateInput}
-          />
-          <span style={{ color: "var(--text-muted)", marginTop: 4 }}>to</span>
-          <CustomDatePicker
-            value={endDate}
-            onChange={(val: string) => setEndDate(val)}
-            placeholder="End Date"
-            className={styles.dateInput}
-          />
-          <CustomButton
-            variant="outline"
-            size="sm"
-            onClick={handleDateFilter}
-            disabled={!startDate || !endDate}
-            containerStyle={{ marginTop: 4 }}
+            <div>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+                Interviews
+              </h1>
+              <p style={{ color: "var(--text-muted)" }}>
+                Schedule and manage candidate interviews
+              </p>
+            </div>
+            {canCreateInterviews && (
+              <CustomButton
+                variant="gradient"
+                icon={<CustomIcon name="Plus" size={20} />}
+                onClick={() => {
+                  setEditingInterview(null);
+                  setIsModalOpen(true);
+                }}
+              >
+                Schedule Interview
+              </CustomButton>
+            )}
+          </div>
+        }
+        filters={
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
           >
-            Apply
-          </CustomButton>
-        </div>
-      </div>
+            <CustomFilterBar
+              options={filters}
+              activeOption={activeFilter}
+              onChange={(val) => {
+                setActiveFilter(val);
+                setCurrentPage(0);
+                setStartDate("");
+                setEndDate("");
+              }}
+            />
 
-      <div className="glass-card" style={{ padding: 0 }}>
+            <div className={styles.dateFilter}>
+              <CustomDatePicker
+                value={startDate}
+                onChange={(val: string) => setStartDate(val)}
+                placeholder="Start Date"
+                className={styles.dateInput}
+              />
+              <span style={{ color: "var(--text-muted)", marginTop: 4 }}>
+                to
+              </span>
+              <CustomDatePicker
+                value={endDate}
+                onChange={(val: string) => setEndDate(val)}
+                placeholder="End Date"
+                className={styles.dateInput}
+              />
+              <CustomButton
+                variant="outline"
+                size="sm"
+                onClick={handleDateFilter}
+                disabled={!startDate || !endDate}
+                containerStyle={{ marginTop: 4 }}
+              >
+                Apply
+              </CustomButton>
+            </div>
+          </div>
+        }
+        pagination={
+          <CustomPagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(totalItems / itemsPerPage)}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageSizeChange={(size) => {
+              setItemsPerPage(size);
+              setCurrentPage(0);
+            }}
+          />
+        }
+      >
         <CustomTable
+          style={{ flex: 1, overflowY: "auto" }}
           columns={columns}
           data={interviews}
           loading={loading}
@@ -343,18 +363,7 @@ const InterviewList: React.FC = () => {
           emptyMessage="No interviews found"
           onRowClick={(i) => navigate(`/interviews/${i.id}`)}
         />
-        <CustomPagination
-          currentPage={currentPage}
-          totalPages={Math.ceil(totalItems / itemsPerPage)}
-          onPageChange={setCurrentPage}
-          totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
-          onPageSizeChange={(size) => {
-            setItemsPerPage(size);
-            setCurrentPage(0);
-          }}
-        />
-      </div>
+      </StandardListLayout>
 
       <ScheduleInterviewModal
         isOpen={isModalOpen}
@@ -365,7 +374,7 @@ const InterviewList: React.FC = () => {
         onSuccess={handleScheduleSuccess}
         interview={editingInterview}
       />
-    </div>
+    </>
   );
 };
 

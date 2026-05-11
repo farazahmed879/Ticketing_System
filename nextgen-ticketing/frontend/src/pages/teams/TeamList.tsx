@@ -12,6 +12,8 @@ import type { TableColumn } from "../../components/types";
 import TeamModal from "./components/TeamModal";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
 
+import StandardListLayout from "../../components/StandardListLayout";
+
 const TeamList: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
@@ -246,61 +248,57 @@ const TeamList: React.FC = () => {
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
+    <>
+      <StandardListLayout
+        header={
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Teams</h1>
+              <p style={{ color: "var(--text-muted)" }}>
+                Manage cross-functional teams and projects
+              </p>
+            </div>
+            <CustomButton
+              variant="gradient"
+              icon={<CustomIcon name="Plus" size={20} />}
+              onClick={() => {
+                setEditingTeam(null);
+                setIsModalOpen(true);
+              }}
+            >
+              Add Team
+            </CustomButton>
+          </div>
+        }
+        filters={
+          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+            <CustomInput
+              placeholder="Search teams..."
+              value={search}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSearch(e.target.value)
+              }
+              icon={<CustomIcon name="Search" size={18} />}
+              containerStyle={{ maxWidth: "350px" }}
+            />
+          </div>
+        }
       >
-        <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Teams</h1>
-          <p style={{ color: "var(--text-muted)" }}>
-            Manage cross-functional teams and projects
-          </p>
-        </div>
-        <CustomButton
-          variant="gradient"
-          icon={<CustomIcon name="Plus" size={20} />}
-          onClick={() => {
-            setEditingTeam(null);
-            setIsModalOpen(true);
-          }}
-        >
-          Add Team
-        </CustomButton>
-      </div>
-
-      <div
-        style={{
-          marginBottom: 20,
-          display: "flex",
-          gap: 16,
-          alignItems: "center",
-        }}
-      >
-        <CustomInput
-          placeholder="Search teams..."
-          value={search}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            setSearch(e.target.value)
-          }
-          icon={<CustomIcon name="Search" size={18} />}
-          containerStyle={{ maxWidth: "350px" }}
-        />
-      </div>
-
-      <div className="glass-card" style={{ padding: 0 }}>
         <CustomTable
+          style={{ flex: 1, overflowY: "auto" }}
           columns={columns}
           data={filteredTeams}
           loading={loading}
           loadingMessage="Loading teams..."
           emptyMessage="No teams found"
         />
-      </div>
+      </StandardListLayout>
 
       <TeamModal
         isOpen={isModalOpen}
@@ -311,7 +309,7 @@ const TeamList: React.FC = () => {
         projects={projects}
         users={users}
       />
-    </div>
+    </>
   );
 };
 

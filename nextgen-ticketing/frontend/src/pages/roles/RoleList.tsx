@@ -13,6 +13,8 @@ import { RoleName, UIMessages } from "../../utils/constants";
 import RoleModal from "./components/RoleModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
+import StandardListLayout from "../../components/StandardListLayout";
+
 const RoleList: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
@@ -202,55 +204,59 @@ const RoleList: React.FC = () => {
   ];
 
   return (
-    <div className="animate-fade-in">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
+    <>
+      <StandardListLayout
+        header={
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+                Roles & Permissions
+              </h1>
+              <p style={{ color: "var(--text-muted)" }}>
+                Manage system access levels and permissions
+              </p>
+            </div>
+            <CustomButton
+              variant="gradient"
+              icon={<CustomIcon name="Plus" size={20} />}
+              onClick={() => {
+                setEditingRole(null);
+                setIsModalOpen(true);
+              }}
+            >
+              Create Role
+            </CustomButton>
+          </div>
+        }
+        pagination={
+          <CustomPagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(totalItems / itemsPerPage)}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageSizeChange={(size) => {
+              setItemsPerPage(size);
+              setCurrentPage(0);
+            }}
+          />
+        }
       >
-        <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
-            Roles & Permissions
-          </h1>
-          <p style={{ color: "var(--text-muted)" }}>
-            Manage system access levels and permissions
-          </p>
-        </div>
-        <CustomButton
-          variant="gradient"
-          icon={<CustomIcon name="Plus" size={20} />}
-          onClick={() => {
-            setEditingRole(null);
-            setIsModalOpen(true);
-          }}
-        >
-          Create Role
-        </CustomButton>
-      </div>
-
-      <div className="glass-card" style={{ padding: 0 }}>
         <CustomTable
+          style={{ flex: 1, overflowY: "auto" }}
           columns={columns}
           data={roles}
           loading={loading}
           loadingMessage="Loading roles..."
           emptyMessage="No roles found"
         />
-        <CustomPagination
-          currentPage={currentPage}
-          totalPages={Math.ceil(totalItems / itemsPerPage)}
-          onPageChange={setCurrentPage}
-          totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
-          onPageSizeChange={(size) => {
-            setItemsPerPage(size);
-            setCurrentPage(0);
-          }}
-        />
-      </div>
+      </StandardListLayout>
 
       <RoleModal
         isOpen={isModalOpen}
@@ -271,7 +277,7 @@ const RoleList: React.FC = () => {
         loading={isDeleting}
         type="danger"
       />
-    </div>
+    </>
   );
 };
 

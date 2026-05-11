@@ -11,6 +11,11 @@ import { useNotification } from "../../context/NotificationContext";
 import CustomSelect from "../../components/CustomSelect";
 import { RoleName, StatusName, UIMessages } from "../../utils/constants";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import CustomButton from "../../components/CustomButton";
+import CustomTextArea from "../../components/CustomTextArea";
+import CustomDatePicker from "../../components/CustomDatePicker";
+import CustomBadge from "../../components/CustomBadge";
+import CustomDropdownMenu from "../../components/CustomDropdownMenu";
 
 import type { TicketDetail as ITicketDetail } from "../../types";
 
@@ -233,10 +238,113 @@ const TicketDetail: React.FC = () => {
     }
   };
 
-  if (loading || !ticket) return <div>Loading ticket...</div>;
+  if (loading || !ticket)
+    return (
+      <div className={`${styles.container} animate-fade-in`}>
+        {/* Left Column Skeleton */}
+        <div>
+          {/* Ticket Info Card */}
+          <div className="glass-card" style={{ padding: 32, marginBottom: 32 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24 }}>
+              <div style={{ flex: 1 }}>
+                <div className="skeleton-pulse" style={{ width: 120, height: 14, borderRadius: 8, background: "var(--bg-skeleton)", marginBottom: 12 }} />
+                <div className="skeleton-pulse" style={{ width: "70%", height: 28, borderRadius: 8, background: "var(--bg-skeleton)", marginBottom: 16 }} />
+              </div>
+              <div className="skeleton-pulse" style={{ width: 36, height: 36, borderRadius: 10, background: "var(--bg-skeleton)" }} />
+            </div>
+            <div className="skeleton-pulse" style={{ width: "100%", height: 16, borderRadius: 8, background: "var(--bg-skeleton)", marginBottom: 8 }} />
+            <div className="skeleton-pulse" style={{ width: "90%", height: 16, borderRadius: 8, background: "var(--bg-skeleton)", marginBottom: 8 }} />
+            <div className="skeleton-pulse" style={{ width: "60%", height: 16, borderRadius: 8, background: "var(--bg-skeleton)", marginBottom: 24 }} />
+            <div style={{ display: "flex", gap: 12 }}>
+              <div className="skeleton-pulse" style={{ width: 60, height: 24, borderRadius: 16, background: "var(--bg-skeleton)" }} />
+              <div className="skeleton-pulse" style={{ width: 80, height: 24, borderRadius: 16, background: "var(--bg-skeleton)" }} />
+            </div>
+          </div>
+
+          {/* Tabs Skeleton */}
+          <div style={{ display: "flex", gap: 32, borderBottom: "1px solid var(--border-glass)", marginBottom: 24, paddingBottom: 12 }}>
+            <div className="skeleton-pulse" style={{ width: 120, height: 16, borderRadius: 8, background: "var(--bg-skeleton)" }} />
+            <div className="skeleton-pulse" style={{ width: 80, height: 16, borderRadius: 8, background: "var(--bg-skeleton)" }} />
+          </div>
+
+          {/* Comments Skeleton */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} style={{ display: "flex", gap: 16 }}>
+                <div className="skeleton-pulse" style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--bg-skeleton)", flexShrink: 0 }} />
+                <div style={{ flex: 1, padding: 16, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-glass)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                    <div className="skeleton-pulse" style={{ width: 100, height: 12, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+                    <div className="skeleton-pulse" style={{ width: 70, height: 10, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+                  </div>
+                  <div className="skeleton-pulse" style={{ width: "85%", height: 14, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Comment Input Skeleton */}
+          <div className="glass-card" style={{ marginTop: 32, padding: 24 }}>
+            <div className="skeleton-pulse" style={{ width: "100%", height: 80, borderRadius: 8, background: "var(--bg-skeleton)", marginBottom: 12 }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div className="skeleton-pulse" style={{ width: 120, height: 16, borderRadius: 8, background: "var(--bg-skeleton)" }} />
+              <div className="skeleton-pulse" style={{ width: 80, height: 36, borderRadius: 8, background: "var(--bg-skeleton)" }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column (Sidebar) Skeleton */}
+        <div className="glass-card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 24 }}>
+          {/* Status */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="skeleton-pulse" style={{ width: 60, height: 10, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+            <div className="skeleton-pulse" style={{ width: "100%", height: 40, borderRadius: 10, background: "var(--bg-skeleton)" }} />
+          </div>
+          {/* Priority */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="skeleton-pulse" style={{ width: 70, height: 10, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+            <div className="skeleton-pulse" style={{ width: "100%", height: 40, borderRadius: 10, background: "var(--bg-skeleton)" }} />
+          </div>
+          {/* Owner */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="skeleton-pulse" style={{ width: 50, height: 10, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div className="skeleton-pulse" style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--bg-skeleton)" }} />
+              <div className="skeleton-pulse" style={{ width: 120, height: 14, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+            </div>
+          </div>
+          {/* Assignee */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="skeleton-pulse" style={{ width: 70, height: 10, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+            <div className="skeleton-pulse" style={{ width: "100%", height: 40, borderRadius: 10, background: "var(--bg-skeleton)" }} />
+          </div>
+          {/* Details */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="skeleton-pulse" style={{ width: 60, height: 10, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+            <div className="skeleton-pulse" style={{ width: "80%", height: 14, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+            <div className="skeleton-pulse" style={{ width: "70%", height: 14, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+            <div className="skeleton-pulse" style={{ width: "60%", height: 14, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+            <div className="skeleton-pulse" style={{ width: "100%", height: 36, borderRadius: 8, background: "var(--bg-skeleton)" }} />
+            <div className="skeleton-pulse" style={{ width: "75%", height: 14, borderRadius: 6, background: "var(--bg-skeleton)" }} />
+          </div>
+        </div>
+      </div>
+    );
 
   return (
-    <div className={`${styles.container} animate-fade-in`}>
+    <div className="animate-fade-in">
+      <div style={{ marginBottom: 20 }}>
+        <CustomButton
+          variant="outline"
+          size="sm"
+          icon={<CustomIcon name="ArrowLeft" size={18} />}
+          onClick={() => navigate(-1)}
+          style={{ borderRadius: 10 }}
+        >
+          Back
+        </CustomButton>
+      </div>
+      <div className={styles.container}>
       <div className={styles.leftColumn}>
         <div className={`${styles.ticketInfo} glass-card`}>
           <div className={styles.ticketHeader}>
@@ -244,16 +352,26 @@ const TicketDetail: React.FC = () => {
               <span className={styles.uid}>Ticket #{ticket.uid}</span>
               <h1 className={styles.title}>{ticket.subject}</h1>
             </div>
-            <button
-              className="glass-card"
-              style={{ padding: 8, borderRadius: 10 }}
-            >
-              <CustomIcon
-                name="MoreVertical"
-                size={20}
-                color="var(--text-muted)"
-              />
-            </button>
+            <CustomDropdownMenu
+              items={[
+                {
+                  label: "Copy Ticket ID",
+                  icon: "Hash",
+                  onClick: () => {
+                    navigator.clipboard.writeText(String(ticket.uid));
+                    showNotification("success", "Ticket ID copied to clipboard");
+                  },
+                },
+                {
+                  label: "Copy Ticket URL",
+                  icon: "Link",
+                  onClick: () => {
+                    navigator.clipboard.writeText(window.location.href);
+                    showNotification("success", "Ticket URL copied to clipboard");
+                  },
+                },
+              ]}
+            />
           </div>
 
           <div className={styles.issue}>{ticket.issue}</div>
@@ -330,11 +448,11 @@ const TicketDetail: React.FC = () => {
 
             <div className={`${styles.commentInput} glass-card`}>
               <form onSubmit={handleAddComment} className={styles.inputWrapper}>
-                <textarea
+                <CustomTextArea
                   placeholder="Type your message here..."
                   rows={4}
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
+                  onChange={(e: any) => setNewComment(e.target.value)}
                   style={{ width: "100%", resize: "none" }}
                 />
                 <div className={styles.inputActions}>
@@ -356,22 +474,13 @@ const TicketDetail: React.FC = () => {
                     <CustomIcon name="Lock" size={14} />
                     Internal Note
                   </label>
-                  <button
+                  <CustomButton
                     type="submit"
-                    className="bg-gradient"
-                    style={{
-                      padding: "8px 24px",
-                      borderRadius: 8,
-                      color: "white",
-                      fontWeight: 600,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
+                    variant="gradient"
+                    icon={<CustomIcon name="Send" size={16} />}
                   >
                     Send
-                    <CustomIcon name="Send" size={16} />
-                  </button>
+                  </CustomButton>
                 </div>
               </form>
             </div>
@@ -477,17 +586,15 @@ const TicketDetail: React.FC = () => {
                 placeholder="Priority"
               />
             ) : (
-              <div
-                className={tableStyles.badge}
+              <CustomBadge
+                color={ticket.priority.color}
                 style={{
-                  background: `${ticket.priority.color}15`,
-                  color: ticket.priority.color,
                   textAlign: "center",
                   padding: "8px",
                 }}
               >
                 {ticket.priority.name}
-              </div>
+              </CustomBadge>
             )}
           </div>
 
@@ -504,19 +611,18 @@ const TicketDetail: React.FC = () => {
                 {ticket.owner.fullname}
               </span>
               {ticket.owner.id !== user?.id && (
-                <button
+                <CustomButton
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleStartChat(ticket.owner.id)}
-                  style={{
-                    background: "transparent",
-                    color: "var(--accent-primary)",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
+                  icon={<CustomIcon name="MessageSquare" size={14} />}
                   title="Chat with Owner"
-                >
-                  <CustomIcon name="MessageSquare" size={14} />
-                </button>
+                  style={{
+                    padding: 0,
+                    minHeight: "auto",
+                    color: "var(--accent-primary)",
+                  }}
+                />
               )}
             </div>
           </div>
@@ -565,19 +671,18 @@ const TicketDetail: React.FC = () => {
                   {ticket?.assignee?.fullname || "Unassigned"}
                 </span>
                 {ticket?.assignee && ticket?.assignee?.id !== user?.id && (
-                  <button
+                  <CustomButton
+                    variant="ghost"
+                    size="sm"
                     onClick={() => handleStartChat(ticket?.assignee?.id)}
-                    style={{
-                      background: "transparent",
-                      color: "var(--accent-secondary)",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
+                    icon={<CustomIcon name="MessageSquare" size={14} />}
                     title="Chat with Assignee"
-                  >
-                    <CustomIcon name="MessageSquare" size={14} />
-                  </button>
+                    style={{
+                      padding: 0,
+                      minHeight: "auto",
+                      color: "var(--accent-secondary)",
+                    }}
+                  />
                 )}
               </div>
             )}
@@ -617,33 +722,29 @@ const TicketDetail: React.FC = () => {
                 <CustomIcon name="Layers" size={16} />
                 <span>Project: {ticket.group?.name || "None"}</span>
               </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <CustomDatePicker
+                  label={
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <CustomIcon name="Calendar" size={16} />
+                      <span>Due Date</span>
+                    </div>
+                  }
+                  value={ticket.dueDate ? new Date(ticket.dueDate).toISOString().split("T")[0] : ""}
+                  onChange={handleUpdateDueDate}
+                />
+              </div>
               <div
                 style={{
                   display: "flex",
-                  flexDirection: "column",
-                  gap: 4,
+                  alignItems: "center",
+                  gap: 10,
                   fontSize: "0.85rem",
                   color: "var(--text-secondary)",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <CustomIcon name="Calendar" size={16} />
-                  <span>Due Date</span>
-                </div>
-                <input
-                  type="date"
-                  className="glass-card"
-                  style={{
-                    padding: "8px 12px",
-                    width: "100%",
-                    fontSize: "0.85rem",
-                    color: "var(--text-primary)",
-                    marginTop: 4,
-                    border: "1px solid var(--border-glass)",
-                  }}
-                  value={ticket.dueDate ? new Date(ticket.dueDate).toISOString().split("T")[0] : ""}
-                  onChange={(e) => handleUpdateDueDate(e.target.value)}
-                />
+                <CustomIcon name="Clock" size={16} />
+                <span>Created: {new Date(ticket.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
               </div>
             </div>
           </div>
@@ -662,6 +763,7 @@ const TicketDetail: React.FC = () => {
         type={confirmConfig.type}
         confirmText="Confirm"
       />
+      </div>
     </div>
   );
 };

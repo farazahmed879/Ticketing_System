@@ -6,7 +6,6 @@ import CustomSelect from "../../../components/CustomSelect";
 import { useAuth } from "../../../context/AuthContext";
 import { RoleName, AnnouncementType } from "../../../utils/constants";
 
-
 interface AnnouncementFormProps {
   initialData?: any;
   onSubmit: (data: any) => Promise<void>;
@@ -24,7 +23,11 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
         title: "",
         description: "",
         date: "",
-        type: isCustomer ? AnnouncementType.REVIEW : isEmployee ? AnnouncementType.MOMENT : AnnouncementType.EVENT,
+        type: isCustomer
+          ? AnnouncementType.REVIEW
+          : isEmployee
+            ? AnnouncementType.MOMENT
+            : AnnouncementType.EVENT,
       },
     });
 
@@ -36,14 +39,22 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
           date: initialData.date
             ? new Date(initialData.date).toISOString().split("T")[0]
             : "",
-          type: isCustomer ? AnnouncementType.REVIEW : isEmployee ? AnnouncementType.MOMENT : initialData.type,
+          type: isCustomer
+            ? AnnouncementType.REVIEW
+            : isEmployee
+              ? AnnouncementType.MOMENT
+              : initialData.type,
         });
       } else {
         reset({
           title: "",
           description: "",
           date: "",
-          type: isCustomer ? AnnouncementType.REVIEW : isEmployee ? AnnouncementType.MOMENT : AnnouncementType.EVENT,
+          type: isCustomer
+            ? AnnouncementType.REVIEW
+            : isEmployee
+              ? AnnouncementType.MOMENT
+              : AnnouncementType.EVENT,
         });
       }
     };
@@ -67,7 +78,7 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
           control={control}
           rules={{ required: "Title is required" }}
           label="Title"
-          placeholder="Announcement title"
+          placeholder="Title"
         />
         <CustomTextArea
           name="description"

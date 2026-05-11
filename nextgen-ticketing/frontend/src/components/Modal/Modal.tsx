@@ -11,9 +11,10 @@ interface ModalProps {
   footer?: React.ReactNode;
   maxWidth?: string;
   minHeight?: string;
+  headerAction?: React.ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer, maxWidth, minHeight }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer, maxWidth, minHeight, headerAction }) => {
   if (!isOpen) return null;
 
   const modalStyle: React.CSSProperties = {
@@ -22,13 +23,16 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer,
   };
 
   return ReactDOM.createPortal(
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={`${styles.modal} glass-card animate-fade-in`} style={modalStyle} onClick={e => e.stopPropagation()}>
+    <div className={styles.overlay}>
+      <div className={`${styles.modal} glass-card animate-fade-in`} style={modalStyle}>
         <div className={styles.header}>
           <h2>{title}</h2>
-          <button onClick={onClose} className={styles.closeBtn}>
-            <CustomIcon name="X" size={20} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {headerAction}
+            <button onClick={onClose} className={styles.closeBtn}>
+              <CustomIcon name="X" size={20} />
+            </button>
+          </div>
         </div>
         <div className={styles.content}>
           {children}

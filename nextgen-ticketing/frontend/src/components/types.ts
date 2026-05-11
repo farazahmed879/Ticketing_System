@@ -69,6 +69,7 @@ export interface CustomTableProps<T> {
   loadingMessage?: string;
   onRowClick?: (item: T) => void;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export interface FilterOption {

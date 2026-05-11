@@ -6,7 +6,7 @@ import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
 import styles from "./CandidateList.module.css";
 import { API_ROUTES } from "../../utils/apiRoutes";
-import { CandidateStatus, UIMessages } from "../../utils/constants";
+import { CandidateStatus, UIMessages, DEFAULT_PAGE_SIZE } from "../../utils/constants";
 import { useNavigate, Link } from "react-router-dom";
 import type { Candidate } from "../../types";
 import CustomTable from "../../components/CustomTable";
@@ -17,6 +17,8 @@ import type { TableColumn } from "../../components/types";
 import CandidateModal from "./components/CandidateModal";
 import CustomPagination from "../../components/CustomPagination";
 import ConfirmationModal from "../../components/ConfirmationModal";
+
+import StandardListLayout from "../../components/StandardListLayout";
 
 const statusBadgeVariant = (status: string) => {
   switch (status) {
@@ -52,7 +54,7 @@ const CandidateList: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [candidateToDelete, setCandidateToDelete] = useState<string | null>(
@@ -317,168 +319,194 @@ const CandidateList: React.FC = () => {
   }
 
   return (
-    <div className="animate-fade-in">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
-        <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Candidates</h1>
-          <p style={{ color: "var(--text-muted)" }}>
-            Manage interview candidates and their profiles
-          </p>
-        </div>
-        <CustomButton
-          variant="gradient"
-          icon={<CustomIcon name="Plus" size={20} />}
-          onClick={() => {
-            setCurrentEditingId(null);
-            setIsModalOpen(true);
-          }}
-        >
-          Add Candidate
-        </CustomButton>
-      </div>
-
-      <div
-        className="glass-card"
-        style={{ padding: "16px", marginBottom: "24px", borderRadius: "12px" }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "16px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <h3 style={{ margin: 0, fontSize: "1.1rem" }}>Filters</h3>
-            <CustomBadge variant={isAiMode ? "primary" : "neutral"}>
-              {isAiMode ? "AI Search Active" : "Standard Search"}
-            </CustomBadge>
-          </div>
-          <CustomButton
-            variant={isAiMode ? "gradient" : "outline"}
-            size="sm"
-            icon={<CustomIcon name="Sparkles" size={16} />}
-            onClick={() => {
-              setIsAiMode(!isAiMode);
-              setCurrentPage(0);
-              if (!isAiMode) {
-                setSearchTerm("");
-                setPositionFilter("");
-                setSkillsFilter("");
-              } else {
-                setAiPrompt("");
-              }
-            }}
-          >
-            {isAiMode ? "Disable AI Match" : "Enable AI Match"}
-          </CustomButton>
-        </div>
-
-        {isAiMode ? (
-          <div style={{ display: "flex", gap: "16px", alignItems: "flex-end" }}>
-            <div style={{ flex: 1 }}>
-              <CustomInput
-                label="AI Natural Language Query"
-                placeholder="e.g., Senior React developer with strong communication skills..."
-                value={aiPrompt}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setAiPrompt(e.target.value)
-                }
-                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                  e.key === "Enter" && handleSearch()
-                }
-                icon={<CustomIcon name="Search" size={18} />}
-              />
-            </div>
-            <CustomButton
-              variant="primary"
-              onClick={handleSearch}
-              style={{ height: "48px" }}
-            >
-              Analyze
-            </CustomButton>
-          </div>
-        ) : (
+    <>
+      <StandardListLayout
+        header={
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr 200px auto",
-              gap: "16px",
-              alignItems: "end",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            <CustomInput
-              label="Search Name/Email"
-              placeholder="e.g. John Doe"
-              value={searchTerm}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setSearchTerm(e.target.value)
-              }
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                e.key === "Enter" && handleSearch()
-              }
-              icon={<CustomIcon name="Search" size={18} />}
-            />
-            <CustomInput
-              label="Position"
-              placeholder="e.g. Frontend Dev"
-              value={positionFilter}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setPositionFilter(e.target.value)
-              }
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                e.key === "Enter" && handleSearch()
-              }
-            />
-            <CustomInput
-              label="Technical Skills"
-              placeholder="e.g. React, Node.js"
-              value={skillsFilter}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setSkillsFilter(e.target.value)
-              }
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
-                e.key === "Enter" && handleSearch()
-              }
-            />
-            <CustomSelect
-              label="Status"
-              value={statusFilter}
-              onChange={(val) => {
-                setStatusFilter(val);
-                setCurrentPage(0);
-              }}
-              placeholder="All Statuses"
-              options={[
-                { value: "all", label: "All Statuses" },
-                { value: CandidateStatus.ACTIVE, label: "Active" },
-                { value: CandidateStatus.HIRED, label: "Hired" },
-                { value: CandidateStatus.REJECTED, label: "Rejected" },
-                { value: CandidateStatus.ON_HOLD, label: "On Hold" },
-              ]}
-            />
+            <div>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+                Candidates
+              </h1>
+              <p style={{ color: "var(--text-muted)" }}>
+                Manage interview candidates and their profiles
+              </p>
+            </div>
             <CustomButton
-              variant="secondary"
-              onClick={handleSearch}
-              icon={<CustomIcon name="Filter" size={18} />}
-              style={{ height: "48px" }}
+              variant="gradient"
+              icon={<CustomIcon name="Plus" size={20} />}
+              onClick={() => {
+                setCurrentEditingId(null);
+                setIsModalOpen(true);
+              }}
             >
-              Filter
+              Add Candidate
             </CustomButton>
           </div>
-        )}
-      </div>
+        }
+        filters={
+          <div
+            className="glass-card"
+            style={{
+              padding: "16px",
+              marginBottom: "16px",
+              borderRadius: "12px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "16px",
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "12px" }}
+              >
+                <h3 style={{ margin: 0, fontSize: "1.1rem" }}>Filters</h3>
+                <CustomBadge variant={isAiMode ? "primary" : "neutral"}>
+                  {isAiMode ? "AI Search Active" : "Standard Search"}
+                </CustomBadge>
+              </div>
+              <CustomButton
+                variant={isAiMode ? "gradient" : "outline"}
+                size="sm"
+                icon={<CustomIcon name="Sparkles" size={16} />}
+                onClick={() => {
+                  setIsAiMode(!isAiMode);
+                  setCurrentPage(0);
+                  if (!isAiMode) {
+                    setSearchTerm("");
+                    setPositionFilter("");
+                    setSkillsFilter("");
+                  } else {
+                    setAiPrompt("");
+                  }
+                }}
+              >
+                {isAiMode ? "Disable AI Match" : "Enable AI Match"}
+              </CustomButton>
+            </div>
 
-      <div className="glass-card" style={{ padding: 0 }}>
+            {isAiMode ? (
+              <div
+                style={{ display: "flex", gap: "16px", alignItems: "flex-end" }}
+              >
+                <div style={{ flex: 1 }}>
+                  <CustomInput
+                    label="AI Natural Language Query"
+                    placeholder="e.g., Senior React developer with strong communication skills..."
+                    value={aiPrompt}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setAiPrompt(e.target.value)
+                    }
+                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                      e.key === "Enter" && handleSearch()
+                    }
+                    icon={<CustomIcon name="Search" size={18} />}
+                  />
+                </div>
+                <CustomButton
+                  variant="primary"
+                  onClick={handleSearch}
+                  style={{ height: "48px" }}
+                >
+                  Analyze
+                </CustomButton>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr 1fr 200px auto",
+                  gap: "16px",
+                  alignItems: "end",
+                }}
+              >
+                <CustomInput
+                  label="Search Name/Email"
+                  placeholder="e.g. John Doe"
+                  value={searchTerm}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setSearchTerm(e.target.value)
+                  }
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                    e.key === "Enter" && handleSearch()
+                  }
+                  icon={<CustomIcon name="Search" size={18} />}
+                />
+                <CustomInput
+                  label="Position"
+                  placeholder="e.g. Frontend Dev"
+                  value={positionFilter}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setPositionFilter(e.target.value)
+                  }
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                    e.key === "Enter" && handleSearch()
+                  }
+                />
+                <CustomInput
+                  label="Technical Skills"
+                  placeholder="e.g. React, Node.js"
+                  value={skillsFilter}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setSkillsFilter(e.target.value)
+                  }
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                    e.key === "Enter" && handleSearch()
+                  }
+                />
+                <CustomSelect
+                  label="Status"
+                  value={statusFilter}
+                  onChange={(val) => {
+                    setStatusFilter(val);
+                    setCurrentPage(0);
+                  }}
+                  placeholder="All Statuses"
+                  options={[
+                    { value: "all", label: "All Statuses" },
+                    { value: CandidateStatus.ACTIVE, label: "Active" },
+                    { value: CandidateStatus.HIRED, label: "Hired" },
+                    { value: CandidateStatus.REJECTED, label: "Rejected" },
+                    { value: CandidateStatus.ON_HOLD, label: "On Hold" },
+                  ]}
+                />
+                <CustomButton
+                  variant="secondary"
+                  onClick={handleSearch}
+                  icon={<CustomIcon name="Filter" size={18} />}
+                  style={{ height: "48px" }}
+                >
+                  Filter
+                </CustomButton>
+              </div>
+            )}
+          </div>
+        }
+        pagination={
+          <CustomPagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(totalItems / itemsPerPage)}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageSizeChange={(size) => {
+              setItemsPerPage(size);
+              setCurrentPage(0);
+            }}
+          />
+        }
+      >
         <CustomTable
+          style={{ flex: 1, overflowY: "auto" }}
           columns={columns}
           data={candidates}
           loading={loading}
@@ -486,18 +514,7 @@ const CandidateList: React.FC = () => {
           emptyMessage="No candidates found"
           onRowClick={(c) => navigate(`/candidates/${c.id}`)}
         />
-        <CustomPagination
-          currentPage={currentPage}
-          totalPages={Math.ceil(totalItems / itemsPerPage)}
-          onPageChange={setCurrentPage}
-          totalItems={totalItems}
-          itemsPerPage={itemsPerPage}
-          onPageSizeChange={(size) => {
-            setItemsPerPage(size);
-            setCurrentPage(0);
-          }}
-        />
-      </div>
+      </StandardListLayout>
 
       <CandidateModal
         isOpen={isModalOpen}
@@ -516,7 +533,7 @@ const CandidateList: React.FC = () => {
         confirmText="Delete"
         type="danger"
       />
-    </div>
+    </>
   );
 };
 

@@ -21,7 +21,10 @@ import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomPagination from "../../components/CustomPagination";
+import CustomDropdownMenu from "../../components/CustomDropdownMenu";
 import CreateTicketModal from "./components/CreateTicketModal";
+import StandardListLayout from "../../components/StandardListLayout";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 const TicketList: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -40,6 +43,10 @@ const TicketList: React.FC = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [types, setTypes] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
+  
+  // Delete Ticket State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [ticketToDelete, setTicketToDelete] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { showNotification, setIsLoading } = useNotification();
@@ -106,68 +113,105 @@ const TicketList: React.FC = () => {
     }
   };
 
+  const handleDeleteTicket = async () => {
+    if (!ticketToDelete) return;
+    setIsLoading(true, UIMessages.LOADING.DELETING);
+    try {
+      await api.delete(API_ROUTES.TICKETS.BY_ID(ticketToDelete));
+      showNotification("success", "Ticket deleted successfully!");
+      setIsDeleteModalOpen(false);
+      setTicketToDelete(null);
+      fetchTickets();
+    } catch (err: any) {
+      console.error("Failed to delete ticket", err);
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to delete ticket",
+      );
+    } finally {
+      setIsLoading(false, "");
+    }
+  };
+
   return (
     <>
-      <div className="animate-fade-in">
-        <div className={styles.header}>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Tickets</h1>
-          {(user?.role?.name === RoleName.ADMIN ||
-            user?.role?.permissions?.tickets?.create) && (
-            <CustomButton
-              variant="gradient"
-              icon={<CustomIcon name="Plus" size={20} />}
-              onClick={() => setIsModalOpen(true)}
-            >
-              Create Ticket
-            </CustomButton>
-          )}
-        </div>
-
-        <div className={styles.filters}>
-          <div
-            className={styles.search}
-            style={{ border: "none", background: "transparent", padding: 0 }}
-          >
-            <CustomInput
-              placeholder="Search by subject or ID..."
-              value={search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setSearch(e.target.value)
-              }
-              icon={<CustomIcon name="Search" size={18} />}
-              containerStyle={{ minWidth: "300px" }}
-            />
+      <StandardListLayout
+        header={
+          <div className={styles.header}>
+            <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Tickets</h1>
+            {(user?.role?.name === RoleName.ADMIN ||
+              user?.role?.permissions?.tickets?.create) && (
+              <CustomButton
+                variant="gradient"
+                icon={<CustomIcon name="Plus" size={20} />}
+                onClick={() => setIsModalOpen(true)}
+              >
+                Create Ticket
+              </CustomButton>
+            )}
           </div>
-          <CustomSelect
-            value={status}
-            onChange={(val) => setStatus(val)}
-            placeholder="All Statuses"
-            options={[
-              { value: "", label: "All Statuses" },
-              { value: StatusName.NEW, label: StatusName.NEW },
-              { value: StatusName.OPEN, label: StatusName.OPEN },
-              { value: StatusName.IN_PROCESS, label: StatusName.IN_PROCESS },
-              { value: StatusName.RESOLVED, label: StatusName.RESOLVED },
-              { value: StatusName.CLOSED, label: StatusName.CLOSED },
-            ]}
-            style={{ minWidth: "180px" }}
-          />
-          <CustomButton
-            variant="secondary"
-            icon={
-              <CustomIcon
-                name="Filter"
-                size={18}
-                color="var(--accent-primary)"
+        }
+        filters={
+          <div className={styles.filters}>
+            <div
+              className={styles.search}
+              style={{ border: "none", background: "transparent", padding: 0 }}
+            >
+              <CustomInput
+                placeholder="Search by subject or ID..."
+                value={search}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSearch(e.target.value)
+                }
+                icon={<CustomIcon name="Search" size={18} />}
+                containerStyle={{ minWidth: "300px" }}
               />
-            }
-            style={{ padding: "0 16px" }}
-          >
-            More Filters
-          </CustomButton>
-        </div>
-
+            </div>
+            <CustomSelect
+              value={status}
+              onChange={(val) => setStatus(val)}
+              placeholder="All Statuses"
+              options={[
+                { value: "", label: "All Statuses" },
+                { value: StatusName.NEW, label: StatusName.NEW },
+                { value: StatusName.OPEN, label: StatusName.OPEN },
+                { value: StatusName.IN_PROCESS, label: StatusName.IN_PROCESS },
+                { value: StatusName.RESOLVED, label: StatusName.RESOLVED },
+                { value: StatusName.CLOSED, label: StatusName.CLOSED },
+              ]}
+              style={{ minWidth: "180px" }}
+            />
+            <CustomButton
+              variant="secondary"
+              icon={
+                <CustomIcon
+                  name="Filter"
+                  size={18}
+                  color="var(--accent-primary)"
+                />
+              }
+              style={{ padding: "0 16px" }}
+            >
+              More Filters
+            </CustomButton>
+          </div>
+        }
+        pagination={
+          <CustomPagination
+            currentPage={page}
+            totalPages={Math.ceil(totalCount / itemsPerPage)}
+            onPageChange={setPage}
+            totalItems={totalCount}
+            itemsPerPage={itemsPerPage}
+            onPageSizeChange={(size) => {
+              setItemsPerPage(size);
+              setPage(0);
+            }}
+          />
+        }
+      >
         <CustomTable
+          style={{ flex: 1, overflowY: "auto" }}
           columns={[
             {
               header: "UID",
@@ -228,6 +272,52 @@ const TicketList: React.FC = () => {
               render: (t) =>
                 t.dueDate ? format(new Date(t.dueDate), "MMM dd, yyyy") : "-",
             },
+            {
+              header: "Actions",
+              key: "actions",
+              render: (t) => (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <CustomDropdownMenu
+                    items={[
+                      {
+                        label: "Copy Ticket ID",
+                        icon: "Hash",
+                        onClick: () => {
+                          navigator.clipboard.writeText(String(t.uid));
+                          showNotification("success", "Ticket ID copied");
+                        },
+                      },
+                      {
+                        label: "Copy Ticket URL",
+                        icon: "Link",
+                        onClick: () => {
+                          const url = `${window.location.origin}/tickets/${t.id}`;
+                          navigator.clipboard.writeText(url);
+                          showNotification("success", "Ticket URL copied");
+                        },
+                      },
+                      {
+                        label: "Open Full Page",
+                        icon: "ExternalLink",
+                        onClick: () => {
+                          navigate(`/tickets/${t.id}`);
+                        },
+                      },
+                      ...(user?.role?.name === RoleName.ADMIN ? [{
+                        label: "Delete Ticket",
+                        icon: "Trash2",
+                        onClick: () => {
+                          setTicketToDelete(t.id);
+                          setIsDeleteModalOpen(true);
+                        },
+                        danger: true,
+                      }] : []),
+                    ]}
+                    triggerSize={16}
+                  />
+                </div>
+              ),
+            },
           ]}
           data={tickets}
           loading={loading}
@@ -236,21 +326,7 @@ const TicketList: React.FC = () => {
           onRowClick={(t) => navigate(`/tickets/${t.id}`)}
           className="glass-card-hover"
         />
-
-        <div className="glass-card" style={{ padding: 0 }}>
-          <CustomPagination
-            currentPage={page}
-            totalPages={Math.ceil(totalCount / itemsPerPage)}
-            onPageChange={setPage}
-            totalItems={totalCount}
-            itemsPerPage={itemsPerPage}
-            onPageSizeChange={(size) => {
-              setItemsPerPage(size);
-              setPage(0);
-            }}
-          />
-        </div>
-      </div>
+      </StandardListLayout>
 
       <CreateTicketModal
         isOpen={isModalOpen}
@@ -261,6 +337,19 @@ const TicketList: React.FC = () => {
         agents={agents}
         user={user}
         onSubmit={handleCreateTicket}
+      />
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setTicketToDelete(null);
+        }}
+        onConfirm={handleDeleteTicket}
+        title="Delete Ticket"
+        message="Are you sure you want to delete this ticket? This action cannot be undone."
+        confirmText="Delete"
+        type="danger"
       />
     </>
   );

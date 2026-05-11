@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import CustomIcon from '../CustomIcon';
 import styles from './CustomPagination.module.css';
+import { PAGE_SIZE_OPTIONS, DEFAULT_PAGE_SIZE } from '../../utils/constants';
 
 interface CustomPaginationProps {
   currentPage: number;
@@ -9,7 +10,7 @@ interface CustomPaginationProps {
   totalItems?: number;
   itemsPerPage?: number;
   onPageSizeChange?: (size: number) => void;
-  pageSizeOptions?: number[];
+  pageSizeOptions?: number[] | readonly number[];
 }
 
 const CustomPagination: React.FC<CustomPaginationProps> = ({
@@ -17,9 +18,9 @@ const CustomPagination: React.FC<CustomPaginationProps> = ({
   totalPages,
   onPageChange,
   totalItems,
-  itemsPerPage = 10,
+  itemsPerPage = DEFAULT_PAGE_SIZE,
   onPageSizeChange,
-  pageSizeOptions = [10, 25, 50, 100],
+  pageSizeOptions = PAGE_SIZE_OPTIONS,
 }) => {
   const [isSizeDropdownOpen, setIsSizeDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

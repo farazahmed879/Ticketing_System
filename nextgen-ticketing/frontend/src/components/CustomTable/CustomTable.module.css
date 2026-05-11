@@ -11,6 +11,10 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border-glass);
+  position: sticky;
+  top: 0;
+  background: var(--bg-input);
+  z-index: 5;
 }
 
 .table td {

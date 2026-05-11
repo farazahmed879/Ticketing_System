@@ -156,7 +156,7 @@ const Login: React.FC = () => {
                 className={styles.forgotLink}
                 onClick={() => setShowForgot(true)}
               >
-                Forgot Password?
+                Help me log in
               </button>
             </div>
 
@@ -170,7 +170,7 @@ const Login: React.FC = () => {
               Sign In
             </CustomButton>
 
-            <div className={styles.footer}>
+            {/* <div className={styles.footer}>
               <span>Don't have an account?</span>
               <button
                 type="button"
@@ -179,7 +179,7 @@ const Login: React.FC = () => {
               >
                 Create Account
               </button>
-            </div>
+            </div> */}
           </form>
         ) : (
           <form

@@ -1,8 +1,8 @@
 export const RoleName = {
   ADMIN: "Admin",
-  AGENT: "Agent",
+  AGENT: "Manager",
   EMPLOYEE: "Employee",
-  CUSTOMER: "Customer",
+  CUSTOMER: "Client",
   HR: "HR",
 } as const;
 export type RoleName = (typeof RoleName)[keyof typeof RoleName];
@@ -10,7 +10,7 @@ export type RoleName = (typeof RoleName)[keyof typeof RoleName];
 export const RoleType = {
   AGENTS: "agents",
   ADMINS: "admins",
-  CUSTOMERS: "customers",
+  CUSTOMERS: "clients",
   ALL: "all",
 } as const;
 export type RoleType = (typeof RoleType)[keyof typeof RoleType];

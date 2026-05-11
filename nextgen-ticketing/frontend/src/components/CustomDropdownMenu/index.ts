@@ -1,2 +1,1 @@
-export { default } from './CustomDropdownMenu';
-export type { DropdownMenuItem } from './CustomDropdownMenu';
+export { default } from "./CustomDropdownMenu";

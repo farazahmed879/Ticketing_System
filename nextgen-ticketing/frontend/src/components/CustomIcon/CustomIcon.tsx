@@ -6,7 +6,7 @@ import * as Icons from "lucide-react";
  * Centralizes lucide-react icons to avoid multiple imports across the app.
  */
 
-import type { IconName, CustomIconProps } from "../types";
+import type { CustomIconProps } from "../types";
 
 const CustomIcon: React.FC<CustomIconProps> = ({ name, ...props }) => {
   const IconComponent = (Icons as any)[name] as React.FC<Icons.LucideProps>;

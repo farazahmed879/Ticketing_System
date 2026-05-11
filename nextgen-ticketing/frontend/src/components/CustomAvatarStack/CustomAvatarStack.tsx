@@ -2,7 +2,7 @@ import React from "react";
 import styles from "./CustomAvatarStack.module.css";
 import CustomImage from "../CustomImage";
 
-import type { AvatarItem, CustomAvatarStackProps } from "../types";
+import type { CustomAvatarStackProps } from "../types";
 
 const CustomAvatarStack: React.FC<CustomAvatarStackProps> = ({
   items = [],

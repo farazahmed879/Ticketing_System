@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../types";
 import { commonUsecase } from "../usecases/common.usecase";
 
 export const commonController = {
@@ -66,7 +66,7 @@ export const commonController = {
     try {
       const group = await commonUsecase.updateGroup(
         req.params.id as string,
-        req.body
+        req.body,
       );
       res.json({ success: true, group });
     } catch (error: any) {

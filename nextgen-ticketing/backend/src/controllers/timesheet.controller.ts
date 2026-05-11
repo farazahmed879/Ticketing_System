@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../types";
 import { timesheetUsecase } from "../usecases/timesheet.usecase";
 
 export const timesheetController = {
@@ -15,7 +15,7 @@ export const timesheetController = {
       const entries = await timesheetUsecase.getEntries(
         startDate as string,
         endDate as string,
-        targetUserId
+        targetUserId,
       );
       res.json({ success: true, entries });
     } catch (error: any) {
@@ -35,7 +35,7 @@ export const timesheetController = {
         date,
         totalHours,
         notes,
-        tasks
+        tasks,
       );
       res.json({ success: true, entry });
     } catch (error: any) {
@@ -51,7 +51,7 @@ export const timesheetController = {
 
       const entry = await timesheetUsecase.approveEntry(
         req.params.id as string,
-        agentId
+        agentId,
       );
       res.json({ success: true, entry });
     } catch (error: any) {
@@ -67,7 +67,7 @@ export const timesheetController = {
       const { reason } = req.body;
       const entry = await timesheetUsecase.rejectEntry(
         req.params.id as string,
-        reason
+        reason,
       );
       res.json({ success: true, entry });
     } catch (error: any) {
@@ -96,7 +96,7 @@ export const timesheetController = {
       const report = await timesheetUsecase.getMonthlyReport(
         month as string,
         year as string,
-        targetUserId
+        targetUserId,
       );
 
       res.json({ success: true, report });

@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../types";
 import { teamUsecase } from "../usecases/team.usecase";
 
 export const teamController = {
@@ -25,7 +25,10 @@ export const teamController = {
 
   async updateTeam(req: AuthRequest, res: Response) {
     try {
-      const team = await teamUsecase.updateTeam(req.params.id as string, req.body);
+      const team = await teamUsecase.updateTeam(
+        req.params.id as string,
+        req.body,
+      );
       res.json({ success: true, team });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

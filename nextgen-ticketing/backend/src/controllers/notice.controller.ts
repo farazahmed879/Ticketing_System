@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../types";
 import { noticeUsecase } from "../usecases/notice.usecase";
 
 export const noticeController = {
@@ -23,7 +23,10 @@ export const noticeController = {
 
   async updateNotice(req: AuthRequest, res: Response) {
     try {
-      const notice = await noticeUsecase.updateNotice(req.params.id as string, req.body);
+      const notice = await noticeUsecase.updateNotice(
+        req.params.id as string,
+        req.body,
+      );
       res.json({ success: true, notice });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
@@ -32,7 +35,9 @@ export const noticeController = {
 
   async activateNotice(req: AuthRequest, res: Response) {
     try {
-      const notice = await noticeUsecase.activateNotice(req.params.id as string);
+      const notice = await noticeUsecase.activateNotice(
+        req.params.id as string,
+      );
       res.json({ success: true, notice });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

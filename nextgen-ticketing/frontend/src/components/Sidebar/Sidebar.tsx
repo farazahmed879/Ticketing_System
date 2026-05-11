@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import CustomIcon from "../CustomIcon";
@@ -11,6 +11,49 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  const navRef = useRef<HTMLDivElement>(null);
+  const [canScrollUp, setCanScrollUp] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+  const [hoveredSubmenu, setHoveredSubmenu] = useState<{item: any, top: number} | null>(null);
+
+  const checkScroll = () => {
+    if (navRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = navRef.current;
+      setCanScrollUp(scrollTop > 0);
+      setCanScrollDown(Math.ceil(scrollTop + clientHeight) < scrollHeight);
+    }
+  };
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const observer = new ResizeObserver(() => checkScroll());
+    // Observe all children to catch submenu expansions
+    Array.from(nav.children).forEach(child => observer.observe(child));
+    observer.observe(nav);
+    
+    nav.addEventListener('scroll', checkScroll);
+    checkScroll();
+    
+    return () => {
+      observer.disconnect();
+      nav.removeEventListener('scroll', checkScroll);
+    };
+  }, [isCollapsed]);
+
+  const scrollUp = () => {
+    if (navRef.current) {
+      navRef.current.scrollBy({ top: -150, behavior: 'smooth' });
+    }
+  };
+
+  const scrollDown = () => {
+    if (navRef.current) {
+      navRef.current.scrollBy({ top: 150, behavior: 'smooth' });
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -26,7 +69,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
     return user.role.permissions?.[module]?.[action] === true;
   };
 
-  const navItems = [
+  interface NavItemType {
+    icon: React.ReactNode;
+    label: string;
+    path: string;
+    permission: string;
+    children?: { label: string; path: string }[];
+  }
+
+  const navItems: NavItemType[] = [
     {
       icon: <CustomIcon name="LayoutDashboard" size={20} />,
       label: t("sidebar.dashboard"),
@@ -38,16 +89,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
       label: "Ticket",
       path: "/tickets",
       permission: "tickets.view",
-      children: [
-        {
-          label: "Ticket List",
-          path: "/tickets",
-        },
-        {
-          label: "Ticket Board",
-          path: "/tickets/board",
-        },
-      ],
     },
     {
       icon: <CustomIcon name="FileQuestion" size={20} />,
@@ -150,9 +191,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
         )}
       </div>
 
-      <nav className={styles.nav}>
+      {canScrollUp && (
+        <button 
+          className={styles.scrollBtn}
+          onClick={scrollUp}
+        >
+          <CustomIcon name="ChevronUp" size={16} />
+        </button>
+      )}
+
+      <nav className={styles.nav} ref={navRef}>
         {filteredNavItems.map((item) => (
-          <div key={item.path} className={styles.navItemWrapper}>
+          <div 
+            key={item.path} 
+            className={styles.navItemWrapper}
+            onMouseEnter={(e) => {
+              if (item.children) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setHoveredSubmenu({ item, top: rect.top });
+              }
+            }}
+            onMouseLeave={() => setHoveredSubmenu(null)}
+          >
             <NavLink
               to={item.path}
               end={item.path === "/tickets"}
@@ -166,28 +226,46 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
                 <CustomIcon name="ChevronRight" size={14} style={{ marginLeft: "auto", opacity: 0.5 }} />
               )}
             </NavLink>
-
-            {item.children && (
-              <div className={styles.submenu}>
-                <div className={styles.submenuHeader}>
-                  {item.label}
-                </div>
-                {item.children.map((child) => (
-                  <NavLink
-                    key={child.path}
-                    to={child.path}
-                    className={({ isActive }) =>
-                      `${styles.submenuLink} ${isActive ? styles.submenuLinkActive : ""}`
-                    }
-                  >
-                    {child.label}
-                  </NavLink>
-                ))}
-              </div>
-            )}
           </div>
         ))}
       </nav>
+
+      {hoveredSubmenu && (
+        <div 
+          className={styles.submenuFlyout}
+          style={{ 
+            top: hoveredSubmenu.top, 
+            left: isCollapsed ? 90 : 270 
+          }}
+          onMouseEnter={() => setHoveredSubmenu(hoveredSubmenu)}
+          onMouseLeave={() => setHoveredSubmenu(null)}
+        >
+          <div className={styles.submenuHeader}>
+            {hoveredSubmenu.item.label}
+          </div>
+          {hoveredSubmenu.item.children.map((child: any) => (
+            <NavLink
+              key={child.path}
+              to={child.path}
+              className={({ isActive }) =>
+                `${styles.submenuLink} ${isActive ? styles.submenuLinkActive : ""}`
+              }
+              onClick={() => setHoveredSubmenu(null)}
+            >
+              {child.label}
+            </NavLink>
+          ))}
+        </div>
+      )}
+
+      {canScrollDown && (
+        <button 
+          className={styles.scrollBtn}
+          onClick={scrollDown}
+        >
+          <CustomIcon name="ChevronDown" size={16} />
+        </button>
+      )}
 
       <div
         className={styles.userProfile}

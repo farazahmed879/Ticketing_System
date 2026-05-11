@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../types";
 import { departmentUsecase } from "../usecases/department.usecase";
 
 export const departmentController = {
@@ -23,7 +23,10 @@ export const departmentController = {
 
   async updateDepartment(req: AuthRequest, res: Response) {
     try {
-      const department = await departmentUsecase.updateDepartment(req.params.id as string, req.body);
+      const department = await departmentUsecase.updateDepartment(
+        req.params.id as string,
+        req.body,
+      );
       res.json({ success: true, department });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

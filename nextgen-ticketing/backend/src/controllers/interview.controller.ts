@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../types";
 import { interviewUsecase } from "../usecases/interview.usecase";
 import { emitNotificationToUser } from "../socketio/events";
 
@@ -8,7 +8,7 @@ export const interviewController = {
     try {
       const { interviews, total } = await interviewUsecase.getAllInterviews(
         req.query,
-        req.user
+        req.user,
       );
       res.json({ success: true, interviews, total });
     } catch (error: any) {
@@ -20,7 +20,7 @@ export const interviewController = {
     try {
       const interview = await interviewUsecase.getInterviewById(
         req.params.id as string,
-        req.user
+        req.user,
       );
       res.json({ success: true, interview });
     } catch (error: any) {
@@ -28,8 +28,8 @@ export const interviewController = {
         error.message === "Interview not found"
           ? 404
           : error.message.includes("Access denied")
-          ? 403
-          : 500;
+            ? 403
+            : 500;
       res.status(status).json({ success: false, error: error.message });
     }
   },
@@ -39,10 +39,8 @@ export const interviewController = {
       const user = req.user;
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-      const { interview, notifications } = await interviewUsecase.createInterview(
-        req.body,
-        user
-      );
+      const { interview, notifications } =
+        await interviewUsecase.createInterview(req.body, user);
 
       const io = req.app.get("io");
       if (io) {
@@ -62,11 +60,12 @@ export const interviewController = {
       const user = req.user;
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-      const { interview, notifications } = await interviewUsecase.updateInterview(
-        req.params.id as string,
-        req.body,
-        user
-      );
+      const { interview, notifications } =
+        await interviewUsecase.updateInterview(
+          req.params.id as string,
+          req.body,
+          user,
+        );
 
       const io = req.app.get("io");
       if (io && notifications) {
@@ -85,7 +84,7 @@ export const interviewController = {
     try {
       const interview = await interviewUsecase.updateInterviewStatus(
         req.params.id as string,
-        req.body.status
+        req.body.status,
       );
       res.json({ success: true, interview });
     } catch (error: any) {
@@ -110,7 +109,7 @@ export const interviewController = {
       const feedback = await interviewUsecase.submitFeedback(
         req.params.id as string,
         req.body,
-        user
+        user,
       );
       res.json({ success: true, feedback });
     } catch (error: any) {

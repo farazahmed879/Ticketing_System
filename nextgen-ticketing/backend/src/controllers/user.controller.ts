@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../types";
 import { userUsecase } from "../usecases/user.usecase";
 
 export const userController = {
@@ -17,7 +17,7 @@ export const userController = {
         limit as string,
         page as string,
         showDeleted as string,
-        search as string
+        search as string,
       );
       res.json({ success: true, accounts, total, count: accounts.length });
     } catch (error: any) {
@@ -45,7 +45,10 @@ export const userController = {
 
   async updateUser(req: AuthRequest, res: Response) {
     try {
-      const user = await userUsecase.updateUser(req.params.id as string, req.body);
+      const user = await userUsecase.updateUser(
+        req.params.id as string,
+        req.body,
+      );
       res.json({ success: true, user });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

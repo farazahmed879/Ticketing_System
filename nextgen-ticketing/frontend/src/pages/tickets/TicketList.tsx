@@ -138,7 +138,22 @@ const TicketList: React.FC = () => {
       <StandardListLayout
         header={
           <div className={styles.header}>
-            <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Tickets</h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>Tickets</h1>
+              <div style={{ display: 'flex', background: 'var(--bg-card)', padding: 4, borderRadius: 8, border: '1px solid var(--border-glass)' }}>
+                <button 
+                  style={{ padding: '6px 12px', borderRadius: 6, background: 'var(--accent-primary)', color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, cursor: 'default' }}
+                >
+                  <CustomIcon name="List" size={16} /> List
+                </button>
+                <button 
+                  onClick={() => navigate('/tickets/board')}
+                  style={{ padding: '6px 12px', borderRadius: 6, background: 'transparent', color: 'var(--text-secondary)', border: 'none', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', transition: 'all 0.2s' }}
+                >
+                  <CustomIcon name="Kanban" size={16} /> Board
+                </button>
+              </div>
+            </div>
             {(user?.role?.name === RoleName.ADMIN ||
               user?.role?.permissions?.tickets?.create) && (
               <CustomButton

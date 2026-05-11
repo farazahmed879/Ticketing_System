@@ -1,12 +1,15 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../types";
 import { roleUsecase } from "../usecases/role.usecase";
 
 export const roleController = {
   async getRoles(req: AuthRequest, res: Response) {
     try {
       const { limit, page } = req.query;
-      const { roles, total } = await roleUsecase.getRoles(limit as string, page as string);
+      const { roles, total } = await roleUsecase.getRoles(
+        limit as string,
+        page as string,
+      );
       res.json({ success: true, roles, total });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
@@ -24,7 +27,10 @@ export const roleController = {
 
   async updateRole(req: AuthRequest, res: Response) {
     try {
-      const role = await roleUsecase.updateRole(req.params.id as string, req.body);
+      const role = await roleUsecase.updateRole(
+        req.params.id as string,
+        req.body,
+      );
       res.json({ success: true, role });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

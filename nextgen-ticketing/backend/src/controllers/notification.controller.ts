@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../types";
 import { notificationUsecase } from "../usecases/notification.usecase";
 
 export const notificationController = {

@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../types";
 import { chatUsecase } from "../usecases/chat.usecase";
 
 export const chatController = {
@@ -22,7 +22,7 @@ export const chatController = {
 
       const conversation = await chatUsecase.getConversation(
         req.params.id as string,
-        userId
+        userId,
       );
       res.json({ success: true, conversation });
     } catch (error: any) {
@@ -30,8 +30,8 @@ export const chatController = {
         error.message === "Conversation not found"
           ? 404
           : error.message === "Access denied"
-          ? 403
-          : 500;
+            ? 403
+            : 500;
       res.status(status).json({ success: false, error: error.message });
     }
   },
@@ -43,7 +43,7 @@ export const chatController = {
 
       const conversation = await chatUsecase.startConversation(
         userId,
-        req.body.partnerId
+        req.body.partnerId,
       );
       const status = (conversation as any).createdAt ? 201 : 200;
       res.status(status).json({ success: true, conversation });
@@ -53,8 +53,8 @@ export const chatController = {
         error.message.includes("yourself")
           ? 403
           : error.message === "User not found"
-          ? 404
-          : 500;
+            ? 404
+            : 500;
       res.status(status).json({ success: false, error: error.message });
     }
   },
@@ -67,7 +67,7 @@ export const chatController = {
       const message = await chatUsecase.sendMessage(
         req.params.id as string,
         userId,
-        req.body.body
+        req.body.body,
       );
       res.status(201).json({ success: true, message });
     } catch (error: any) {
@@ -96,12 +96,14 @@ export const chatController = {
       if (!name || !name.trim())
         return res.status(400).json({ message: "Group name is required" });
       if (!memberIds || memberIds.length < 1)
-        return res.status(400).json({ message: "At least one other member required" });
+        return res
+          .status(400)
+          .json({ message: "At least one other member required" });
 
       const conversation = await chatUsecase.createGroupChat(
         userId,
         name,
-        memberIds
+        memberIds,
       );
       res.status(201).json({ success: true, conversation });
     } catch (error: any) {
@@ -119,7 +121,7 @@ export const chatController = {
         req.params.id as string,
         userId,
         req.body.addMemberIds,
-        req.body.removeMemberIds
+        req.body.removeMemberIds,
       );
       res.json({ success: true, conversation });
     } catch (error: any) {
@@ -128,8 +130,8 @@ export const chatController = {
         error.message.includes("Access denied")
           ? 403
           : error.message.includes("not found")
-          ? 404
-          : 500;
+            ? 404
+            : 500;
       res.status(status).json({ success: false, error: error.message });
     }
   },

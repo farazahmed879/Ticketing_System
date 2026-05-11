@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../../components/CustomIcon";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
@@ -17,6 +18,7 @@ import { BoardSkeleton } from "../../../components/CustomSkeleton/CustomSkeleton
 import ColumnStatus from "./ColumnStatus";
 
 const TicketBoard: React.FC = () => {
+  const navigate = useNavigate();
   const [columns, setColumns] = useState<Column[]>([]);
   const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
@@ -280,7 +282,22 @@ const TicketBoard: React.FC = () => {
         <>
           <div className={styles.header}>
             <div className={styles.titleInfo}>
-              <h1>Ticketing Board</h1>
+              <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+                <h1>Ticketing Board</h1>
+                <div style={{ display: 'flex', background: 'var(--bg-card)', padding: 4, borderRadius: 8, border: '1px solid var(--border-glass)', height: 'fit-content' }}>
+                  <button 
+                    onClick={() => navigate('/tickets')}
+                    style={{ padding: '6px 12px', borderRadius: 6, background: 'transparent', color: 'var(--text-secondary)', border: 'none', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', transition: 'all 0.2s' }}
+                  >
+                    <CustomIcon name="List" size={16} /> List
+                  </button>
+                  <button 
+                    style={{ padding: '6px 12px', borderRadius: 6, background: 'var(--accent-primary)', color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, cursor: 'default' }}
+                  >
+                    <CustomIcon name="Kanban" size={16} /> Board
+                  </button>
+                </div>
+              </div>
               <p>Drag and drop tickets to manage workflow</p>
             </div>
 

@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../types";
 import { candidateUsecase } from "../usecases/candidate.usecase";
 
 export const candidateController = {
@@ -32,12 +32,10 @@ export const candidateController = {
       res.status(201).json({ success: true, candidate });
     } catch (error: any) {
       if (error.code === "P2002") {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "A candidate with this email already exists",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "A candidate with this email already exists",
+        });
       }
       res.status(500).json({ success: false, error: error.message });
     }
@@ -52,12 +50,10 @@ export const candidateController = {
       res.json({ success: true, candidate });
     } catch (error: any) {
       if (error.code === "P2002") {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            error: "A candidate with this email already exists",
-          });
+        return res.status(400).json({
+          success: false,
+          error: "A candidate with this email already exists",
+        });
       }
       res.status(500).json({ success: false, error: error.message });
     }

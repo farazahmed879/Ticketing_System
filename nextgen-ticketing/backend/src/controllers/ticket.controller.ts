@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest } from "../types";
 import { ticketUsecase } from "../usecases/ticket.usecase";
 import { emitNotificationToUser } from "../socketio/events";
 

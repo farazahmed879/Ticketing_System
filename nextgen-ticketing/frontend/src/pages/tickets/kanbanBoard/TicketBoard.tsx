@@ -5,6 +5,7 @@ import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import { useNotification } from "../../../context/NotificationContext";
 import styles from "./TicketBoard.module.css";
+import styles1 from "../TicketList.module.css";
 import { RoleName, UIMessages } from "../../../utils/constants";
 import { useAuth } from "../../../context/AuthContext";
 import { socket } from "../../../services/socket";
@@ -16,6 +17,8 @@ import CreateTicketModal from "../components/CreateTicketModal";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import { BoardSkeleton } from "../../../components/CustomSkeleton/CustomSkeleton";
 import ColumnStatus from "./ColumnStatus";
+import StandardListLayout from "../../../components/StandardListLayout";
+import ListAndKanbanSwitcher from "../components/ListAndKanbanSwitcher";
 
 const TicketBoard: React.FC = () => {
   const navigate = useNavigate();
@@ -279,38 +282,31 @@ const TicketBoard: React.FC = () => {
       {loading ? (
         <BoardSkeleton />
       ) : (
-        <>
-          <div className={styles.header}>
-            <div className={styles.titleInfo}>
+        <StandardListLayout
+          header={
+            <div className={styles.header}>
               <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-                <h1>Ticketing Board</h1>
-                <div style={{ display: 'flex', background: 'var(--bg-card)', padding: 4, borderRadius: 8, border: '1px solid var(--border-glass)', height: 'fit-content' }}>
-                  <button 
-                    onClick={() => navigate('/tickets')}
-                    style={{ padding: '6px 12px', borderRadius: 6, background: 'transparent', color: 'var(--text-secondary)', border: 'none', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', transition: 'all 0.2s' }}
-                  >
-                    <CustomIcon name="List" size={16} /> List
-                  </button>
-                  <button 
-                    style={{ padding: '6px 12px', borderRadius: 6, background: 'var(--accent-primary)', color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, cursor: 'default' }}
-                  >
-                    <CustomIcon name="Kanban" size={16} /> Board
-                  </button>
-                </div>
+                <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
+                  Ticketing Board
+                </h1>
               </div>
-              <p>Drag and drop tickets to manage workflow</p>
+              {(user?.role?.name === RoleName.ADMIN ||
+                user?.role?.permissions?.tickets?.create) && (
+                <CustomButton
+                  variant="gradient"
+                  size="sm"
+                  icon={<CustomIcon name="Plus" size={18} />}
+                  onClick={() => setIsCreateModalOpen(true)}
+                  style={{ minHeight: 48, borderRadius: 12 }}
+                >
+                  Create Ticket
+                </CustomButton>
+              )}
             </div>
-
-            <div className={styles.headerActions}>
-              <CustomButton
-                variant="gradient"
-                size="sm"
-                icon={<CustomIcon name="Plus" size={18} />}
-                onClick={() => setIsCreateModalOpen(true)}
-                style={{ minHeight: 48, borderRadius: 12 }}
-              >
-                Create Ticket
-              </CustomButton>
+          }
+          filters={
+            <div className={styles1.filters}>
+              <ListAndKanbanSwitcher navigate={navigate} selectedValue="board" />
               <CustomButton
                 variant="gradient"
                 size="sm"
@@ -411,35 +407,37 @@ const TicketBoard: React.FC = () => {
                 )}
               </div>
             </div>
-          </div>
+          }
+        >
+          <>
+            <div className={styles.kanbanBoard}>
+              {columns.map((column) => {
+                const isCollapsed = collapsedColumns.includes(column.id);
+                const isStatusAllowed =
+                  user?.role?.name === RoleName.ADMIN ||
+                  user?.role?.permissions?.boardStatuses?.[column.id] === true;
 
-          <div className={styles.kanbanBoard}>
-            {columns.map((column) => {
-              const isCollapsed = collapsedColumns.includes(column.id);
-              const isStatusAllowed =
-                user?.role?.name === RoleName.ADMIN ||
-                user?.role?.permissions?.boardStatuses?.[column.id] === true;
-
-              return (
-                <ColumnStatus
-                  key={column.id}
-                  column={column}
-                  handleDragStart={handleDragStart}
-                  handleDragOver={handleDragOver}
-                  handleDrop={handleDrop}
-                  toggleColumnCollapse={toggleColumnCollapse}
-                  openTicketDetail={openTicketDetail}
-                  isCollapsed={isCollapsed}
-                  isStatusAllowed={isStatusAllowed}
-                  setTicketToDelete={setTicketToDelete}
-                  setIsDeleteModalOpen={setIsDeleteModalOpen}
-                  showNotification={showNotification}
-                  user={user}
-                />
-              );
-            })}
-          </div>
-        </>
+                return (
+                  <ColumnStatus
+                    key={column.id}
+                    column={column}
+                    handleDragStart={handleDragStart}
+                    handleDragOver={handleDragOver}
+                    handleDrop={handleDrop}
+                    toggleColumnCollapse={toggleColumnCollapse}
+                    openTicketDetail={openTicketDetail}
+                    isCollapsed={isCollapsed}
+                    isStatusAllowed={isStatusAllowed}
+                    setTicketToDelete={setTicketToDelete}
+                    setIsDeleteModalOpen={setIsDeleteModalOpen}
+                    showNotification={showNotification}
+                    user={user}
+                  />
+                );
+              })}
+            </div>
+          </>
+        </StandardListLayout>
       )}
 
       <TicketDetailModal

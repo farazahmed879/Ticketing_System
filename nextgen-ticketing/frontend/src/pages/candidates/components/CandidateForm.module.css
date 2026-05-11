@@ -1,0 +1,71 @@
+.formContainer {
+  width: 100%;
+  max-height: calc(90vh - 200px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 0;
+}
+
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 16px;
+  border-right: 1px solid var(--border-glass);
+  min-width: 0;
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 16px;
+}
+
+.twoColGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .formGrid {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  .leftColumn {
+    padding-right: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border-glass);
+    padding-bottom: 24px;
+    overflow-y: visible;
+  }
+
+  .rightColumn {
+    padding-right: 0;
+    overflow-y: visible;
+  }
+}
+
+@media (max-width: 500px) {
+  .twoColGrid {
+    grid-template-columns: 1fr;
+  }
+}

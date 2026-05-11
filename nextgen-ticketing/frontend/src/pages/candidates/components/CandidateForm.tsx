@@ -16,6 +16,7 @@ import {
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import { useNotification } from "../../../context/NotificationContext";
+import styles from "./CandidateForm.module.css";
 import type { Candidate, CandidateFormData } from "../../../types";
 
 interface CandidateFormProps {
@@ -322,15 +323,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
   };
 
   return (
-    <div
-      style={{
-        width: "100%",
-        maxHeight: "85vh",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <div className={styles.formContainer}>
       <form
         id="candidate-form"
         onSubmit={handleSubmit(handleFormSubmit)}
@@ -338,29 +331,10 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
           e.preventDefault();
           handleReset();
         }}
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
-          gap: 24,
-          flex: 1,
-          width: "100%",
-          boxSizing: "border-box",
-          minHeight: 0,
-        }}
+        className={styles.formGrid}
       >
         {/* LEFT COLUMN - Candidate Details */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-            overflowY: "auto",
-            minHeight: 0,
-            paddingRight: 16,
-            borderRight: "1px solid var(--border-glass)",
-            minWidth: 0,
-          }}
-        >
+        <div className={styles.leftColumn}>
           <div
             style={{
               display: "flex",
@@ -395,9 +369,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
             required
           />
 
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
+          <div className={styles.twoColGrid}>
             <CustomInput
               name="position"
               control={control}
@@ -419,9 +391,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
             />
           </div>
 
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
+          <div className={styles.twoColGrid}>
             <PhoneInput
               label="Phone"
               control={control}
@@ -440,9 +410,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
               required
             />
           </div>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
+          <div className={styles.twoColGrid}>
             <CustomInput
               name="dob"
               control={control}
@@ -457,9 +425,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
               placeholder="12345-1234567-1"
             />
           </div>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
+          <div className={styles.twoColGrid}>
             <CustomInput
               name="nationality"
               control={control}
@@ -485,9 +451,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
             icon={<CustomIcon name="Zap" size={16} />}
           />
 
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
+          <div className={styles.twoColGrid}>
             <CustomInput
               name="linkedin"
               control={control}
@@ -503,9 +467,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
               placeholder="https://github.com/username"
             />
           </div>
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
+          <div className={styles.twoColGrid}>
             <CustomInput
               name="portfolio"
               control={control}
@@ -541,17 +503,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         </div>
 
         {/* RIGHT COLUMN - Resume Upload & Extracted Data */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-            minWidth: 0,
-            minHeight: 0,
-            overflowY: "auto",
-            paddingRight: 16,
-          }}
-        >
+        <div className={styles.rightColumn}>
           <div
             style={{
               display: "flex",

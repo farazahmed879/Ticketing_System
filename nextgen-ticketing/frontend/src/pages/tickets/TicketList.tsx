@@ -25,6 +25,7 @@ import CustomDropdownMenu from "../../components/CustomDropdownMenu";
 import CreateTicketModal from "./components/CreateTicketModal";
 import StandardListLayout from "../../components/StandardListLayout";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import ListAndKanbanSwitcher from "./components/ListAndKanbanSwitcher";
 
 const TicketList: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -43,7 +44,7 @@ const TicketList: React.FC = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [types, setTypes] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
-  
+
   // Delete Ticket State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState<string | null>(null);
@@ -139,20 +140,9 @@ const TicketList: React.FC = () => {
         header={
           <div className={styles.header}>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>Tickets</h1>
-              <div style={{ display: 'flex', background: 'var(--bg-card)', padding: 4, borderRadius: 8, border: '1px solid var(--border-glass)' }}>
-                <button 
-                  style={{ padding: '6px 12px', borderRadius: 6, background: 'var(--accent-primary)', color: '#fff', border: 'none', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, cursor: 'default' }}
-                >
-                  <CustomIcon name="List" size={16} /> List
-                </button>
-                <button 
-                  onClick={() => navigate('/tickets/board')}
-                  style={{ padding: '6px 12px', borderRadius: 6, background: 'transparent', color: 'var(--text-secondary)', border: 'none', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', transition: 'all 0.2s' }}
-                >
-                  <CustomIcon name="Kanban" size={16} /> Board
-                </button>
-              </div>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
+                Tickets
+              </h1>
             </div>
             {(user?.role?.name === RoleName.ADMIN ||
               user?.role?.permissions?.tickets?.create) && (
@@ -168,6 +158,7 @@ const TicketList: React.FC = () => {
         }
         filters={
           <div className={styles.filters}>
+            <ListAndKanbanSwitcher navigate={navigate} selectedValue="list" />
             <div
               className={styles.search}
               style={{ border: "none", background: "transparent", padding: 0 }}
@@ -318,15 +309,19 @@ const TicketList: React.FC = () => {
                           navigate(`/tickets/${t.id}`);
                         },
                       },
-                      ...(user?.role?.name === RoleName.ADMIN ? [{
-                        label: "Delete Ticket",
-                        icon: "Trash2",
-                        onClick: () => {
-                          setTicketToDelete(t.id);
-                          setIsDeleteModalOpen(true);
-                        },
-                        danger: true,
-                      }] : []),
+                      ...(user?.role?.name === RoleName.ADMIN
+                        ? [
+                            {
+                              label: "Delete Ticket",
+                              icon: "Trash2",
+                              onClick: () => {
+                                setTicketToDelete(t.id);
+                                setIsDeleteModalOpen(true);
+                              },
+                              danger: true,
+                            },
+                          ]
+                        : []),
                     ]}
                     triggerSize={16}
                   />

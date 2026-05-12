@@ -259,7 +259,7 @@ export const PERMISSION_MODULES = [
   },
   {
     id: "announcements",
-    label: "Announcements",
+    label: "Shoutouts",
     actions: ["view", "create", "update", "delete"],
   },
 ];

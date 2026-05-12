@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { format, formatDistanceToNow } from "date-fns";
 import Modal from "../../../components/Modal";
@@ -15,16 +16,10 @@ import CustomDatePicker from "../../../components/CustomDatePicker";
 import CustomInput from "../../../components/CustomInput";
 import CustomDropdownMenu from "../../../components/CustomDropdownMenu";
 import ConfirmationModal from "../../../components/ConfirmationModal";
+import CustomSkeleton from "../../../components/CustomSkeleton";
+import CustomBadge from "../../../components/CustomBadge";
+import type { TicketUpdateFormData, TicketDetailModalProps } from "../../../types";
 
-interface TicketDetailModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  ticket: any;
-  agents: any[];
-  priorities: any[];
-  columns: any[];
-  onTicketUpdate: () => void;
-}
 
 const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   isOpen,
@@ -38,21 +33,36 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const { user } = useAuth();
   const { showNotification, setIsLoading } = useNotification();
   const navigate = useNavigate();
+  const { control, handleSubmit, reset, watch, setValue } = useForm<TicketUpdateFormData>({
+    defaultValues: {
+      statusId: ticket?.status?.id || "",
+      priorityId: ticket?.priority?.id || "",
+      assigneeId: ticket?.assignee?.id || "",
+      dueDate: ticket?.dueDate ? new Date(ticket.dueDate).toISOString().split("T")[0] : "",
+      issue: ticket?.issue || "",
+    }
+  });
+
   const [fullTicketData, setFullTicketData] = useState<any>(null);
   const [newComment, setNewComment] = useState("");
-  const [description, setDescription] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const fetchFullTicketData = useCallback(async () => {
-    if (!ticket?.id) return;
     try {
       const res = await api.get(API_ROUTES.TICKETS.BY_ID(ticket.id));
-      setFullTicketData(res.data.ticket);
-      setDescription(res.data.ticket.issue);
+      const t = res.data.ticket;
+      setFullTicketData(t);
+      reset({
+        statusId: t.status?.id || "",
+        priorityId: t.priority?.id || "",
+        assigneeId: t.assignee?.id || "",
+        dueDate: t.dueDate ? new Date(t.dueDate).toISOString().split("T")[0] : "",
+        issue: t.issue || "",
+      });
     } catch (err) {
       console.error("Failed to fetch full ticket data", err);
     }
-  }, [ticket?.id]);
+  }, [ticket?.id, reset]);
 
   useEffect(() => {
     if (isOpen && ticket?.id) {
@@ -62,92 +72,21 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     }
   }, [isOpen, ticket?.id, fetchFullTicketData]);
 
-  const handleUpdateStatus = async (statusId: string) => {
-    try {
-      setIsLoading(true, UIMessages.LOADING.UPDATING_STATUS);
-      await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), { statusId });
-      showNotification("success", "Status updated successfully");
-      onTicketUpdate();
-      fetchFullTicketData();
-    } catch (err) {
-      showNotification("error", "Failed to update status");
-    } finally {
-      setIsLoading(false, "");
-    }
-  };
-
-  const handleUpdatePriority = async (priorityId: string) => {
-    try {
-      setIsLoading(true, UIMessages.LOADING.UPDATING_PRIORITY);
-      await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), { priorityId });
-      showNotification("success", "Priority updated successfully");
-      onTicketUpdate();
-      fetchFullTicketData();
-    } catch (err) {
-      showNotification("error", "Failed to update priority");
-    } finally {
-      setIsLoading(false, "");
-    }
-  };
-
-  const handleAssignTicket = async (assigneeId: string) => {
-    try {
-      setIsLoading(true, UIMessages.LOADING.ASSIGNING_TICKET);
-      const updateData: any = { assigneeId };
-
-      // If assigning to someone (not unassigning), set status to Open
-      if (assigneeId) {
-        const openStatus = columns.find(
-          (c) => c.name.toLowerCase() === StatusName.OPEN.toLowerCase(),
-        );
-        if (openStatus && ticket.status.id !== openStatus.id) {
-          updateData.statusId = openStatus.id;
-        }
-      }
-
-      await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), updateData);
-      showNotification(
-        "success",
-        assigneeId
-          ? "Ticket assigned and status updated to Open"
-          : "Ticket unassigned",
-      );
-      onTicketUpdate();
-      fetchFullTicketData();
-    } catch (err) {
-      showNotification("error", "Failed to assign ticket");
-    } finally {
-      setIsLoading(false, "");
-    }
-  };
-
-  const handleUpdateDueDate = async (dueDate: string) => {
-    try {
-      setIsLoading(true, UIMessages.LOADING.UPDATING_DUE_DATE);
-      await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), {
-        dueDate: dueDate || null,
-      });
-      showNotification("success", "Due date updated successfully");
-      onTicketUpdate();
-      fetchFullTicketData();
-    } catch (err) {
-      showNotification("error", "Failed to update due date");
-    } finally {
-      setIsLoading(false, "");
-    }
-  };
-  const handleUpdateDescription = async () => {
-    if (description === fullTicketData?.issue) return;
+  const handleSave = async (data: TicketUpdateFormData) => {
     try {
       setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
       await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), {
-        issue: description,
+        statusId: data.statusId,
+        priorityId: data.priorityId,
+        assigneeId: data.assigneeId || null,
+        dueDate: data.dueDate || null,
+        issue: data.issue,
       });
-      showNotification("success", "Description updated successfully");
+      showNotification("success", "Ticket updated successfully");
       onTicketUpdate();
       fetchFullTicketData();
     } catch (err) {
-      showNotification("error", "Failed to update description");
+      showNotification("error", "Failed to update ticket");
     } finally {
       setIsLoading(false, "");
     }
@@ -260,6 +199,20 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           ]}
         />
       }
+      footer={
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, width: "100%" }}>
+          <CustomButton variant="ghost" onClick={onClose}>
+            Cancel
+          </CustomButton>
+          <CustomButton
+            variant="gradient"
+            onClick={handleSubmit(handleSave)}
+            icon={<CustomIcon name="Save" size={18} />}
+          >
+            Save Changes
+          </CustomButton>
+        </div>
+      }
     >
       {!fullTicketData ? (
         <div
@@ -274,38 +227,38 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           {/* Left Skeleton */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             <div style={{ display: "flex", gap: 12 }}>
-              <div className="skeleton-pulse" style={{ width: 140, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.06)" }} />
-              <div className="skeleton-pulse" style={{ width: 180, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.06)" }} />
-              <div className="skeleton-pulse" style={{ width: 160, height: 36, borderRadius: 8, background: "rgba(255,255,255,0.06)" }} />
+              <CustomSkeleton width={140} height={36} borderRadius={8} />
+              <CustomSkeleton width={180} height={36} borderRadius={8} />
+              <CustomSkeleton width={160} height={36} borderRadius={8} />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <div className="skeleton-pulse" style={{ width: 100, height: 14, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
-                <div className="skeleton-pulse" style={{ width: "100%", height: 120, borderRadius: 12, background: "rgba(255,255,255,0.04)" }} />
+                <CustomSkeleton width={100} height={14} />
+                <CustomSkeleton width="100%" height={200} borderRadius={12} />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <div className="skeleton-pulse" style={{ width: 80, height: 14, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
-                <div className="skeleton-pulse" style={{ width: "100%", height: 64, borderRadius: 12, background: "rgba(255,255,255,0.04)" }} />
-                <div className="skeleton-pulse" style={{ width: 80, height: 14, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
-                <div className="skeleton-pulse" style={{ width: "100%", height: 40, borderRadius: 12, background: "rgba(255,255,255,0.04)" }} />
-                <div className="skeleton-pulse" style={{ width: 80, height: 14, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
-                <div className="skeleton-pulse" style={{ width: "100%", height: 64, borderRadius: 12, background: "rgba(255,255,255,0.04)" }} />
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <CustomSkeleton width={80} height={14} />
+                    <CustomSkeleton width="100%" height={60} borderRadius={12} />
+                  </div>
+                ))}
               </div>
             </div>
           </div>
           {/* Right Skeleton (Comments) */}
           <div style={{ borderLeft: "1px solid var(--border-glass)", paddingLeft: 24, display: "flex", flexDirection: "column", gap: 16 }}>
-            <div className="skeleton-pulse" style={{ width: 140, height: 18, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} style={{ padding: 12, borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-glass)", display: "flex", flexDirection: "column", gap: 8 }}>
+            <CustomSkeleton width={140} height={18} />
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="glass-card" style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <div className="skeleton-pulse" style={{ width: 100, height: 12, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
-                  <div className="skeleton-pulse" style={{ width: 60, height: 10, borderRadius: 6, background: "rgba(255,255,255,0.04)" }} />
+                  <CustomSkeleton width={100} height={12} />
+                  <CustomSkeleton width={60} height={10} />
                 </div>
-                <div className="skeleton-pulse" style={{ width: "90%", height: 14, borderRadius: 6, background: "rgba(255,255,255,0.04)" }} />
+                <CustomSkeleton width="90%" height={14} />
               </div>
             ))}
-            <div className="skeleton-pulse" style={{ width: "100%", height: 40, borderRadius: 10, background: "rgba(255,255,255,0.04)", marginTop: "auto" }} />
+            <CustomSkeleton width="100%" height={48} borderRadius={10} style={{ marginTop: "auto" }} />
           </div>
         </div>
       ) : (
@@ -341,38 +294,37 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             >
               {canUpdatePriority ? (
                 <CustomSelect
+                  name="priorityId"
+                  control={control}
                   options={priorities.map((p) => ({
                     value: p.id,
                     label: p.name,
                     icon: <CustomIcon name="Tag" size={14} color={p.color} />,
                   }))}
-                  value={displayTicket.priority.id}
-                  onChange={handleUpdatePriority}
                   style={{
                     minWidth: 140,
                     fontSize: "0.8rem",
                   }}
                 />
               ) : (
-                <span
-                  className="badge"
+                <CustomBadge
+                  color={displayTicket.priority.color}
                   style={{
-                    background: `${displayTicket.priority.color}15`,
-                    color: displayTicket.priority.color,
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
                     padding: "6px 12px",
                     borderRadius: 8,
                     fontSize: "0.8rem",
-                    fontWeight: 600,
                   }}
                 >
                   <CustomIcon name="Tag" size={16} />{" "}
                   {displayTicket.priority.name}
-                </span>
+                </CustomBadge>
               )}
               <CustomSelect
+                name="statusId"
+                control={control}
                 options={columns.map((s) => ({
                   value: s.id,
                   label: s.name,
@@ -388,32 +340,27 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           StatusName.FAILED.toLowerCase()))
                   ),
                 }))}
-                value={displayTicket.status.id}
-                onChange={handleUpdateStatus}
                 style={{
                   minWidth: 180,
                   fontSize: "0.8rem",
                 }}
               />
-              <span
-                className="badge"
+              <CustomBadge
+                variant="neutral"
                 style={{
-                  background: "rgba(255,255,255,0.05)",
-                  color: "var(--text-muted)",
                   display: "flex",
                   alignItems: "center",
                   gap: 6,
                   padding: "6px 12px",
                   borderRadius: 8,
                   fontSize: "0.8rem",
-                  fontWeight: 600,
                   width: "fit-content",
                   minWidth: 140,
                 }}
               >
                 <CustomIcon name="Calendar" size={16} />{" "}
                 Created: {format(new Date(displayTicket.createdAt), "MMM dd, yyyy")}
-              </span>
+              </CustomBadge>
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -437,6 +384,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}
           >
             <CustomTextArea
+              name="issue"
+              control={control}
               label={
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <CustomIcon
@@ -447,9 +396,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   <span>Description</span>
                 </div>
               }
-              value={description}
-              onChange={(e: any) => setDescription(e.target.value)}
-              onBlur={handleUpdateDescription}
               disabled={!canUpdate}
               placeholder={
                 canUpdate ? "Add a description..." : "No description provided"
@@ -567,6 +513,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               </div>
 
               <CustomDatePicker
+                name="dueDate"
+                control={control}
                 label={
                   <div
                     style={{ display: "flex", alignItems: "center", gap: 8 }}
@@ -579,14 +527,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     <span>Due Date</span>
                   </div>
                 }
-                value={
-                  displayTicket.dueDate
-                    ? new Date(displayTicket.dueDate)
-                        .toISOString()
-                        .split("T")[0]
-                    : ""
-                }
-                onChange={handleUpdateDueDate}
                 disabled={!canUpdate}
               />
 
@@ -620,6 +560,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 >
                   {canAssign && (
                     <CustomSelect
+                      name="assigneeId"
+                      control={control}
                       options={[
                         {
                           value: "",
@@ -632,8 +574,17 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           image: agent.image,
                         })),
                       ]}
-                      value={displayTicket.assignee?.id || ""}
-                      onChange={handleAssignTicket}
+                      onChange={(val) => {
+                        setValue('assigneeId', val);
+                        if (val) {
+                          const openStatus = columns.find(
+                            (c) => c.name.toLowerCase() === StatusName.OPEN.toLowerCase(),
+                          );
+                          if (openStatus && watch('statusId') !== openStatus.id) {
+                            setValue('statusId', openStatus.id);
+                          }
+                        }
+                      }}
                       disabled={!canAssign}
                       placeholder="Assign ticket..."
                     />

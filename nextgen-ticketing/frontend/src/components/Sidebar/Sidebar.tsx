@@ -15,7 +15,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
   const navRef = useRef<HTMLDivElement>(null);
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
-  const [hoveredSubmenu, setHoveredSubmenu] = useState<{item: any, top: number} | null>(null);
+  const [hoveredSubmenu, setHoveredSubmenu] = useState<{
+    item: any;
+    top: number;
+  } | null>(null);
 
   const checkScroll = () => {
     if (navRef.current) {
@@ -31,27 +34,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
 
     const observer = new ResizeObserver(() => checkScroll());
     // Observe all children to catch submenu expansions
-    Array.from(nav.children).forEach(child => observer.observe(child));
+    Array.from(nav.children).forEach((child) => observer.observe(child));
     observer.observe(nav);
-    
-    nav.addEventListener('scroll', checkScroll);
+
+    nav.addEventListener("scroll", checkScroll);
     checkScroll();
-    
+
     return () => {
       observer.disconnect();
-      nav.removeEventListener('scroll', checkScroll);
+      nav.removeEventListener("scroll", checkScroll);
     };
   }, [isCollapsed]);
 
   const scrollUp = () => {
     if (navRef.current) {
-      navRef.current.scrollBy({ top: -150, behavior: 'smooth' });
+      navRef.current.scrollBy({ top: -150, behavior: "smooth" });
     }
   };
 
   const scrollDown = () => {
     if (navRef.current) {
-      navRef.current.scrollBy({ top: 150, behavior: 'smooth' });
+      navRef.current.scrollBy({ top: 150, behavior: "smooth" });
     }
   };
 
@@ -120,18 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
       path: "/projects",
       permission: "projects.view",
     },
-    {
-      icon: <CustomIcon name="Users" size={20} />,
-      label: t("sidebar.users"),
-      path: "/users",
-      permission: "users.view",
-    },
-    {
-      icon: <CustomIcon name="Shield" size={20} />,
-      label: t("sidebar.roles"),
-      path: "/roles",
-      permission: "roles.view",
-    },
+
     {
       icon: <CustomIcon name="Clock" size={20} />,
       label: t("sidebar.timesheet"),
@@ -155,6 +147,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
       label: t("sidebar.announcements"),
       path: "/announcements",
       permission: "announcements.view",
+    },
+    {
+      icon: <CustomIcon name="Users" size={20} />,
+      label: t("sidebar.users"),
+      path: "/users",
+      permission: "users.view",
+    },
+    {
+      icon: <CustomIcon name="Shield" size={20} />,
+      label: t("sidebar.roles"),
+      path: "/roles",
+      permission: "roles.view",
     },
   ];
 
@@ -192,18 +196,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
       </div>
 
       {canScrollUp && (
-        <button 
-          className={styles.scrollBtn}
-          onClick={scrollUp}
-        >
+        <button className={styles.scrollBtn} onClick={scrollUp}>
           <CustomIcon name="ChevronUp" size={16} />
         </button>
       )}
 
       <nav className={styles.nav} ref={navRef}>
         {filteredNavItems.map((item) => (
-          <div 
-            key={item.path} 
+          <div
+            key={item.path}
             className={styles.navItemWrapper}
             onMouseEnter={(e) => {
               if (item.children) {
@@ -223,7 +224,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
               {item.icon}
               {!isCollapsed && <span>{item.label}</span>}
               {item.children && !isCollapsed && (
-                <CustomIcon name="ChevronRight" size={14} style={{ marginLeft: "auto", opacity: 0.5 }} />
+                <CustomIcon
+                  name="ChevronRight"
+                  size={14}
+                  style={{ marginLeft: "auto", opacity: 0.5 }}
+                />
               )}
             </NavLink>
           </div>
@@ -231,11 +236,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
       </nav>
 
       {hoveredSubmenu && (
-        <div 
+        <div
           className={styles.submenuFlyout}
-          style={{ 
-            top: hoveredSubmenu.top, 
-            left: isCollapsed ? 90 : 270 
+          style={{
+            top: hoveredSubmenu.top,
+            left: isCollapsed ? 90 : 270,
           }}
           onMouseEnter={() => setHoveredSubmenu(hoveredSubmenu)}
           onMouseLeave={() => setHoveredSubmenu(null)}
@@ -259,10 +264,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
       )}
 
       {canScrollDown && (
-        <button 
-          className={styles.scrollBtn}
-          onClick={scrollDown}
-        >
+        <button className={styles.scrollBtn} onClick={scrollDown}>
           <CustomIcon name="ChevronDown" size={16} />
         </button>
       )}

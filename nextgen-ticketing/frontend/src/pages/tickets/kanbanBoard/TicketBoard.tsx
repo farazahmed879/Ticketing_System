@@ -306,9 +306,12 @@ const TicketBoard: React.FC = () => {
           }
           filters={
             <div className={styles1.filters}>
-              <ListAndKanbanSwitcher navigate={navigate} selectedValue="board" />
+              <ListAndKanbanSwitcher
+                navigate={navigate}
+                selectedValue="board"
+              />
               <CustomButton
-                variant="gradient"
+                variant="outline"
                 size="sm"
                 onClick={toggleAllColumns}
                 title={
@@ -327,11 +330,7 @@ const TicketBoard: React.FC = () => {
                   />
                 }
                 style={{ minHeight: 48, borderRadius: 12 }}
-              >
-                {collapsedColumns.length === columns.length
-                  ? "Expand All"
-                  : "Collapse All"}
-              </CustomButton>
+              />
 
               <div className={styles.filterGroup}>
                 <CustomSelect

@@ -355,6 +355,24 @@ export interface TicketFormData {
   dueDate?: string;
 }
 
+export interface TicketUpdateFormData {
+  statusId: string;
+  priorityId: string;
+  assigneeId: string;
+  dueDate: string;
+  issue: string;
+}
+
+export interface TicketDetailModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  ticket: any; // Using any for now to maintain compatibility with existing usage
+  agents: User[];
+  priorities: any[];
+  columns: Column[];
+  onTicketUpdate: () => void;
+}
+
 export interface UserFormData {
   fullname: string;
   email: string;

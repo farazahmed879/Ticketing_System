@@ -202,13 +202,15 @@ export const ticketUsecase = {
     // }
 
     // RBAC for Priority
-    if (data.priorityId && data.priorityId !== existingTicket.priorityId) {
-      const canUpdatePriority =
-        user.role === RoleName.ADMIN || user.permissions?.tickets?.priority;
-      if (!canUpdatePriority) {
-        throw new Error("You do not have permission to change ticket priority");
-      }
-    }
+
+    // console.log("user", user);
+    // if (data.priorityId && data.priorityId !== existingTicket.priorityId) {
+    //   const canUpdatePriority =
+    //     user.role === RoleName.ADMIN || user.permissions?.tickets?.priority;
+    //   if (!canUpdatePriority) {
+    //     throw new Error("You do not have permission to change ticket priority");
+    //   }
+    // }
 
     const updateData: any = {};
     const historyEntries: any[] = [];

@@ -134,4 +134,28 @@ export const timesheetRepository = {
       },
     });
   },
+  async findReviewEntries(filters: { status?: string; userId?: string; startDate?: Date; endDate?: Date }) {
+    const where: any = {};
+    if (filters.status) where.status = filters.status;
+    if (filters.userId) where.userId = filters.userId;
+    if (filters.startDate || filters.endDate) {
+      where.date = {};
+      if (filters.startDate) where.date.gte = filters.startDate;
+      if (filters.endDate) where.date.lte = filters.endDate;
+    }
+
+    return prisma.timesheetEntry.findMany({
+      where,
+      include: {
+        user: { select: { id: true, fullname: true, email: true, image: true } },
+        tasks: {
+          include: {
+            project: { select: { name: true } },
+          },
+        },
+        approvedBy: { select: { id: true, fullname: true } },
+      },
+      orderBy: { date: "desc" },
+    });
+  },
 };

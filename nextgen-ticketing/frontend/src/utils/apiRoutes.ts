@@ -6,112 +6,113 @@
 export const API_ROUTES = {
   // Auth
   AUTH: {
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    LOGIN_HELP: '/auth/login-help',
+    LOGIN: "/auth/login",
+    REGISTER: "/auth/register",
+    LOGIN_HELP: "/auth/login-help",
   },
 
   // Dashboard
   DASHBOARD: {
-    STATS: '/common/dashboard',
+    STATS: "/common/dashboard",
   },
 
   // Tickets
   TICKETS: {
-    BASE: '/tickets',
+    BASE: "/tickets",
     BY_ID: (id: string) => `/tickets/${id}`,
     COMMENTS: (id: string) => `/tickets/${id}/comments`,
   },
-  
+
   // Timesheets
   TIMESHEETS: {
-    ENTRIES: '/timesheets/entries',
+    ENTRIES: "/timesheets/entries",
     APPROVE: (id: string) => `/timesheets/approve/${id}`,
     REJECT: (id: string) => `/timesheets/reject/${id}`,
-    PENDING: '/timesheets/pending',
-    REPORT: '/timesheets/report',
+    PENDING: "/timesheets/pending",
+    REPORT: "/timesheets/report",
   },
 
   // Users
   USERS: {
-    BASE: '/users',
+    BASE: "/users",
+    GET_BY_ROLES: "/users/usersByRole",
     BY_ID: (id: string) => `/users/${id}`,
   },
 
   // Roles
   ROLES: {
-    BASE: '/roles',
+    BASE: "/roles",
     BY_ID: (id: string) => `/roles/${id}`,
   },
 
   // Requests
   REQUESTS: {
-    BASE: '/requests',
+    BASE: "/requests",
     BY_ID: (id: string) => `/requests/${id}`,
   },
 
   // Messages
   MESSAGES: {
-    CONVERSATIONS: '/messages/conversations',
+    CONVERSATIONS: "/messages/conversations",
     CONVERSATION_BY_ID: (id: string) => `/messages/conversations/${id}`,
-    GROUPS: '/messages/groups',
-    PARTNERS: '/messages/partners',
+    GROUPS: "/messages/groups",
+    PARTNERS: "/messages/partners",
   },
 
   // Departments
   DEPARTMENTS: {
-    BASE: '/departments',
+    BASE: "/departments",
     BY_ID: (id: string) => `/departments/${id}`,
   },
 
   // Teams
   TEAMS: {
-    BASE: '/teams',
+    BASE: "/teams",
     BY_ID: (id: string) => `/teams/${id}`,
   },
 
   // Projects
   PROJECTS: {
-    BASE: '/projects',
+    BASE: "/projects",
     BY_ID: (id: string) => `/projects/${id}`,
   },
 
   // Notifications
   NOTIFICATIONS: {
-    BASE: '/notifications',
+    BASE: "/notifications",
     MARK_READ: (id: string) => `/notifications/${id}/read`,
-    READ_ALL: '/notifications/read-all',
-    CLEAR: '/notifications/clear',
+    READ_ALL: "/notifications/read-all",
+    CLEAR: "/notifications/clear",
   },
 
   // Common / Metadata
   COMMON: {
-    PRIORITIES: '/common/priorities',
-    GROUPS: '/common/groups',
-    TYPES: '/common/types',
-    STATUSES: '/common/statuses',
+    PRIORITIES: "/common/priorities",
+    GROUPS: "/common/groups",
+    TYPES: "/common/types",
+    STATUSES: "/common/statuses",
   },
 
   // Candidates
   CANDIDATES: {
-    BASE: '/candidates',
+    BASE: "/candidates",
     BY_ID: (id: string) => `/candidates/${id}`,
-    UPLOAD_RESUME: '/candidates/upload-resume',
+    UPLOAD_RESUME: "/candidates/upload-resume",
     CONVERT: (id: string) => `/candidates/${id}/convert`,
-    LEADERBOARD: '/candidates/leaderboard',
+    LEADERBOARD: "/candidates/leaderboard",
   },
 
   // Interviews
   INTERVIEWS: {
-    BASE: '/interviews',
+    BASE: "/interviews",
     BY_ID: (id: string) => `/interviews/${id}`,
     STATUS: (id: string) => `/interviews/${id}/status`,
     FEEDBACK: (id: string) => `/interviews/${id}/feedback`,
   },
-  
+
   // Announcements
   ANNOUNCEMENTS: {
-    BASE: '/announcements',
+    BASE: "/announcements",
     BY_ID: (id: string) => `/announcements/${id}`,
   },
 };

@@ -15,8 +15,19 @@ export const departmentRepository = {
     return prisma.department.findFirst({
       where: { id, deleted: false },
       include: {
-        teams: { select: { id: true, name: true }, where: { deleted: false } },
-        projects: { select: { id: true, name: true }, where: { deleted: false } },
+        teams: {
+          where: { deleted: false },
+          include: {
+            manager: { select: { id: true, fullname: true } },
+            members: { select: { id: true } },
+          },
+        },
+        projects: {
+          where: { deleted: false },
+          include: {
+            clients: { select: { id: true, fullname: true } },
+          },
+        },
       },
     });
   },

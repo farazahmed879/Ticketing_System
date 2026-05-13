@@ -81,10 +81,9 @@ const TicketBoard: React.FC = () => {
       const [
         ticketsRes,
         statusRes,
-        agentsRes,
+        usersRes,
         priorityRes,
         groupsRes,
-        customersRes,
         typesRes,
       ] = await Promise.all([
         api.get(API_ROUTES.TICKETS.BASE, {
@@ -109,23 +108,46 @@ const TicketBoard: React.FC = () => {
           },
         }),
         api.get(API_ROUTES.COMMON.STATUSES),
-        api.get(API_ROUTES.USERS.BASE, {
-          params: { type: "agents", limit: -1 },
+        api.get(API_ROUTES.USERS.GET_BY_ROLES, {
+          params: {
+            roles: [
+              RoleName.AGENT,
+              RoleName.CUSTOMER,
+              RoleName.EMPLOYEE,
+              RoleName.ADMIN,
+            ],
+            limit: -1,
+          },
         }),
         api.get(API_ROUTES.COMMON.PRIORITIES),
-        api.get(API_ROUTES.COMMON.GROUPS, { params: { limit: -1 } }),
-        api.get(API_ROUTES.USERS.BASE, {
-          params: { type: "customers", limit: -1 },
+        api.get(API_ROUTES.PROJECTS.BASE, {
+          params: {
+            role: user?.role?.name,
+            userId: user?.id,
+          },
         }),
         api.get(API_ROUTES.COMMON.TYPES),
       ]);
 
       const allTickets = ticketsRes.data.tickets;
       const allStatuses = statusRes.data.statuses;
-      setAgents(agentsRes.data.accounts);
+      const allAccounts = usersRes.data.accounts;
+
+      // Map agents (Staff) and customers separately
+      setAgents(
+        allAccounts.filter(
+          (u: any) =>
+            u.role.name === RoleName.AGENT ||
+            u.role.name === RoleName.EMPLOYEE ||
+            u.role.name === RoleName.HR,
+        ),
+      );
+      setCustomers(
+        allAccounts.filter((u: any) => u.role.name === RoleName.CUSTOMER),
+      );
+
       setPriorities(priorityRes.data.priorities);
-      setProjects(groupsRes.data.groups);
-      setCustomers(customersRes.data.accounts);
+      setProjects(groupsRes.data.projects);
       setTypes(typesRes.data.types);
 
       const boardColumns: Column[] = allStatuses.map((s: any) => ({
@@ -285,7 +307,20 @@ const TicketBoard: React.FC = () => {
         <StandardListLayout
           header={
             <div className={styles.header}>
-              <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+                <CustomButton
+                  variant="ghost"
+                  onClick={() => navigate("/tickets")}
+                  icon={<CustomIcon name="ArrowLeft" size={20} />}
+                  style={{ 
+                    width: 40, 
+                    height: 40, 
+                    padding: 0, 
+                    borderRadius: '12px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid var(--border-glass)'
+                  }}
+                />
                 <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
                   Ticketing Board
                 </h1>

@@ -198,7 +198,7 @@ export interface TimesheetEntry {
   totalHours: number;
   notes?: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
-  user?: { fullname: string; email: string };
+  user?: { fullname: string; email: string; image?: string };
   tasks: TimesheetTask[];
   approvedBy?: { fullname: string };
 }

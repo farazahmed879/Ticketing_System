@@ -5,6 +5,10 @@ export const departmentUsecase = {
     return departmentRepository.findMany();
   },
 
+  async getDepartmentById(id: string) {
+    return departmentRepository.findById(id);
+  },
+
   async createDepartment(data: any) {
     const deptData = {
       name: data.name,

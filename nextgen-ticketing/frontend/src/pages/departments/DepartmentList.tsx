@@ -10,16 +10,23 @@ import CustomInput from "../../components/CustomInput";
 import type { Department } from "../../types";
 import type { TableColumn } from "../../components/types";
 import DepartmentModal from "./components/DepartmentModal";
-
 import StandardListLayout from "../../components/StandardListLayout";
+import CustomPagination from "../../components/CustomPagination";
+import { truncateString } from "../../utils/helpers";
+import { useNavigate } from "react-router-dom";
 
 const DepartmentList: React.FC = () => {
+  const navigate = useNavigate();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const { showNotification, setIsLoading } = useNotification();
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(0);
+  const [itemsPerPage] = useState(10);
 
   const fetchDepts = async () => {
     try {
@@ -45,6 +52,11 @@ const DepartmentList: React.FC = () => {
         d.description?.toLowerCase().includes(search.toLowerCase()),
     );
   }, [departments, search]);
+
+  const paginatedDepartments = useMemo(() => {
+    const startIndex = currentPage * itemsPerPage;
+    return filteredDepartments.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredDepartments, currentPage, itemsPerPage]);
 
   const handleEdit = (dept: Department) => {
     setEditingDept(dept);
@@ -119,10 +131,23 @@ const DepartmentList: React.FC = () => {
               color="var(--accent-primary)"
             />
           </div>
-          <div>
-            <div style={{ fontWeight: 600 }}>{d.name}</div>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/departments/${d.id}`);
+            }}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              style={{
+                fontWeight: 600,
+                color: "var(--accent-primary)",
+              }}
+            >
+              {d.name}
+            </div>
             <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-              {d.description || "No description"}
+              {d.description ? truncateString(d.description, 60) : "No description"}
             </div>
           </div>
         </div>
@@ -223,9 +248,10 @@ const DepartmentList: React.FC = () => {
             <CustomInput
               placeholder="Search departments..."
               value={search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setSearch(e.target.value)
-              }
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setSearch(e.target.value);
+                setCurrentPage(0);
+              }}
               icon={<CustomIcon name="Search" size={18} />}
               containerStyle={{ maxWidth: "350px" }}
             />
@@ -235,11 +261,23 @@ const DepartmentList: React.FC = () => {
         <CustomTable
           style={{ flex: 1, overflowY: "auto" }}
           columns={columns}
-          data={filteredDepartments}
+          data={paginatedDepartments}
           loading={loading}
           loadingMessage="Loading departments..."
           emptyMessage="No departments found"
+          onRowClick={(d) => navigate(`/departments/${d.id}`)}
         />
+        {filteredDepartments.length > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <CustomPagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredDepartments.length / itemsPerPage)}
+              onPageChange={setCurrentPage}
+              totalItems={filteredDepartments.length}
+              itemsPerPage={itemsPerPage}
+            />
+          </div>
+        )}
       </StandardListLayout>
 
       <DepartmentModal

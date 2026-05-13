@@ -1,6 +1,6 @@
-import { Router } from 'express';
-import { userController } from '../controllers/user.controller';
-import { authMiddleware, checkRole } from '../middleware/auth';
+import { Router } from "express";
+import { userController } from "../controllers/user.controller";
+import { authMiddleware, checkRole } from "../middleware/auth";
 
 const router = Router();
 
@@ -37,7 +37,39 @@ const router = Router();
  *       200:
  *         description: List of users
  */
-router.get('/', authMiddleware, userController.getUsers);
+router.get("/", authMiddleware, userController.getUsers);
+
+/**
+ * @swagger
+ * /api/users/usersByRole:
+ *   get:
+ *     summary: Get users filtered by multiple roles
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: roles
+ *         style: form
+ *         explode: true
+ *         schema:
+ *           type: array
+ *           items:
+ *             type: string
+ *             enum: [ALL, AGENT, ADMIN, CUSTOMER]
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: List of users filtered by roles
+ */
+router.get("/usersByRole", authMiddleware, userController.getUsersByRoles);
 
 /**
  * @swagger
@@ -77,7 +109,7 @@ router.get('/', authMiddleware, userController.getUsers);
  *       201:
  *         description: User created
  */
-router.post('/', authMiddleware, userController.createUser);
+router.post("/", authMiddleware, userController.createUser);
 
 /**
  * @swagger
@@ -106,7 +138,7 @@ router.post('/', authMiddleware, userController.createUser);
  *       200:
  *         description: Profile updated
  */
-router.put('/profile', authMiddleware, userController.updateProfile);
+router.put("/profile", authMiddleware, userController.updateProfile);
 
 /**
  * @swagger
@@ -132,8 +164,33 @@ router.put('/profile', authMiddleware, userController.updateProfile);
  *       200:
  *         description: Password updated
  */
-router.post('/profile/password', authMiddleware, userController.updatePassword);
-router.post('/profile/phone', authMiddleware, userController.updatePhoneNumber);
+router.post("/profile/password", authMiddleware, userController.updatePassword);
+
+/**
+ * @swagger
+ * /api/users/profile/phone:
+ *   post:
+ *     summary: Update own phone number
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPhone, newPhone]
+ *             properties:
+ *               currentPhone:
+ *                 type: string
+ *               newPhone:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Phone number updated
+ */
+router.post("/profile/phone", authMiddleware, userController.updatePhoneNumber);
 
 /**
  * @swagger
@@ -153,7 +210,7 @@ router.post('/profile/phone', authMiddleware, userController.updatePhoneNumber);
  *       200:
  *         description: User details
  */
-router.get('/:id', authMiddleware, userController.getUserById);
+router.get("/:id", authMiddleware, userController.getUserById);
 
 /**
  * @swagger
@@ -186,7 +243,7 @@ router.get('/:id', authMiddleware, userController.getUserById);
  *       200:
  *         description: User updated
  */
-router.put('/:id', authMiddleware, userController.updateUser);
+router.put("/:id", authMiddleware, userController.updateUser);
 
 /**
  * @swagger
@@ -206,6 +263,6 @@ router.put('/:id', authMiddleware, userController.updateUser);
  *       200:
  *         description: User deleted
  */
-router.delete('/:id', authMiddleware, userController.deleteUser);
+router.delete("/:id", authMiddleware, userController.deleteUser);
 
 export default router;

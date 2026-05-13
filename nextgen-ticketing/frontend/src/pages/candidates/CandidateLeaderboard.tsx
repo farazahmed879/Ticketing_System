@@ -196,13 +196,30 @@ const CandidateLeaderboard: React.FC = () => {
 
   return (
     <div className="animate-fade-in">
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: "2rem", fontWeight: 800, marginBottom: 8, background: 'linear-gradient(to right, #fff, var(--text-muted))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Hiring Leaderboard
-        </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: '1.1rem' }}>
-          Top performing candidates based on interview feedback and ratings
-        </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+          <CustomButton
+            variant="ghost"
+            onClick={() => navigate("/candidates")}
+            icon={<CustomIcon name="ArrowLeft" size={20} />}
+            style={{ 
+              width: 40, 
+              height: 40, 
+              padding: 0, 
+              borderRadius: '12px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid var(--border-glass)'
+            }}
+          />
+          <div>
+            <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
+              Hiring Leaderboard
+            </h1>
+            <p style={{ color: "var(--text-muted)", margin: "4px 0 0 0", fontSize: '0.9rem' }}>
+              Top performing candidates based on interview feedback and ratings
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>

@@ -8,8 +8,12 @@ export const projectController = {
       const user = (req as any).user;
       const query: any = { ...req.query };
 
-      if (user.role === RoleName.CUSTOMER) {
-        query.clientId = user.id;
+      // Filter projects for Client role
+      const role = user?.role || req.query.role;
+      const userId = user?.id || req.query.userId;
+
+      if (role === RoleName.CUSTOMER && userId) {
+        query.clientId = userId;
       }
 
       const projects = await projectRepository.findMany(query);
@@ -22,7 +26,10 @@ export const projectController = {
   async getById(req: Request, res: Response) {
     try {
       const project = await projectRepository.findById(req.params.id as string);
-      if (!project) return res.status(404).json({ success: false, error: "Project not found" });
+      if (!project)
+        return res
+          .status(404)
+          .json({ success: false, error: "Project not found" });
       res.json({ success: true, project });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
@@ -40,7 +47,10 @@ export const projectController = {
 
   async update(req: Request, res: Response) {
     try {
-      const project = await projectRepository.update(req.params.id as string, req.body);
+      const project = await projectRepository.update(
+        req.params.id as string,
+        req.body,
+      );
       res.json({ success: true, project });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });

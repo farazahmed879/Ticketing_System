@@ -12,6 +12,20 @@ export const departmentController = {
     }
   },
 
+  async getDepartmentById(req: AuthRequest, res: Response) {
+    try {
+      const department = await departmentUsecase.getDepartmentById(
+        req.params.id as string,
+      );
+      if (!department) {
+        return res.status(404).json({ success: false, error: "Department not found" });
+      }
+      res.json({ success: true, department });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
   async createDepartment(req: AuthRequest, res: Response) {
     try {
       const department = await departmentUsecase.createDepartment(req.body);

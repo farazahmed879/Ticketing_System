@@ -77,7 +77,13 @@ export const timesheetController = {
 
   async getPendingEntries(req: AuthRequest, res: Response) {
     try {
-      const entries = await timesheetUsecase.getPendingEntries();
+      const { status, userId, month, year } = req.query;
+      const entries = await timesheetUsecase.getReviewEntries({
+        status: status as string,
+        userId: userId as string,
+        month: month as string,
+        year: year as string,
+      });
       res.json({ success: true, entries });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

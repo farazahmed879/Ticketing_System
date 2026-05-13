@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import CustomInput from "../../components/CustomInput";
@@ -61,6 +61,15 @@ const CandidateList: React.FC = () => {
     null,
   );
 
+  // Tracks the filter values that were last submitted via Enter/Filter button.
+  // Used to detect when an applied text filter is cleared so we can auto-refetch.
+  const activeFiltersRef = useRef({
+    search: "",
+    position: "",
+    skills: "",
+    aiPrompt: "",
+  });
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -90,8 +99,34 @@ const CandidateList: React.FC = () => {
     fetchData();
   }, [statusFilter, currentPage, itemsPerPage]);
 
+  // Auto-refetch when a previously-applied text filter is cleared via keyboard,
+  // so users don't have to click Filter again to see the unfiltered list.
+  useEffect(() => {
+    const active = activeFiltersRef.current;
+    const filterCleared =
+      (active.search && !searchTerm) ||
+      (active.position && !positionFilter) ||
+      (active.skills && !skillsFilter) ||
+      (active.aiPrompt && !aiPrompt);
+    if (!filterCleared) return;
+    activeFiltersRef.current = {
+      search: searchTerm,
+      position: positionFilter,
+      skills: skillsFilter,
+      aiPrompt: aiPrompt,
+    };
+    setCurrentPage(0);
+    fetchData();
+  }, [searchTerm, positionFilter, skillsFilter, aiPrompt]);
+
   const handleSearch = () => {
     setCurrentPage(0);
+    activeFiltersRef.current = {
+      search: searchTerm,
+      position: positionFilter,
+      skills: skillsFilter,
+      aiPrompt: aiPrompt,
+    };
     fetchData();
   };
 
@@ -381,6 +416,12 @@ const CandidateList: React.FC = () => {
                 onClick={() => {
                   setIsAiMode(!isAiMode);
                   setCurrentPage(0);
+                  activeFiltersRef.current = {
+                    search: "",
+                    position: "",
+                    skills: "",
+                    aiPrompt: "",
+                  };
                   if (!isAiMode) {
                     setSearchTerm("");
                     setPositionFilter("");

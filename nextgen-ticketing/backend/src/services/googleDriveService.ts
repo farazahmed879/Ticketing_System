@@ -4,21 +4,22 @@ import { Readable } from "stream";
 const SCOPES = ["https://www.googleapis.com/auth/drive.file"];
 
 function getAuthClient() {
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-  if (!email || !key || !folderId) {
+  if (!clientId || !clientSecret || !refreshToken || !folderId) {
     return null;
   }
 
-  const auth = new google.auth.JWT({
-    email,
-    key: key.replace(/\\n/g, "\n"),
-    scopes: SCOPES,
+  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
+  oauth2Client.setCredentials({
+    refresh_token: refreshToken,
+    scope: SCOPES.join(" "),
   });
 
-  return auth;
+  return oauth2Client;
 }
 
 export async function uploadToGoogleDrive(
@@ -30,7 +31,7 @@ export async function uploadToGoogleDrive(
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
   if (!auth || !folderId) {
-    console.warn("Google Drive credentials not configured — skipping upload");
+    console.warn("Google Drive OAuth credentials not configured — skipping upload");
     return null;
   }
 

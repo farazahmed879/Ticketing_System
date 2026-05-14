@@ -24,6 +24,7 @@ const router = Router();
  *         description: List of departments
  */
 router.get('/', authMiddleware, departmentController.getDepartments);
+router.get('/:id', authMiddleware, departmentController.getDepartmentById);
 
 /**
  * @swagger

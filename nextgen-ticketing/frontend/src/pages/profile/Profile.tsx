@@ -47,14 +47,28 @@ const Profile: React.FC = () => {
     >
       {/* Back Button (Only if viewing another user) */}
       {id && (
-        <div style={{ marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 15, marginBottom: 8 }}>
           <CustomButton
-            variant="outline"
+            variant="ghost"
             onClick={() => navigate("/users")}
-            icon={<CustomIcon name="ChevronLeft" size={18} />}
-          >
-            Back to Users
-          </CustomButton>
+            icon={<CustomIcon name="ArrowLeft" size={20} />}
+            style={{ 
+              width: 40, 
+              height: 40, 
+              padding: 0, 
+              borderRadius: '12px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid var(--border-glass)'
+            }}
+          />
+          <div>
+            <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
+              User Profile
+            </h1>
+            <p style={{ color: "var(--text-muted)", margin: "4px 0 0 0", fontSize: '0.9rem' }}>
+              Detailed overview of team member information
+            </p>
+          </div>
         </div>
       )}
 

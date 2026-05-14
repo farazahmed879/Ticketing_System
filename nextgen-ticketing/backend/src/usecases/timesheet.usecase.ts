@@ -87,4 +87,21 @@ export const timesheetUsecase = {
       entries,
     };
   },
+  async getReviewEntries(filters: { status?: string; userId?: string; month?: string; year?: string }) {
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+
+    if (filters.month !== undefined && filters.year !== undefined) {
+      const m = parseInt(filters.month);
+      const y = parseInt(filters.year);
+      startDate = startOfMonth(new Date(y, m));
+      endDate = endOfMonth(new Date(y, m));
+    }
+
+    return timesheetRepository.findReviewEntries({
+      ...filters,
+      startDate,
+      endDate,
+    });
+  },
 };

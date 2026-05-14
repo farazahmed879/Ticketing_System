@@ -31,6 +31,7 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Create New Ticket"
+      maxWidth="800px"
       footer={
         <>
           <CustomButton variant="secondary" onClick={onClose}>

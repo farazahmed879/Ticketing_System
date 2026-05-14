@@ -12,7 +12,10 @@ import styles from './Timesheet.module.css';
 
 import type { TimesheetReport as ITimesheetReport } from '../../types';
 
+import { useNavigate } from 'react-router-dom';
+
 const TimesheetReport: React.FC = () => {
+  const navigate = useNavigate();
   const [report, setReport] = useState<ITimesheetReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(new Date().getMonth());
@@ -45,8 +48,30 @@ const TimesheetReport: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h1 style={{ fontSize: '1.8rem', fontWeight: 700 }}>Monthly Timesheet Report</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+          <CustomButton
+            variant="ghost"
+            onClick={() => navigate("/timesheet")}
+            icon={<CustomIcon name="ArrowLeft" size={20} />}
+            style={{ 
+              width: 40, 
+              height: 40, 
+              padding: 0, 
+              borderRadius: '12px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid var(--border-glass)'
+            }}
+          />
+          <div>
+            <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
+              Timesheet Report
+            </h1>
+            <p style={{ color: "var(--text-muted)", margin: "4px 0 0 0", fontSize: '0.9rem' }}>
+              Detailed insights into logged time and project distribution
+            </p>
+          </div>
+        </div>
         <div style={{ display: 'flex', gap: 12 }}>
           <CustomSelect
             value={month.toString()}

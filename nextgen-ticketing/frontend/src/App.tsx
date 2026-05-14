@@ -16,6 +16,7 @@ import TicketBoard from "./pages/tickets/kanbanBoard/TicketBoard.tsx";
 import TicketDetail from "./pages/tickets/TicketDetail.tsx";
 import Messages from "./pages/messages/Messages.tsx";
 import DepartmentList from "./pages/departments/DepartmentList.tsx";
+import DepartmentDetail from "./pages/departments/DepartmentDetail.tsx";
 import TeamList from "./pages/teams/TeamList.tsx";
 import ProjectList from "./pages/projects/ProjectList.tsx";
 import UserList from "./pages/users/UserList.tsx";
@@ -71,6 +72,7 @@ const App: React.FC = () => {
               <Route path="messages" element={<Messages />} />
               <Route path="teams" element={<TeamList />} />
               <Route path="departments" element={<DepartmentList />} />
+              <Route path="departments/:id" element={<DepartmentDetail />} />
               <Route path="projects" element={<ProjectList />} />
               <Route path="timesheet" element={<Timesheet />} />
               <Route path="timesheet/review" element={<TimesheetReview />} />

@@ -24,7 +24,7 @@
   backdrop-filter: var(--blur-lg);
   border: 1px solid var(--border-glass);
   border-radius: 24px;
-  overflow: visible;
+  overflow: hidden; /* Keep content within rounded corners */
   position: relative;
   animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -61,7 +61,9 @@
 
 .content {
   padding: 24px;
-  overflow: visible; /* Prevent leakage */
+  overflow-y: auto; /* Enable scroll if content is long */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-glass) transparent;
   flex: 1;
   display: flex;
   flex-direction: column;

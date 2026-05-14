@@ -26,6 +26,8 @@ import CreateTicketModal from "./components/CreateTicketModal";
 import StandardListLayout from "../../components/StandardListLayout";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import ListAndKanbanSwitcher from "./components/ListAndKanbanSwitcher";
+import CustomAvatarStack from "../../components/CustomAvatarStack";
+import { truncateString } from "../../utils/helpers";
 
 const TicketList: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -58,20 +60,27 @@ const TicketList: React.FC = () => {
       try {
         const [pRes, gRes, tRes, aRes] = await Promise.all([
           api.get(API_ROUTES.COMMON.PRIORITIES),
-          api.get(API_ROUTES.COMMON.GROUPS),
+          api.get(API_ROUTES.PROJECTS.BASE, {
+            params: {
+              role: user?.role?.name,
+              userId: user?.id,
+            },
+          }),
           api.get(API_ROUTES.COMMON.TYPES),
           api.get(API_ROUTES.USERS.BASE, { params: { type: "agents" } }),
         ]);
         setPriorities(pRes.data.priorities);
-        setProjects(gRes.data.groups);
+        setProjects(gRes.data.projects);
         setTypes(tRes.data.types);
         setAgents(aRes.data.accounts);
       } catch (err) {
         console.error("Failed to fetch metadata", err);
       }
     };
-    fetchMetadata();
-  }, []);
+    if (user) {
+      fetchMetadata();
+    }
+  }, [user]);
 
   const fetchTickets = async () => {
     try {
@@ -229,10 +238,17 @@ const TicketList: React.FC = () => {
               ),
             },
             {
-              header: "Subject",
+              header: "Title",
               key: "subject",
               render: (t) => (
-                <span style={{ fontWeight: 600 }}>{t.subject}</span>
+                <>
+                  <div style={{ fontSize: 12, color: "lightgray" }}>
+                    {t.group?.name || "-"}
+                  </div>
+                  <div style={{ fontWeight: 600 }}>
+                    {truncateString(t.subject, 50)}
+                  </div>
+                </>
               ),
             },
             {
@@ -260,26 +276,37 @@ const TicketList: React.FC = () => {
             {
               header: "Assignee",
               key: "assignee",
-              render: (t) => t.assignee?.fullname || "Unassigned",
+              render: (t) =>
+                t.assignee ? (
+                  <CustomAvatarStack
+                    items={[
+                      {
+                        id: t.assignee.id,
+                        name: t.assignee?.fullname,
+                        image: t.assignee?.image,
+                      },
+                    ]}
+                    limit={4}
+                    size={28}
+                  />
+                ) : (
+                  "N/A"
+                ),
             },
-            {
-              header: "Project",
-              key: "group",
-              render: (t) => t.group?.name || "-",
-            },
+
             {
               header: "Created",
               key: "createdAt",
-              render: (t) => format(new Date(t.createdAt), "MMM dd, yyyy"),
+              render: (t) => format(new Date(t.createdAt), "MMM dd, yy"),
             },
             {
               header: "Due Date",
               key: "dueDate",
               render: (t) =>
-                t.dueDate ? format(new Date(t.dueDate), "MMM dd, yyyy") : "-",
+                t.dueDate ? format(new Date(t.dueDate), "MMM dd, yy") : "-",
             },
             {
-              header: "Actions",
+              header: "",
               key: "actions",
               render: (t) => (
                 <div onClick={(e) => e.stopPropagation()}>

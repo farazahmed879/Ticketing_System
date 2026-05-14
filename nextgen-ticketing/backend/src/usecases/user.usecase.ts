@@ -8,7 +8,7 @@ export const userUsecase = {
     limit: string = "10",
     page: string = "0",
     showDeleted: string = "false",
-    search: string = ""
+    search: string = "",
   ) {
     const take = parseInt(limit);
     const skip = parseInt(page) * take;
@@ -16,8 +16,7 @@ export const userUsecase = {
     let roleFilter: any = {};
     if (type === RoleType.AGENTS)
       roleFilter = { role: { OR: [{ isAgent: true }, { isEmployee: true }] } };
-    else if (type === RoleType.ADMINS)
-      roleFilter = { role: { isAdmin: true } };
+    else if (type === RoleType.ADMINS) roleFilter = { role: { isAdmin: true } };
     else if (type === RoleType.CUSTOMERS)
       roleFilter = { role: { name: RoleName.CUSTOMER } };
 
@@ -32,6 +31,90 @@ export const userUsecase = {
         { email: { contains: search, mode: "insensitive" } },
         { username: { contains: search, mode: "insensitive" } },
       ];
+    }
+
+    const [accounts, total] = await Promise.all([
+      userRepository.findMany(where, skip, take === -1 ? undefined : take),
+      userRepository.count(where),
+    ]);
+
+    return { accounts, total };
+  },
+
+  async getUsersByRoles(
+    roles: string[] = ["ALL"],
+    limit: string = "10",
+    page: string = "0",
+    showDeleted: string = "false",
+    search: string = "",
+  ) {
+    const take = parseInt(limit);
+    const skip = parseInt(page) * take;
+
+    let roleConditions: any[] = [];
+
+    if (roles.includes(RoleName.EMPLOYEE)) {
+      roleConditions.push({
+        role: {
+          OR: [{ isAgent: true }, { isEmployee: true }],
+        },
+      });
+    }
+
+    if (roles.includes(RoleName.ADMIN)) {
+      roleConditions.push({
+        role: { 
+          OR: [
+            { isAdmin: true },
+            { name: RoleName.ADMIN }
+          ]
+        },
+      });
+    }
+
+    if (roles.includes(RoleName.AGENT)) {
+      roleConditions.push({
+        role: { name: RoleName.AGENT },
+      });
+    }
+
+    if (roles.includes(RoleName.CUSTOMER)) {
+      roleConditions.push({
+        role: { name: RoleName.CUSTOMER },
+      });
+    }
+
+    if (roles.includes(RoleName.HR)) {
+      roleConditions.push({
+        role: { name: RoleName.HR },
+      });
+    }
+
+    const where: any = {
+      deleted: showDeleted === "true" ? undefined : false,
+    };
+
+    // Apply role filters only if not ALL
+    if (!roles.includes("ALL") && roleConditions.length > 0) {
+      where.OR = roleConditions;
+    }
+
+    // Search filter
+    if (search) {
+      const searchConditions = [
+        { fullname: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { username: { contains: search, mode: "insensitive" } },
+      ];
+
+      // combine role + search properly
+      if (where.OR) {
+        where.AND = [{ OR: where.OR }, { OR: searchConditions }];
+
+        delete where.OR;
+      } else {
+        where.OR = searchConditions;
+      }
     }
 
     const [accounts, total] = await Promise.all([
@@ -82,18 +165,26 @@ export const userUsecase = {
     if (data.teamIds !== undefined) updateData.teamIds = data.teamIds;
 
     // New profile fields
-    if (data.primaryContact !== undefined) updateData.primaryContact = data.primaryContact;
-    if (data.secondaryContact !== undefined) updateData.secondaryContact = data.secondaryContact;
+    if (data.primaryContact !== undefined)
+      updateData.primaryContact = data.primaryContact;
+    if (data.secondaryContact !== undefined)
+      updateData.secondaryContact = data.secondaryContact;
     if (data.cnic !== undefined) updateData.cnic = data.cnic;
-    if (data.linkedInUrl !== undefined) updateData.linkedInUrl = data.linkedInUrl;
+    if (data.linkedInUrl !== undefined)
+      updateData.linkedInUrl = data.linkedInUrl;
     if (data.gitUrl !== undefined) updateData.gitUrl = data.gitUrl;
     if (data.address !== undefined) updateData.address = data.address;
-    if (data.emergencyContact !== undefined) updateData.emergencyContact = data.emergencyContact;
-    if (data.primaryResumeUrl !== undefined) updateData.primaryResumeUrl = data.primaryResumeUrl;
-    if (data.jpPatternResumeUrl !== undefined) updateData.jpPatternResumeUrl = data.jpPatternResumeUrl;
-    if (data.nationality !== undefined) updateData.nationality = data.nationality;
+    if (data.emergencyContact !== undefined)
+      updateData.emergencyContact = data.emergencyContact;
+    if (data.primaryResumeUrl !== undefined)
+      updateData.primaryResumeUrl = data.primaryResumeUrl;
+    if (data.jpPatternResumeUrl !== undefined)
+      updateData.jpPatternResumeUrl = data.jpPatternResumeUrl;
+    if (data.nationality !== undefined)
+      updateData.nationality = data.nationality;
     if (data.location !== undefined) updateData.location = data.location;
-    if (data.employeeType !== undefined) updateData.employeeType = data.employeeType;
+    if (data.employeeType !== undefined)
+      updateData.employeeType = data.employeeType;
     if (data.branch !== undefined) updateData.branch = data.branch;
 
     if (data.password) {

@@ -98,15 +98,30 @@ const CandidateDetail: React.FC = () => {
       className="animate-fade-in"
       style={{ display: "flex", flexDirection: "column", gap: 24 }}
     >
-      {/* Back Button */}
-      <div style={{ marginBottom: 8 }}>
-        <CustomButton
-          variant="outline"
-          onClick={() => navigate("/candidates")}
-          icon={<CustomIcon name="ChevronLeft" size={18} />}
-        >
-          Back to Candidates
-        </CustomButton>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+          <CustomButton
+            variant="ghost"
+            onClick={() => navigate("/candidates")}
+            icon={<CustomIcon name="ArrowLeft" size={20} />}
+            style={{ 
+              width: 40, 
+              height: 40, 
+              padding: 0, 
+              borderRadius: '12px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid var(--border-glass)'
+            }}
+          />
+          <div>
+            <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
+              Candidate Details
+            </h1>
+            <p style={{ color: "var(--text-muted)", margin: "4px 0 0 0", fontSize: '0.9rem' }}>
+              Detailed profile and hiring history
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Header Card */}

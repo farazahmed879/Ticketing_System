@@ -24,6 +24,35 @@ export const userController = {
       res.status(500).json({ success: false, error: error.message });
     }
   },
+  async getUsersByRoles(req: AuthRequest, res: Response) {
+    try {
+      const {
+        limit = "10",
+        page = "0",
+        showDeleted = "false",
+        search = "",
+      } = req.query;
+
+      // Handle both 'roles' and 'roles[]' from query
+      let roles = req.query.roles || req.query["roles[]"] || ["ALL"];
+
+      // Ensure roles is an array
+      if (!Array.isArray(roles)) {
+        roles = [roles as string];
+      }
+
+      const { accounts, total } = await userUsecase.getUsersByRoles(
+        roles as string[],
+        limit as string,
+        page as string,
+        showDeleted as string,
+        search as string,
+      );
+      res.json({ success: true, accounts, total, count: accounts.length });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
 
   async getUserById(req: AuthRequest, res: Response) {
     try {

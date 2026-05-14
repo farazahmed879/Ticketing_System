@@ -224,15 +224,30 @@ const InterviewDetail: React.FC = () => {
 
   return (
     <div className={`animate-fade-in ${styles.container}`}>
-      {/* Back Button */}
-      <div className={styles.topBar}>
-        <CustomButton
-          variant="outline"
-          onClick={() => navigate("/interviews")}
-          icon={<CustomIcon name="ArrowLeft" size={18} />}
-        >
-          Back to Interviews
-        </CustomButton>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+          <CustomButton
+            variant="ghost"
+            onClick={() => navigate("/interviews")}
+            icon={<CustomIcon name="ArrowLeft" size={20} />}
+            style={{ 
+              width: 40, 
+              height: 40, 
+              padding: 0, 
+              borderRadius: '12px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid var(--border-glass)'
+            }}
+          />
+          <div>
+            <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
+              Interview Details
+            </h1>
+            <p style={{ color: "var(--text-muted)", margin: "4px 0 0 0", fontSize: '0.9rem' }}>
+              Review candidate assessment and panel feedback
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Header Card */}

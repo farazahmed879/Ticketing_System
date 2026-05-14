@@ -89,7 +89,11 @@ const TicketForm: React.FC<TicketFormProps> = ({
     <form
       id="ticket-form"
       onSubmit={handleSubmit(onSubmit)}
-      style={{ display: "flex", flexDirection: "column", gap: 20 }}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 20,
+      }}
     >
       <CustomInput
         name="subject"
@@ -203,7 +207,10 @@ const TicketForm: React.FC<TicketFormProps> = ({
             placeholder="Unassigned"
             options={[
               { value: "", label: "Unassigned" },
-              ...agents.map((a) => ({ value: a.id, label: a.fullname })),
+              ...agents.map((a) => ({
+                value: a.id,
+                label: `${a.fullname}-(${a.role.name})`,
+              })),
             ]}
           />
         )}

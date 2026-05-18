@@ -11,6 +11,7 @@ import { CandidateStatus, COUNTRY_CODES } from "../../../utils/constants";
 import {
   extractTextFromFile,
   parseResumeData,
+  deriveNameFromFilename,
   type ResumeData,
 } from "../../../utils/resumeParser";
 import api from "../../../services/api";
@@ -181,6 +182,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
       });
 
       if (parsed.name) setValue("name", parsed.name);
+      if (parsed.position) setValue("position", parsed.position);
       if (parsed.email) setValue("email", parsed.email);
       if (parsed.cnic) setValue("cnic", parsed.cnic);
       if (parsed.address) setValue("address", parsed.address);
@@ -230,21 +232,54 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
           setHasUploadedResume(true);
           if (uploadRes.data.parsedData) {
             const serverParsed = uploadRes.data.parsedData;
-            // Only populate if not already set by client-side parsing
+            // Use server-parsed values as fallback for any field the client missed.
             const currentValues = getValues();
-
+            const stringFields: Array<keyof typeof currentValues> = [
+              "name",
+              "position",
+              "email",
+              "cnic",
+              "address",
+              "linkedin",
+              "portfolio",
+              "github",
+              "nationality",
+              "city",
+            ];
+            for (const field of stringFields) {
+              if (serverParsed[field] && !currentValues[field]) {
+                setValue(field, serverParsed[field]);
+              }
+            }
             if (serverParsed.dob && !currentValues.dob) {
               const date = new Date(serverParsed.dob);
               if (!isNaN(date.getTime())) {
                 setValue("dob", date.toISOString().split("T")[0]);
               }
             }
-            if (serverParsed.nationality && !currentValues.nationality) {
-              setValue("nationality", serverParsed.nationality);
+            if (serverParsed.phone && !currentValues.phone) {
+              const matchedCode = COUNTRY_CODES.find((code) =>
+                serverParsed.phone.startsWith(code.value),
+              );
+              if (matchedCode) {
+                setValue("countryCode", matchedCode.value);
+                setValue(
+                  "phone",
+                  serverParsed.phone.replace(matchedCode.value, "").trim(),
+                );
+              } else {
+                setValue("phone", serverParsed.phone);
+              }
             }
-            if (serverParsed.city && !currentValues.city) {
-              setValue("city", serverParsed.city);
-            }
+            setResumeData((prev) => ({
+              objective: prev.objective || serverParsed.objective || "",
+              technicalSkills:
+                prev.technicalSkills || serverParsed.technicalSkills || "",
+              workExperience:
+                prev.workExperience || serverParsed.workExperience || "",
+              projects: prev.projects || serverParsed.projects || "",
+              rawText: prev.rawText,
+            }));
           }
           showNotification("success", "Resume uploaded to Google Drive");
         }
@@ -254,6 +289,12 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
           uploadErr.response?.data?.error || uploadErr.message,
         );
         showNotification("warning", "Resume parsed but Drive upload failed.");
+      }
+
+      // Last-resort: derive name from the filename if parsing didn't find one.
+      if (!getValues().name) {
+        const derived = deriveNameFromFilename(file.name);
+        if (derived) setValue("name", derived);
       }
     } catch (err: any) {
       console.error("Resume processing failed:", err);

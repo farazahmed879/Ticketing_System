@@ -12,6 +12,7 @@ export interface ResumeData {
   rawText: string;
   // Contact info extracted from resume
   name?: string;
+  position?: string;
   email?: string;
   phone?: string;
   cnic?: string;
@@ -41,34 +42,96 @@ export async function extractTextFromFile(file: File): Promise<string> {
   throw new Error("Unsupported file type. Only PDF and DOCX are supported.");
 }
 
+type PdfItem = { x: number; y: number; str: string; width: number };
+
 async function extractFromPDF(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const lines: string[] = [];
+  const pageTexts: string[] = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
+    const viewport = page.getViewport({ scale: 1 });
 
-    // Group items by Y position to reconstruct lines
-    const itemsByY: Map<number, string[]> = new Map();
-    for (const item of content.items as any[]) {
-      if (!item.str || item.str.trim() === "") continue;
-      // Round Y to group items on same line
-      const y = Math.round(item.transform[5]);
-      if (!itemsByY.has(y)) itemsByY.set(y, []);
-      itemsByY.get(y)!.push(item.str);
-    }
+    const items: PdfItem[] = (content.items as any[])
+      .filter((it) => it.str && it.str.trim() !== "")
+      .map((it) => ({
+        x: it.transform[4],
+        y: it.transform[5],
+        str: it.str,
+        width: it.width || 0,
+      }));
 
-    // Sort by Y descending (PDF coords: top = higher Y)
-    const sortedYs = [...itemsByY.keys()].sort((a, b) => b - a);
-    for (const y of sortedYs) {
-      const lineText = itemsByY.get(y)!.join(" ").trim();
-      if (lineText) lines.push(lineText);
+    if (items.length === 0) continue;
+
+    // Detect a two-column split: find an X band in the center that few items cross.
+    const splitX = detectColumnSplit(items, viewport.width);
+    const columnGroups = splitX
+      ? [
+          items.filter((it) => it.x + it.width / 2 < splitX),
+          items.filter((it) => it.x + it.width / 2 >= splitX),
+        ]
+      : [items];
+
+    for (const col of columnGroups) {
+      const colText = reassembleLines(col);
+      if (colText) pageTexts.push(colText);
     }
   }
 
-  return lines.join("\n");
+  return pageTexts.join("\n");
+}
+
+function detectColumnSplit(items: PdfItem[], pageWidth: number): number | null {
+  if (items.length < 30 || !pageWidth) return null;
+  const center = pageWidth / 2;
+  const band = pageWidth * 0.08;
+  const crossing = items.filter(
+    (it) => it.x < center + band && it.x + it.width > center - band,
+  ).length;
+  // If <8% of items straddle the center band, treat as two columns.
+  return crossing / items.length < 0.08 ? center : null;
+}
+
+function reassembleLines(items: PdfItem[]): string {
+  if (items.length === 0) return "";
+  // Group into lines by Y proximity (tolerate small vertical jitter within a line).
+  const sorted = [...items].sort((a, b) => b.y - a.y || a.x - b.x);
+  const lines: PdfItem[][] = [];
+  let current: PdfItem[] = [];
+  let currentY: number | null = null;
+  const yTolerance = 3;
+
+  for (const it of sorted) {
+    if (currentY === null || Math.abs(it.y - currentY) <= yTolerance) {
+      current.push(it);
+      currentY = currentY === null ? it.y : currentY;
+    } else {
+      lines.push(current);
+      current = [it];
+      currentY = it.y;
+    }
+  }
+  if (current.length) lines.push(current);
+
+  return lines
+    .map((row) => {
+      const inOrder = row.sort((a, b) => a.x - b.x);
+      // Insert a separator when there's a large horizontal gap between items
+      // (helps preserve column-like separation within a single visual row).
+      let text = "";
+      let prevEnd: number | null = null;
+      for (const r of inOrder) {
+        if (prevEnd !== null && r.x - prevEnd > 20) text += "  ";
+        else if (text) text += " ";
+        text += r.str;
+        prevEnd = r.x + r.width;
+      }
+      return text.trim();
+    })
+    .filter(Boolean)
+    .join("\n");
 }
 
 async function extractFromDOCX(file: File): Promise<string> {
@@ -94,6 +157,10 @@ export function parseResumeData(text: string): ResumeData {
     "career highlights",
     "professional profile",
     "personal summary",
+    "executive summary",
+    "overview",
+    "introduction",
+    "professional overview",
   ]);
 
   const workExperience = extractSection(normalized, [
@@ -106,6 +173,9 @@ export function parseResumeData(text: string): ResumeData {
     "career history",
     "professional work history",
     "relevant experience",
+    "career experience",
+    "industry experience",
+    "work summary",
   ]);
 
   const technicalSkills = extractSection(normalized, [
@@ -122,6 +192,10 @@ export function parseResumeData(text: string): ResumeData {
     "technical proficiencies",
     "skills & abilities",
     "professional skills",
+    "skill set",
+    "skillset",
+    "expertise",
+    "key competencies",
   ]);
 
   const projects = extractSection(normalized, [
@@ -147,7 +221,7 @@ export function parseResumeData(text: string): ResumeData {
   return {
     objective: objective || "",
     workExperience: workExperience || "",
-    technicalSkills: technicalSkills || "",
+    technicalSkills: normalizeSkillList(technicalSkills) || "",
     projects: projects || "",
     rawText: normalized,
     ...contactInfo,
@@ -155,10 +229,65 @@ export function parseResumeData(text: string): ResumeData {
 }
 
 /**
+ * Derive a candidate name from the resume's filename as a last-resort fallback.
+ * Strips the extension, splits on CamelCase boundaries and separators, drops
+ * resume-related noise words, and title-cases what remains.
+ *
+ *   "resumeShabeeh.pdf"          -> "Shabeeh"
+ *   "Resume_Shabeeh_Haider.pdf"  -> "Shabeeh Haider"
+ *   "JohnDoeResume.docx"         -> "John Doe"
+ *   "shabeeh-haider-cv.pdf"      -> "Shabeeh Haider"
+ *   "cv.pdf"                     -> ""
+ *   "1234_resume.pdf"            -> ""
+ */
+export function deriveNameFromFilename(filename: string): string {
+  if (!filename) return "";
+  let base = filename.replace(/\.[^.]+$/, "");
+  // Insert spaces at CamelCase boundaries before tokenizing
+  base = base.replace(/([a-z])([A-Z])/g, "$1 $2");
+  // Normalize separators to spaces
+  base = base.replace(/[_\-.()]+/g, " ");
+  // Drop common resume-related noise words as whole tokens
+  base = base.replace(
+    /\b(resume|cv|curriculum|vitae|biodata|profile|final|new|updated?|copy|version|draft|latest)\b/gi,
+    " ",
+  );
+  const tokens = base
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter((t) => {
+      if (!t || t.length < 2) return false;
+      if (/^\d+$/.test(t)) return false;
+      if (/^v\d+$/i.test(t)) return false;
+      return /^[A-Za-z]/.test(t);
+    });
+  if (tokens.length === 0 || tokens.length > 4) return "";
+  return tokens
+    .map((t) => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase())
+    .join(" ");
+}
+
+// Normalize skills that arrived as a single line with bullets/pipes/slashes
+// into a comma-separated list, while preserving multi-line block layouts.
+function normalizeSkillList(skills: string): string {
+  if (!skills) return "";
+  const trimmed = skills.trim();
+  if (!trimmed) return "";
+  const looksLikeBlock = trimmed.split("\n").length > 2;
+  if (looksLikeBlock) return trimmed;
+  return trimmed
+    .split(/[•·●▪◦|·•\/]| – | - /g)
+    .map((s) => s.replace(/^[\s\-:,]+|[\s\-:,]+$/g, ""))
+    .filter((s) => s.length > 1)
+    .join(", ");
+}
+
+/**
  * Extract contact information from the resume text using regex patterns
  */
 function extractContactInfo(text: string): {
   name?: string;
+  position?: string;
   email?: string;
   phone?: string;
   cnic?: string;
@@ -198,19 +327,110 @@ function extractContactInfo(text: string): {
     return trimmed;
   };
 
-  if (lines.length > 0) {
-    const firstLine = unspace(lines[0]);
-    const labelPattern =
-      /^(resume|curriculum vitae|cv|name|contact|personal)\s*[:\-]/i;
-    if (
-      !labelPattern.test(firstLine) &&
-      firstLine.length < 60 &&
-      firstLine.length > 2
-    ) {
-      result.name = toTitleCase(firstLine);
-    } else {
-      const nameMatch = text.match(/(?:name|full\s*name)\s*[:\-–]\s*(.+)/i);
-      if (nameMatch) result.name = toTitleCase(unspace(nameMatch[1]));
+  // --- Name ---
+  // Walks the top ~20 lines (covers cases where a two-column resume puts the
+  // sidebar first and the name lives further down in the joined text). Also
+  // supports accented characters, "Name | Title" patterns, and an email-derived
+  // last-resort.
+  const headerNoise =
+    /^(resume|curriculum\s*vitae|cv|profile|biodata|personal\s*details?|personal\s*information|contact|contact\s*information)\s*[:\-]?$/i;
+  const nameWordRe = /^[\p{Lu}\p{Ll}][\p{L}.'\-]{0,30}$/u;
+  const looksLikeName = (s: string) => {
+    if (!s) return false;
+    if (s.length < 3 || s.length > 60) return false;
+    if (/[@\d]/.test(s)) return false;
+    if (headerNoise.test(s)) return false;
+    const words = s.split(/\s+/).filter(Boolean);
+    if (words.length < 2 || words.length > 5) return false;
+    return words.every((w) => nameWordRe.test(w));
+  };
+
+  // Try line-by-line in the top of the document. If a candidate line contains
+  // a separator like "|" / "—" / "–" / " - ", split it and test each side —
+  // common pattern is "John Doe | Senior Software Engineer".
+  let nameSet = false;
+  let nameLineIndex = -1;
+  for (let i = 0; i < Math.min(lines.length, 20); i++) {
+    const raw = unspace(lines[i]);
+    const segments = raw.split(/\s*[|│•·]\s*|\s+[–—]\s+|\s+-\s+/);
+    for (const seg of segments) {
+      const candidate = seg.trim();
+      if (looksLikeName(candidate)) {
+        result.name = toTitleCase(candidate);
+        nameSet = true;
+        nameLineIndex = i;
+        // If the line had multiple segments, the *other* segment is often
+        // the position/title.
+        if (segments.length > 1 && !result.position) {
+          const other = segments
+            .map((s) => s.trim())
+            .find((s) => s && s !== candidate);
+          if (other && other.length >= 3 && other.length <= 80) {
+            result.position = toTitleCase(other);
+          }
+        }
+        break;
+      }
+    }
+    if (nameSet) break;
+  }
+  if (!nameSet) {
+    const nameMatch = text.match(/(?:^|\n)\s*(?:name|full\s*name)\s*[:\-–]\s*(.+)/i);
+    if (nameMatch) {
+      const candidate = unspace(nameMatch[1].split("\n")[0]);
+      if (candidate.length > 1 && candidate.length < 80) {
+        result.name = toTitleCase(candidate);
+        nameSet = true;
+      }
+    }
+  }
+
+  // --- Position / Job title ---
+  // Three heuristics (first hit wins):
+  //   1. Explicit label: "Position:", "Title:", "Role:", "Designation:"
+  //   2. Line immediately after the name line (very common at top of resume)
+  //   3. Regex of common title shapes in the top 20 lines
+  const TITLE_KEYWORDS_RE =
+    /\b(?:Senior|Junior|Lead|Principal|Staff|Chief|Head|Director|VP|Vice\s+President|Founder|Co[\s\-]?founder|Owner|Partner|Associate|Intern)?\s*(?:Software|Front[\s\-]?end|Back[\s\-]?end|Full[\s\-]?stack|Web|Mobile|iOS|Android|Cloud|Data|AI|ML|Machine\s+Learning|DevOps|QA|UI|UX|Product|Project|Marketing|Sales|HR|Finance|Embedded|Network|Security|Systems|Game|Graphic|Content|Digital|Business)?\s*(?:Developer|Engineer|Designer|Manager|Analyst|Consultant|Architect|Specialist|Coordinator|Programmer|Scientist|Researcher|Administrator|Executive|Officer|Tester|Recruiter|Trainer|Teacher|Lecturer|Professor|Doctor|Attorney|Lawyer|Accountant|Auditor|Strategist|Writer|Editor|Marketer)\b/i;
+  const isPositionLine = (s: string) => {
+    if (!s) return false;
+    if (s.length < 3 || s.length > 80) return false;
+    if (/[@]/.test(s)) return false;
+    if (/^\d/.test(s)) return false;
+    return TITLE_KEYWORDS_RE.test(s);
+  };
+
+  if (!result.position) {
+    // 1. Explicit label
+    const labelMatch = text.match(
+      /(?:position|title|role|designation|current\s*role)\s*[:\-–]\s*(.+?)(?:\n|$)/i,
+    );
+    if (labelMatch) {
+      const candidate = labelMatch[1].trim();
+      if (candidate.length >= 3 && candidate.length <= 80) {
+        result.position = toTitleCase(candidate);
+      }
+    }
+  }
+  if (!result.position && nameLineIndex >= 0) {
+    // 2. Line right after the name
+    for (let j = nameLineIndex + 1; j < Math.min(lines.length, nameLineIndex + 4); j++) {
+      const candidate = unspace(lines[j]);
+      if (isPositionLine(candidate)) {
+        result.position = toTitleCase(candidate);
+        break;
+      }
+    }
+  }
+  if (!result.position) {
+    // 3. Regex over top 20 lines
+    for (let i = 0; i < Math.min(lines.length, 20); i++) {
+      const raw = unspace(lines[i]);
+      const m = raw.match(TITLE_KEYWORDS_RE);
+      if (m && isPositionLine(m[0])) {
+        result.position = toTitleCase(m[0].trim());
+        break;
+      }
     }
   }
 
@@ -326,22 +546,59 @@ function extractContactInfo(text: string): {
   }
 
   // --- Date of Birth ---
-  const dobMatch = text.match(
-    /(?:dob|date\s*of\s*birth|birth|born)\s*[:\-–]\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|\w+\s+\d{1,2},?\s+\d{4})/i,
-  );
-  if (dobMatch) result.dob = dobMatch[1].trim();
+  // Cover: DD/MM/YYYY, YYYY-MM-DD, "5 Jan 1995", "January 5, 1995", "5th January 1995",
+  // and label variants: DOB / Date of Birth / Born / D.O.B
+  const dobPatterns = [
+    /(?:d\.?o\.?b\.?|date\s*of\s*birth|birth\s*date|born(?:\s*on)?)\s*[:\-–]?\s*(\d{1,2}(?:st|nd|rd|th)?[\/\-\.\s]+(?:\d{1,2}|[a-z]{3,9})[\/\-\.\s,]+\d{2,4})/i,
+    /(?:d\.?o\.?b\.?|date\s*of\s*birth|birth\s*date|born(?:\s*on)?)\s*[:\-–]?\s*([a-z]{3,9}\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{2,4})/i,
+    /(?:d\.?o\.?b\.?|date\s*of\s*birth|birth\s*date|born(?:\s*on)?)\s*[:\-–]?\s*(\d{4}[\-\/]\d{1,2}[\-\/]\d{1,2})/i,
+  ];
+  for (const pattern of dobPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      result.dob = match[1].trim().replace(/(\d)(st|nd|rd|th)/gi, "$1");
+      break;
+    }
+  }
 
   // --- Nationality ---
   const nationalityMatch = text.match(
-    /(?:nationality|citizenship)\s*[:\-–]\s*([a-z\s]+)(?:\n|$)/i,
+    /(?:nationality|citizenship|nation)\s*[:\-–]\s*([a-z][a-z\s\-]{2,30}?)(?:[,\n]|$)/i,
   );
-  if (nationalityMatch) result.nationality = nationalityMatch[1].trim();
+  if (nationalityMatch) {
+    const val = nationalityMatch[1].trim().split(/\s{2,}/)[0].trim();
+    if (val.length >= 3 && val.length <= 30) {
+      result.nationality = toTitleCase(val);
+    }
+  }
 
   // --- City ---
-  const cityMatch = text.match(
-    /(?:city|location|residing\s*in)\s*[:\-–]\s*([a-z\s]+)(?:\n|$)/i,
+  let cityFound: string | null = null;
+  const cityLabelMatch = text.match(
+    /(?:city|town|location|residing\s*in|based\s*in)\s*[:\-–]\s*([a-z][a-z\s\-]{1,30}?)(?:[,\n]|$)/i,
   );
-  if (cityMatch) result.city = cityMatch[1].trim();
+  if (cityLabelMatch) {
+    const val = cityLabelMatch[1].trim();
+    if (val.length >= 2 && val.length <= 30 && !/^\d/.test(val)) {
+      cityFound = toTitleCase(val);
+    }
+  }
+  // Fallback: if address was found, take the last city-like token from it.
+  if (!cityFound && result.address) {
+    const segments = result.address
+      .split(/[,\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (let i = segments.length - 1; i >= 0; i--) {
+      const seg = segments[i].replace(/\b\d{4,}\b/g, "").trim(); // strip ZIPs
+      // Pure alpha, 2-30 chars, not a country-name length
+      if (/^[A-Za-z][A-Za-z\s\-]{1,29}$/.test(seg) && seg.length <= 25) {
+        cityFound = toTitleCase(seg);
+        break;
+      }
+    }
+  }
+  if (cityFound) result.city = cityFound;
 
   return result;
 }

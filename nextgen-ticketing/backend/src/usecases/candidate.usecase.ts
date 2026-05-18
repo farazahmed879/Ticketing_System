@@ -185,13 +185,30 @@ export const candidateUsecase = {
     }
 
     // Parse Resume Data
-    let parsedData = { dob: null, nationality: null, city: null };
+    let parsedData: any = {
+      name: null,
+      position: null,
+      email: null,
+      phone: null,
+      cnic: null,
+      address: null,
+      linkedin: null,
+      portfolio: null,
+      github: null,
+      dob: null,
+      nationality: null,
+      city: null,
+      objective: "",
+      workExperience: "",
+      technicalSkills: "",
+      projects: "",
+    };
     try {
       const text = await resumeParserService.extractText(
         file.buffer,
         file.mimetype,
       );
-      parsedData = resumeParserService.parseData(text);
+      parsedData = { ...parsedData, ...resumeParserService.parseData(text) };
     } catch (parseError) {
       console.error("Failed to parse resume text:", parseError);
     }

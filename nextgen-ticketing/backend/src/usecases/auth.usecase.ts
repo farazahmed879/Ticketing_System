@@ -29,6 +29,7 @@ export const authUsecase = {
         id: user.id,
         email: user.email,
         fullname: user.fullname,
+        leaves: user.leaves,
         role: {
           name: user.role.name,
           permissions: user.role.permissions,
@@ -49,6 +50,7 @@ export const authUsecase = {
       email: user.email,
       fullname: user.fullname,
       title: user.title,
+      leaves: user.leaves,
       role: {
         name: user.role.name,
         permissions: user.role.permissions,

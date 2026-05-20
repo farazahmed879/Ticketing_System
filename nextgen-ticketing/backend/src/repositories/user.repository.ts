@@ -26,6 +26,7 @@ export const userRepository = {
         location: true,
         employeeType: true,
         branch: true,
+        leaves: true,
         lastOnline: true,
         deleted: true,
         createdAt: true,

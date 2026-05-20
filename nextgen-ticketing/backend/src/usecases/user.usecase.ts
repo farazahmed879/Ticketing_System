@@ -186,6 +186,9 @@ export const userUsecase = {
     if (data.employeeType !== undefined)
       updateData.employeeType = data.employeeType;
     if (data.branch !== undefined) updateData.branch = data.branch;
+    if (data.leaves !== undefined && data.leaves !== null) {
+      updateData.leaves = Number(data.leaves);
+    }
 
     if (data.password) {
       updateData.password = await bcrypt.hash(data.password, 10);

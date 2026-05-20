@@ -33,6 +33,7 @@ model User {
   location          String?
   employeeType      String?   @default("Onsite") // Onsite, Remote
   branch            String?
+  leaves            Float     @default(20)
 
   roleId        String    @db.ObjectId
   role          Role      @relation(fields: [roleId], references: [id])

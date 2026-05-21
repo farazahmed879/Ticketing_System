@@ -7,13 +7,21 @@ export const announcementController = {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
+      const search = (req.query.search as string) || "";
       const skip = (page - 1) * limit;
 
       const user = (req as any).user;
-      let where = {};
+      let where: any = {};
 
       if (user.role !== RoleName.ADMIN && user.role !== RoleName.AGENT) {
-        where = { authorId: user.id };
+        where.authorId = user.id;
+      }
+
+      if (search) {
+        where.OR = [
+          { title: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ];
       }
 
       const [announcements, total] = await Promise.all([

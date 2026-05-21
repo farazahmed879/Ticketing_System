@@ -8,6 +8,7 @@ import type { TableColumn } from "../../components/types";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
+import CustomInput from "../../components/CustomInput";
 import { format } from "date-fns";
 import AnnouncementModal from "./components/AnnouncementModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
@@ -42,6 +43,7 @@ const AnnouncementList: React.FC = () => {
   const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [search, setSearch] = useState("");
   const { showNotification, setIsLoading } = useNotification();
 
   const fetchData = async () => {
@@ -51,6 +53,7 @@ const AnnouncementList: React.FC = () => {
         params: {
           page: page + 1,
           limit: limit,
+          search,
         },
       });
       setAnnouncements(response.data.announcements);
@@ -66,7 +69,7 @@ const AnnouncementList: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [page, limit]);
+  }, [page, limit, search]);
 
   const handleSubmit = async (data: any) => {
     setIsSaving(true);
@@ -174,6 +177,7 @@ const AnnouncementList: React.FC = () => {
             size="sm"
             onClick={() => handleEdit(ann)}
             icon={<CustomIcon name="Edit2" size={16} />}
+            title="Edit Shoutout"
           />
           <CustomButton
             variant="ghost"
@@ -186,6 +190,7 @@ const AnnouncementList: React.FC = () => {
                 color="var(--accent-danger)"
               />
             }
+            title="Delete Shoutout"
           />
         </div>
       ),
@@ -219,6 +224,20 @@ const AnnouncementList: React.FC = () => {
             >
               Create Shoutout
             </CustomButton>
+          </div>
+        }
+        filters={
+          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+            <CustomInput
+              placeholder="Search shoutouts..."
+              value={search}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
+              icon={<CustomIcon name="Search" size={18} />}
+              containerStyle={{ minWidth: "300px" }}
+            />
           </div>
         }
         pagination={

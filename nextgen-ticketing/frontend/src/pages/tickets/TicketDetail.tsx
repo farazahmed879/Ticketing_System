@@ -1067,7 +1067,7 @@ const TicketDetail: React.FC = () => {
                   }}
                 >
                   <CustomIcon name="Layers" size={16} />
-                  <span>Project: {ticket.group?.name || "None"}</span>
+                  <span>Project: {ticket.project?.name || "None"}</span>
                 </div>
                 <div
                   style={{ display: "flex", flexDirection: "column", gap: 4 }}

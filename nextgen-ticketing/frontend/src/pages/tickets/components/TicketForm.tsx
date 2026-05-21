@@ -31,7 +31,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
         subject: "",
         issue: "",
         priorityId: "",
-        groupId: "",
+        projectId: "",
         typeId: "",
         assigneeId: "",
         dueDate: "",
@@ -65,7 +65,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
         subject: initialData.subject,
         issue: initialData.issue,
         priorityId: initialData.priority.id,
-        groupId: initialData.group?.id || "",
+        projectId: (initialData as any).project?.id || "",
         typeId: initialData.type?.id || "",
         assigneeId: initialData.assignee?.id || "",
         dueDate: initialData.dueDate
@@ -77,7 +77,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
         subject: "",
         issue: "",
         priorityId: priorities.length > 0 ? priorities[0].id : "",
-        groupId: "",
+        projectId: "",
         typeId: types.length > 0 ? types[0].id : "",
         assigneeId: "",
         dueDate: "",
@@ -132,7 +132,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
         <CustomSelect
-          name="groupId"
+          name="projectId"
           control={control}
           label="Project"
           placeholder="No Project"

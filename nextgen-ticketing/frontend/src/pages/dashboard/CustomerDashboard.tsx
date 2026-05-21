@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import StatsCards from "./components/StatsCards";
 import api from "../../services/api";
@@ -9,6 +10,7 @@ import CustomSkeleton from "../../components/CustomSkeleton/CustomSkeleton";
 import styles from "./Dashboard.module.css";
 
 const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -161,7 +163,26 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
         ) : projects.length > 0 ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 20 }}>
             {projects.map((project) => (
-              <div key={project.id} className="glass-card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+              <div
+                key={project.id}
+                onClick={() => navigate(`/projects/${project.id}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate(`/projects/${project.id}`);
+                  }
+                }}
+                className="glass-card"
+                style={{
+                  padding: 24,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 16,
+                  cursor: "pointer",
+                }}
+              >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{ 

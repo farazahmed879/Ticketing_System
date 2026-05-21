@@ -75,6 +75,15 @@ export interface Project {
   department?: { id: string; name: string };
   clientIds: string[];
   clients?: { id: string; fullname: string; image?: string }[];
+  tickets?: {
+    id: string;
+    uid: number;
+    subject: string;
+    createdAt: string;
+    status?: { id: string; name: string; color?: string };
+    priority?: { id: string; name: string; color?: string };
+    assignee?: { id: string; fullname: string; image?: string };
+  }[];
   createdAt: string;
 }
 
@@ -100,7 +109,8 @@ export interface Ticket {
   status: { id: string; name: string; color: string };
   priority: { id: string; name: string; color: string };
   type?: { id: string; name: string };
-  group: { id: string; name: string };
+  group?: { id: string; name: string };
+  project?: { id: string; name: string };
   owner: { id: string; fullname: string; image?: string };
   assignee?: { id: string; fullname: string; image?: string };
   createdAt: string;
@@ -350,7 +360,7 @@ export interface TicketFormData {
   subject: string;
   issue: string;
   priorityId: string;
-  groupId: string;
+  projectId: string;
   typeId: string;
   assigneeId: string;
   dueDate?: string;

@@ -25,6 +25,19 @@ export const projectRepository = {
       include: {
         department: { select: { id: true, name: true } },
         clients: { select: { id: true, fullname: true, image: true } },
+        tickets: {
+          where: { deleted: false },
+          select: {
+            id: true,
+            uid: true,
+            subject: true,
+            createdAt: true,
+            status: { select: { id: true, name: true, color: true } },
+            priority: { select: { id: true, name: true, color: true } },
+            assignee: { select: { id: true, fullname: true, image: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
       },
     });
   },

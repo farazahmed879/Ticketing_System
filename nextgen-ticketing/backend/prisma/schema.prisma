@@ -116,6 +116,9 @@ model Ticket {
   groupId     String?  @db.ObjectId
   group       Group?   @relation(fields: [groupId], references: [id])
 
+  projectId   String?  @db.ObjectId
+  project     Project? @relation(fields: [projectId], references: [id])
+
   tags        String[]
   comments    Comment[]
   history     History[]
@@ -233,6 +236,8 @@ model Project {
 
   clientIds   String[] @db.ObjectId
   clients     User[]   @relation(fields: [clientIds], references: [id])
+
+  tickets     Ticket[]
 
   timesheetTasks TimesheetTask[]
 

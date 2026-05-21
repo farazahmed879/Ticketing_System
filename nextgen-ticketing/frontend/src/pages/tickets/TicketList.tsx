@@ -106,7 +106,7 @@ const TicketList: React.FC = () => {
     try {
       await api.post(API_ROUTES.TICKETS.BASE, {
         ...data,
-        groupId: data.groupId || null,
+        projectId: data.projectId || null,
         assigneeId: data.assigneeId || null,
       });
       setIsModalOpen(false);

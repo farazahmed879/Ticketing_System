@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
@@ -30,6 +31,7 @@ const statusBadgeVariant = (status: string) => {
 import StandardListLayout from "../../components/StandardListLayout";
 
 const ProjectList: React.FC = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -213,13 +215,19 @@ const ProjectList: React.FC = () => {
           <CustomButton
             variant="ghost"
             size="sm"
-            onClick={() => handleEdit(p)}
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              handleEdit(p);
+            }}
             icon={<CustomIcon name="Edit2" size={16} />}
           />
           <CustomButton
             variant="ghost"
             size="sm"
-            onClick={() => handleDelete(p.id)}
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              handleDelete(p.id);
+            }}
             icon={<CustomIcon name="Trash2" size={16} />}
             style={{ color: "var(--accent-danger)" }}
           />
@@ -278,6 +286,7 @@ const ProjectList: React.FC = () => {
           loading={loading}
           loadingMessage="Loading projects..."
           emptyMessage="No projects found"
+          onRowClick={(p) => navigate(`/projects/${p.id}`)}
         />
       </StandardListLayout>
 

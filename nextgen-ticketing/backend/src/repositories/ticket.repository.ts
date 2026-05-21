@@ -16,6 +16,7 @@ export const ticketRepository = {
           select: { id: true, fullname: true, email: true, image: true },
         },
         group: { select: { id: true, name: true } },
+        project: { select: { id: true, name: true } },
         _count: { select: { comments: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -91,6 +92,7 @@ export const ticketRepository = {
           select: { id: true, fullname: true, email: true, image: true },
         },
         group: { select: { id: true, name: true } },
+        project: { select: { id: true, name: true } },
         comments: {
           include: {
             author: { select: { id: true, fullname: true, image: true } },
@@ -116,6 +118,7 @@ export const ticketRepository = {
         type: true,
         owner: true,
         group: true,
+        project: true,
         assignee: true,
       },
     });
@@ -131,6 +134,7 @@ export const ticketRepository = {
         type: true,
         owner: true,
         group: true,
+        project: true,
         assignee: true,
       },
     });

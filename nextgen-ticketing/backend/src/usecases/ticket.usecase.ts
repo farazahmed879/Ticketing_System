@@ -124,6 +124,8 @@ export const ticketUsecase = {
     };
 
     if (data.groupId) createData.group = { connect: { id: data.groupId } };
+    if (data.projectId)
+      createData.project = { connect: { id: data.projectId } };
     if (data.assigneeId)
       createData.assignee = { connect: { id: data.assigneeId } };
 
@@ -247,6 +249,7 @@ export const ticketUsecase = {
 
     if (data.typeId) updateData.typeId = data.typeId;
     if (data.groupId) updateData.groupId = data.groupId;
+    if (data.projectId !== undefined) updateData.projectId = data.projectId;
 
     if (
       data.assigneeId !== undefined &&
@@ -331,13 +334,15 @@ export const ticketUsecase = {
   },
 
   async batchUpdateTickets(data: any, user: any) {
-    const { ticketIds, statusId, priorityId, groupId, assigneeId } = data;
+    const { ticketIds, statusId, priorityId, groupId, projectId, assigneeId } =
+      data;
     const actorId = user.id;
 
     const updateData: any = {};
     if (statusId) updateData.statusId = statusId;
     if (priorityId) updateData.priorityId = priorityId;
     if (groupId) updateData.groupId = groupId;
+    if (projectId !== undefined) updateData.projectId = projectId;
     if (assigneeId !== undefined) updateData.assigneeId = assigneeId;
 
     await ticketRepository.updateMany(ticketIds, updateData);
@@ -452,7 +457,7 @@ export const ticketUsecase = {
           data: {
             description: `Working on Ticket #${ticket.uid}: ${ticket.subject}`,
             hours: 0,
-            projectId: ticket.groupId,
+            projectId: (ticket as any).projectId ?? null,
             ticketId: ticket.id,
             entryId: entry.id,
           },

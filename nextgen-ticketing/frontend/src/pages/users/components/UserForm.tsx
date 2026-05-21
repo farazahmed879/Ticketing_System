@@ -46,6 +46,7 @@ const UserForm: React.FC<UserFormProps> = ({
       location: "",
       employeeType: "Onsite",
       branch: "",
+      leaves: 20,
     },
   });
 
@@ -93,6 +94,7 @@ const UserForm: React.FC<UserFormProps> = ({
         location: initialData.location || "",
         employeeType: initialData.employeeType || "Onsite",
         branch: initialData.branch || "",
+        leaves: initialData.leaves ?? 20,
       });
     } else {
       reset({
@@ -117,6 +119,7 @@ const UserForm: React.FC<UserFormProps> = ({
         location: "",
         employeeType: "Onsite",
         branch: "",
+        leaves: 20,
       });
     }
   }, [initialData, reset]);
@@ -166,6 +169,10 @@ const UserForm: React.FC<UserFormProps> = ({
           ...data,
           primaryContact: data.primaryContact ? `${data.primaryContactCode} ${data.primaryContact.trim()}` : "",
           secondaryContact: data.secondaryContact ? `${data.secondaryContactCode} ${data.secondaryContact.trim()}` : "",
+          leaves:
+            data.leaves !== undefined && (data.leaves as any) !== ""
+              ? Number(data.leaves)
+              : undefined,
         };
         // Remove code fields from payload before sending
         delete payload.primaryContactCode;
@@ -299,6 +306,18 @@ const UserForm: React.FC<UserFormProps> = ({
                   />
                   {employeeType === "Onsite" && <CustomInput name="branch" control={control} label="Branch" placeholder="Main Branch" />}
                 </div>
+                <CustomInput
+                  name="leaves"
+                  control={control}
+                  label="Leave Balance (days)"
+                  type="number"
+                  placeholder="20"
+                  min={0}
+                  step="0.5"
+                  rules={{
+                    min: { value: 0, message: "Cannot be negative" },
+                  }}
+                />
               </div>
 
               {/* Other info */}

@@ -29,6 +29,7 @@ export interface User {
   location?: string;
   employeeType?: string;
   branch?: string;
+  leaves?: number;
   image?: string;
   lastOnline?: string;
 }
@@ -395,6 +396,7 @@ export interface UserFormData {
   location?: string;
   employeeType?: string;
   branch?: string;
+  leaves?: number;
 }
 
 export interface ProjectFormData {

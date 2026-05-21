@@ -232,6 +232,27 @@ const Profile: React.FC = () => {
                 <label>Employee ID</label>
                 <span>#{user.id.toString().slice(-6).toUpperCase()}</span>
               </div>
+              <div className={styles.infoItem}>
+                <label>Leave Balance</label>
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <CustomIcon
+                    name="Calendar"
+                    size={16}
+                    color="var(--accent-primary)"
+                  />
+                  <strong style={{ fontSize: "1.05rem" }}>
+                    {user.leaves ?? 0}
+                  </strong>
+                  <span
+                    style={{
+                      color: "var(--text-muted)",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    days remaining
+                  </span>
+                </span>
+              </div>
             </div>
           </div>
 

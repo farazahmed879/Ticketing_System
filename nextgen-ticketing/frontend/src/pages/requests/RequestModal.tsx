@@ -16,8 +16,10 @@ interface RequestModalProps {
 }
 
 const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const { control, handleSubmit, reset } = useForm();
+  const { control, handleSubmit, reset, watch } = useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const todayIso = new Date().toISOString().split("T")[0];
+  const watchedStart = watch("startDate");
 
   const onSubmit = async (data: any) => {
     try {
@@ -72,6 +74,7 @@ const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, onSuccess 
             control={control}
             type="date"
             label="Start Date"
+            min={todayIso}
             rules={{ required: "Start date is required" }}
           />
           <CustomInput
@@ -79,6 +82,7 @@ const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, onSuccess 
             control={control}
             type="date"
             label="End Date"
+            min={watchedStart || todayIso}
           />
         </div>
 

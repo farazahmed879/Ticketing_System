@@ -97,6 +97,7 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
             rules={{ required: "Date is required" }}
             label="Scheduled Date"
             type="date"
+            min={new Date().toISOString().split("T")[0]}
           />
           <CustomSelect
             name="type"

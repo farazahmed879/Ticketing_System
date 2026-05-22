@@ -933,15 +933,22 @@ const TicketDetail: React.FC = () => {
                   placeholder="Priority"
                 />
               ) : (
-                <CustomBadge
-                  color={ticket.priority.color}
-                  style={{
-                    textAlign: "center",
-                    padding: "8px",
-                  }}
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: 10 }}
                 >
-                  {ticket.priority.name}
-                </CustomBadge>
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: ticket.priority.color,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span style={{ fontSize: "0.9rem" }}>
+                    {ticket.priority.name}
+                  </span>
+                </div>
               )}
             </div>
 
@@ -950,7 +957,7 @@ const TicketDetail: React.FC = () => {
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div
                   className={tableStyles.avatar}
-                  style={{ width: 32, height: 32 }}
+                  style={{ width: 32, height: 32 , display: "flex", alignItems: "center", justifyContent: "center" }}
                 >
                   <CustomIcon name="User" size={16} />
                 </div>
@@ -998,7 +1005,7 @@ const TicketDetail: React.FC = () => {
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div
                     className={tableStyles.avatar}
-                    style={{ width: 32, height: 32 }}
+                    style={{ width: 32, height: 32 , display: "flex", alignItems: "center", justifyContent: "center" }}
                   >
                     {ticket?.assignee?.image ? (
                       <img

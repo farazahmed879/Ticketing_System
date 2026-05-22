@@ -33,7 +33,7 @@ export const ticketRepository = {
     return prisma.ticket.findMany({
       where: {
         deleted: false,
-        dueDate: { lt: endOfYesterday },
+        dueDate: { not: null, lt: endOfYesterday },
         status: {
           isResolved: false,
           name: { not: StatusName.FAILED },

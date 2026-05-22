@@ -241,14 +241,25 @@ const TicketList: React.FC = () => {
               header: "Title",
               key: "subject",
               render: (t) => (
-                <>
-                  <div style={{ fontSize: 12, color: "lightgray" }}>
-                    {t.group?.name || "-"}
-                  </div>
-                  <div style={{ fontWeight: 600 }}>
-                    {truncateString(t.subject, 50)}
-                  </div>
-                </>
+                <div style={{ fontWeight: 600 }}>
+                  {truncateString(t.subject, 50)}
+                </div>
+              ),
+            },
+            {
+              header: "Project",
+              key: "project",
+              render: (t) => (
+                <span
+                  style={{
+                    fontSize: "0.85rem",
+                    color: t.project?.name
+                      ? "var(--text-secondary)"
+                      : "var(--text-muted)",
+                  }}
+                >
+                  {t.project?.name || "-"}
+                </span>
               ),
             },
             {
@@ -264,11 +275,7 @@ const TicketList: React.FC = () => {
               header: "Priority",
               key: "priority",
               render: (t) => (
-                <CustomBadge
-                  variant={
-                    t.priority.name === PriorityName.HIGH ? "danger" : "neutral"
-                  }
-                >
+                <CustomBadge color={t.priority.color}>
                   {t.priority.name}
                 </CustomBadge>
               ),

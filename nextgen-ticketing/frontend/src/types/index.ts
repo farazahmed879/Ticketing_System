@@ -32,6 +32,7 @@ export interface User {
   leaves?: number;
   image?: string;
   lastOnline?: string;
+  createdAt?: string;
 }
 
 export interface Department {

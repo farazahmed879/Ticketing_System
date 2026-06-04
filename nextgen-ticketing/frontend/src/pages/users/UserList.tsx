@@ -20,6 +20,27 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 
 import StandardListLayout from "../../components/StandardListLayout";
 
+// Map each role to a distinct CustomBadge variant and matching text color.
+const getRoleStyle = (
+  roleName?: string,
+): { variant: "danger" | "primary" | "warning" | "success" | "info" | "neutral"; color: string } => {
+  switch (roleName?.toLowerCase()) {
+    case "admin":
+      return { variant: "danger", color: "#f44336" };
+    case "manager":
+      return { variant: "primary", color: "var(--accent-primary)" };
+    case "hr":
+      return { variant: "warning", color: "#ff9800" };
+    case "employee":
+      return { variant: "success", color: "#4caf50" };
+    case "client":
+    case "customer":
+      return { variant: "info", color: "#2196f3" };
+    default:
+      return { variant: "neutral", color: "var(--text-muted)" };
+  }
+};
+
 const UserList: React.FC = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
@@ -34,6 +55,7 @@ const UserList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -143,50 +165,75 @@ const UserList: React.FC = () => {
           </div>
           <div>
             <div style={{ fontWeight: 600 }}>{u.fullname}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-              {u.email}
+            <div
+              style={{
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                color: getRoleStyle(u.role?.name).color,
+              }}
+            >
+              {u.role?.name}
             </div>
           </div>
         </div>
       ),
     },
     {
-      header: "Role",
-      key: "role",
+      header: "Contact",
+      key: "contact",
       render: (u) => (
-        <CustomBadge variant={u.role.isAdmin ? "danger" : "info"}>
-          {u.role.name}
-        </CustomBadge>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <span
+            style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}
+          >
+            {u.email}
+          </span>
+          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+            {u.primaryContact || u.mobileNumber || "—"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Emergency Contact",
+      key: "emergencyContact",
+      render: (u) => (
+        <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+          {u.emergencyContact || "—"}
+        </span>
       ),
     },
     {
       header: "Status",
       key: "status",
       render: (u) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <div
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: u.lastOnline
-                ? "var(--accent-success)"
-                : "var(--text-muted)",
-            }}
-          ></div>
-          <span style={{ fontSize: "0.85rem" }}>
-            {u.lastOnline ? "Online" : "Offline"}
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: u.lastOnline
+                  ? "var(--accent-success)"
+                  : "var(--text-muted)",
+              }}
+            />
+            <span style={{ fontSize: "0.85rem" }}>
+              {u.lastOnline ? "Online" : "Offline"}
+            </span>
+          </div>
+          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+            Joined{" "}
+            {u.createdAt
+              ? new Date(u.createdAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              : "—"}
           </span>
         </div>
-      ),
-    },
-    {
-      header: "Joined",
-      key: "createdAt",
-      render: () => (
-        <span style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-          {new Date().toLocaleDateString()}
-        </span>
       ),
     },
     {
@@ -267,7 +314,7 @@ const UserList: React.FC = () => {
           </div>
         }
         filters={
-          <div style={{ display: "flex", gap: 16 }}>
+          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
             <CustomInput
               placeholder="Search users..."
               value={searchTerm}
@@ -293,6 +340,33 @@ const UserList: React.FC = () => {
               ]}
               style={{ width: 200 }}
             />
+            <div
+              style={{
+                display: "flex",
+                gap: 4,
+                padding: 4,
+                borderRadius: 10,
+                border: "1px solid var(--border-glass)",
+                background: "rgba(255,255,255,0.03)",
+              }}
+            >
+              <CustomButton
+                variant={viewMode === "list" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                icon={<CustomIcon name="List" size={16} />}
+                title="List view"
+                style={{ padding: "6px 10px" }}
+              />
+              <CustomButton
+                variant={viewMode === "grid" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                icon={<CustomIcon name="LayoutGrid" size={16} />}
+                title="Grid view"
+                style={{ padding: "6px 10px" }}
+              />
+            </div>
           </div>
         }
         pagination={
@@ -309,15 +383,241 @@ const UserList: React.FC = () => {
           />
         }
       >
-        <CustomTable
-          style={{ flex: 1, overflowY: "auto" }}
-          columns={columns}
-          data={users}
-          loading={loading}
-          loadingMessage="Loading users..."
-          emptyMessage="No users found"
-          onRowClick={(u) => navigate(`/profile/${u.id}`)}
-        />
+        {viewMode === "list" ? (
+          <CustomTable
+            style={{ flex: 1, overflowY: "auto" }}
+            columns={columns}
+            data={users}
+            loading={loading}
+            loadingMessage="Loading users..."
+            emptyMessage="No users found"
+            onRowClick={(u) => navigate(`/profile/${u.id}`)}
+          />
+        ) : loading ? (
+          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+            Loading users...
+          </div>
+        ) : users.length === 0 ? (
+          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+            No users found
+          </div>
+        ) : (
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gap: 16,
+              padding: "4px 0",
+            }}
+          >
+            {users.map((u) => (
+              <div
+                key={u.id}
+                className="glass-card"
+                onClick={() => navigate(`/profile/${u.id}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate(`/profile/${u.id}`);
+                  }
+                }}
+                style={{
+                  padding: 20,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 14,
+                  cursor: "pointer",
+                  border: "1px solid var(--border-glass)",
+                  borderRadius: 14,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                  }}
+                >
+                  <div
+                    className={styles.avatar}
+                    style={{ width: 48, height: 48, fontSize: "1.1rem" }}
+                  >
+                    {u.image ? (
+                      <img src={u.image} alt={u.fullname} />
+                    ) : (
+                      u.fullname.charAt(0)
+                    )}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        fontSize: "0.95rem",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {u.fullname}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        color: getRoleStyle(u.role?.name).color,
+                      }}
+                    >
+                      {u.role?.name}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    fontSize: "0.8rem",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      minWidth: 0,
+                    }}
+                  >
+                    <CustomIcon name="Mail" size={14} />
+                    <span
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {u.email}
+                    </span>
+                  </div>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  >
+                    <CustomIcon name="Phone" size={14} />
+                    <span style={{ color: "var(--text-muted)" }}>
+                      {u.primaryContact || u.mobileNumber || "—"}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      minWidth: 0,
+                    }}
+                    title={u.emergencyContact || ""}
+                  >
+                    <CustomIcon name="LifeBuoy" size={14} />
+                    <span
+                      style={{
+                        color: "var(--text-muted)",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {u.emergencyContact || "—"}
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: u.lastOnline
+                          ? "var(--accent-success)"
+                          : "var(--text-muted)",
+                      }}
+                    />
+                    <span
+                      style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}
+                    >
+                      {u.lastOnline ? "Online" : "Offline"}
+                    </span>
+                  </div>
+                  <span
+                    style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}
+                  >
+                    Joined{" "}
+                    {u.createdAt
+                      ? new Date(u.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "—"}
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: 4,
+                    borderTop: "1px solid var(--border-glass)",
+                    paddingTop: 10,
+                    marginTop: 2,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <CustomButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(u)}
+                    title="Edit User"
+                    icon={<CustomIcon name="Edit2" size={16} />}
+                    style={{ color: "var(--text-muted)", padding: "4px 8px" }}
+                  />
+                  <CustomButton
+                    variant="ghost"
+                    size="sm"
+                    disabled={u.role.isAdmin}
+                    onClick={() => handleDelete(u.id)}
+                    title={
+                      u.role.isAdmin
+                        ? "Admin accounts cannot be deleted"
+                        : "Delete User"
+                    }
+                    icon={<CustomIcon name="Trash2" size={16} />}
+                    style={{
+                      color: u.role.isAdmin
+                        ? "var(--text-muted)"
+                        : "var(--accent-danger)",
+                      padding: "4px 8px",
+                      opacity: u.role.isAdmin ? 0.5 : 1,
+                      cursor: u.role.isAdmin ? "not-allowed" : "pointer",
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </StandardListLayout>
 
       <UserModal

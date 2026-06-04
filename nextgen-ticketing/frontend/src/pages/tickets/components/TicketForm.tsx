@@ -221,6 +221,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
           label="Due Date (Optional)"
           type="date"
           placeholder="Select due date"
+          min={new Date().toISOString().split("T")[0]}
         />
       </div>
 

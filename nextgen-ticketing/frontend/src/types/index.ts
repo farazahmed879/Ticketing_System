@@ -112,6 +112,7 @@ export interface Ticket {
   type?: { id: string; name: string };
   group?: { id: string; name: string };
   project?: { id: string; name: string };
+  attachments?: string[];
   owner: { id: string; fullname: string; image?: string };
   assignee?: { id: string; fullname: string; image?: string };
   createdAt: string;

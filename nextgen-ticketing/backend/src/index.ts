@@ -47,7 +47,9 @@ app.set('io', io);
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
-app.use(express.json());
+// Large limit to accommodate base64-encoded image attachments on tickets and
+// comments (up to 5 images × 2MB binary ≈ 13.3MB base64 per payload).
+app.use(express.json({ limit: "20mb" }));
 
 // Swagger
 setupSwagger(app);

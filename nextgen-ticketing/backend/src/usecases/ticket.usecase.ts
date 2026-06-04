@@ -8,6 +8,34 @@ import {
 } from "../utils/constants";
 import { startOfDay } from "date-fns";
 
+const MAX_ATTACHMENTS = 5;
+const MAX_ATTACHMENT_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB binary, after base64 decode
+const ATTACHMENT_DATA_URL_RE = /^data:image\/(png|jpe?g|webp|gif);base64,/i;
+
+function validateAttachments(attachments: any): string[] | undefined {
+  if (attachments === undefined || attachments === null) return undefined;
+  if (!Array.isArray(attachments)) {
+    throw new Error("attachments must be an array.");
+  }
+  if (attachments.length > MAX_ATTACHMENTS) {
+    throw new Error(`Maximum ${MAX_ATTACHMENTS} attachments allowed.`);
+  }
+  for (const a of attachments) {
+    if (typeof a !== "string" || !ATTACHMENT_DATA_URL_RE.test(a)) {
+      throw new Error(
+        "Attachments must be PNG, JPEG, WebP, or GIF data URLs.",
+      );
+    }
+    const base64 = a.split(",")[1] || "";
+    const padding = (base64.match(/=+$/) || [""])[0].length;
+    const binarySize = (base64.length * 3) / 4 - padding;
+    if (binarySize > MAX_ATTACHMENT_SIZE_BYTES) {
+      throw new Error("Each attachment must be 2MB or smaller.");
+    }
+  }
+  return attachments as string[];
+}
+
 export const ticketUsecase = {
   async autoFailOverdueTickets() {
     const endOfYesterday = new Date();
@@ -104,6 +132,8 @@ export const ticketUsecase = {
       finalStatusId = newStatus?.id;
     }
 
+    const validatedAttachments = validateAttachments(data.attachments) ?? [];
+
     const createData: any = {
       uid,
       subject: data.subject,
@@ -113,6 +143,7 @@ export const ticketUsecase = {
       type: { connect: { id: data.typeId } },
       owner: { connect: { id: user.id } },
       tags: data.tags || [],
+      attachments: validatedAttachments,
       dueDate: data.dueDate ? new Date(data.dueDate) : null,
       history: {
         create: {
@@ -193,7 +224,11 @@ export const ticketUsecase = {
 
     // --- RBAC: gate each editable field per the role matrix ---
     // Subject / Description
-    if (data.subject !== undefined || data.issue !== undefined) {
+    if (
+      data.subject !== undefined ||
+      data.issue !== undefined ||
+      data.attachments !== undefined
+    ) {
       const canEditContent =
         isAdminOrManager ||
         (isEmployee && (isOwner || isAssignee)) ||
@@ -290,6 +325,9 @@ export const ticketUsecase = {
       updateData.subject = data.subject;
     if (data.issue && data.issue !== existingTicket.issue)
       updateData.issue = data.issue;
+    if (data.attachments !== undefined) {
+      updateData.attachments = validateAttachments(data.attachments) ?? [];
+    }
 
     if (data.statusId && data.statusId !== existingTicket.statusId) {
       const newStatus = await ticketRepository.findStatusById(data.statusId);
@@ -441,10 +479,12 @@ export const ticketUsecase = {
   async addComment(id: string, data: any, user: any) {
     const authorId = data.authorId || user.id;
     const ticketId = data.ticketId || id;
+    const attachments = validateAttachments(data.attachments) ?? [];
 
     const newComment = await ticketRepository.addComment({
       comment: data.comment,
       isNote: data.isNote || false,
+      attachments,
       authorId,
       ticketId,
     });

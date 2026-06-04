@@ -5,6 +5,9 @@ export const ticketRepository = {
   async findMany(where: any, skip: number, take: number) {
     return prisma.ticket.findMany({
       where,
+      // Omit attachments here so list payloads stay small.
+      // Attachments are still fetched in findTicketById for the detail page.
+      omit: { attachments: true },
       include: {
         status: true,
         priority: true,

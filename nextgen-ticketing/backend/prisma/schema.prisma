@@ -120,6 +120,7 @@ model Ticket {
   project     Project? @relation(fields: [projectId], references: [id])
 
   tags        String[]
+  attachments String[]
   comments    Comment[]
   history     History[]
   timesheetTasks TimesheetTask[]
@@ -162,6 +163,7 @@ model Comment {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   comment     String
   isNote      Boolean  @default(false)
+  attachments String[]
   authorId    String   @db.ObjectId
   author      User     @relation(fields: [authorId], references: [id])
   ticketId    String   @db.ObjectId

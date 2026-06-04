@@ -28,6 +28,11 @@ const TicketDetail: React.FC = () => {
   );
   const [newComment, setNewComment] = useState("");
   const [isNote, setIsNote] = useState(false);
+  const [isEditingSubject, setIsEditingSubject] = useState(false);
+  const [subjectDraft, setSubjectDraft] = useState("");
+  const [isEditingIssue, setIsEditingIssue] = useState(false);
+  const [issueDraft, setIssueDraft] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [statuses, setStatuses] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
@@ -56,6 +61,27 @@ const TicketDetail: React.FC = () => {
   const canUpdatePriority =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.tickets?.priority;
+
+  // Mirrors the backend matrix in ticket.usecase.updateTicket.
+  // Subject + description editable by: Admin, Manager, Employee (if owner or
+  // assignee), Client (if owner AND ticket still in "New" status).
+  const canEditContent = (() => {
+    if (!ticket || !user) return false;
+    const role = user.role?.name;
+    const isAdmin = role === RoleName.ADMIN;
+    const isManager = role === RoleName.AGENT;
+    const isEmployee = role === RoleName.EMPLOYEE;
+    const isClient = role === RoleName.CUSTOMER;
+    const isOwner = ticket.owner.id === user.id;
+    const isAssignee = ticket.assignee?.id === user.id;
+    const ticketIsNew = ticket.status?.name === StatusName.NEW;
+    return (
+      isAdmin ||
+      isManager ||
+      (isEmployee && (isOwner || isAssignee)) ||
+      (isClient && isOwner && ticketIsNew)
+    );
+  })();
 
   const fetchTicket = async () => {
     try {
@@ -103,6 +129,82 @@ const TicketDetail: React.FC = () => {
     fetchStatuses();
     fetchPriorities();
   }, [id, canAssign]);
+
+  const startEditSubject = () => {
+    if (!ticket) return;
+    setSubjectDraft(ticket.subject);
+    setIsEditingSubject(true);
+  };
+
+  const cancelEditSubject = () => {
+    setIsEditingSubject(false);
+    setSubjectDraft("");
+  };
+
+  const handleSaveSubject = async () => {
+    if (!ticket) return;
+    const trimmed = subjectDraft.trim();
+    if (!trimmed) {
+      showNotification("error", "Subject cannot be empty");
+      return;
+    }
+    if (trimmed === ticket.subject) {
+      setIsEditingSubject(false);
+      return;
+    }
+    setIsSavingEdit(true);
+    try {
+      await api.put(API_ROUTES.TICKETS.BY_ID(id!), { subject: trimmed });
+      showNotification("success", "Subject updated");
+      setIsEditingSubject(false);
+      fetchTicket();
+    } catch (err: any) {
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to update subject",
+      );
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const startEditIssue = () => {
+    if (!ticket) return;
+    setIssueDraft(ticket.issue);
+    setIsEditingIssue(true);
+  };
+
+  const cancelEditIssue = () => {
+    setIsEditingIssue(false);
+    setIssueDraft("");
+  };
+
+  const handleSaveIssue = async () => {
+    if (!ticket) return;
+    const trimmed = issueDraft.trim();
+    if (!trimmed) {
+      showNotification("error", "Description cannot be empty");
+      return;
+    }
+    if (trimmed === ticket.issue) {
+      setIsEditingIssue(false);
+      return;
+    }
+    setIsSavingEdit(true);
+    try {
+      await api.put(API_ROUTES.TICKETS.BY_ID(id!), { issue: trimmed });
+      showNotification("success", "Description updated");
+      setIsEditingIssue(false);
+      fetchTicket();
+    } catch (err: any) {
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to update description",
+      );
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -679,9 +781,67 @@ const TicketDetail: React.FC = () => {
         <div className={styles.leftColumn}>
           <div className={`${styles.ticketInfo} glass-card`}>
             <div className={styles.ticketHeader}>
-              <div>
+              <div style={{ flex: 1 }}>
                 <span className={styles.uid}>Ticket #{ticket.uid}</span>
-                <h1 className={styles.title}>{ticket.subject}</h1>
+                {isEditingSubject ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "center",
+                      marginTop: 8,
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={subjectDraft}
+                      onChange={(e) => setSubjectDraft(e.target.value)}
+                      autoFocus
+                      style={{
+                        flex: 1,
+                        fontSize: "1.4rem",
+                        fontWeight: 700,
+                        padding: "6px 10px",
+                        border: "1px solid var(--border-glass)",
+                        borderRadius: 8,
+                        background: "rgba(255,255,255,0.03)",
+                        color: "var(--text-primary)",
+                        outline: "none",
+                      }}
+                    />
+                    <CustomButton
+                      variant="primary"
+                      size="sm"
+                      onClick={handleSaveSubject}
+                      loading={isSavingEdit}
+                      icon={<CustomIcon name="Check" size={16} />}
+                      title="Save"
+                    />
+                    <CustomButton
+                      variant="ghost"
+                      size="sm"
+                      onClick={cancelEditSubject}
+                      icon={<CustomIcon name="X" size={16} />}
+                      title="Cancel"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  >
+                    <h1 className={styles.title}>{ticket.subject}</h1>
+                    {canEditContent && (
+                      <CustomButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={startEditSubject}
+                        icon={<CustomIcon name="Edit2" size={14} />}
+                        title="Edit title"
+                        style={{ padding: 4 }}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
               <CustomDropdownMenu
                 items={[
@@ -711,7 +871,57 @@ const TicketDetail: React.FC = () => {
               />
             </div>
 
-            <div className={styles.issue}>{ticket.issue}</div>
+            {isEditingIssue ? (
+              <div>
+                <CustomTextArea
+                  value={issueDraft}
+                  onChange={(e: any) => setIssueDraft(e.target.value)}
+                  rows={6}
+                  style={{ width: "100%" }}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    marginTop: 8,
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <CustomButton
+                    variant="ghost"
+                    onClick={cancelEditIssue}
+                    disabled={isSavingEdit}
+                  >
+                    Cancel
+                  </CustomButton>
+                  <CustomButton
+                    variant="primary"
+                    onClick={handleSaveIssue}
+                    loading={isSavingEdit}
+                  >
+                    Save
+                  </CustomButton>
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{ display: "flex", alignItems: "flex-start", gap: 8 }}
+              >
+                <div className={styles.issue} style={{ flex: 1 }}>
+                  {ticket.issue}
+                </div>
+                {canEditContent && (
+                  <CustomButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={startEditIssue}
+                    icon={<CustomIcon name="Edit2" size={14} />}
+                    title="Edit description"
+                    style={{ padding: 4 }}
+                  />
+                )}
+              </div>
+            )}
 
             <div style={{ marginTop: 24, display: "flex", gap: 12 }}>
               {ticket.tags.map((tag) => (

@@ -14,7 +14,6 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 import CustomButton from "../../components/CustomButton";
 import CustomTextArea from "../../components/CustomTextArea";
 import CustomDatePicker from "../../components/CustomDatePicker";
-import CustomBadge from "../../components/CustomBadge";
 import CustomDropdownMenu from "../../components/CustomDropdownMenu";
 
 import type { TicketDetail as ITicketDetail } from "../../types";

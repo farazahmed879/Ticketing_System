@@ -10,7 +10,6 @@ import styles from "./TicketList.module.css";
 import {
   RoleName,
   StatusName,
-  PriorityName,
   UIMessages,
 } from "../../utils/constants";
 import { API_ROUTES } from "../../utils/apiRoutes";

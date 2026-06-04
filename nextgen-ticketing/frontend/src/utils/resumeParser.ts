@@ -587,7 +587,7 @@ function extractContactInfo(text: string): {
   if (!cityFound && result.address) {
     const segments = result.address
       .split(/[,\n]/)
-      .map((s) => s.trim())
+      .map((s:string) => s.trim())
       .filter(Boolean);
     for (let i = segments.length - 1; i >= 0; i--) {
       const seg = segments[i].replace(/\b\d{4,}\b/g, "").trim(); // strip ZIPs

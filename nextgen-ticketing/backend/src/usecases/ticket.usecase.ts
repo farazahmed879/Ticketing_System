@@ -180,39 +180,108 @@ export const ticketUsecase = {
     if (!existingTicket) throw new Error("Ticket not found");
 
     const actorId = user.id;
-    const isStaff =
-      user.role === RoleName.ADMIN ||
-      user.role === RoleName.AGENT ||
-      user.role === RoleName.EMPLOYEE;
+    const isAdmin = user.role === RoleName.ADMIN;
+    const isManager = user.role === RoleName.AGENT;
+    const isEmployee = user.role === RoleName.EMPLOYEE;
+    const isClient = user.role === RoleName.CUSTOMER;
+    const isAdminOrManager = isAdmin || isManager;
+    const isStaff = isAdmin || isManager || isEmployee; // kept for downstream uses
+    const isOwner = existingTicket.ownerId === user.id;
+    const isAssignee = existingTicket.assigneeId === user.id;
+    const ticketIsNew =
+      existingTicket.status?.name === StatusName.NEW;
 
-    // // RBAC for non-staff
-    // if (!isStaff && data.statusId) {
-    //   const targetStatus = await ticketRepository.findStatusById(data.statusId);
-    //   const statusName = targetStatus?.name.toLowerCase();
-    //   const isBasicAction =
-    //     statusName === StatusName.CANCELLED.toLowerCase() ||
-    //     statusName === StatusName.OPEN.toLowerCase() ||
-    //     statusName === StatusName.FAILED.toLowerCase();
+    // --- RBAC: gate each editable field per the role matrix ---
+    // Subject / Description
+    if (data.subject !== undefined || data.issue !== undefined) {
+      const canEditContent =
+        isAdminOrManager ||
+        (isEmployee && (isOwner || isAssignee)) ||
+        (isClient && isOwner && ticketIsNew);
+      if (!canEditContent) {
+        throw new Error(
+          "You do not have permission to edit this ticket's content.",
+        );
+      }
+    }
 
-    //   if (!isBasicAction) {
-    //     throw new Error("You can only update tickets to Failed or Cancelled");
-    //   }
+    // Status
+    if (
+      data.statusId !== undefined &&
+      data.statusId !== existingTicket.statusId
+    ) {
+      if (!isAdminOrManager) {
+        const targetStatus = await ticketRepository.findStatusById(
+          data.statusId,
+        );
+        const statusName = targetStatus?.name.toLowerCase();
+        const isBasicTransition =
+          statusName === StatusName.OPEN.toLowerCase() ||
+          statusName === StatusName.CANCELLED.toLowerCase() ||
+          statusName === StatusName.FAILED.toLowerCase();
+        const canEditStatus =
+          (isEmployee && (isOwner || isAssignee)) ||
+          (isClient && isOwner && isBasicTransition);
+        if (!canEditStatus) {
+          throw new Error(
+            "You do not have permission to change this ticket's status.",
+          );
+        }
+      }
+    }
 
-    //   if (existingTicket.ownerId !== user.id) {
-    //     throw new Error("You can only update your own tickets");
-    //   }
-    // }
+    // Priority
+    if (
+      data.priorityId !== undefined &&
+      data.priorityId !== existingTicket.priorityId
+    ) {
+      if (!isAdminOrManager) {
+        throw new Error("Only Admins and Managers can change ticket priority.");
+      }
+    }
 
-    // RBAC for Priority
+    // Type
+    if (data.typeId !== undefined && data.typeId !== existingTicket.typeId) {
+      if (!isAdminOrManager) {
+        throw new Error("Only Admins and Managers can change ticket type.");
+      }
+    }
 
-    // console.log("user", user);
-    // if (data.priorityId && data.priorityId !== existingTicket.priorityId) {
-    //   const canUpdatePriority =
-    //     user.role === RoleName.ADMIN || user.permissions?.tickets?.priority;
-    //   if (!canUpdatePriority) {
-    //     throw new Error("You do not have permission to change ticket priority");
-    //   }
-    // }
+    // Assignee
+    if (
+      data.assigneeId !== undefined &&
+      data.assigneeId !== existingTicket.assigneeId
+    ) {
+      if (!isAdminOrManager) {
+        throw new Error("Only Admins and Managers can assign tickets.");
+      }
+    }
+
+    // Project
+    if (data.projectId !== undefined) {
+      if (!isAdminOrManager) {
+        throw new Error("Only Admins and Managers can change ticket project.");
+      }
+    }
+
+    // Due date
+    if (data.dueDate !== undefined) {
+      const canEditDueDate = isAdminOrManager || (isEmployee && isAssignee);
+      if (!canEditDueDate) {
+        throw new Error(
+          "You do not have permission to change ticket due date.",
+        );
+      }
+    }
+
+    // Tags
+    if (data.tags !== undefined) {
+      const canEditTags =
+        isAdminOrManager || (isEmployee && (isOwner || isAssignee));
+      if (!canEditTags) {
+        throw new Error("You do not have permission to change ticket tags.");
+      }
+    }
 
     const updateData: any = {};
     const historyEntries: any[] = [];

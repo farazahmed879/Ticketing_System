@@ -129,7 +129,29 @@ const Profile: React.FC = () => {
               >
                 {user.title || user.role?.name}
               </span>
-              <CustomBadge variant="primary">{user.role?.name}</CustomBadge>
+              <CustomBadge
+                variant={
+                  ((): "danger" | "primary" | "warning" | "success" | "info" | "neutral" => {
+                    switch (user.role?.name?.toLowerCase()) {
+                      case "admin":
+                        return "danger";
+                      case "manager":
+                        return "primary";
+                      case "hr":
+                        return "warning";
+                      case "employee":
+                        return "success";
+                      case "client":
+                      case "customer":
+                        return "info";
+                      default:
+                        return "neutral";
+                    }
+                  })()
+                }
+              >
+                {user.role?.name}
+              </CustomBadge>
               {user.employeeType && (
                 <CustomBadge variant="success">{user.employeeType}</CustomBadge>
               )}

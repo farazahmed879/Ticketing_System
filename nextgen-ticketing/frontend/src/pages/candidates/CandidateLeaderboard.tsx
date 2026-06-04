@@ -8,6 +8,7 @@ import CustomBadge from "../../components/CustomBadge";
 import { CandidateStatus } from "../../utils/constants";
 import { useNavigate } from "react-router-dom";
 import type { TableColumn } from "../../components/types";
+import CustomButton from "../../components/CustomButton";
 
 interface LeaderboardEntry {
   id: string;

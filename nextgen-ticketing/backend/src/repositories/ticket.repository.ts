@@ -1,5 +1,5 @@
 import prisma from "../prisma";
-import { StatusName, ActionName } from "../utils/constants";
+import { StatusName, ActionName, RoleName } from "../utils/constants";
 
 export const ticketRepository = {
   async findMany(where: any, skip: number, take: number) {
@@ -164,8 +164,8 @@ export const ticketRepository = {
     return prisma.user.findMany({
       where: {
         OR: [
-          { role: { name: "Admin" } },
-          { role: { name: "Agent" } },
+          { role: { name: RoleName.ADMIN } },
+          { role: { name: RoleName.AGENT } },
         ],
         deleted: false,
       },

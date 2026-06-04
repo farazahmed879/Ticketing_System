@@ -49,7 +49,7 @@ export const ticketController = {
 
   async updateTicket(req: AuthRequest, res: Response) {
     try {
-      debugger;
+      // console.log("updateTicket controller");
       const user = req.user;
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
@@ -58,6 +58,8 @@ export const ticketController = {
         req.body,
         user,
       );
+
+      // console.log("notifications", notifications);
 
       const io = req.app.get("io");
       if (io) {

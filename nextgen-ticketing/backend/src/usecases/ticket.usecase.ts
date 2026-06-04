@@ -207,6 +207,7 @@ export const ticketUsecase = {
   },
 
   async updateTicket(id: string, data: any, user: any) {
+    // console.log("Data", data);
     const existingTicket = (await ticketRepository.findTicketById(id)) as any;
     if (!existingTicket) throw new Error("Ticket not found");
 
@@ -417,15 +418,63 @@ export const ticketUsecase = {
     const ticket = await ticketRepository.updateTicket(id, updateData);
 
     const notifications = [];
-    if (data.assigneeId && data.assigneeId !== existingTicket.assigneeId) {
+
+    // Build a summary of what changed for the notification message
+    const changes: string[] = [];
+    for (const entry of historyEntries) {
+      changes.push(entry.description);
+    }
+    const changeSummary =
+      changes.length > 0 ? changes.join("; ") : "Ticket details updated";
+
+    // Collect all user IDs to notify (admins, managers, employees + assignee)
+    const notifyIds = new Set<string>();
+
+    // Get all staff (Admin, Manager, Employee)
+    const staff = await ticketRepository.findStaff();
+    for (const s of staff) {
+      notifyIds.add(s.id);
+    }
+
+    // Also notify the assigned employee (current or newly assigned)
+    const assigneeId = data.assigneeId ?? existingTicket.assigneeId;
+    if (assigneeId) {
+      notifyIds.add(assigneeId);
+    }
+
+    // console.log("ticket.status.name", ticket);
+
+    // Notify the ticket owner (client) only when status changes to Approved
+    // Staff owners are already included via findStaff() above
+    const isStatusApproved =
+      data.statusId &&
+      data.statusId !== existingTicket.statusId &&
+      ticket.status.name === StatusName.APPROVED;
+    const ownerIsStaff = staff.some((s) => s.id === existingTicket.ownerId);
+    if (existingTicket.ownerId && (ownerIsStaff || isStatusApproved)) {
+      notifyIds.add(existingTicket.ownerId);
+    }
+
+    // Don't notify the user who made the update
+    notifyIds.delete(actorId);
+
+    for (const targetUserId of notifyIds) {
+      const isAssignment =
+        data.assigneeId &&
+        data.assigneeId !== existingTicket.assigneeId &&
+        targetUserId === data.assigneeId;
       const notification = await ticketRepository.createNotification({
-        title: "Ticket Assigned",
-        message: `Ticket #${ticket.uid} has been assigned to you.`,
-        type: "assignment",
-        userId: data.assigneeId,
+        title: isAssignment
+          ? NotificationMessages.TITLES.ASSIGNMENT
+          : NotificationMessages.TITLES.UPDATE,
+        message: isAssignment
+          ? NotificationMessages.TICKET_ASSIGNED(ticket.uid)
+          : `Ticket #${ticket.uid} updated: ${changeSummary}`,
+        type: isAssignment ? "assignment" : "ticket_updated",
+        userId: targetUserId,
         data: { ticketId: ticket.id, uid: ticket.uid },
       });
-      notifications.push({ userId: data.assigneeId, notification });
+      notifications.push({ userId: targetUserId, notification });
     }
 
     // Auto-create timesheet task

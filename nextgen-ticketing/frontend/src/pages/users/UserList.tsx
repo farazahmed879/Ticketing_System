@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
+import { socket } from "../../services/socket";
 import CustomInput from "../../components/CustomInput";
 import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
@@ -16,11 +17,15 @@ import type { TableColumn } from "../../components/types";
 import UserModal from "./components/UserModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import StandardListLayout from "../../components/StandardListLayout";
+import UserCard from "./components/user-card";
 
 // Map each role to a distinct CustomBadge variant and matching text color.
 const getRoleStyle = (
   roleName?: string,
-): { variant: "danger" | "primary" | "warning" | "success" | "info" | "neutral"; color: string } => {
+): {
+  variant: "danger" | "primary" | "warning" | "success" | "info" | "neutral";
+  color: string;
+} => {
   switch (roleName?.toLowerCase()) {
     case "admin":
       return { variant: "danger", color: "#f44336" };
@@ -58,6 +63,9 @@ const UserList: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+
+  // Listen to real-time online users from socket
 
   const fetchData = async () => {
     try {
@@ -83,15 +91,6 @@ const UserList: React.FC = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    setLoading(true);
-    const delayDebounceFn = setTimeout(() => {
-      fetchData();
-    }, 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [roleFilter, currentPage, searchTerm, itemsPerPage]);
 
   const handleSubmit = async (data: UserFormData) => {
     setIsLoading(
@@ -180,9 +179,7 @@ const UserList: React.FC = () => {
       key: "contact",
       render: (u) => (
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <span
-            style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}
-          >
+          <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
             {u.email}
           </span>
           <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
@@ -211,13 +208,13 @@ const UserList: React.FC = () => {
                 width: 8,
                 height: 8,
                 borderRadius: "50%",
-                background: u.lastOnline
+                background: onlineUserIds.has(u.id)
                   ? "var(--accent-success)"
                   : "var(--text-muted)",
               }}
             />
             <span style={{ fontSize: "0.85rem" }}>
-              {u.lastOnline ? "Online" : "Offline"}
+              {onlineUserIds.has(u.id) ? "Online" : "Offline"}
             </span>
           </div>
           <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
@@ -279,6 +276,28 @@ const UserList: React.FC = () => {
     },
   ];
 
+  useEffect(() => {
+    setLoading(true);
+    const delayDebounceFn = setTimeout(() => {
+      fetchData();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [roleFilter, currentPage, searchTerm, itemsPerPage]);
+
+  useEffect(() => {
+    const handleOnlineUsers = (
+      onlineUsers: { userId: string; status: string }[],
+    ) => {
+      setOnlineUserIds(new Set(onlineUsers.map((u) => u.userId)));
+    };
+
+    socket.on("users:online", handleOnlineUsers);
+    return () => {
+      socket.off("users:online", handleOnlineUsers);
+    };
+  }, []);
+
   return (
     <>
       <StandardListLayout
@@ -331,9 +350,7 @@ const UserList: React.FC = () => {
               placeholder="All Roles"
               options={[
                 { value: "all", label: "All Roles" },
-                { value: "agents", label: "Agents" },
-                { value: "admins", label: "Admins" },
-                { value: "customers", label: "Customers" },
+                ...roles.map((r) => ({ value: r.id, label: r.name })),
               ]}
               style={{ width: 200 }}
             />
@@ -391,11 +408,23 @@ const UserList: React.FC = () => {
             onRowClick={(u) => navigate(`/profile/${u.id}`)}
           />
         ) : loading ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+          <div
+            style={{
+              padding: 40,
+              textAlign: "center",
+              color: "var(--text-muted)",
+            }}
+          >
             Loading users...
           </div>
         ) : users.length === 0 ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+          <div
+            style={{
+              padding: 40,
+              textAlign: "center",
+              color: "var(--text-muted)",
+            }}
+          >
             No users found
           </div>
         ) : (
@@ -409,209 +438,15 @@ const UserList: React.FC = () => {
               padding: "4px 0",
             }}
           >
-            {users.map((u) => (
-              <div
+            {users.map((u: any) => (
+              <UserCard
                 key={u.id}
-                className="glass-card"
-                onClick={() => navigate(`/profile/${u.id}`)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    navigate(`/profile/${u.id}`);
-                  }
-                }}
-                style={{
-                  padding: 20,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 14,
-                  cursor: "pointer",
-                  border: "1px solid var(--border-glass)",
-                  borderRadius: 14,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                  }}
-                >
-                  <div
-                    className={styles.avatar}
-                    style={{ width: 48, height: 48, fontSize: "1.1rem" }}
-                  >
-                    {u.image ? (
-                      <img src={u.image} alt={u.fullname} />
-                    ) : (
-                      u.fullname.charAt(0)
-                    )}
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div
-                      style={{
-                        fontWeight: 700,
-                        fontSize: "0.95rem",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {u.fullname}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        color: getRoleStyle(u.role?.name).color,
-                      }}
-                    >
-                      {u.role?.name}
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                    fontSize: "0.8rem",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      minWidth: 0,
-                    }}
-                  >
-                    <CustomIcon name="Mail" size={14} />
-                    <span
-                      style={{
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {u.email}
-                    </span>
-                  </div>
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}
-                  >
-                    <CustomIcon name="Phone" size={14} />
-                    <span style={{ color: "var(--text-muted)" }}>
-                      {u.primaryContact || u.mobileNumber || "—"}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      minWidth: 0,
-                    }}
-                    title={u.emergencyContact || ""}
-                  >
-                    <CustomIcon name="LifeBuoy" size={14} />
-                    <span
-                      style={{
-                        color: "var(--text-muted)",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {u.emergencyContact || "—"}
-                    </span>
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 8,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <div
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        background: u.lastOnline
-                          ? "var(--accent-success)"
-                          : "var(--text-muted)",
-                      }}
-                    />
-                    <span
-                      style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}
-                    >
-                      {u.lastOnline ? "Online" : "Offline"}
-                    </span>
-                  </div>
-                  <span
-                    style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}
-                  >
-                    Joined{" "}
-                    {u.createdAt
-                      ? new Date(u.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })
-                      : "—"}
-                  </span>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: 4,
-                    borderTop: "1px solid var(--border-glass)",
-                    paddingTop: 10,
-                    marginTop: 2,
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <CustomButton
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(u)}
-                    title="Edit User"
-                    icon={<CustomIcon name="Edit2" size={16} />}
-                    style={{ color: "var(--text-muted)", padding: "4px 8px" }}
-                  />
-                  <CustomButton
-                    variant="ghost"
-                    size="sm"
-                    disabled={u.role.isAdmin}
-                    onClick={() => handleDelete(u.id)}
-                    title={
-                      u.role.isAdmin
-                        ? "Admin accounts cannot be deleted"
-                        : "Delete User"
-                    }
-                    icon={<CustomIcon name="Trash2" size={16} />}
-                    style={{
-                      color: u.role.isAdmin
-                        ? "var(--text-muted)"
-                        : "var(--accent-danger)",
-                      padding: "4px 8px",
-                      opacity: u.role.isAdmin ? 0.5 : 1,
-                      cursor: u.role.isAdmin ? "not-allowed" : "pointer",
-                    }}
-                  />
-                </div>
-              </div>
+                data={u}
+                isOnline={onlineUserIds.has(u.id)}
+                getRoleStyle={getRoleStyle}
+                handleEdit={handleEdit}
+                handleDelete={handleDelete}
+              />
             ))}
           </div>
         )}

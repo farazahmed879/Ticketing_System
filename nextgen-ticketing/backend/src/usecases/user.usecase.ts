@@ -19,6 +19,8 @@ export const userUsecase = {
     else if (type === RoleType.ADMINS) roleFilter = { role: { isAdmin: true } };
     else if (type === RoleType.CUSTOMERS)
       roleFilter = { role: { name: RoleName.CUSTOMER } };
+    else if (type && type.toLowerCase() !== "all")
+      roleFilter = { roleId: type };
 
     const where: any = {
       deleted: showDeleted === "true" ? undefined : false,

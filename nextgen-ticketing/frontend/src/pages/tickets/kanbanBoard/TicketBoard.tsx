@@ -196,15 +196,27 @@ const TicketBoard: React.FC = () => {
     e.preventDefault();
   };
 
-  const handleDrop = async (e: React.DragEvent, statusId: string) => {
+  const handleDrop = async (
+    e: React.DragEvent,
+    statusId: string,
+    targetStatusName: string,
+  ) => {
     const ticketId = e.dataTransfer.getData("ticketId");
     if (!ticketId) return;
 
     let ticket: Ticket | undefined;
+    let currentColumn: any;
     for (const col of columns) {
       ticket = col.tickets.find((t) => t.id === ticketId);
-      if (ticket) break;
+      if (ticket) {
+        currentColumn = col;
+        break;
+      }
     }
+
+    const currentStatusName = currentColumn?.name || ticket?.status?.name || "";
+
+    if (currentStatusName == targetStatusName) return;
 
     // const isOwner = ticket?.owner?.id === user?.id;
     // const canUpdate =
@@ -212,12 +224,10 @@ const TicketBoard: React.FC = () => {
     //   user?.role?.permissions?.tickets?.update ||
     //   isOwner;
 
-    const targetColumn = columns.find((c) => c.id === statusId);
-    // const statusName = targetColumn?.name.toLowerCase();
     // const isBasicAction =
-    //   statusName === StatusName.OPEN.toLowerCase() ||
-    //   statusName === StatusName.TRASH.toLowerCase() ||
-    //   statusName === StatusName.FAILED.toLowerCase();
+    //   statusName.toLowerCase() === StatusName.OPEN.toLowerCase() ||
+    //   statusName.toLowerCase() === StatusName.TRASH.toLowerCase() ||
+    //   statusName.toLowerCase() === StatusName.FAILED.toLowerCase();
 
     const isStatusAllowed =
       user?.role?.name === RoleName.ADMIN ||
@@ -231,23 +241,35 @@ const TicketBoard: React.FC = () => {
     if (!isStatusAllowed) {
       showNotification(
         "error",
-        UIMessages.BOARD.ACCESS_DENIED(targetColumn?.name || "this status"),
+        UIMessages.BOARD.ACCESS_DENIED(targetStatusName || "this status"),
       );
       return;
     }
 
-    handleUpdateStatus(ticketId, statusId);
+    handleUpdateStatus(ticketId, statusId, currentStatusName, targetStatusName);
   };
 
-  const handleUpdateStatus = async (ticketId: string, statusId: string) => {
+  const handleUpdateStatus = async (
+    ticketId: string,
+    statusId: string,
+    currentStatusName: string,
+    targetStatusName: string,
+  ) => {
     try {
       setIsLoading(true, UIMessages.LOADING.UPDATING_STATUS);
-      await api.put(API_ROUTES.TICKETS.BY_ID(ticketId), { statusId });
+      await api.put(API_ROUTES.TICKETS.BY_ID(ticketId), {
+        statusId,
+        currentStatusName,
+        targetStatusName,
+      });
       showNotification("success", "Ticket status updated");
       fetchBoardData();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update status", err);
-      showNotification("error", "Failed to update ticket status");
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to update ticket status",
+      );
     } finally {
       setIsLoading(false, "");
     }

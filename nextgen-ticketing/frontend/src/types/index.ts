@@ -374,6 +374,8 @@ export interface TicketUpdateFormData {
   assigneeId: string;
   dueDate: string;
   issue: string;
+  targetStatusName: string;
+  currentStatusName: string;
 }
 
 export interface TicketDetailModalProps {

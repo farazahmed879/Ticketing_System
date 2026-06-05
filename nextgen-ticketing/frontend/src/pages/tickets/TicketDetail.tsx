@@ -353,9 +353,12 @@ const TicketDetail: React.FC = () => {
       setCommentCooldownActive(true);
       setTimeout(() => setCommentCooldownActive(false), 1000);
       fetchTicket(); // Refresh ticket to show new comment
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to add comment", err);
-      showNotification("error", "Failed to send comment");
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to send comment",
+      );
     } finally {
       setIsSubmittingComment(false);
     }
@@ -367,9 +370,12 @@ const TicketDetail: React.FC = () => {
       await api.put(API_ROUTES.TICKETS.BY_ID(id!), { assigneeId });
       showNotification("success", "Ticket assigned successfully");
       fetchTicket();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to assign ticket", err);
-      showNotification("error", "Failed to assign ticket");
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to assign ticket",
+      );
     } finally {
       setIsLoading(false, "");
     }
@@ -436,7 +442,10 @@ const TicketDetail: React.FC = () => {
   const executeStatusUpdate = async (statusId: string) => {
     try {
       setIsLoading(true, UIMessages.LOADING.UPDATING_STATUS);
-      await api.put(API_ROUTES.TICKETS.BY_ID(id!), { statusId });
+      await api.put(API_ROUTES.TICKETS.BY_ID(id!), { 
+        statusId,
+        statusName: ticket?.status?.name || ""
+      });
       showNotification("success", "Ticket status updated");
       fetchTicket();
     } catch (err: any) {
@@ -466,9 +475,12 @@ const TicketDetail: React.FC = () => {
       await api.put(API_ROUTES.TICKETS.BY_ID(id!), { priorityId });
       showNotification("success", "Ticket priority updated");
       fetchTicket();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update priority", err);
-      showNotification("error", "Failed to update ticket priority");
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to update ticket priority",
+      );
     } finally {
       setIsLoading(false, "");
     }
@@ -482,9 +494,12 @@ const TicketDetail: React.FC = () => {
       });
       showNotification("success", "Due date updated successfully");
       fetchTicket();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to update due date", err);
-      showNotification("error", "Failed to update due date");
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to update due date",
+      );
     } finally {
       setIsLoading(false, "");
     }

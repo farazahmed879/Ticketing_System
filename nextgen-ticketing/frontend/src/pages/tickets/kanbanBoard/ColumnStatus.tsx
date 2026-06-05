@@ -34,7 +34,7 @@ const ColumnStatus = ({
       key={column.id}
       className={`${styles.column} ${isCollapsed ? styles.columnCollapsed : ""} ${!isStatusAllowed ? styles.columnDisabled : ""}`}
       onDragOver={handleDragOver}
-      onDrop={(e) => handleDrop(e, column.id)}
+      onDrop={(e) => handleDrop(e, column.id, column.name)}
     >
       {!isStatusAllowed && !isCollapsed && (
         <CustomIcon name="Lock" className={styles.bgLockIcon} />

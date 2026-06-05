@@ -45,6 +45,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     useForm<TicketUpdateFormData>({
       defaultValues: {
         statusId: ticket?.status?.id || "",
+        targetStatusName: ticket?.status?.name || "",
+        currentStatusName: ticket?.status?.name || "",
         priorityId: ticket?.priority?.id || "",
         assigneeId: ticket?.assignee?.id || "",
         dueDate: ticket?.dueDate
@@ -128,7 +130,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           : "",
         issue: t.issue || "",
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to fetch full ticket data", err);
     }
   }, [ticket?.id, reset]);
@@ -144,18 +146,24 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const handleSave = async (data: TicketUpdateFormData) => {
     try {
       setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
-      await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), {
+      const body = {
         statusId: data.statusId,
+        targetStatusName: data.targetStatusName || "",
+        currentStatusName: displayTicket?.status?.name || "",
         priorityId: data.priorityId,
         assigneeId: data.assigneeId || null,
         dueDate: data.dueDate || null,
         issue: data.issue,
-      });
+      };
+      await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), body);
       showNotification("success", "Ticket updated successfully");
       onTicketUpdate();
       fetchFullTicketData();
-    } catch (err) {
-      showNotification("error", "Failed to update ticket");
+    } catch (err: any) {
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to update ticket",
+      );
     } finally {
       setIsLoading(false, "");
     }
@@ -179,7 +187,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       setCommentCooldownActive(true);
       setTimeout(() => setCommentCooldownActive(false), 1000);
       fetchFullTicketData();
-    } catch (err) {
+    } catch (err: any) {
       showNotification("error", "Failed to add comment");
     } finally {
       setIsSubmittingComment(false);
@@ -227,8 +235,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       e.target.files,
       attachmentsDraft.length,
     );
-    if (accepted.length)
-      setAttachmentsDraft((prev) => [...prev, ...accepted]);
+    if (accepted.length) setAttachmentsDraft((prev) => [...prev, ...accepted]);
     if (errors.length) setAttachmentsDraftError(errors.join(" "));
     e.target.value = "";
   };
@@ -860,6 +867,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                   watch("statusId") !== openStatus.id
                                 ) {
                                   setValue("statusId", openStatus.id);
+                                  setValue("targetStatusName", openStatus.name);
                                 }
                               }
                             }}
@@ -1126,10 +1134,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                   key={idx}
                                   type="button"
                                   onClick={() =>
-                                    openLightbox(
-                                      displayTicket.attachments,
-                                      idx,
-                                    )
+                                    openLightbox(displayTicket.attachments, idx)
                                   }
                                   title="View image"
                                   style={{

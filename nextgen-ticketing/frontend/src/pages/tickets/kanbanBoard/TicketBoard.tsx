@@ -218,6 +218,36 @@ const TicketBoard: React.FC = () => {
 
     if (currentStatusName == targetStatusName) return;
 
+    // Catch dragging an unassigned ticket OUT of a "starting" column
+    // (New / Unassigned) and INTO any non-terminal working column.
+    // Terminal moves (Cancelled / Failed) are still allowed without assignee.
+    // Movement between other columns is unrestricted regardless of assignee.
+    const startingNames = ["new", "unassigned"];
+    const terminalNames = ["cancelled", "failed"];
+    const currentIsStarting = startingNames.includes(
+      currentStatusName.toLowerCase(),
+    );
+    const targetIsStarting = startingNames.includes(
+      targetStatusName.toLowerCase(),
+    );
+    const targetIsTerminal = terminalNames.includes(
+      targetStatusName.toLowerCase(),
+    );
+    if (
+      ticket &&
+      !ticket.assignee?.id &&
+      currentIsStarting &&
+      !targetIsStarting &&
+      !targetIsTerminal
+    ) {
+      showNotification(
+        "warning",
+        `Please assign this ticket to a team member before moving it to "${targetStatusName}".`,
+      );
+      openTicketDetail(ticket);
+      return;
+    }
+
     // const isOwner = ticket?.owner?.id === user?.id;
     // const canUpdate =
     //   user?.role?.name === RoleName.ADMIN ||

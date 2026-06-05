@@ -2,7 +2,13 @@ import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import styles from "../UserList.module.css";
-const UserCard = ({ data, isOnline, getRoleStyle, handleEdit, handleDelete }) => {
+const UserCard = ({
+  data,
+  isOnline,
+  getRoleStyle,
+  handleEdit,
+  handleDelete,
+}: any) => {
   const navigate = useNavigate();
   return (
     <div

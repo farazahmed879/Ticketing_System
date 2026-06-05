@@ -22,9 +22,7 @@ function validateAttachments(attachments: any): string[] | undefined {
   }
   for (const a of attachments) {
     if (typeof a !== "string" || !ATTACHMENT_DATA_URL_RE.test(a)) {
-      throw new Error(
-        "Attachments must be PNG, JPEG, WebP, or GIF data URLs.",
-      );
+      throw new Error("Attachments must be PNG, JPEG, WebP, or GIF data URLs.");
     }
     const base64 = a.split(",")[1] || "";
     const padding = (base64.match(/=+$/) || [""])[0].length;
@@ -220,8 +218,7 @@ export const ticketUsecase = {
     const isStaff = isAdmin || isManager || isEmployee; // kept for downstream uses
     const isOwner = existingTicket.ownerId === user.id;
     const isAssignee = existingTicket.assigneeId === user.id;
-    const ticketIsNew =
-      existingTicket.status?.name === StatusName.NEW;
+    const ticketIsNew = existingTicket.status?.name === StatusName.NEW;
 
     // --- RBAC: gate each editable field per the role matrix ---
     // Subject / Description
@@ -250,14 +247,24 @@ export const ticketUsecase = {
         const targetStatus = await ticketRepository.findStatusById(
           data.statusId,
         );
-        const statusName = targetStatus?.name.toLowerCase();
-        const isBasicTransition =
-          statusName === StatusName.OPEN.toLowerCase() ||
-          statusName === StatusName.CANCELLED.toLowerCase() ||
-          statusName === StatusName.FAILED.toLowerCase();
-        const canEditStatus =
-          (isEmployee && (isOwner || isAssignee)) ||
-          (isClient && isOwner && isBasicTransition);
+        const statusName = targetStatus?.name.toLowerCase() || "";
+        //here need to work
+        if (
+          isClient &&
+          ![
+            StatusName.OPEN.toLowerCase(),
+            StatusName.CLOSED.toLowerCase(),
+            StatusName.CANCELLED.toLowerCase(),
+            StatusName.FAILED.toLowerCase(),
+            StatusName.CLOSED.toLowerCase(),
+          ].includes(statusName?.toLocaleLowerCase())
+        ) {
+          throw new Error(
+            "You do not have permission to change this ticket's status.",
+          );
+        }
+
+        const canEditStatus = isEmployee && (isOwner || isAssignee);
         if (!canEditStatus) {
           throw new Error(
             "You do not have permission to change this ticket's status.",
@@ -301,7 +308,11 @@ export const ticketUsecase = {
     }
 
     // Due date
-    if (data.dueDate !== undefined) {
+    if (
+      data.dueDate !== undefined &&
+      data.dueDate !==
+        (existingTicket.dueDate ? existingTicket.dueDate.toISOString() : null)
+    ) {
       const canEditDueDate = isAdminOrManager || (isEmployee && isAssignee);
       if (!canEditDueDate) {
         throw new Error(

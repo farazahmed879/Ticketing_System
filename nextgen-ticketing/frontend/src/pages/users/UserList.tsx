@@ -8,16 +8,13 @@ import { useNotification } from "../../context/NotificationContext";
 import styles from "./UserList.module.css";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { UIMessages } from "../../utils/constants";
-
 import type { User, Role, UserFormData } from "../../types";
 import CustomTable from "../../components/CustomTable";
-import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomPagination from "../../components/CustomPagination";
 import type { TableColumn } from "../../components/types";
 import UserModal from "./components/UserModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
-
 import StandardListLayout from "../../components/StandardListLayout";
 
 // Map each role to a distinct CustomBadge variant and matching text color.

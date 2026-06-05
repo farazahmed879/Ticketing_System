@@ -373,7 +373,20 @@ const TicketDetail: React.FC = () => {
   const handleAssign = async (assigneeId: string) => {
     try {
       setIsLoading(true, UIMessages.LOADING.ASSIGNING_TICKET);
-      await api.put(API_ROUTES.TICKETS.BY_ID(id!), { assigneeId });
+      const payload: { assigneeId: string; statusId?: string } = {
+        assigneeId,
+      };
+      // Match the board modal: when actually assigning (not unassigning),
+      // auto-transition the ticket to "Open" unless it's already there.
+      if (assigneeId && ticket) {
+        const openStatus = statuses.find(
+          (s) => s.name.toLowerCase() === StatusName.OPEN.toLowerCase(),
+        );
+        if (openStatus && ticket.status.id !== openStatus.id) {
+          payload.statusId = openStatus.id;
+        }
+      }
+      await api.put(API_ROUTES.TICKETS.BY_ID(id!), payload);
       showNotification("success", "Ticket assigned successfully");
       fetchTicket();
     } catch (err) {

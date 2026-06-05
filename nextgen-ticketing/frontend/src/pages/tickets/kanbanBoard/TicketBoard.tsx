@@ -321,8 +321,6 @@ const TicketBoard: React.FC = () => {
     }
   };
 
-  console.log("columns", columns);
-
   return (
     <div className={styles.boardContainer}>
       {loading ? (

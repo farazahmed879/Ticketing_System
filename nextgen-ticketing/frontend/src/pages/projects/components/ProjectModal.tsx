@@ -8,7 +8,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   onClose,
   onSubmit,
   project,
-  departments,
   clients,
 }) => {
   return (
@@ -21,7 +20,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
         initialData={project}
         onSubmit={onSubmit}
         onCancel={onClose}
-        departments={departments}
         clients={clients}
       />
     </Modal>

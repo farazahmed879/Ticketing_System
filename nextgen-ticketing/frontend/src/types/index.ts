@@ -415,7 +415,6 @@ export interface ProjectFormData {
   name: string;
   description: string;
   status: string;
-  departmentId: string;
   clientIds: string[];
 }
 
@@ -424,8 +423,7 @@ export interface ProjectFormProps {
   onSubmit: (data: ProjectFormData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
-  departments: Department[];
-  clients: any[]; // Using any for now to avoid circular dependency or complex imports if needed, but User is preferred
+  clients: any[];
 }
 
 export interface ProjectModalProps {
@@ -433,7 +431,6 @@ export interface ProjectModalProps {
   onClose: () => void;
   onSubmit: (data: any) => Promise<void>;
   project?: Project | null;
-  departments: Department[];
   clients: any[];
 }
 

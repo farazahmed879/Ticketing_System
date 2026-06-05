@@ -9,7 +9,7 @@ import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomBadge from "../../components/CustomBadge";
 import CustomInput from "../../components/CustomInput";
-import type { Project, Department } from "../../types";
+import type { Project } from "../../types";
 import type { TableColumn } from "../../components/types";
 import ProjectModal from "./components/ProjectModal";
 
@@ -38,22 +38,19 @@ const ProjectList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [clients, setClients] = useState<any[]>([]);
   const { showNotification, setIsLoading } = useNotification();
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [projectsRes, deptsRes, clientsRes] = await Promise.all([
+      const [projectsRes, clientsRes] = await Promise.all([
         api.get(API_ROUTES.PROJECTS.BASE),
-        api.get(API_ROUTES.DEPARTMENTS.BASE),
         api.get(API_ROUTES.USERS.BASE, {
-          params: { type: "customers", limit: -1 },
+          params: { type: "clients", limit: -1 },
         }),
       ]);
       setProjects(projectsRes.data.projects);
-      setDepartments(deptsRes.data.departments);
       setClients(clientsRes.data.accounts);
     } catch (err) {
       console.error("Failed to fetch projects data", err);
@@ -73,7 +70,6 @@ const ProjectList: React.FC = () => {
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.description?.toLowerCase().includes(search.toLowerCase()) ||
         p.status.toLowerCase().includes(search.toLowerCase()) ||
-        p.department?.name?.toLowerCase().includes(search.toLowerCase()) ||
         p.clients?.some((c) =>
           c.fullname.toLowerCase().includes(search.toLowerCase()),
         ),
@@ -162,15 +158,7 @@ const ProjectList: React.FC = () => {
         </div>
       ),
     },
-    {
-      header: "Department",
-      key: "department",
-      render: (p) => (
-        <span style={{ fontSize: "0.9rem" }}>
-          {p.department?.name || "N/A"}
-        </span>
-      ),
-    },
+
     {
       header: "Clients",
       key: "clients",
@@ -295,7 +283,6 @@ const ProjectList: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}
         project={editingProject}
-        departments={departments}
         clients={clients}
       />
     </>

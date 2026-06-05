@@ -13,7 +13,6 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   onSubmit,
   onCancel,
   isLoading = false,
-  departments,
   clients,
 }) => {
   const { handleSubmit, control, reset } = useForm<ProjectFormData>({
@@ -21,7 +20,6 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
       name: "",
       description: "",
       status: "Active",
-      departmentId: "",
       clientIds: [],
     },
   });
@@ -32,7 +30,6 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         name: initialData.name,
         description: initialData.description || "",
         status: initialData.status,
-        departmentId: initialData.departmentId || "",
         clientIds: initialData.clientIds || [],
       });
     } else {
@@ -40,16 +37,11 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         name: "",
         description: "",
         status: "Active",
-        departmentId: "",
         clientIds: [],
       });
     }
   }, [initialData, reset]);
 
-  const departmentOptions = departments.map((d) => ({
-    value: d.id,
-    label: d.name,
-  }));
   const clientOptions = clients.map((c) => ({
     value: c.id,
     label: c.fullname,
@@ -69,22 +61,13 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         required
       />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <CustomSelect
-          name="departmentId"
-          control={control}
-          label="Department"
-          placeholder="Select Department"
-          options={departmentOptions}
-        />
-        <CustomSelect
-          name="status"
-          control={control}
-          label="Status"
-          placeholder="Select Status"
-          options={PROJECT_STATUS_OPTIONS}
-        />
-      </div>
+      <CustomSelect
+        name="status"
+        control={control}
+        label="Status"
+        placeholder="Select Status"
+        options={PROJECT_STATUS_OPTIONS}
+      />
 
       <CustomMultiSelect
         name="clientIds"

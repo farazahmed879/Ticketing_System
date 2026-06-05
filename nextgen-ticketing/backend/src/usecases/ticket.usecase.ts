@@ -326,6 +326,30 @@ export const ticketUsecase = {
           }
         }
       }
+
+      if (isEmployee) {
+        const rules: Array<[string[], string, string]> = [
+          [
+            [StatusName.OPEN],
+            StatusName.IN_PROCESS,
+            "Only assigned tickets can be moved to In Progress.",
+          ],
+          [
+            [StatusName.IN_PROCESS],
+            StatusName.RESOLVED,
+            "Only in-progress tickets can be moved to Resolved.",
+          ],
+        ];
+
+        for (const [requiredStatuses, ruleTarget, message] of rules) {
+          if (
+            targetStatus === ruleTarget &&
+            !requiredStatuses.includes(currentStatus)
+          ) {
+            throw new Error(message);
+          }
+        }
+      }
     }
 
     // Priority

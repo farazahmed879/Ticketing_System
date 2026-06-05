@@ -25,7 +25,7 @@ export type TicketType = (typeof TicketType)[keyof typeof TicketType];
 export const StatusName = {
   NEW: "Unassigned",
   OPEN: "Assigned",
-  CANCELLED: "Cancelled",
+  TRASH: "Trash",
   FAILED: "Failed",
   IN_PROCESS: "In Process",
   RESOLVED: "Resolved",

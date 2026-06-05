@@ -413,7 +413,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             (s.name.toLowerCase() ===
                               StatusName.OPEN.toLowerCase() ||
                               s.name.toLowerCase() ===
-                                StatusName.CANCELLED.toLowerCase() ||
+                                StatusName.TRASH.toLowerCase() ||
                               s.name.toLowerCase() ===
                                 StatusName.FAILED.toLowerCase()))
                         ),
@@ -580,7 +580,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                               (displayTicket.status.name.toLowerCase() ===
                                 StatusName.OPEN.toLowerCase() ||
                                 displayTicket.status.name.toLowerCase() ===
-                                  StatusName.CANCELLED.toLowerCase()) && (
+                                  StatusName.TRASH.toLowerCase()) && (
                                 <CustomButton
                                   variant="ghost"
                                   size="sm"

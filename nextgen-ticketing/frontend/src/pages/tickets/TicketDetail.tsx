@@ -91,8 +91,7 @@ const TicketDetail: React.FC = () => {
       document.body.style.overflow = prevOverflow;
     };
   }, [lightbox]);
-  const commentSendDisabled =
-    isSubmittingComment || commentCooldownActive;
+  const commentSendDisabled = isSubmittingComment || commentCooldownActive;
   const [statuses, setStatuses] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
@@ -182,13 +181,6 @@ const TicketDetail: React.FC = () => {
       console.error("Failed to fetch priorities", err);
     }
   };
-
-  useEffect(() => {
-    fetchTicket();
-    if (canAssign) fetchAgents();
-    fetchStatuses();
-    fetchPriorities();
-  }, [id, canAssign]);
 
   const startEditSubject = () => {
     if (!ticket) return;
@@ -288,8 +280,7 @@ const TicketDetail: React.FC = () => {
       e.target.files,
       attachmentsDraft.length,
     );
-    if (accepted.length)
-      setAttachmentsDraft((prev) => [...prev, ...accepted]);
+    if (accepted.length) setAttachmentsDraft((prev) => [...prev, ...accepted]);
     if (errors.length) setAttachmentsDraftError(errors.join(" "));
     e.target.value = "";
   };
@@ -398,7 +389,7 @@ const TicketDetail: React.FC = () => {
     const statusName = targetStatus?.name.toLowerCase();
     const isBasicAction =
       statusName === StatusName.OPEN.toLowerCase() ||
-      statusName === StatusName.CANCELLED.toLowerCase() ||
+      statusName === StatusName.TRASH.toLowerCase() ||
       statusName === StatusName.FAILED.toLowerCase();
 
     const isStatusAllowed =
@@ -423,13 +414,13 @@ const TicketDetail: React.FC = () => {
     }
 
     if (
-      statusName === StatusName.CANCELLED.toLowerCase() ||
+      statusName === StatusName.TRASH.toLowerCase() ||
       statusName === StatusName.FAILED.toLowerCase()
     ) {
       setPendingStatusId(statusId);
       setConfirmConfig({
         title:
-          statusName === StatusName.CANCELLED.toLowerCase()
+          statusName === StatusName.TRASH.toLowerCase()
             ? "Cancel Ticket"
             : "Mark as Failed",
         message: `Are you sure you want to ${statusName} this ticket? This action may be final depending on your workflow.`,
@@ -498,6 +489,13 @@ const TicketDetail: React.FC = () => {
       setIsLoading(false, "");
     }
   };
+
+  useEffect(() => {
+    fetchTicket();
+    if (canAssign) fetchAgents();
+    fetchStatuses();
+    fetchPriorities();
+  }, [id, canAssign]);
 
   if (loading || !ticket)
     return (
@@ -899,26 +897,39 @@ const TicketDetail: React.FC = () => {
 
   return (
     <div className="animate-fade-in">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 24,
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
           <CustomButton
             variant="ghost"
             onClick={() => navigate(-1)}
             icon={<CustomIcon name="ArrowLeft" size={20} />}
-            style={{ 
-              width: 40, 
-              height: 40, 
-              padding: 0, 
-              borderRadius: '12px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid var(--border-glass)'
+            style={{
+              width: 40,
+              height: 40,
+              padding: 0,
+              borderRadius: "12px",
+              background: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid var(--border-glass)",
             }}
           />
           <div>
             <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
               Ticket Details
             </h1>
-            <p style={{ color: "var(--text-muted)", margin: "4px 0 0 0", fontSize: '0.9rem' }}>
+            <p
+              style={{
+                color: "var(--text-muted)",
+                margin: "4px 0 0 0",
+                fontSize: "0.9rem",
+              }}
+            >
               Manage and track ticket progress
             </p>
           </div>
@@ -1541,8 +1552,7 @@ const TicketDetail: React.FC = () => {
                       icon={<CustomIcon name="Send" size={16} />}
                       disabled={
                         commentSendDisabled ||
-                        (!newComment.trim() &&
-                          commentAttachments.length === 0)
+                        (!newComment.trim() && commentAttachments.length === 0)
                       }
                       loading={isSubmittingComment}
                       title="Send comment"
@@ -1617,7 +1627,7 @@ const TicketDetail: React.FC = () => {
                     (ticket.owner.id === user?.id &&
                       (s.name.toLowerCase() === StatusName.OPEN.toLowerCase() ||
                         s.name.toLowerCase() ===
-                          StatusName.CANCELLED.toLowerCase() ||
+                          StatusName.TRASH.toLowerCase() ||
                         s.name.toLowerCase() ===
                           StatusName.FAILED.toLowerCase()))
                   ),
@@ -1661,9 +1671,7 @@ const TicketDetail: React.FC = () => {
                   placeholder="Priority"
                 />
               ) : (
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: 10 }}
-                >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div
                     style={{
                       width: 10,
@@ -1685,7 +1693,13 @@ const TicketDetail: React.FC = () => {
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div
                   className={tableStyles.avatar}
-                  style={{ width: 32, height: 32 , display: "flex", alignItems: "center", justifyContent: "center" }}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
                   <CustomIcon name="User" size={16} />
                 </div>
@@ -1733,7 +1747,13 @@ const TicketDetail: React.FC = () => {
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div
                     className={tableStyles.avatar}
-                    style={{ width: 32, height: 32 , display: "flex", alignItems: "center", justifyContent: "center" }}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
                   >
                     {ticket?.assignee?.image ? (
                       <img
@@ -1868,130 +1888,36 @@ const TicketDetail: React.FC = () => {
 
       {lightbox &&
         createPortal(
-        <div
-          onClick={closeLightbox}
-          role="dialog"
-          aria-modal="true"
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 9999,
-            background: "rgba(0, 0, 0, 0.85)",
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 24,
-          }}
-        >
-          {/* Close button (top-right) */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              closeLightbox();
-            }}
-            title="Close (Esc)"
+          <div
+            onClick={closeLightbox}
+            role="dialog"
+            aria-modal="true"
             style={{
-              position: "absolute",
-              top: 16,
-              right: 16,
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              color: "white",
-              cursor: "pointer",
+              position: "fixed",
+              inset: 0,
+              zIndex: 9999,
+              background: "rgba(0, 0, 0, 0.85)",
+              backdropFilter: "blur(4px)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              padding: 24,
             }}
           >
-            <CustomIcon name="X" size={20} />
-          </button>
-
-          {/* Counter (top-center) */}
-          {lightbox.images.length > 1 && (
-            <div
-              style={{
-                position: "absolute",
-                top: 20,
-                left: "50%",
-                transform: "translateX(-50%)",
-                color: "rgba(255,255,255,0.8)",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                background: "rgba(0,0,0,0.4)",
-                padding: "6px 14px",
-                borderRadius: 20,
-              }}
-            >
-              {lightbox.index + 1} / {lightbox.images.length}
-            </div>
-          )}
-
-          {/* Prev */}
-          {lightbox.images.length > 1 && (
+            {/* Close button (top-right) */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                lightboxPrev();
+                closeLightbox();
               }}
-              title="Previous (←)"
+              title="Close (Esc)"
               style={{
                 position: "absolute",
-                left: 16,
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: 44,
-                height: 44,
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                color: "white",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <CustomIcon name="ChevronLeft" size={24} />
-            </button>
-          )}
-
-          {/* Image */}
-          <img
-            src={lightbox.images[lightbox.index]}
-            alt={`attachment-${lightbox.index}`}
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: "92vw",
-              maxHeight: "88vh",
-              objectFit: "contain",
-              borderRadius: 8,
-              boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
-              cursor: "default",
-            }}
-          />
-
-          {/* Next */}
-          {lightbox.images.length > 1 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                lightboxNext();
-              }}
-              title="Next (→)"
-              style={{
-                position: "absolute",
+                top: 16,
                 right: 16,
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: 44,
-                height: 44,
+                width: 40,
+                height: 40,
                 borderRadius: "50%",
                 background: "rgba(255,255,255,0.1)",
                 border: "1px solid rgba(255,255,255,0.2)",
@@ -2002,12 +1928,106 @@ const TicketDetail: React.FC = () => {
                 justifyContent: "center",
               }}
             >
-              <CustomIcon name="ChevronRight" size={24} />
+              <CustomIcon name="X" size={20} />
             </button>
-          )}
-        </div>,
-        document.body,
-      )}
+
+            {/* Counter (top-center) */}
+            {lightbox.images.length > 1 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 20,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  color: "rgba(255,255,255,0.8)",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  background: "rgba(0,0,0,0.4)",
+                  padding: "6px 14px",
+                  borderRadius: 20,
+                }}
+              >
+                {lightbox.index + 1} / {lightbox.images.length}
+              </div>
+            )}
+
+            {/* Prev */}
+            {lightbox.images.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  lightboxPrev();
+                }}
+                title="Previous (←)"
+                style={{
+                  position: "absolute",
+                  left: 16,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: "white",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <CustomIcon name="ChevronLeft" size={24} />
+              </button>
+            )}
+
+            {/* Image */}
+            <img
+              src={lightbox.images[lightbox.index]}
+              alt={`attachment-${lightbox.index}`}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                maxWidth: "92vw",
+                maxHeight: "88vh",
+                objectFit: "contain",
+                borderRadius: 8,
+                boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+                cursor: "default",
+              }}
+            />
+
+            {/* Next */}
+            {lightbox.images.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  lightboxNext();
+                }}
+                title="Next (→)"
+                style={{
+                  position: "absolute",
+                  right: 16,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: "white",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <CustomIcon name="ChevronRight" size={24} />
+              </button>
+            )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };

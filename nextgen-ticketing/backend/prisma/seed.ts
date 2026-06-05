@@ -137,7 +137,7 @@ async function main() {
     },
     { name: StatusName.CLOSED, color: "#9e9e9e", order: 6, isResolved: true },
     {
-      name: StatusName.CANCELLED,
+      name: StatusName.TRASH,
       color: "#ff5252",
       order: 7,
       isResolved: true,

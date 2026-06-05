@@ -6,7 +6,7 @@ import { API_ROUTES } from "../../../utils/apiRoutes";
 import { useNotification } from "../../../context/NotificationContext";
 import styles from "./TicketBoard.module.css";
 import styles1 from "../TicketList.module.css";
-import { RoleName, UIMessages } from "../../../utils/constants";
+import { RoleName, StatusName, UIMessages } from "../../../utils/constants";
 import { useAuth } from "../../../context/AuthContext";
 import { socket } from "../../../services/socket";
 import CustomSelect from "../../../components/CustomSelect";
@@ -216,7 +216,7 @@ const TicketBoard: React.FC = () => {
     // const statusName = targetColumn?.name.toLowerCase();
     // const isBasicAction =
     //   statusName === StatusName.OPEN.toLowerCase() ||
-    //   statusName === StatusName.CANCELLED.toLowerCase() ||
+    //   statusName === StatusName.TRASH.toLowerCase() ||
     //   statusName === StatusName.FAILED.toLowerCase();
 
     const isStatusAllowed =
@@ -299,6 +299,8 @@ const TicketBoard: React.FC = () => {
     }
   };
 
+  console.log("columns", columns);
+
   return (
     <div className={styles.boardContainer}>
       {loading ? (
@@ -312,13 +314,13 @@ const TicketBoard: React.FC = () => {
                   variant="ghost"
                   onClick={() => navigate("/tickets")}
                   icon={<CustomIcon name="ArrowLeft" size={20} />}
-                  style={{ 
-                    width: 40, 
-                    height: 40, 
-                    padding: 0, 
-                    borderRadius: '12px',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid var(--border-glass)'
+                  style={{
+                    width: 40,
+                    height: 40,
+                    padding: 0,
+                    borderRadius: "12px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid var(--border-glass)",
                   }}
                 />
                 <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
@@ -461,7 +463,9 @@ const TicketBoard: React.FC = () => {
                     toggleColumnCollapse={toggleColumnCollapse}
                     openTicketDetail={openTicketDetail}
                     isCollapsed={isCollapsed}
-                    isStatusAllowed={isStatusAllowed}
+                    isStatusAllowed={
+                      column?.name === StatusName.OPEN ? false : isStatusAllowed
+                    }
                     setTicketToDelete={setTicketToDelete}
                     setIsDeleteModalOpen={setIsDeleteModalOpen}
                     showNotification={showNotification}

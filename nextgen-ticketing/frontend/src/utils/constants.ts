@@ -11,7 +11,7 @@ export type RoleName = (typeof RoleName)[keyof typeof RoleName];
 export const StatusName = {
   NEW: "Unassigned",
   OPEN: "Assigned",
-  CANCELLED: "Cancelled",
+  TRASH: "Trash",
   FAILED: "Failed",
   IN_PROCESS: "In Process",
   RESOLVED: "Resolved",

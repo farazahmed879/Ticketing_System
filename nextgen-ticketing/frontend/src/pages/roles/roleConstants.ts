@@ -48,7 +48,7 @@ export const ADMIN_PERMISSIONS = {
   boardStatuses: {
     new: true,
     open: true,
-    cancelled: true,
+    trash: true,
     failed: true,
     inProcess: true,
     resolved: true,
@@ -84,7 +84,7 @@ export const AGENT_PERMISSIONS = {
   boardStatuses: {
     new: true,
     open: true,
-    cancelled: false,
+    trash: false,
     failed: true,
     inProcess: false,
     resolved: false,
@@ -120,7 +120,7 @@ export const EMPLOYEE_PERMISSIONS = {
   boardStatuses: {
     new: false,
     open: false,
-    cancelled: false,
+    trash: false,
     failed: false,
     inProcess: true,
     resolved: true,
@@ -156,7 +156,7 @@ export const CUSTOMER_PERMISSIONS = {
   boardStatuses: {
     new: true,
     open: false,
-    cancelled: true,
+    trash: true,
     failed: false,
     inProcess: true,
     resolved: true,
@@ -192,7 +192,7 @@ export const HR_PERMISSIONS = {
   boardStatuses: {
     new: false,
     open: false,
-    cancelled: false,
+    trash: false,
     failed: false,
     inProcess: true,
     resolved: true,

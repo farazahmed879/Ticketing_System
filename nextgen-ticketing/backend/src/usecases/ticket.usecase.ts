@@ -254,7 +254,7 @@ export const ticketUsecase = {
           ![
             StatusName.OPEN.toLowerCase(),
             StatusName.CLOSED.toLowerCase(),
-            StatusName.CANCELLED.toLowerCase(),
+            StatusName.TRASH.toLowerCase(),
             StatusName.FAILED.toLowerCase(),
             StatusName.CLOSED.toLowerCase(),
           ].includes(statusName?.toLocaleLowerCase())

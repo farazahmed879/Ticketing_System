@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -22,6 +23,11 @@ import type {
   TicketDetailModalProps,
 } from "../../../types";
 import CommentSection from "./CommentsSection";
+import {
+  ACCEPT_ATTRIBUTE,
+  MAX_ATTACHMENTS,
+  readAttachmentFiles,
+} from "../../../utils/attachments";
 
 const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   isOpen,
@@ -51,6 +57,62 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const [fullTicketData, setFullTicketData] = useState<any>(null);
   const [newComment, setNewComment] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  // Lightbox state
+  const [lightbox, setLightbox] = useState<{
+    images: string[];
+    index: number;
+  } | null>(null);
+  const openLightbox = (images: string[], index: number) =>
+    setLightbox({ images, index });
+  const closeLightbox = () => setLightbox(null);
+  const lightboxNext = () =>
+    setLightbox((lb) =>
+      lb ? { ...lb, index: (lb.index + 1) % lb.images.length } : null,
+    );
+  const lightboxPrev = () =>
+    setLightbox((lb) =>
+      lb
+        ? {
+            ...lb,
+            index: (lb.index - 1 + lb.images.length) % lb.images.length,
+          }
+        : null,
+    );
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeLightbox();
+      else if (e.key === "ArrowRight") lightboxNext();
+      else if (e.key === "ArrowLeft") lightboxPrev();
+    };
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [lightbox]);
+
+  // Ticket-level attachment editor state
+  const [isEditingAttachments, setIsEditingAttachments] = useState(false);
+  const [attachmentsDraft, setAttachmentsDraft] = useState<string[]>([]);
+  const [attachmentsDraftError, setAttachmentsDraftError] = useState<
+    string | null
+  >(null);
+  const [isSavingAttachments, setIsSavingAttachments] = useState(false);
+  const attachmentsEditFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Comment attachment state
+  const [commentAttachments, setCommentAttachments] = useState<string[]>([]);
+  const [commentAttachmentError, setCommentAttachmentError] = useState<
+    string | null
+  >(null);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentCooldownActive, setCommentCooldownActive] = useState(false);
+  const commentSendDisabled = isSubmittingComment || commentCooldownActive;
 
   const fetchFullTicketData = useCallback(async () => {
     try {
@@ -101,17 +163,97 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim() && commentAttachments.length === 0) return;
+    if (commentSendDisabled) return;
 
+    setIsSubmittingComment(true);
     try {
       await api.post(API_ROUTES.TICKETS.COMMENTS(ticket.id), {
         comment: newComment,
         isNote: false,
+        attachments: commentAttachments,
       });
       setNewComment("");
+      setCommentAttachments([]);
+      setCommentAttachmentError(null);
+      setCommentCooldownActive(true);
+      setTimeout(() => setCommentCooldownActive(false), 1000);
       fetchFullTicketData();
     } catch (err) {
       showNotification("error", "Failed to add comment");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const handleCommentAttachmentSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setCommentAttachmentError(null);
+    const { accepted, errors } = await readAttachmentFiles(
+      e.target.files,
+      commentAttachments.length,
+    );
+    if (accepted.length)
+      setCommentAttachments((prev) => [...prev, ...accepted]);
+    if (errors.length) setCommentAttachmentError(errors.join(" "));
+    e.target.value = "";
+  };
+
+  const removeCommentAttachment = (idx: number) => {
+    setCommentAttachments((prev) => prev.filter((_, i) => i !== idx));
+    setCommentAttachmentError(null);
+  };
+
+  const startEditAttachments = () => {
+    setAttachmentsDraft(displayTicket.attachments || []);
+    setAttachmentsDraftError(null);
+    setIsEditingAttachments(true);
+  };
+
+  const cancelEditAttachments = () => {
+    setIsEditingAttachments(false);
+    setAttachmentsDraft([]);
+    setAttachmentsDraftError(null);
+  };
+
+  const handleAttachmentsDraftSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setAttachmentsDraftError(null);
+    const { accepted, errors } = await readAttachmentFiles(
+      e.target.files,
+      attachmentsDraft.length,
+    );
+    if (accepted.length)
+      setAttachmentsDraft((prev) => [...prev, ...accepted]);
+    if (errors.length) setAttachmentsDraftError(errors.join(" "));
+    e.target.value = "";
+  };
+
+  const removeAttachmentDraft = (idx: number) => {
+    setAttachmentsDraft((prev) => prev.filter((_, i) => i !== idx));
+    setAttachmentsDraftError(null);
+  };
+
+  const handleSaveAttachments = async () => {
+    setIsSavingAttachments(true);
+    try {
+      await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), {
+        attachments: attachmentsDraft,
+      });
+      showNotification("success", "Attachments updated");
+      setIsEditingAttachments(false);
+      fetchFullTicketData();
+    } catch (err: any) {
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to update attachments",
+      );
+    } finally {
+      setIsSavingAttachments(false);
     }
   };
 
@@ -159,6 +301,25 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const canCreateComments =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.comments?.create;
+
+  // Mirror TicketDetail's content-edit gate.
+  const canEditContent = (() => {
+    if (!displayTicket || !user) return false;
+    const role = user.role?.name;
+    const isAdmin = role === RoleName.ADMIN;
+    const isManager = role === RoleName.AGENT;
+    const isEmployee = role === RoleName.EMPLOYEE;
+    const isClient = role === RoleName.CUSTOMER;
+    const isOwner = displayTicket.owner?.id === user.id;
+    const isAssignee = displayTicket.assignee?.id === user.id;
+    const ticketIsNew = displayTicket.status?.name === StatusName.NEW;
+    return (
+      isAdmin ||
+      isManager ||
+      (isEmployee && (isOwner || isAssignee)) ||
+      (isClient && isOwner && ticketIsNew)
+    );
+  })();
 
   return (
     <>
@@ -331,6 +492,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               flex: 1,
               display: "flex",
               flexDirection: "column",
+              minHeight: 0,
             }}
           >
             <div
@@ -340,6 +502,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 gap: 30,
                 padding: "10px 0",
                 flex: 1,
+                minHeight: 0,
               }}
             >
               {/* Left Column: Details */}
@@ -793,6 +956,233 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* Ticket attachments */}
+                {(canEditContent ||
+                  (displayTicket.attachments &&
+                    displayTicket.attachments.length > 0)) && (
+                  <div>
+                    {isEditingAttachments ? (
+                      <div>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: 8,
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "0.85rem",
+                              fontWeight: 600,
+                              color: "var(--text-secondary)",
+                            }}
+                          >
+                            Attachments
+                          </span>
+                          <span
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "var(--text-muted)",
+                            }}
+                          >
+                            {attachmentsDraft.length} / {MAX_ATTACHMENTS}
+                          </span>
+                        </div>
+                        <input
+                          ref={attachmentsEditFileInputRef}
+                          type="file"
+                          accept={ACCEPT_ATTRIBUTE}
+                          multiple
+                          onChange={handleAttachmentsDraftSelect}
+                          style={{ display: "none" }}
+                        />
+                        <div
+                          style={{ display: "flex", flexWrap: "wrap", gap: 10 }}
+                        >
+                          {attachmentsDraft.map((src, idx) => (
+                            <div
+                              key={idx}
+                              style={{
+                                position: "relative",
+                                width: 72,
+                                height: 72,
+                                borderRadius: 8,
+                                overflow: "hidden",
+                                border: "1px solid var(--border-glass)",
+                              }}
+                            >
+                              <img
+                                src={src}
+                                alt={`attachment-${idx}`}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeAttachmentDraft(idx)}
+                                title="Remove"
+                                style={{
+                                  position: "absolute",
+                                  top: 2,
+                                  right: 2,
+                                  width: 20,
+                                  height: 20,
+                                  borderRadius: "50%",
+                                  background: "rgba(0,0,0,0.6)",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  color: "white",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  padding: 0,
+                                }}
+                              >
+                                <CustomIcon name="X" size={12} />
+                              </button>
+                            </div>
+                          ))}
+                          {attachmentsDraft.length < MAX_ATTACHMENTS && (
+                            <CustomButton
+                              type="button"
+                              variant="outline"
+                              onClick={() =>
+                                attachmentsEditFileInputRef.current?.click()
+                              }
+                              icon={<CustomIcon name="ImagePlus" size={16} />}
+                              style={{
+                                width: 72,
+                                height: 72,
+                                padding: 0,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                              title="Add image"
+                            />
+                          )}
+                        </div>
+                        {attachmentsDraftError && (
+                          <div
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "var(--accent-danger)",
+                              marginTop: 6,
+                            }}
+                          >
+                            {attachmentsDraftError}
+                          </div>
+                        )}
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 8,
+                            justifyContent: "flex-end",
+                            marginTop: 10,
+                          }}
+                        >
+                          <CustomButton
+                            variant="ghost"
+                            onClick={cancelEditAttachments}
+                            disabled={isSavingAttachments}
+                          >
+                            Cancel
+                          </CustomButton>
+                          <CustomButton
+                            variant="primary"
+                            onClick={handleSaveAttachments}
+                            loading={isSavingAttachments}
+                          >
+                            Save
+                          </CustomButton>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 8,
+                        }}
+                      >
+                        <div
+                          style={{
+                            flex: 1,
+                            display: "flex",
+                            flexWrap: "wrap",
+                            gap: 10,
+                          }}
+                        >
+                          {displayTicket.attachments &&
+                          displayTicket.attachments.length > 0 ? (
+                            displayTicket.attachments.map(
+                              (src: string, idx: number) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() =>
+                                    openLightbox(
+                                      displayTicket.attachments,
+                                      idx,
+                                    )
+                                  }
+                                  title="View image"
+                                  style={{
+                                    display: "block",
+                                    width: 80,
+                                    height: 80,
+                                    borderRadius: 8,
+                                    overflow: "hidden",
+                                    border: "1px solid var(--border-glass)",
+                                    padding: 0,
+                                    cursor: "zoom-in",
+                                    background: "transparent",
+                                  }}
+                                >
+                                  <img
+                                    src={src}
+                                    alt={`attachment-${idx}`}
+                                    style={{
+                                      width: "100%",
+                                      height: "100%",
+                                      objectFit: "cover",
+                                      display: "block",
+                                    }}
+                                  />
+                                </button>
+                              ),
+                            )
+                          ) : (
+                            <span
+                              style={{
+                                fontSize: "0.85rem",
+                                color: "var(--text-muted)",
+                                fontStyle: "italic",
+                              }}
+                            >
+                              No attachments
+                            </span>
+                          )}
+                        </div>
+                        {canEditContent && (
+                          <CustomButton
+                            variant="ghost"
+                            size="sm"
+                            onClick={startEditAttachments}
+                            icon={<CustomIcon name="Edit2" size={14} />}
+                            title="Edit attachments"
+                            style={{ padding: 4 }}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {/* Description */}
               </div>
 
@@ -805,6 +1195,13 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   handleAddComment={handleAddComment}
                   setNewComment={setNewComment}
                   newComment={newComment}
+                  commentAttachments={commentAttachments}
+                  handleCommentAttachmentSelect={handleCommentAttachmentSelect}
+                  removeCommentAttachment={removeCommentAttachment}
+                  commentAttachmentError={commentAttachmentError}
+                  openLightbox={openLightbox}
+                  commentSendDisabled={commentSendDisabled}
+                  isSubmittingComment={isSubmittingComment}
                 />
               )}
             </div>
@@ -820,6 +1217,140 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         confirmText="Delete"
         type="danger"
       />
+
+      {lightbox &&
+        createPortal(
+          <div
+            onClick={closeLightbox}
+            role="dialog"
+            aria-modal="true"
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 10000,
+              background: "rgba(0, 0, 0, 0.85)",
+              backdropFilter: "blur(4px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 24,
+            }}
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                closeLightbox();
+              }}
+              title="Close (Esc)"
+              style={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.1)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "white",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <CustomIcon name="X" size={20} />
+            </button>
+            {lightbox.images.length > 1 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 20,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  color: "rgba(255,255,255,0.8)",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  background: "rgba(0,0,0,0.4)",
+                  padding: "6px 14px",
+                  borderRadius: 20,
+                }}
+              >
+                {lightbox.index + 1} / {lightbox.images.length}
+              </div>
+            )}
+            {lightbox.images.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  lightboxPrev();
+                }}
+                title="Previous (←)"
+                style={{
+                  position: "absolute",
+                  left: 16,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: "white",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <CustomIcon name="ChevronLeft" size={24} />
+              </button>
+            )}
+            <img
+              src={lightbox.images[lightbox.index]}
+              alt={`attachment-${lightbox.index}`}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                maxWidth: "92vw",
+                maxHeight: "88vh",
+                objectFit: "contain",
+                borderRadius: 8,
+                boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+                cursor: "default",
+              }}
+            />
+            {lightbox.images.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  lightboxNext();
+                }}
+                title="Next (→)"
+                style={{
+                  position: "absolute",
+                  right: 16,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: "white",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <CustomIcon name="ChevronRight" size={24} />
+              </button>
+            )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 };

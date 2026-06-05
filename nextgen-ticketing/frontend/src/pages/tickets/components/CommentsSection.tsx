@@ -1,7 +1,12 @@
+import { useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomInput from "../../../components/CustomInput";
 import CustomButton from "../../../components/CustomButton";
+import {
+  ACCEPT_ATTRIBUTE,
+  MAX_ATTACHMENTS,
+} from "../../../utils/attachments";
 
 const CommentSection = ({
   fullTicketData,
@@ -10,7 +15,20 @@ const CommentSection = ({
   handleAddComment,
   setNewComment,
   newComment,
+  commentAttachments = [],
+  handleCommentAttachmentSelect,
+  removeCommentAttachment,
+  commentAttachmentError,
+  openLightbox,
+  commentSendDisabled = false,
+  isSubmittingComment = false,
 }: any) => {
+  const commentFileInputRef = useRef<HTMLInputElement>(null);
+  const hasAttachmentSupport = Boolean(handleCommentAttachmentSelect);
+  const sendDisabled =
+    (!newComment.trim() && commentAttachments.length === 0) ||
+    commentSendDisabled;
+
   return (
     <div
       style={{
@@ -19,7 +37,8 @@ const CommentSection = ({
         gap: 16,
         borderLeft: "1px solid var(--border-glass)",
         paddingLeft: 24,
-        maxHeight: "100%",
+        height: "100%",
+        minHeight: 0,
       }}
     >
       <label
@@ -60,7 +79,7 @@ const CommentSection = ({
                 flexDirection: "column",
                 gap: 12,
                 flex: 1,
-                maxHeight: "450px",
+                minHeight: 0,
                 overflowY: "auto",
                 paddingRight: 8,
               }}
@@ -105,9 +124,56 @@ const CommentSection = ({
                         })}
                       </span>
                     </div>
-                    <div style={{ fontSize: "0.85rem", lineHeight: 1.5 }}>
-                      {comment.comment}
-                    </div>
+                    {comment.comment?.trim() && (
+                      <div style={{ fontSize: "0.85rem", lineHeight: 1.5 }}>
+                        {comment.comment}
+                      </div>
+                    )}
+                    {comment.attachments && comment.attachments.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: 8,
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 6,
+                        }}
+                      >
+                        {comment.attachments.map(
+                          (src: string, idx: number) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() =>
+                                openLightbox?.(comment.attachments, idx)
+                              }
+                              title="View image"
+                              style={{
+                                display: "block",
+                                width: 56,
+                                height: 56,
+                                borderRadius: 6,
+                                overflow: "hidden",
+                                border: "1px solid var(--border-glass)",
+                                padding: 0,
+                                cursor: "zoom-in",
+                                background: "transparent",
+                              }}
+                            >
+                              <img
+                                src={src}
+                                alt={`attachment-${idx}`}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                  display: "block",
+                                }}
+                              />
+                            </button>
+                          ),
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))
               ) : (
@@ -131,27 +197,125 @@ const CommentSection = ({
                 onSubmit={handleAddComment}
                 style={{
                   display: "flex",
-                  gap: 10,
+                  flexDirection: "column",
+                  gap: 8,
                   marginTop: "auto",
                 }}
               >
-                <CustomInput
-                  placeholder="Add a comment..."
-                  value={newComment}
-                  onChange={(e: any) => setNewComment(e.target.value)}
-                  containerStyle={{ flex: 1 }}
-                />
-                <CustomButton
-                  type="submit"
-                  variant="gradient"
-                  disabled={!newComment.trim()}
-                  icon={<CustomIcon name="Send" size={18} />}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 10,
-                  }}
-                />
+                {hasAttachmentSupport && commentAttachments.length > 0 && (
+                  <div
+                    style={{ display: "flex", flexWrap: "wrap", gap: 6 }}
+                  >
+                    {commentAttachments.map((src: string, idx: number) => (
+                      <div
+                        key={idx}
+                        style={{
+                          position: "relative",
+                          width: 56,
+                          height: 56,
+                          borderRadius: 6,
+                          overflow: "hidden",
+                          border: "1px solid var(--border-glass)",
+                        }}
+                      >
+                        <img
+                          src={src}
+                          alt={`attachment-${idx}`}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeCommentAttachment?.(idx)}
+                          title="Remove"
+                          style={{
+                            position: "absolute",
+                            top: 2,
+                            right: 2,
+                            width: 18,
+                            height: 18,
+                            borderRadius: "50%",
+                            background: "rgba(0,0,0,0.6)",
+                            border: "none",
+                            cursor: "pointer",
+                            color: "white",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: 0,
+                          }}
+                        >
+                          <CustomIcon name="X" size={10} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {hasAttachmentSupport && commentAttachmentError && (
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "var(--accent-danger)",
+                    }}
+                  >
+                    {commentAttachmentError}
+                  </span>
+                )}
+                {hasAttachmentSupport && (
+                  <input
+                    ref={commentFileInputRef}
+                    type="file"
+                    accept={ACCEPT_ATTRIBUTE}
+                    multiple
+                    onChange={handleCommentAttachmentSelect}
+                    style={{ display: "none" }}
+                  />
+                )}
+                <div style={{ display: "flex", gap: 10 }}>
+                  <CustomInput
+                    placeholder="Add a comment..."
+                    value={newComment}
+                    onChange={(e: any) => setNewComment(e.target.value)}
+                    containerStyle={{ flex: 1 }}
+                  />
+                  {hasAttachmentSupport && (
+                    <CustomButton
+                      type="button"
+                      variant="ghost"
+                      onClick={() => commentFileInputRef.current?.click()}
+                      disabled={
+                        commentAttachments.length >= MAX_ATTACHMENTS
+                      }
+                      icon={<CustomIcon name="Paperclip" size={18} />}
+                      title={
+                        commentAttachments.length >= MAX_ATTACHMENTS
+                          ? `Maximum ${MAX_ATTACHMENTS} images reached`
+                          : "Attach image"
+                      }
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 10,
+                        padding: 0,
+                      }}
+                    />
+                  )}
+                  <CustomButton
+                    type="submit"
+                    variant="gradient"
+                    disabled={sendDisabled}
+                    loading={isSubmittingComment}
+                    icon={<CustomIcon name="Send" size={18} />}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
+                    }}
+                  />
+                </div>
               </form>
             )}
           </>

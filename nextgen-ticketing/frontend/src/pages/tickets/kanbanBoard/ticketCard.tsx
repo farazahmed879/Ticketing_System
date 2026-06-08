@@ -1,4 +1,4 @@
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import CustomDropdownMenu from "../../../components/CustomDropdownMenu";
 import CustomIcon from "../../../components/CustomIcon";
 import { RoleName } from "../../../utils/constants";
@@ -78,7 +78,15 @@ const TicketCard = ({
           </div>
         )}
         {ticket.dueDate && (
-          <div className={styles.metaItem} title="Due Date">
+          <div
+            className={styles.metaItem}
+            title="Due Date"
+            style={
+              isBefore(startOfDay(parseISO(ticket.dueDate)), startOfDay(new Date()))
+                ? { color: "var(--error-color, #ef4444)", fontWeight: "bold" }
+                : {}
+            }
+          >
             <CustomIcon name="Calendar" size={12} />
             <span>Due: {format(parseISO(ticket.dueDate), "MMM dd")}</span>
           </div>

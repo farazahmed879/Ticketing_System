@@ -56,7 +56,7 @@ export const ticketUsecase = {
   },
 
   async getTickets(filters: any, user: any) {
-    await this.autoFailOverdueTickets();
+    // await this.autoFailOverdueTickets();
 
     const {
       status,
@@ -418,8 +418,8 @@ export const ticketUsecase = {
       ? existingTicket.dueDate.toISOString().split("T")[0]
       : null;
 
-      console.log("data.dueDate", data.dueDate);
-      console.log("existing dueDate", dueDate);
+    console.log("data.dueDate", data.dueDate);
+    console.log("existing dueDate", dueDate);
 
     if (data.dueDate !== undefined && data.dueDate !== dueDate) {
       const canEditDueDate = isAdmin || isManager;

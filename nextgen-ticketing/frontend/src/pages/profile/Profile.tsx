@@ -8,6 +8,7 @@ import CustomButton from "../../components/CustomButton";
 import CustomBadge from "../../components/CustomBadge";
 import styles from "./Profile.module.css";
 import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
+import { RoleName } from "../../utils/constants";
 
 const Profile: React.FC = () => {
   const { id } = useParams();
@@ -47,25 +48,38 @@ const Profile: React.FC = () => {
     >
       {/* Back Button (Only if viewing another user) */}
       {id && (
-        <div style={{ display: "flex", alignItems: "center", gap: 15, marginBottom: 8 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 15,
+            marginBottom: 8,
+          }}
+        >
           <CustomButton
             variant="ghost"
             onClick={() => navigate("/users")}
             icon={<CustomIcon name="ArrowLeft" size={20} />}
-            style={{ 
-              width: 40, 
-              height: 40, 
-              padding: 0, 
-              borderRadius: '12px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid var(--border-glass)'
+            style={{
+              width: 40,
+              height: 40,
+              padding: 0,
+              borderRadius: "12px",
+              background: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid var(--border-glass)",
             }}
           />
           <div>
             <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
               User Profile
             </h1>
-            <p style={{ color: "var(--text-muted)", margin: "4px 0 0 0", fontSize: '0.9rem' }}>
+            <p
+              style={{
+                color: "var(--text-muted)",
+                margin: "4px 0 0 0",
+                fontSize: "0.9rem",
+              }}
+            >
               Detailed overview of team member information
             </p>
           </div>
@@ -130,25 +144,29 @@ const Profile: React.FC = () => {
                 {user.title || user.role?.name}
               </span>
               <CustomBadge
-                variant={
-                  ((): "danger" | "primary" | "warning" | "success" | "info" | "neutral" => {
-                    switch (user.role?.name?.toLowerCase()) {
-                      case "admin":
-                        return "danger";
-                      case "manager":
-                        return "primary";
-                      case "hr":
-                        return "warning";
-                      case "employee":
-                        return "success";
-                      case "client":
-                      case "customer":
-                        return "info";
-                      default:
-                        return "neutral";
-                    }
-                  })()
-                }
+                variant={(():
+                  | "danger"
+                  | "primary"
+                  | "warning"
+                  | "success"
+                  | "info"
+                  | "neutral" => {
+                  switch (user.role?.name?.toLowerCase()) {
+                    case "admin":
+                      return "danger";
+                    case "manager":
+                      return "primary";
+                    case "hr":
+                      return "warning";
+                    case "employee":
+                      return "success";
+                    case "client":
+                    case "customer":
+                      return "info";
+                    default:
+                      return "neutral";
+                  }
+                })()}
               >
                 {user.role?.name}
               </CustomBadge>
@@ -251,7 +269,11 @@ const Profile: React.FC = () => {
                 </span>
               </div>
               <div className={styles.infoItem}>
-                <label>Employee ID</label>
+                <label>
+                  {user.role.name === RoleName.CUSTOMER
+                    ? "Client ID"
+                    : "Employee ID"}
+                </label>
                 <span>#{user.id.toString().slice(-6).toUpperCase()}</span>
               </div>
               <div className={styles.infoItem}>

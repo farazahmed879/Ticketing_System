@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import CustomIcon from "../CustomIcon";
+import ConfirmationModal from "../ConfirmationModal";
 import { useAuth } from "../../context/AuthContext";
 import styles from "./Sidebar.module.css";
 
@@ -19,6 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
     item: any;
     top: number;
   } | null>(null);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const checkScroll = () => {
     if (navRef.current) {
@@ -59,6 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
   };
 
   const handleLogout = () => {
+    setIsLogoutModalOpen(false);
     logout();
     navigate("/login");
   };
@@ -288,7 +291,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            handleLogout();
+            setIsLogoutModalOpen(true);
           }}
           className={styles.logoutBtn}
           title={t("sidebar.logout")}
@@ -296,6 +299,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
           <CustomIcon name="LogOut" size={18} />
         </button>
       </div>
+
+      <ConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+        title={t("sidebar.logout")}
+        message={t("logoutMessage", "Are you sure you want to log out of your account?")}
+        confirmText={t("sidebar.logout", "Logout")}
+        type="danger"
+      />
     </aside>
   );
 };

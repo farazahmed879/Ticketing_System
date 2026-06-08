@@ -38,8 +38,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   columns,
   onTicketUpdate,
 }) => {
-  console.log("ticket", ticket);
-
   const isDisbaledMode =
     ticket?.status?.name === StatusName.TRASH ||
     ticket?.status?.name === StatusName.CLOSED;
@@ -88,22 +86,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         : null,
     );
 
-  useEffect(() => {
-    if (!lightbox) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeLightbox();
-      else if (e.key === "ArrowRight") lightboxNext();
-      else if (e.key === "ArrowLeft") lightboxPrev();
-    };
-    window.addEventListener("keydown", onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [lightbox]);
-
   // Ticket-level attachment editor state
   const [isEditingAttachments, setIsEditingAttachments] = useState(false);
   const [attachmentsDraft, setAttachmentsDraft] = useState<string[]>([]);
@@ -141,42 +123,13 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     }
   }, [ticket?.id, reset]);
 
-  useEffect(() => {
-    if (isOpen && ticket?.id) {
-      fetchFullTicketData();
-    } else {
-      setFullTicketData(null);
-    }
-  }, [isOpen, ticket?.id, fetchFullTicketData]);
-
   const handleSave = async (data: TicketUpdateFormData) => {
-    console.log("columns");
-
-    try {
-      setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
-      const body = {
-        statusId: data.statusId,
-        targetStatusName:
-          columns.find((c) => c.id === data.statusId)?.name || "",
-        currentStatusName: displayTicket?.status?.name || "",
-        priorityId: data.priorityId,
-        assigneeId: data.assigneeId || null,
-        dueDate: data.dueDate || null,
-        issue: data.issue,
-      };
-
-      await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), body);
-      showNotification("success", "Ticket updated successfully");
-      onTicketUpdate();
-      fetchFullTicketData();
-    } catch (err: any) {
-      showNotification(
-        "error",
-        err.response?.data?.error || "Failed to update ticket",
-      );
-    } finally {
-      setIsLoading(false, "");
-    }
+    onTicketUpdate(
+      ticket.id,
+      data.statusId,
+      displayTicket?.status?.name,
+      columns.find((c) => c.id === data.statusId)?.name || "",
+    );
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
@@ -286,7 +239,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       showNotification("success", "Ticket deleted successfully!");
       setIsDeleteModalOpen(false);
       onClose();
-      onTicketUpdate();
+      // onTicketUpdate();
     } catch (err: any) {
       console.error("Failed to delete ticket", err);
       showNotification(
@@ -297,6 +250,30 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       setIsLoading(false, "");
     }
   };
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeLightbox();
+      else if (e.key === "ArrowRight") lightboxNext();
+      else if (e.key === "ArrowLeft") lightboxPrev();
+    };
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [lightbox]);
+
+  useEffect(() => {
+    if (isOpen && ticket?.id) {
+      fetchFullTicketData();
+    } else {
+      setFullTicketData(null);
+    }
+  }, [isOpen, ticket?.id, fetchFullTicketData]);
 
   if (!ticket) return null;
 
@@ -669,7 +646,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         <span>Description</span>
                       </div>
                     }
-                    disabled={!canUpdate || isDisbaledMode} 
+                    disabled={!canUpdate || isDisbaledMode}
                     placeholder={
                       canUpdate
                         ? "Add a description..."
@@ -996,10 +973,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     }}
                   >
                     <CustomIcon name="Calendar" size={13} />
-                    Created {format(
-                      new Date(displayTicket.createdAt),
-                      "MMM dd, yyyy",
-                    )}
+                    Created{" "}
+                    {format(new Date(displayTicket.createdAt), "MMM dd, yyyy")}
                   </span>
                   {displayTicket.updatedAt && (
                     <span
@@ -1010,7 +985,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       }}
                     >
                       <CustomIcon name="RefreshCw" size={13} />
-                      Updated {format(
+                      Updated{" "}
+                      {format(
                         new Date(displayTicket.updatedAt),
                         "MMM dd, yyyy",
                       )}

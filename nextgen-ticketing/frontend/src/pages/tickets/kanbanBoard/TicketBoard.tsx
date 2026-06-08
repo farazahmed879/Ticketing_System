@@ -129,7 +129,10 @@ const TicketBoard: React.FC = () => {
       ]);
 
       const allTickets = ticketsRes.data.tickets;
-      const allStatuses = STATUS;
+      const allStatuses =
+        user.role.name === RoleName.EMPLOYEE
+          ? STATUS.filter((s: any) => s.name !== StatusName.NEW)
+          : STATUS;
       const allAccounts = usersRes.data.accounts;
 
       // Map agents (Staff) and customers separately
@@ -176,23 +179,28 @@ const TicketBoard: React.FC = () => {
     setIsDetailModalOpen(true);
   };
 
-  useEffect(() => {
-    fetchBoardData();
-
-    // Listen for real-time updates
-    socket.on("ticket:updated", () => {
-      fetchBoardData();
-    });
-
-    return () => {
-      socket.off("ticket:updated");
-    };
-  }, [fetchBoardData]);
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
+  const isAllowedToUpdatedTheTicketStatus = (
+    ticket: Ticket,
+    targetStatusName: string,
+  ) => {
+    if (
+      (user?.role?.name === RoleName.ADMIN ||
+        user?.role.name === RoleName.AGENT) &&
+      targetStatusName === StatusName.OPEN
+    ) {
+      showNotification(
+        "warning",
+        `Please assign this ticket to a team member before moving it to "${targetStatusName}".`,
+      );
+      openTicketDetail(ticket);
+      return false;
+    }
+    return true;
+  };
   const handleDrop = async (
     e: React.DragEvent,
     statusId: string,
@@ -216,35 +224,7 @@ const TicketBoard: React.FC = () => {
 
     if (currentStatusName == targetStatusName) return;
 
-    if (
-      (user?.role?.name === RoleName.ADMIN ||
-        user?.role.name === RoleName.AGENT) &&
-      targetStatusName === StatusName.OPEN
-    ) {
-      showNotification(
-        "warning",
-        `Please assign this ticket to a team member before moving it to "${targetStatusName}".`,
-      );
-      openTicketDetail(ticket);
-      return;
-    }
-
-    const isStatusAllowed =
-      user?.role?.name === RoleName.ADMIN ||
-      user?.role?.permissions?.boardStatuses?.[statusId] === true;
-
-    // if (!canUpdate) {
-    //   showNotification("error", UIMessages.BOARD.PERMISSION_DENIED);
-    //   return;
-    // }
-
-    if (!isStatusAllowed) {
-      showNotification(
-        "error",
-        UIMessages.BOARD.ACCESS_DENIED(targetStatusName || "this status"),
-      );
-      return;
-    }
+    if (!isAllowedToUpdatedTheTicketStatus(ticket, targetStatusName)) return;
 
     handleUpdateStatus(ticketId, statusId, currentStatusName, targetStatusName);
   };
@@ -256,6 +236,23 @@ const TicketBoard: React.FC = () => {
     targetStatusName: string,
   ) => {
     try {
+      const isStatusAllowed =
+        user?.role?.name === RoleName.ADMIN ||
+        user?.role?.permissions?.boardStatuses?.[statusId] === true;
+
+      // if (!canUpdate) {
+      //   showNotification("error", UIMessages.BOARD.PERMISSION_DENIED);
+      //   return;
+      // }
+
+      if (!isStatusAllowed) {
+        showNotification(
+          "error",
+          UIMessages.BOARD.ACCESS_DENIED(targetStatusName || "this status"),
+        );
+        return;
+      }
+
       setIsLoading(true, UIMessages.LOADING.UPDATING_STATUS);
       await api.put(API_ROUTES.TICKETS.BY_ID(ticketId), {
         statusId,
@@ -320,6 +317,19 @@ const TicketBoard: React.FC = () => {
       setIsLoading(false, "");
     }
   };
+
+  useEffect(() => {
+    fetchBoardData();
+
+    // Listen for real-time updates
+    socket.on("ticket:updated", () => {
+      fetchBoardData();
+    });
+
+    return () => {
+      socket.off("ticket:updated");
+    };
+  }, [fetchBoardData]);
 
   return (
     <div className={styles.boardContainer}>
@@ -503,7 +513,7 @@ const TicketBoard: React.FC = () => {
         agents={agents}
         priorities={priorities}
         columns={columns}
-        onTicketUpdate={fetchBoardData}
+        onTicketUpdate={handleUpdateStatus}
       />
 
       <CreateTicketModal

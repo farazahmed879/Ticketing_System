@@ -135,7 +135,7 @@ export const STATUS = [
   },
   {
     id: "69e5f24917cc1f4597f3d5c6",
-    name: "Cancelled",
+    name: "Trash",
     color: "#ff5252",
     order: 7,
     isResolved: true,

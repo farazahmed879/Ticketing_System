@@ -205,8 +205,8 @@ export const ticketUsecase = {
   },
 
   async updateTicket(id: string, data: any, user: any) {
-    console.log("Data", data);
-    console.log("user", user);
+    // console.log("Data", data);
+    // console.log("user", user);
     const existingTicket = (await ticketRepository.findTicketById(id)) as any;
     if (!existingTicket) throw new Error("Ticket not found");
 
@@ -219,7 +219,6 @@ export const ticketUsecase = {
     const isStaff = isAdmin || isManager || isEmployee; // kept for downstream uses
     const isOwner = existingTicket.ownerId === user.id;
     const isAssignee = existingTicket.assigneeId === user.id;
-    const ticketIsNew = existingTicket.status?.name === StatusName.NEW;
 
     const targetStatus = data?.targetStatusName?.toLowerCase() || "";
     const currentStatus = data?.currentStatusName?.toLowerCase() || "";
@@ -227,65 +226,15 @@ export const ticketUsecase = {
     if (currentStatus == StatusName.TRASH)
       throw new Error("Trash Ticket can not be changed.");
 
-    // --- RBAC: gate each editable field per the role matrix ---
-    // Subject / Description
-
-    //pata nahi kya bala hai ye.. bad mai dekhte
-    // if (
-    //   data.subject !== undefined ||
-    //   data.issue !== undefined ||
-    //   data.attachments !== undefined
-    // ) {
-    //   const canEditContent =
-    //     isAdmin ||
-    //     (isEmployee && (isOwner || isAssignee)) ||
-    //     (isClient && isOwner && ticketIsNew);
-    //   if (!canEditContent) {
-    //     throw new Error(
-    //       "You do not have permission to edit this ticket's content.",
-    //     );
-    //   }
-    // }
-
     // Status
     if (
       data.statusId !== undefined &&
       data.statusId !== existingTicket.statusId
     ) {
-      // Server-side security check: an unassigned ticket cannot move to a
-      // working column. The same update may set an assignee in the same call
-      // (e.g., from the modal where assignee+status save together) — that's
-      // allowed. Terminal moves (Trash/Failed/Closed) are also allowed.
-      // const willHaveAssignee =
-      //   data.assigneeId !== undefined
-      //     ? !!data.assigneeId
-      //     : !!existingTicket.assigneeId;
-      // if (!willHaveAssignee) {
-      //   const targetRecord = await ticketRepository.findStatusById(
-      //     data.statusId,
-      //   );
-      //   const targetName = (targetRecord?.name || "").toLowerCase();
-      //   const allowedTargets = new Set([
-      //     StatusName.NEW.toLowerCase(),
-      //     StatusName.TRASH.toLowerCase(),
-      //     StatusName.FAILED.toLowerCase(),
-      //     StatusName.CLOSED.toLowerCase(),
-      //   ]);
-      //   if (!allowedTargets.has(targetName)) {
-      //     throw new Error(
-      //       "Cannot move an unassigned ticket to a working column. Please assign it to a team member first.",
-      //     );
-      //   }
-      // }
-
-      // const st = await ticketRepository.findStatusById(data.statusId);
-
       const current = currentStatus.toLowerCase();
       const target = targetStatus.toLowerCase();
 
       if (isClient) {
-        console.log("client target", target);
-        console.log("client current", current);
         const ALLOWED_TARGETS = new Set(
           [StatusName.CLOSED, StatusName.TRASH, StatusName.FAILED].map((s) =>
             s.toLowerCase(),
@@ -439,9 +388,6 @@ export const ticketUsecase = {
       ? existingTicket.dueDate.toISOString().split("T")[0]
       : null;
 
-    console.log("data.dueDate", data.dueDate);
-    console.log("existing dueDate", dueDate);
-
     if (data.dueDate !== undefined && data.dueDate !== dueDate) {
       const canEditDueDate = isAdmin || isManager;
       if (!canEditDueDate) {
@@ -471,7 +417,9 @@ export const ticketUsecase = {
     }
 
     if (data.statusId && data.statusId !== existingTicket.statusId) {
+      // const newStatus = await ticketRepository.findStatusById(data.statusId);
       const newStatus = await ticketRepository.findStatusById(data.statusId);
+
       updateData.statusId = data.statusId;
       if (newStatus?.isResolved) updateData.closedAt = new Date();
       else updateData.closedAt = null;

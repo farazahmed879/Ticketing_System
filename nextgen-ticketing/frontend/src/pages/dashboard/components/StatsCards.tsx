@@ -13,7 +13,9 @@ const StatsCards: React.FC<StatsCardsProps> = ({ cards }) => {
           style={{
             animationDelay: `${i * 0.1}s`,
             borderLeft: `4px solid ${card.color}`,
+            cursor: card.onClick ? "pointer" : "default",
           }}
+          onClick={card.onClick}
         >
           <div className={styles.statInfo}>
             <span className={styles.statLabel}>{card.label}</span>

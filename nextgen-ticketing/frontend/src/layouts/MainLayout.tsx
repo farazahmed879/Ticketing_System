@@ -202,7 +202,7 @@ const MainLayout: React.FC = () => {
                     flexDirection: "column",
                     boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
                     border: "1px solid var(--border-glass)",
-                    background: "var(--bg-card)",
+                    background: "var(--bg-dropdown)",
                     backdropFilter: "var(--blur-lg)",
                     borderRadius: 16,
                   }}

@@ -41,6 +41,107 @@ export const PriorityName = {
 
 export type PriorityName = (typeof PriorityName)[keyof typeof PriorityName];
 
+export const PRIORITIES = [
+  {
+    id: "69e5da8e0e2d511b4eab95f1",
+    name: "Low",
+    color: "#4caf50",
+    order: 0,
+  },
+  {
+    id: "69e5da8f0e2d511b4eab95f2",
+    name: "Normal",
+    color: "#2196f3",
+    order: 1,
+  },
+  {
+    id: "69e5da900e2d511b4eab95f3",
+    name: "High",
+    color: "#ff9800",
+    order: 2,
+  },
+  {
+    id: "69e5da900e2d511b4eab95f4",
+    name: "Urgent",
+    color: "#f44336",
+    order: 3,
+  },
+];
+
+export const TICKET_TYPES = [
+  {
+    id: "69e5da910e2d511b4eab95f5",
+    name: "Issue",
+  },
+  {
+    id: "69e5da910e2d511b4eab95f6",
+    name: "Task",
+  },
+  {
+    id: "69e5da920e2d511b4eab95f7",
+    name: "Request",
+  },
+];
+
+export const STATUS = [
+  {
+    id: "69e5da8a0e2d511b4eab95ea",
+    name: "Unassigned",
+    color: "#29b955",
+    order: 0,
+    isResolved: false,
+  },
+  {
+    id: "69e5da8b0e2d511b4eab95eb",
+    name: "Assigned",
+    color: "#2196f3",
+    order: 1,
+    isResolved: false,
+  },
+  {
+    id: "69e7608bc5508c8356cd4e0f",
+    name: "Failed",
+    color: "#ef4444",
+    order: 2,
+    isResolved: true,
+  },
+  {
+    id: "69e5da8b0e2d511b4eab95ec",
+    name: "In Process",
+    color: "#ff9800",
+    order: 3,
+    isResolved: false,
+  },
+  {
+    id: "69e5da8c0e2d511b4eab95ed",
+    name: "Resolved",
+    color: "#4caf50",
+    order: 4,
+    isResolved: true,
+  },
+  {
+    id: "69e8990038550b9543f7236f",
+    name: "Approved",
+    color: "#00e676",
+    order: 5,
+    isResolved: true,
+  },
+  {
+    id: "69e5da8c0e2d511b4eab95ee",
+    name: "Closed",
+    color: "#9e9e9e",
+    order: 6,
+    isResolved: true,
+  },
+  {
+    id: "69e5f24917cc1f4597f3d5c6",
+    name: "Cancelled",
+    color: "#ff5252",
+    order: 7,
+    isResolved: true,
+  },
+];
+
 export const UIMessages = {
   LOGIN: {
     INVALID_CREDENTIALS: "Invalid credentials",

@@ -6,7 +6,14 @@ import { API_ROUTES } from "../../../utils/apiRoutes";
 import { useNotification } from "../../../context/NotificationContext";
 import styles from "./TicketBoard.module.css";
 import styles1 from "../TicketList.module.css";
-import { RoleName, StatusName, UIMessages } from "../../../utils/constants";
+import {
+  PRIORITIES,
+  RoleName,
+  STATUS,
+  StatusName,
+  TICKET_TYPES,
+  UIMessages,
+} from "../../../utils/constants";
 import { useAuth } from "../../../context/AuthContext";
 import { socket } from "../../../services/socket";
 import CustomSelect from "../../../components/CustomSelect";
@@ -26,7 +33,7 @@ const TicketBoard: React.FC = () => {
   const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
-  const [priorities, setPriorities] = useState<any[]>([]);
+  // const [priorities, setPriorities] = useState<any[]>([]);
   const [selectedPriorityNames, setSelectedPriorityNames] = useState<string[]>(
     [],
   );
@@ -34,11 +41,12 @@ const TicketBoard: React.FC = () => {
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
-  const [types, setTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const priorities = PRIORITIES;
+  const types = TICKET_TYPES;
 
   // Delete State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -78,14 +86,7 @@ const TicketBoard: React.FC = () => {
 
   const fetchBoardData = useCallback(async () => {
     try {
-      const [
-        ticketsRes,
-        statusRes,
-        usersRes,
-        priorityRes,
-        groupsRes,
-        typesRes,
-      ] = await Promise.all([
+      const [ticketsRes, usersRes, groupsRes] = await Promise.all([
         api.get(API_ROUTES.TICKETS.BASE, {
           params: {
             limit: -1,
@@ -107,7 +108,6 @@ const TicketBoard: React.FC = () => {
                 : undefined,
           },
         }),
-        api.get(API_ROUTES.COMMON.STATUSES),
         api.get(API_ROUTES.USERS.GET_BY_ROLES, {
           params: {
             roles: [
@@ -119,18 +119,17 @@ const TicketBoard: React.FC = () => {
             limit: -1,
           },
         }),
-        api.get(API_ROUTES.COMMON.PRIORITIES),
+        // api.get(API_ROUTES.COMMON.PRIORITIES),
         api.get(API_ROUTES.PROJECTS.BASE, {
           params: {
             role: user?.role?.name,
             userId: user?.id,
           },
         }),
-        api.get(API_ROUTES.COMMON.TYPES),
       ]);
 
       const allTickets = ticketsRes.data.tickets;
-      const allStatuses = statusRes.data.statuses;
+      const allStatuses = STATUS;
       const allAccounts = usersRes.data.accounts;
 
       // Map agents (Staff) and customers separately
@@ -146,9 +145,7 @@ const TicketBoard: React.FC = () => {
         allAccounts.filter((u: any) => u.role.name === RoleName.CUSTOMER),
       );
 
-      setPriorities(priorityRes.data.priorities);
       setProjects(groupsRes.data.projects);
-      setTypes(typesRes.data.types);
 
       const boardColumns: Column[] = allStatuses.map((s: any) => ({
         id: s.id,
@@ -218,15 +215,6 @@ const TicketBoard: React.FC = () => {
     const currentStatusName = currentColumn?.name || ticket?.status?.name || "";
 
     if (currentStatusName == targetStatusName) return;
-
-    console.log("Attempting to move ticket", {
-      ticketId,
-      currentStatusName,
-      targetStatusName,
-      ticket,
-    });
-
-    console.log("User permissions for target status", { user });
 
     if (
       (user?.role?.name === RoleName.ADMIN ||
@@ -495,9 +483,7 @@ const TicketBoard: React.FC = () => {
                     toggleColumnCollapse={toggleColumnCollapse}
                     openTicketDetail={openTicketDetail}
                     isCollapsed={isCollapsed}
-                    isStatusAllowed={
-                      column?.name === StatusName.OPEN ? false : isStatusAllowed
-                    }
+                    isStatusAllowed={isStatusAllowed}
                     setTicketToDelete={setTicketToDelete}
                     setIsDeleteModalOpen={setIsDeleteModalOpen}
                     showNotification={showNotification}

@@ -44,6 +44,33 @@ export const PriorityName = {
 } as const;
 export type PriorityName = (typeof PriorityName)[keyof typeof PriorityName];
 
+export const PRIORITIES = [
+  {
+    id: "69e5da8e0e2d511b4eab95f1",
+    name: "Low",
+    color: "#4caf50",
+    order: 0,
+  },
+  {
+    id: "69e5da8f0e2d511b4eab95f2",
+    name: "Normal",
+    color: "#2196f3",
+    order: 1,
+  },
+  {
+    id: "69e5da900e2d511b4eab95f3",
+    name: "High",
+    color: "#ff9800",
+    order: 2,
+  },
+  {
+    id: "69e5da900e2d511b4eab95f4",
+    name: "Urgent",
+    color: "#f44336",
+    order: 3,
+  },
+];
+
 export const ActionName = {
   TICKET_CREATED: "TICKET_CREATED",
   TICKET_UPDATED: "TICKET_UPDATED",

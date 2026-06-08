@@ -10,6 +10,8 @@ import {
   MAX_ATTACHMENTS,
   readAttachmentFiles,
 } from "../../../utils/attachments";
+import { useAuth } from "../../../context/AuthContext";
+import { RoleName } from "../../../utils/constants";
 import type { Ticket, TicketFormData } from "../../../types";
 
 interface TicketFormProps {
@@ -32,6 +34,11 @@ const TicketForm: React.FC<TicketFormProps> = ({
   onSubmit,
   showAssignee = false,
 }) => {
+  const { user } = useAuth();
+  const isClient = user?.role?.name === RoleName.CUSTOMER;
+  // Clients shouldn't set a due date when creating a ticket — they can't
+  // gauge SLA. On edit, leave the field visible.
+  const showDueDate = !(isClient);
   const { handleSubmit, control, reset, watch, setValue } =
     useForm<TicketFormData>({
       defaultValues: {
@@ -253,14 +260,16 @@ const TicketForm: React.FC<TicketFormProps> = ({
           />
         )}
 
-        <CustomInput
-          name="dueDate"
-          control={control}
-          label="Due Date (Optional)"
-          type="date"
-          placeholder="Select due date"
-          min={new Date().toISOString().split("T")[0]}
-        />
+        {showDueDate && (
+          <CustomInput
+            name="dueDate"
+            control={control}
+            label="Due Date (Optional)"
+            type="date"
+            placeholder="Select due date"
+            min={new Date().toISOString().split("T")[0]}
+          />
+        )}
       </div>
 
       <CustomTextArea

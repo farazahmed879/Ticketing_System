@@ -47,6 +47,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     ticket?.status?.name === StatusName.CLOSED;
 
   const { user } = useAuth();
+  const isClient = user?.role?.name === RoleName.CUSTOMER;
   const { showNotification, setIsLoading } = useNotification();
   const navigate = useNavigate();
   const { control, handleSubmit, reset, watch, setValue } =
@@ -819,7 +820,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           <span>Due Date</span>
                         </div>
                       }
-                      disabled={!canUpdate || isDisbaledMode}
+                      disabled={!canUpdate || isDisbaledMode || isClient }
                     />
 
                     {/* Assignment */}

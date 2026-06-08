@@ -503,7 +503,7 @@ const Messages: React.FC = () => {
                     flex: 1,
                     background: "transparent",
                     border: "none",
-                    color: "white",
+                    color: "var(--text-primary)",
                   }}
                 />
                 <button

@@ -34,18 +34,21 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
       value: stats?.totalTickets,
       icon: <CustomIcon name="Ticket" size={24} />,
       color: "var(--accent-primary)",
+      onClick: () => navigate("/tickets/board"),
     },
     {
       label: "My Open Tickets",
       value: stats?.openTickets,
       icon: <CustomIcon name="Clock" size={24} />,
       color: "var(--accent-warning)",
+      onClick: () => navigate("/tickets/board"),
     },
     {
       label: "My Resolved Tickets",
       value: stats?.resolvedTickets,
       icon: <CustomIcon name="CheckCircle2" size={24} />,
       color: "var(--accent-success)",
+      onClick: () => navigate("/tickets/board"),
     },
   ];
 

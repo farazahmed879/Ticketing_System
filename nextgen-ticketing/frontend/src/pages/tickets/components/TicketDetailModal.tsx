@@ -38,7 +38,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   isOpen,
   onClose,
   ticket,
-  agents,
+  users,
   priorities,
   onTicketUpdate,
 }) => {
@@ -141,6 +141,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       return;
     }
 
+    const newAssigneeName =
+      users.find((agent) => agent.id === data.assigneeId)?.fullname || "";
+
     const body = {
       ticketId: ticket.id,
       statusId: data.statusId,
@@ -150,6 +153,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       assigneeId: data.assigneeId || null,
       dueDate: data.dueDate || null,
       issue: data.issue,
+      newAssigneeName: newAssigneeName,
     };
 
     onTicketUpdate(body);
@@ -860,7 +864,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                 label: "Unassigned",
                                 icon: <CustomIcon name="UserPlus" size={14} />,
                               },
-                              ...agents.map((agent) => ({
+                              ...users.map((agent) => ({
                                 value: agent.id,
                                 label: agent.fullname,
                                 image: agent.image,

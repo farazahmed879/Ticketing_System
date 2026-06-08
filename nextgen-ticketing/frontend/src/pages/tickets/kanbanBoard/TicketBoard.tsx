@@ -511,7 +511,7 @@ const TicketBoard: React.FC = () => {
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         ticket={selectedTicket}
-        agents={agents}
+        users={agents}
         priorities={priorities}
         onTicketUpdate={handleUpdateStatus}
       />

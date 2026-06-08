@@ -16,15 +16,21 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer,
   return ReactDOM.createPortal(
     <div className={styles.overlay}>
       <div className={`${styles.modal} glass-card animate-fade-in`} style={modalStyle}>
-        <div className={styles.header}>
-          <h2>{title}</h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {headerAction}
-            <button onClick={onClose} className={styles.closeBtn}>
-              <CustomIcon name="X" size={20} />
-            </button>
+        {title ? (
+          <div className={styles.header}>
+            <h2>{title}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {headerAction}
+              <button onClick={onClose} className={styles.closeBtn}>
+                <CustomIcon name="X" size={20} />
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <button onClick={onClose} className={styles.closeBtn} style={{ position: 'absolute', top: 20, right: 20, zIndex: 10 }}>
+            <CustomIcon name="X" size={20} />
+          </button>
+        )}
         <div className={styles.content}>
           {children}
         </div>

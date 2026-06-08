@@ -5,8 +5,11 @@ import {
   ActionName,
   NotificationMessages,
   RoleName,
+  TICKET_STATUSES,
+  PRIORITIES,
 } from "../utils/constants";
 import { startOfDay } from "date-fns";
+import { STATUS_CODES } from "http";
 
 const MAX_ATTACHMENTS = 5;
 const MAX_ATTACHMENT_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB binary, after base64 decode
@@ -417,8 +420,9 @@ export const ticketUsecase = {
     }
 
     if (data.statusId && data.statusId !== existingTicket.statusId) {
-      // const newStatus = await ticketRepository.findStatusById(data.statusId);
-      const newStatus = await ticketRepository.findStatusById(data.statusId);
+      const newStatus = TICKET_STATUSES.find(
+        (s: any) => s.id === data.statusId,
+      );
 
       updateData.statusId = data.statusId;
       if (newStatus?.isResolved) updateData.closedAt = new Date();
@@ -432,9 +436,7 @@ export const ticketUsecase = {
     }
 
     if (data.priorityId && data.priorityId !== existingTicket.priorityId) {
-      const newPriority = await ticketRepository.findPriorityById(
-        data.priorityId,
-      );
+      const newPriority = PRIORITIES.find((p: any) => p.id === data.priorityId);
       updateData.priorityId = data.priorityId;
       historyEntries.push({
         action: ActionName.PRIORITY_CHANGED,
@@ -458,11 +460,8 @@ export const ticketUsecase = {
           existingTicket.assignee?.fullname || "Unknown"
         })`;
       } else {
-        const newAssignee = await ticketRepository.findUserById(
-          data.assigneeId,
-        );
         description = `Ticket assigned to ${
-          newAssignee?.fullname || "Unknown"
+          data?.newAssigneeName || "Unknown"
         } (previously ${existingTicket.assignee?.fullname || "Unassigned"})`;
       }
 
@@ -504,6 +503,8 @@ export const ticketUsecase = {
     updateData.history = { create: historyEntries };
 
     const ticket = await ticketRepository.updateTicket(id, updateData);
+
+    //notification part
 
     const notifications = [];
 

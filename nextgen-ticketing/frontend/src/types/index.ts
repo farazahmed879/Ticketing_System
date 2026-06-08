@@ -382,7 +382,7 @@ export interface TicketDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   ticket: any; // Using any for now to maintain compatibility with existing usage
-  agents: User[];
+  users: User[];
   priorities: any[];
   onTicketUpdate: (body: any) => void;
 }

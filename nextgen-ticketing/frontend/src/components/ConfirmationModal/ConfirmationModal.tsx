@@ -30,27 +30,29 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     <Modal 
       isOpen={isOpen} 
       onClose={onClose} 
-      title={title}
-      footer={
-        <>
-          <CustomButton variant="outline" onClick={onClose} disabled={loading}>
+      maxWidth="400px"
+    >
+      <div className={styles.container}>
+        <div className={`${styles.iconWrapper} ${styles[type]}`}>
+          {getIcon()}
+          <div className={`${styles.iconGlow} ${styles[`${type}Glow`]}`} />
+        </div>
+        <h3 className={styles.title}>{title}</h3>
+        <p className={styles.message}>{message}</p>
+        
+        <div className={styles.actions}>
+          <CustomButton variant="outline" onClick={onClose} disabled={loading} style={{ flex: 1, padding: '12px' }}>
             {cancelText}
           </CustomButton>
           <CustomButton 
             variant={type === 'danger' ? 'danger' : 'primary'} 
             onClick={onConfirm} 
             loading={loading}
+            style={{ flex: 1, padding: '12px' }}
           >
             {confirmText}
           </CustomButton>
-        </>
-      }
-    >
-      <div className={styles.container}>
-        <div className={`${styles.iconWrapper} ${styles[type]}`}>
-          {getIcon()}
         </div>
-        <p className={styles.message}>{message}</p>
       </div>
     </Modal>
   );

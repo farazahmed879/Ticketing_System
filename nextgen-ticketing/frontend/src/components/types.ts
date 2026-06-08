@@ -253,7 +253,7 @@ export interface CustomImageProps extends React.ImgHTMLAttributes<HTMLImageEleme
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  title: string;
+  title?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
   maxWidth?: string;

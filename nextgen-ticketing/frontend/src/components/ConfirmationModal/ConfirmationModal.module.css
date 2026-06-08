@@ -3,7 +3,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 10px 0;
+  padding: 20px 10px 10px;
 }
 
 .iconWrapper {
@@ -13,39 +13,65 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.iconGlow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  filter: blur(20px);
+  z-index: -1;
+  opacity: 0.6;
 }
 
 .danger {
   background: rgba(244, 67, 54, 0.1);
   color: #f44336;
 }
+.dangerGlow { background: #f44336; }
 
 .warning {
   background: rgba(255, 152, 0, 0.1);
   color: #ff9800;
 }
+.warningGlow { background: #ff9800; }
 
 .info {
   background: rgba(33, 150, 243, 0.1);
   color: #2196f3;
 }
+.infoGlow { background: #2196f3; }
 
 .success {
   background: rgba(76, 175, 80, 0.1);
   color: #4caf50;
 }
+.successGlow { background: #4caf50; }
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+}
 
 .message {
-  font-size: 1.1rem;
-  color: var(--text-primary);
-  margin-bottom: 30px;
-  line-height: 1.5;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0 0 32px 0;
+  line-height: 1.6;
 }
 
 .actions {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
 }
 

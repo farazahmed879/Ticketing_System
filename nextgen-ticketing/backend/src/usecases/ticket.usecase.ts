@@ -163,48 +163,19 @@ export const ticketUsecase = {
 
     const ticket = await ticketRepository.createTicket(createData);
 
-    const notifications = [];
-
-    if (data.assigneeId) {
-      const notification = await ticketRepository.createNotification({
-        title: "New Ticket Assigned",
-        message: `Ticket #${ticket.uid} has been assigned to you.`,
-        type: "assignment",
-        userId: data.assigneeId,
-        data: { ticketId: ticket.id, uid: ticket.uid },
-      });
-      notifications.push({ userId: data.assigneeId, notification });
-    }
-
-    if (user.role === RoleName.CUSTOMER) {
-      const staff = await ticketRepository.findStaff();
-      for (const s of staff) {
-        if (s.id === data.assigneeId) continue;
-        const staffNotification = await ticketRepository.createNotification({
-          title: NotificationMessages.TITLES.CUSTOMER_TICKET,
-          message: NotificationMessages.CUSTOMER_TICKET_CREATED(
-            ticket.uid,
-            ticket.owner.fullname,
-          ),
-          type: "ticket_created",
-          userId: s.id,
-          data: { ticketId: ticket.id, uid: ticket.uid },
-        });
-        notifications.push({ userId: s.id, notification: staffNotification });
-      }
-    }
-
-    // Auto-create timesheet task
-    if (
-      (user.role === RoleName.ADMIN ||
-        user.role === RoleName.AGENT ||
-        user.role === RoleName.EMPLOYEE) &&
-      ticket.status.name === StatusName.IN_PROCESS
-    ) {
-      await this.handleTimesheetTask(ticket, user.id);
-    }
-
-    return { ticket, notifications };
+    // Return ticket + context for background notification processing
+    return {
+      ticket,
+      backgroundContext: {
+        ticketId: ticket.id,
+        ticketUid: ticket.uid,
+        ownerFullname: ticket.owner?.fullname || "",
+        assigneeId: data.assigneeId || null,
+        userRole: user.role,
+        userId: user.id,
+        statusName: ticket.status.name,
+      },
+    };
   },
 
   async updateTicket(id: string, data: any, user: any) {
@@ -504,78 +475,24 @@ export const ticketUsecase = {
 
     const ticket = await ticketRepository.updateTicket(id, updateData);
 
-    //notification part
-
-    const notifications = [];
-
-    // Build a summary of what changed for the notification message
-    const changes: string[] = [];
-    for (const entry of historyEntries) {
-      changes.push(entry.description);
-    }
-    const changeSummary =
-      changes.length > 0 ? changes.join("; ") : "Ticket details updated";
-
-    // Collect all user IDs to notify (admins, managers, employees + assignee)
-    const notifyIds = new Set<string>();
-
-    // Get all staff (Admin, Manager, Employee)
-    const staff = await ticketRepository.findStaff();
-    for (const s of staff) {
-      notifyIds.add(s.id);
-    }
-
-    // Also notify the assigned employee (current or newly assigned)
-    const assigneeId = data.assigneeId ?? existingTicket.assigneeId;
-    if (assigneeId) {
-      notifyIds.add(assigneeId);
-    }
-
-    // console.log("ticket.status.name", ticket);
-
-    // Notify the ticket owner (client) only when status changes to Approved
-    // Staff owners are already included via findStaff() above
-    const isStatusApproved =
-      data.statusId &&
-      data.statusId !== existingTicket.statusId &&
-      ticket.status.name === StatusName.APPROVED;
-    const ownerIsStaff = staff.some((s) => s.id === existingTicket.ownerId);
-    if (existingTicket.ownerId && (ownerIsStaff || isStatusApproved)) {
-      notifyIds.add(existingTicket.ownerId);
-    }
-
-    // Don't notify the user who made the update
-    notifyIds.delete(actorId);
-
-    for (const targetUserId of notifyIds) {
-      const isAssignment =
-        data.assigneeId &&
-        data.assigneeId !== existingTicket.assigneeId &&
-        targetUserId === data.assigneeId;
-      const notification = await ticketRepository.createNotification({
-        title: isAssignment
-          ? NotificationMessages.TITLES.ASSIGNMENT
-          : NotificationMessages.TITLES.UPDATE,
-        message: isAssignment
-          ? NotificationMessages.TICKET_ASSIGNED(ticket.uid)
-          : `Ticket #${ticket.uid} updated: ${changeSummary}`,
-        type: isAssignment ? "assignment" : "ticket_updated",
-        userId: targetUserId,
-        data: { ticketId: ticket.id, uid: ticket.uid },
-      });
-      notifications.push({ userId: targetUserId, notification });
-    }
-
-    // Auto-create timesheet task
-    if (
-      data.statusId &&
-      isStaff &&
-      ticket.status.name === StatusName.IN_PROCESS
-    ) {
-      await this.handleTimesheetTask(ticket, actorId);
-    }
-
-    return { ticket, notifications };
+    // Return ticket + context for background notification processing
+    return {
+      ticket,
+      backgroundContext: {
+        ticketId: id,
+        ticketUid: ticket.uid,
+        existingTicket: {
+          ownerId: existingTicket.ownerId,
+          assigneeId: existingTicket.assigneeId,
+          statusId: existingTicket.statusId,
+        },
+        data: { statusId: data.statusId, assigneeId: data.assigneeId },
+        historyEntries,
+        actorId,
+        isStaff,
+        statusName: ticket.status.name,
+      },
+    };
   },
 
   async batchUpdateTickets(data: any, user: any) {
@@ -636,29 +553,16 @@ export const ticketUsecase = {
       },
     });
 
-    const ticket = await ticketRepository.findTicketById(ticketId);
-    const notifications = [];
-
-    if (ticket) {
-      const notifyIds = new Set<string>();
-      if (ticket.assigneeId && ticket.assigneeId !== authorId)
-        notifyIds.add(ticket.assigneeId);
-      if (ticket.ownerId && ticket.ownerId !== authorId)
-        notifyIds.add(ticket.ownerId);
-
-      for (const targetUserId of notifyIds) {
-        const notification = await ticketRepository.createNotification({
-          title: "New Comment",
-          message: `New comment on Ticket #${ticket.uid} by ${newComment.author.fullname}`,
-          type: "comment",
-          userId: targetUserId,
-          data: { ticketId, commentId: newComment.id, uid: ticket.uid },
-        });
-        notifications.push({ userId: targetUserId, notification });
-      }
-    }
-
-    return { comment: newComment, notifications };
+    // Return comment + context for background notification processing
+    return {
+      comment: newComment,
+      backgroundContext: {
+        ticketId,
+        commentId: newComment.id,
+        authorId,
+        authorFullname: newComment.author.fullname,
+      },
+    };
   },
 
   async getTicketHistory(filters: any) {
@@ -679,6 +583,179 @@ export const ticketUsecase = {
 
   async getTimeline(ticketId: string) {
     return ticketRepository.getTimeline(ticketId);
+  },
+
+  /**
+   * Background: send notifications for a newly created ticket.
+   * Called via setImmediate in the controller after the HTTP response is sent.
+   */
+  async sendCreateNotifications(ctx: any) {
+    const notifications: { userId: string; notification: any }[] = [];
+
+    // Notify assignee
+    if (ctx.assigneeId) {
+      const notification = await ticketRepository.createNotification({
+        title: "New Ticket Assigned",
+        message: `Ticket #${ctx.ticketUid} has been assigned to you.`,
+        type: "assignment",
+        userId: ctx.assigneeId,
+        data: { ticketId: ctx.ticketId, uid: ctx.ticketUid },
+      });
+      notifications.push({ userId: ctx.assigneeId, notification });
+    }
+
+    // Notify staff when a customer creates a ticket
+    if (ctx.userRole === RoleName.CUSTOMER) {
+      const staff = await ticketRepository.findStaff();
+      const staffToNotify = staff.filter((s: any) => s.id !== ctx.assigneeId);
+      const staffNotifications = await Promise.all(
+        staffToNotify.map(async (s: any) => {
+          const notification = await ticketRepository.createNotification({
+            title: NotificationMessages.TITLES.CUSTOMER_TICKET,
+            message: NotificationMessages.CUSTOMER_TICKET_CREATED(
+              ctx.ticketUid,
+              ctx.ownerFullname,
+            ),
+            type: "ticket_created",
+            userId: s.id,
+            data: { ticketId: ctx.ticketId, uid: ctx.ticketUid },
+          });
+          return { userId: s.id, notification };
+        }),
+      );
+      notifications.push(...staffNotifications);
+    }
+
+    // Auto-create timesheet task
+    if (
+      (ctx.userRole === RoleName.ADMIN ||
+        ctx.userRole === RoleName.AGENT ||
+        ctx.userRole === RoleName.EMPLOYEE) &&
+      ctx.statusName === StatusName.IN_PROCESS
+    ) {
+      // We need the full ticket for handleTimesheetTask
+      const ticket = await ticketRepository.findTicketById(ctx.ticketId);
+      if (ticket) await this.handleTimesheetTask(ticket, ctx.userId);
+    }
+
+    return notifications;
+  },
+
+  /**
+   * Background: send notifications for a ticket update.
+   * Called via setImmediate in the controller after the HTTP response is sent.
+   */
+  async sendUpdateNotifications(ctx: any) {
+    // Build a summary of what changed for the notification message
+    const changes: string[] = [];
+    for (const entry of ctx.historyEntries) {
+      changes.push(entry.description);
+    }
+    const changeSummary =
+      changes.length > 0 ? changes.join("; ") : "Ticket details updated";
+
+    // Collect all user IDs to notify (admins, managers, employees + assignee)
+    const notifyIds = new Set<string>();
+
+    // Get all staff (Admin, Manager, Employee)
+    const staff = await ticketRepository.findStaff();
+    for (const s of staff) {
+      notifyIds.add(s.id);
+    }
+
+    // Also notify the assigned employee (current or newly assigned)
+    const assigneeId = ctx.data.assigneeId ?? ctx.existingTicket.assigneeId;
+    if (assigneeId) {
+      notifyIds.add(assigneeId);
+    }
+
+    // Notify the ticket owner (client) only when status changes to Approved
+    // Staff owners are already included via findStaff() above
+    const isStatusApproved =
+      ctx.data.statusId &&
+      ctx.data.statusId !== ctx.existingTicket.statusId &&
+      ctx.statusName === StatusName.APPROVED;
+    const ownerIsStaff = staff.some(
+      (s: any) => s.id === ctx.existingTicket.ownerId,
+    );
+    if (
+      ctx.existingTicket.ownerId &&
+      (ownerIsStaff || isStatusApproved)
+    ) {
+      notifyIds.add(ctx.existingTicket.ownerId);
+    }
+
+    // Don't notify the user who made the update
+    notifyIds.delete(ctx.actorId);
+
+    // Create all notifications in parallel
+    const notifications = await Promise.all(
+      Array.from(notifyIds).map(async (targetUserId) => {
+        const isAssignment =
+          ctx.data.assigneeId &&
+          ctx.data.assigneeId !== ctx.existingTicket.assigneeId &&
+          targetUserId === ctx.data.assigneeId;
+        const notification = await ticketRepository.createNotification({
+          title: isAssignment
+            ? NotificationMessages.TITLES.ASSIGNMENT
+            : NotificationMessages.TITLES.UPDATE,
+          message: isAssignment
+            ? NotificationMessages.TICKET_ASSIGNED(ctx.ticketUid)
+            : `Ticket #${ctx.ticketUid} updated: ${changeSummary}`,
+          type: isAssignment ? "assignment" : "ticket_updated",
+          userId: targetUserId,
+          data: { ticketId: ctx.ticketId, uid: ctx.ticketUid },
+        });
+        return { userId: targetUserId, notification };
+      }),
+    );
+
+    // Auto-create timesheet task
+    if (
+      ctx.data.statusId &&
+      ctx.isStaff &&
+      ctx.statusName === StatusName.IN_PROCESS
+    ) {
+      const ticket = await ticketRepository.findTicketById(ctx.ticketId);
+      if (ticket) await this.handleTimesheetTask(ticket, ctx.actorId);
+    }
+
+    return notifications;
+  },
+
+  /**
+   * Background: send notifications for a new comment.
+   * Called via setImmediate in the controller after the HTTP response is sent.
+   */
+  async sendCommentNotifications(ctx: any) {
+    const ticket = await ticketRepository.findTicketById(ctx.ticketId);
+    if (!ticket) return [];
+
+    const notifyIds = new Set<string>();
+    if (ticket.assigneeId && ticket.assigneeId !== ctx.authorId)
+      notifyIds.add(ticket.assigneeId);
+    if (ticket.ownerId && ticket.ownerId !== ctx.authorId)
+      notifyIds.add(ticket.ownerId);
+
+    // Create all notifications in parallel
+    const notifications = await Promise.all(
+      Array.from(notifyIds).map(async (targetUserId) => {
+        const notification = await ticketRepository.createNotification({
+          title: "New Comment",
+          message: `New comment on Ticket #${ticket.uid} by ${ctx.authorFullname}`,
+          type: "comment",
+          userId: targetUserId,
+          data: {
+            ticketId: ctx.ticketId,
+            commentId: ctx.commentId,
+            uid: ticket.uid,
+          },
+        });
+        return { userId: targetUserId, notification };
+      }),
+    );
+
+    return notifications;
   },
 
   async handleTimesheetTask(ticket: any, userId: string) {

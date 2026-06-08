@@ -18,20 +18,35 @@ export const ticketController = {
       const user = req.user;
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-      const { ticket, notifications } = await ticketUsecase.createTicket(
+      const { ticket, backgroundContext } = await ticketUsecase.createTicket(
         req.body,
         user,
       );
 
-      const io = req.app.get("io");
-      if (io) {
-        for (const n of notifications) {
-          emitNotificationToUser(io, n.userId, n.notification);
-        }
-        io.emit("ticket:updated", { ticketId: ticket.id });
-      }
-
+      // Respond immediately to the frontend
       res.status(201).json({ success: true, ticket });
+
+      // Fire-and-forget: notifications + socket emissions in background
+      const io = req.app.get("io");
+      setImmediate(async () => {
+        try {
+          if (io) io.emit("ticket:updated", { ticketId: ticket.id });
+
+          const notifications =
+            await ticketUsecase.sendCreateNotifications(backgroundContext);
+
+          if (io) {
+            for (const n of notifications) {
+              emitNotificationToUser(io, n.userId, n.notification);
+            }
+          }
+        } catch (err) {
+          console.error(
+            "[Background] Failed to send create notifications:",
+            err,
+          );
+        }
+      });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
@@ -49,27 +64,39 @@ export const ticketController = {
 
   async updateTicket(req: AuthRequest, res: Response) {
     try {
-      // console.log("updateTicket controller");
       const user = req.user;
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-      const { ticket, notifications } = await ticketUsecase.updateTicket(
+      const { ticket, backgroundContext } = await ticketUsecase.updateTicket(
         req.params.id as string,
         req.body,
         user,
       );
 
-      // console.log("notifications", notifications);
-
-      const io = req.app.get("io");
-      if (io) {
-        for (const n of notifications) {
-          emitNotificationToUser(io, n.userId, n.notification);
-        }
-        io.emit("ticket:updated", { ticketId: ticket.id });
-      }
-
+      // Respond immediately to the frontend
       res.json({ success: true, ticket });
+
+      // Fire-and-forget: notifications + socket emissions in background
+      const io = req.app.get("io");
+      setImmediate(async () => {
+        try {
+          if (io) io.emit("ticket:updated", { ticketId: ticket.id });
+
+          const notifications =
+            await ticketUsecase.sendUpdateNotifications(backgroundContext);
+
+          if (io) {
+            for (const n of notifications) {
+              emitNotificationToUser(io, n.userId, n.notification);
+            }
+          }
+        } catch (err) {
+          console.error(
+            "[Background] Failed to send update notifications:",
+            err,
+          );
+        }
+      });
     } catch (error: any) {
       const status =
         error.message.includes("permission") ||
@@ -115,21 +142,36 @@ export const ticketController = {
       const user = req.user;
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-      const { comment, notifications } = await ticketUsecase.addComment(
+      const { comment, backgroundContext } = await ticketUsecase.addComment(
         req.params.id as string,
         req.body,
         user,
       );
 
-      const io = req.app.get("io");
-      if (io) {
-        for (const n of notifications) {
-          emitNotificationToUser(io, n.userId, n.notification);
-        }
-        io.emit("ticket:updated", { ticketId: req.params.id });
-      }
-
+      // Respond immediately to the frontend
       res.status(201).json({ success: true, comment });
+
+      // Fire-and-forget: notifications + socket emissions in background
+      const io = req.app.get("io");
+      setImmediate(async () => {
+        try {
+          if (io) io.emit("ticket:updated", { ticketId: req.params.id });
+
+          const notifications =
+            await ticketUsecase.sendCommentNotifications(backgroundContext);
+
+          if (io) {
+            for (const n of notifications) {
+              emitNotificationToUser(io, n.userId, n.notification);
+            }
+          }
+        } catch (err) {
+          console.error(
+            "[Background] Failed to send comment notifications:",
+            err,
+          );
+        }
+      });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }

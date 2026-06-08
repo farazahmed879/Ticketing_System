@@ -293,12 +293,12 @@
 }
 
 .card {
-  padding: 16px;
+  padding: 12px;
   cursor: grab;
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   transition:
     transform 0.2s,
     box-shadow 0.2s;
@@ -315,7 +315,7 @@
 }
 
 .cardPriority {
-  align-self: flex-start;
+  align-self: center;
   font-size: 0.7rem;
   font-weight: 800;
   padding: 2px 8px;
@@ -331,24 +331,24 @@
 }
 
 .cardSubject {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.35;
   color: var(--text-primary);
 }
 
 .cardMeta {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 4px;
+  gap: 8px 10px;
+  margin-top: 2px;
 }
 
 .metaItem {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -361,8 +361,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 8px;
-  padding-top: 12px;
+  margin-top: 4px;
+  padding-top: 8px;
   border-top: 1px solid var(--border-glass);
 }
 

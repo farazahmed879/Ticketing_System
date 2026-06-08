@@ -89,8 +89,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
     },
     {
       icon: <CustomIcon name="Ticket" size={20} />,
-      label: "Ticket",
-      path: "/tickets",
+      label: "Tickets",
+      path: "/tickets/board",
       permission: "tickets.view",
     },
     {

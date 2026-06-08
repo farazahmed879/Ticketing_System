@@ -252,18 +252,45 @@ export const ticketUsecase = {
       data.statusId !== undefined &&
       data.statusId !== existingTicket.statusId
     ) {
+      // Server-side security check: an unassigned ticket cannot move to a
+      // working column. The same update may set an assignee in the same call
+      // (e.g., from the modal where assignee+status save together) — that's
+      // allowed. Terminal moves (Trash/Failed/Closed) are also allowed.
+      const willHaveAssignee =
+        data.assigneeId !== undefined
+          ? !!data.assigneeId
+          : !!existingTicket.assigneeId;
+      if (!willHaveAssignee) {
+        const targetRecord = await ticketRepository.findStatusById(
+          data.statusId,
+        );
+        const targetName = (targetRecord?.name || "").toLowerCase();
+        const allowedTargets = new Set([
+          StatusName.NEW.toLowerCase(),
+          StatusName.TRASH.toLowerCase(),
+          StatusName.FAILED.toLowerCase(),
+          StatusName.CLOSED.toLowerCase(),
+        ]);
+        if (!allowedTargets.has(targetName)) {
+          throw new Error(
+            "Cannot move an unassigned ticket to a working column. Please assign it to a team member first.",
+          );
+        }
+      }
+
       // const st = await ticketRepository.findStatusById(data.statusId);
 
       const current = currentStatus.toLowerCase();
       const target = targetStatus.toLowerCase();
 
       if (isClient) {
+        console.log("client target", target);
+        console.log("client current", current);
         const ALLOWED_TARGETS = new Set(
           [StatusName.CLOSED, StatusName.TRASH, StatusName.FAILED].map((s) =>
             s.toLowerCase(),
           ),
         );
-
         if (!ALLOWED_TARGETS.has(target)) {
           const allowed = [
             StatusName.CLOSED,
@@ -387,11 +414,14 @@ export const ticketUsecase = {
     }
 
     // Due date
-    if (
-      data.dueDate !== undefined &&
-      data.dueDate !==
-        (existingTicket.dueDate ? existingTicket.dueDate.toISOString() : null)
-    ) {
+    const dueDate = existingTicket.dueDate
+      ? existingTicket.dueDate.toISOString().split("T")[0]
+      : null;
+
+      console.log("data.dueDate", data.dueDate);
+      console.log("existing dueDate", dueDate);
+
+    if (data.dueDate !== undefined && data.dueDate !== dueDate) {
       const canEditDueDate = isAdmin || isManager;
       if (!canEditDueDate) {
         throw new Error(

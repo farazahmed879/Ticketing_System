@@ -123,41 +123,66 @@ const MainLayout: React.FC = () => {
           >
             <div style={{ position: "relative" }}>
               <button
-                className="glass-card"
+                className={`glass-card notification-button${unreadCount > 0 ? " has-unread" : ""}`}
                 style={{
                   padding: 8,
                   borderRadius: 10,
                   position: "relative",
                   cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
+                aria-label={
+                  unreadCount > 0
+                    ? `Notifications, ${unreadCount} unread`
+                    : "Notifications"
+                }
+                title={
+                  unreadCount > 0
+                    ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
+                    : "Notifications"
+                }
                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
               >
                 <CustomIcon
                   name="Bell"
                   size={20}
-                  color="var(--text-secondary)"
+                  color={
+                    unreadCount > 0
+                      ? "var(--accent-danger)"
+                      : "var(--text-secondary)"
+                  }
                 />
                 {unreadCount > 0 && (
-                  <div
+                  <span
+                    className="notification-badge"
                     style={{
                       position: "absolute",
-                      top: 6,
-                      right: 6,
-                      width: 18,
+                      top: -6,
+                      right: -6,
+                      minWidth: 18,
                       height: 18,
-                      background: "var(--accent-danger)",
-                      borderRadius: "50%",
+                      padding: "0 5px",
+                      background:
+                        "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                      borderRadius: 9,
                       border: "2px solid var(--bg-main)",
                       color: "white",
-                      fontSize: "10px",
-                      display: "flex",
+                      fontSize: "0.65rem",
+                      lineHeight: 1,
+                      display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
                       fontWeight: 700,
+                      letterSpacing: 0.2,
+                      boxSizing: "content-box",
+                      pointerEvents: "none",
+                      transformOrigin: "center",
                     }}
                   >
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </div>
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
                 )}
               </button>
 

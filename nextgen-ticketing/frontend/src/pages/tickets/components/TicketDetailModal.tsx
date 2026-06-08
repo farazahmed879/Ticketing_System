@@ -38,6 +38,12 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   columns,
   onTicketUpdate,
 }) => {
+  console.log("ticket", ticket);
+
+  const isDisbaledMode =
+    ticket?.status?.name === StatusName.TRASH ||
+    ticket?.status?.name === StatusName.CLOSED;
+
   const { user } = useAuth();
   const { showNotification, setIsLoading } = useNotification();
   const navigate = useNavigate();
@@ -144,17 +150,21 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   }, [isOpen, ticket?.id, fetchFullTicketData]);
 
   const handleSave = async (data: TicketUpdateFormData) => {
+    console.log("columns");
+
     try {
       setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
       const body = {
         statusId: data.statusId,
-        targetStatusName: data.targetStatusName || "",
+        targetStatusName:
+          columns.find((c) => c.id === data.statusId)?.name || "",
         currentStatusName: displayTicket?.status?.name || "",
         priorityId: data.priorityId,
         assigneeId: data.assigneeId || null,
         dueDate: data.dueDate || null,
         issue: data.issue,
       };
+
       await api.put(API_ROUTES.TICKETS.BY_ID(ticket.id), body);
       showNotification("success", "Ticket updated successfully");
       onTicketUpdate();
@@ -327,6 +337,22 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       (isClient && isOwner && ticketIsNew)
     );
   })();
+
+  const getStatusOptions = (columns: any[]) => {
+    return columns.map((s: any) => ({
+      value: s.id,
+      label: s.name,
+      icon: <CustomIcon name="Clock" size={14} color={s.color} />,
+      disabled: !(
+        user?.role?.name === RoleName.ADMIN ||
+        user?.role?.permissions?.boardStatuses?.[s.id] === true ||
+        (displayTicket.owner.id === user?.id &&
+          (s.name.toLowerCase() === StatusName.OPEN.toLowerCase() ||
+            s.name.toLowerCase() === StatusName.TRASH.toLowerCase() ||
+            s.name.toLowerCase() === StatusName.FAILED.toLowerCase()))
+      ),
+    }));
+  };
 
   return (
     <>
@@ -523,6 +549,27 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 }}
               >
                 <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontSize: "0.9rem",
+                    color: "var(--text-secondary)",
+                    marginTop: -8,
+                  }}
+                >
+                  <CustomIcon
+                    name="FolderKanban"
+                    size={16}
+                    color="var(--accent-primary)"
+                  />
+                  <span style={{ fontWeight: 600 }}>Project:</span>
+                  <span style={{ color: "var(--text-primary)" }}>
+                    {displayTicket.project?.name || "None"}
+                  </span>
+                </div>
+
+                <div
                   style={{ display: "flex", justifyContent: "space-between" }}
                 >
                   {/* Header Badges */}
@@ -549,6 +596,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           minWidth: 140,
                           fontSize: "0.8rem",
                         }}
+                        disabled={isDisbaledMode}
                       />
                     ) : (
                       <CustomBadge
@@ -569,49 +617,13 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     <CustomSelect
                       name="statusId"
                       control={control}
-                      options={columns.map((s) => ({
-                        value: s.id,
-                        label: s.name,
-                        icon: (
-                          <CustomIcon name="Clock" size={14} color={s.color} />
-                        ),
-                        disabled: !(
-                          user?.role?.name === RoleName.ADMIN ||
-                          user?.role?.permissions?.boardStatuses?.[s.id] ===
-                            true ||
-                          (displayTicket.owner.id === user?.id &&
-                            (s.name.toLowerCase() ===
-                              StatusName.OPEN.toLowerCase() ||
-                              s.name.toLowerCase() ===
-                                StatusName.TRASH.toLowerCase() ||
-                              s.name.toLowerCase() ===
-                                StatusName.FAILED.toLowerCase()))
-                        ),
-                      }))}
+                      options={getStatusOptions(columns)}
                       style={{
                         minWidth: 180,
                         fontSize: "0.8rem",
                       }}
+                      disabled={isDisbaledMode}
                     />
-                    <CustomBadge
-                      variant="neutral"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "6px 12px",
-                        borderRadius: 8,
-                        fontSize: "0.8rem",
-                        width: "fit-content",
-                        minWidth: 140,
-                      }}
-                    >
-                      <CustomIcon name="Calendar" size={16} /> Created:{" "}
-                      {format(
-                        new Date(displayTicket.createdAt),
-                        "MMM dd, yyyy",
-                      )}
-                    </CustomBadge>
                   </div>
 
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -657,7 +669,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         <span>Description</span>
                       </div>
                     }
-                    disabled={!canUpdate}
+                    disabled={!canUpdate || isDisbaledMode} 
                     placeholder={
                       canUpdate
                         ? "Add a description..."
@@ -803,7 +815,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           <span>Due Date</span>
                         </div>
                       }
-                      disabled={!canUpdate}
+                      disabled={!canUpdate || isDisbaledMode}
                     />
 
                     {/* Assignment */}
@@ -963,6 +975,47 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Created / Updated timestamps */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 20,
+                    fontSize: "0.78rem",
+                    color: "var(--text-muted)",
+                    marginTop: -16,
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <CustomIcon name="Calendar" size={13} />
+                    Created {format(
+                      new Date(displayTicket.createdAt),
+                      "MMM dd, yyyy",
+                    )}
+                  </span>
+                  {displayTicket.updatedAt && (
+                    <span
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <CustomIcon name="RefreshCw" size={13} />
+                      Updated {format(
+                        new Date(displayTicket.updatedAt),
+                        "MMM dd, yyyy",
+                      )}
+                    </span>
+                  )}
                 </div>
 
                 {/* Ticket attachments */}

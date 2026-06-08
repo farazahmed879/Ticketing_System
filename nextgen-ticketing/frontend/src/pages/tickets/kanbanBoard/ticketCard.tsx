@@ -18,7 +18,6 @@ const TicketCard = ({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 4,
         }}
       >
         <div
@@ -72,10 +71,10 @@ const TicketCard = ({
       <div className={styles.cardSubject}>{ticket.subject}</div>
 
       <div className={styles.cardMeta}>
-        {ticket.group && (
+        {ticket.project && (
           <div className={styles.metaItem} title="Project">
-            <CustomIcon name="Folder" size={12} />
-            <span>{ticket.group.name}</span>
+            <CustomIcon name="FolderKanban" size={12} />
+            <span>{ticket.project.name}</span>
           </div>
         )}
         {ticket.dueDate && (
@@ -84,10 +83,22 @@ const TicketCard = ({
             <span>Due: {format(parseISO(ticket.dueDate), "MMM dd")}</span>
           </div>
         )}
-        <div className={styles.metaItem} title="Created Date">
+        <div
+          className={styles.metaItem}
+          title={`Created ${format(new Date(ticket.createdAt), "MMM dd, yyyy")}`}
+        >
           <CustomIcon name="Clock" size={12} />
           <span>Created: {format(new Date(ticket.createdAt), "MMM dd")}</span>
         </div>
+        {ticket.updatedAt && ticket.updatedAt !== ticket.createdAt && (
+          <div
+            className={styles.metaItem}
+            title={`Last updated ${format(new Date(ticket.updatedAt), "MMM dd, yyyy")}`}
+          >
+            <CustomIcon name="RefreshCw" size={12} />
+            <span>Updated: {format(new Date(ticket.updatedAt), "MMM dd")}</span>
+          </div>
+        )}
       </div>
 
       <div className={styles.cardFooter}>

@@ -234,3 +234,49 @@ textarea:focus {
     transform: translateX(100%);
   }
 }
+
+/* Notification badge: scale-pulse to draw attention without being noisy */
+@keyframes notificationBadgePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.45);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 6px rgba(244, 67, 54, 0);
+  }
+}
+
+/* Notification badge: gentle pop-in when a new unread arrives */
+@keyframes notificationBadgePop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.notification-button {
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+.notification-button:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-primary, rgba(124, 58, 237, 0.5));
+}
+.notification-button:active {
+  transform: translateY(0);
+}
+.notification-button.has-unread {
+  border-color: rgba(244, 67, 54, 0.35);
+}
+
+.notification-badge {
+  animation: notificationBadgePop 0.25s ease-out, notificationBadgePulse 2.4s ease-in-out 0.25s infinite;
+}

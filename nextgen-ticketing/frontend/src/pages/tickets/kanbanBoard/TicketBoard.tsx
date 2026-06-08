@@ -213,32 +213,25 @@ const TicketBoard: React.FC = () => {
         break;
       }
     }
+    if (!ticket) return;
 
     const currentStatusName = currentColumn?.name || ticket?.status?.name || "";
 
     if (currentStatusName == targetStatusName) return;
 
-    // Catch dragging an unassigned ticket OUT of a "starting" column
-    // (New / Unassigned) and INTO any non-terminal working column.
-    // Terminal moves (Cancelled / Failed) are still allowed without assignee.
-    // Movement between other columns is unrestricted regardless of assignee.
-    const startingNames = ["new", "unassigned"];
-    const terminalNames = ["cancelled", "failed"];
-    const currentIsStarting = startingNames.includes(
-      currentStatusName.toLowerCase(),
-    );
-    const targetIsStarting = startingNames.includes(
-      targetStatusName.toLowerCase(),
-    );
-    const targetIsTerminal = terminalNames.includes(
-      targetStatusName.toLowerCase(),
-    );
+    console.log("Attempting to move ticket", {
+      ticketId,
+      currentStatusName,
+      targetStatusName,
+      ticket,
+    });
+
+    console.log("User permissions for target status", { user });
+
     if (
-      ticket &&
-      !ticket.assignee?.id &&
-      currentIsStarting &&
-      !targetIsStarting &&
-      !targetIsTerminal
+      (user?.role?.name === RoleName.ADMIN ||
+        user?.role.name === RoleName.AGENT) &&
+      targetStatusName === StatusName.OPEN
     ) {
       showNotification(
         "warning",
@@ -247,17 +240,6 @@ const TicketBoard: React.FC = () => {
       openTicketDetail(ticket);
       return;
     }
-
-    // const isOwner = ticket?.owner?.id === user?.id;
-    // const canUpdate =
-    //   user?.role?.name === RoleName.ADMIN ||
-    //   user?.role?.permissions?.tickets?.update ||
-    //   isOwner;
-
-    // const isBasicAction =
-    //   statusName.toLowerCase() === StatusName.OPEN.toLowerCase() ||
-    //   statusName.toLowerCase() === StatusName.TRASH.toLowerCase() ||
-    //   statusName.toLowerCase() === StatusName.FAILED.toLowerCase();
 
     const isStatusAllowed =
       user?.role?.name === RoleName.ADMIN ||

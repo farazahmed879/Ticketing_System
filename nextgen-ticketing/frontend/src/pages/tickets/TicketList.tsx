@@ -13,7 +13,7 @@ import {
   UIMessages,
 } from "../../utils/constants";
 import { API_ROUTES } from "../../utils/apiRoutes";
-import { format } from "date-fns";
+import { format, isBefore, startOfDay } from "date-fns";
 
 import type { Ticket, TicketFormData } from "../../types";
 import CustomTable from "../../components/CustomTable";
@@ -308,8 +308,24 @@ const TicketList: React.FC = () => {
             {
               header: "Due Date",
               key: "dueDate",
-              render: (t) =>
-                t.dueDate ? format(new Date(t.dueDate), "MMM dd, yy") : "-",
+              render: (t) => {
+                if (!t.dueDate) return "-";
+                const isPassed = isBefore(
+                  startOfDay(new Date(t.dueDate)),
+                  startOfDay(new Date())
+                );
+                return (
+                  <span
+                    style={
+                      isPassed
+                        ? { color: "var(--error-color, #ef4444)", fontWeight: 600 }
+                        : {}
+                    }
+                  >
+                    {format(new Date(t.dueDate), "MMM dd, yy")}
+                  </span>
+                );
+              },
             },
             {
               header: "",

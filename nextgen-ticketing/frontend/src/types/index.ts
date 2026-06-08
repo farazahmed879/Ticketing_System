@@ -385,7 +385,12 @@ export interface TicketDetailModalProps {
   agents: User[];
   priorities: any[];
   columns: Column[];
-  onTicketUpdate: () => void;
+  onTicketUpdate: (
+    ticketId: string,
+    statusId: string,
+    currentStatusName: string,
+    targetStatusName: string,
+  ) => void;
 }
 
 export interface UserFormData {

@@ -165,10 +165,16 @@ const CustomSelect = <T extends FieldValues>({
                   <span className={styles.optionIcon}>{triggerIcon}</span>
                 )}
                 {!isMulti && selectedOption?.image && (
-                  <img src={selectedOption.image} alt="" className={styles.optionImage} />
+                  <img
+                    src={selectedOption.image}
+                    alt=""
+                    className={styles.optionImage}
+                  />
                 )}
                 {!isMulti && selectedOption?.icon && (
-                  <span className={styles.optionIcon}>{selectedOption.icon}</span>
+                  <span className={styles.optionIcon}>
+                    {selectedOption.icon}
+                  </span>
                 )}
                 <span className={styles.text}>{selectedLabel}</span>
               </div>
@@ -294,7 +300,7 @@ const CustomSelect = <T extends FieldValues>({
         name={name}
         control={control}
         rules={rules}
-        render={({ field, fieldState: { error } }) => 
+        render={({ field, fieldState: { error } }) =>
           renderSelect({ field, error: error?.message })
         }
       />

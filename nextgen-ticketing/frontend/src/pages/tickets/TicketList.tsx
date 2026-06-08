@@ -7,11 +7,7 @@ import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import styles from "./TicketList.module.css";
-import {
-  RoleName,
-  StatusName,
-  UIMessages,
-} from "../../utils/constants";
+import { RoleName, STATUS, UIMessages } from "../../utils/constants";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { format, isBefore, startOfDay } from "date-fns";
 
@@ -185,14 +181,10 @@ const TicketList: React.FC = () => {
               value={status}
               onChange={(val) => setStatus(val)}
               placeholder="All Statuses"
-              options={[
-                { value: "", label: "All Statuses" },
-                { value: StatusName.NEW, label: StatusName.NEW },
-                { value: StatusName.OPEN, label: StatusName.OPEN },
-                { value: StatusName.IN_PROCESS, label: StatusName.IN_PROCESS },
-                { value: StatusName.RESOLVED, label: StatusName.RESOLVED },
-                { value: StatusName.CLOSED, label: StatusName.CLOSED },
-              ]}
+              options={STATUS.map((op) => ({
+                label: op.name,
+                value: op.id,
+              }))}
               style={{ minWidth: "180px" }}
             />
             <CustomButton
@@ -312,13 +304,16 @@ const TicketList: React.FC = () => {
                 if (!t.dueDate) return "-";
                 const isPassed = isBefore(
                   startOfDay(new Date(t.dueDate)),
-                  startOfDay(new Date())
+                  startOfDay(new Date()),
                 );
                 return (
                   <span
                     style={
                       isPassed
-                        ? { color: "var(--error-color, #ef4444)", fontWeight: 600 }
+                        ? {
+                            color: "var(--error-color, #ef4444)",
+                            fontWeight: 600,
+                          }
                         : {}
                     }
                   >

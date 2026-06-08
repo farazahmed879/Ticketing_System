@@ -1,5 +1,10 @@
-import type { Control, RegisterOptions, FieldValues, Path } from 'react-hook-form';
-import * as Icons from 'lucide-react';
+import type {
+  Control,
+  RegisterOptions,
+  FieldValues,
+  Path,
+} from "react-hook-form";
+import * as Icons from "lucide-react";
 
 export type IconName = keyof typeof Icons;
 
@@ -68,7 +73,9 @@ export interface CustomMultiSelectProps<T extends FieldValues = any> {
   error?: string;
 }
 
-export interface CustomInputProps<T extends FieldValues = any> extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface CustomInputProps<
+  T extends FieldValues = any,
+> extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: React.ReactNode;
   error?: string;
   icon?: React.ReactNode;
@@ -79,7 +86,9 @@ export interface CustomInputProps<T extends FieldValues = any> extends React.Inp
   rules?: RegisterOptions<T, Path<T>>;
 }
 
-export interface CustomTextAreaProps<T extends FieldValues = any> extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface CustomTextAreaProps<
+  T extends FieldValues = any,
+> extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: React.ReactNode;
   error?: string;
   containerStyle?: React.CSSProperties;
@@ -122,22 +131,40 @@ export interface CustomFilterBarProps {
 
 export interface CustomBadgeProps {
   children: React.ReactNode;
-  variant?: 'success' | 'danger' | 'warning' | 'info' | 'primary' | 'secondary' | 'neutral';
+  variant?:
+    | "success"
+    | "danger"
+    | "warning"
+    | "info"
+    | "primary"
+    | "secondary"
+    | "neutral";
   color?: string;
   className?: string;
   style?: React.CSSProperties;
 }
 
 export interface CustomButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'gradient';
-  size?: 'sm' | 'md' | 'lg';
+  variant?:
+    | "primary"
+    | "secondary"
+    | "outline"
+    | "ghost"
+    | "danger"
+    | "gradient";
+  size?: "sm" | "md" | "lg";
   icon?: React.ReactNode;
   loading?: boolean;
   fullWidth?: boolean;
   containerStyle?: React.CSSProperties;
 }
 
-export interface CustomDatePickerProps<T extends FieldValues = any> extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
+export interface CustomDatePickerProps<
+  T extends FieldValues = any,
+> extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange" | "value"
+> {
   label?: React.ReactNode;
   error?: string;
   name?: Path<T>;
@@ -148,7 +175,12 @@ export interface CustomDatePickerProps<T extends FieldValues = any> extends Omit
   onChange?: (value: string) => void;
 }
 
-export interface CustomDateTimePickerProps<T extends FieldValues = any> extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
+export interface CustomDateTimePickerProps<
+  T extends FieldValues = any,
+> extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange" | "value"
+> {
   label?: React.ReactNode;
   error?: string;
   name?: Path<T>;
@@ -159,7 +191,12 @@ export interface CustomDateTimePickerProps<T extends FieldValues = any> extends 
   onChange?: (value: string) => void;
 }
 
-export interface CustomColorPickerProps<T extends FieldValues = any> extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
+export interface CustomColorPickerProps<
+  T extends FieldValues = any,
+> extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange" | "value"
+> {
   label?: React.ReactNode;
   error?: string;
   name?: Path<T>;
@@ -232,7 +269,7 @@ export interface ConfirmationModalProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  type?: 'danger' | 'warning' | 'info' | 'success';
+  type?: "danger" | "warning" | "info" | "success";
   loading?: boolean;
 }
 

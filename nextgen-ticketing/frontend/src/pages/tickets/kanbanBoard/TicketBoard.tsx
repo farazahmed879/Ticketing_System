@@ -131,8 +131,11 @@ const TicketBoard: React.FC = () => {
       const allTickets = ticketsRes.data.tickets;
       const allStatuses =
         user.role.name === RoleName.EMPLOYEE
-          ? STATUS.filter((s: any) => s.name !== StatusName.NEW)
-          : STATUS;
+          ? STATUS.filter(
+              (s: any) =>
+                s.name !== StatusName.NEW && s.name !== StatusName.TRASH,
+            )
+          : STATUS.filter((s: any) => s.name !== StatusName.TRASH);
       const allAccounts = usersRes.data.accounts;
 
       // Map agents (Staff) and customers separately

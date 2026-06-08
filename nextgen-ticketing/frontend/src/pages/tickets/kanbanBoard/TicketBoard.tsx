@@ -130,7 +130,7 @@ const TicketBoard: React.FC = () => {
 
       const allTickets = ticketsRes.data.tickets;
       const allStatuses =
-        user.role.name === RoleName.EMPLOYEE
+        user?.role?.name === RoleName.EMPLOYEE
           ? STATUS.filter(
               (s: any) =>
                 s.name !== StatusName.NEW && s.name !== StatusName.TRASH,
@@ -229,19 +229,19 @@ const TicketBoard: React.FC = () => {
 
     if (!isAllowedToUpdatedTheTicketStatus(ticket, targetStatusName)) return;
 
-    handleUpdateStatus(ticketId, statusId, currentStatusName, targetStatusName);
+    handleUpdateStatus({
+      ticketId,
+      statusId,
+      currentStatusName,
+      targetStatusName,
+    });
   };
 
-  const handleUpdateStatus = async (
-    ticketId: string,
-    statusId: string,
-    currentStatusName: string,
-    targetStatusName: string,
-  ) => {
+  const handleUpdateStatus = async (body: any) => {
     try {
       const isStatusAllowed =
         user?.role?.name === RoleName.ADMIN ||
-        user?.role?.permissions?.boardStatuses?.[statusId] === true;
+        user?.role?.permissions?.boardStatuses?.[body?.statusId] === true;
 
       // if (!canUpdate) {
       //   showNotification("error", UIMessages.BOARD.PERMISSION_DENIED);
@@ -251,17 +251,15 @@ const TicketBoard: React.FC = () => {
       if (!isStatusAllowed) {
         showNotification(
           "error",
-          UIMessages.BOARD.ACCESS_DENIED(targetStatusName || "this status"),
+          UIMessages.BOARD.ACCESS_DENIED(
+            body.targetStatusName || "this status",
+          ),
         );
         return;
       }
 
       setIsLoading(true, UIMessages.LOADING.UPDATING_STATUS);
-      await api.put(API_ROUTES.TICKETS.BY_ID(ticketId), {
-        statusId,
-        currentStatusName,
-        targetStatusName,
-      });
+      await api.put(API_ROUTES.TICKETS.BY_ID(body.ticketId), body);
       showNotification("success", "Ticket status updated");
       fetchBoardData();
     } catch (err: any) {
@@ -515,7 +513,6 @@ const TicketBoard: React.FC = () => {
         ticket={selectedTicket}
         agents={agents}
         priorities={priorities}
-        columns={columns}
         onTicketUpdate={handleUpdateStatus}
       />
 

@@ -9,7 +9,12 @@ import CustomSelect from "../../../components/CustomSelect";
 import CustomButton from "../../../components/CustomButton";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
-import { RoleName, StatusName, UIMessages } from "../../../utils/constants";
+import {
+  RoleName,
+  STATUS,
+  StatusName,
+  UIMessages,
+} from "../../../utils/constants";
 import { useAuth } from "../../../context/AuthContext";
 import { useNotification } from "../../../context/NotificationContext";
 import CustomTextArea from "../../../components/CustomTextArea";
@@ -35,7 +40,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   ticket,
   agents,
   priorities,
-  columns,
   onTicketUpdate,
 }) => {
   const isDisbaledMode =
@@ -104,6 +108,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const [commentCooldownActive, setCommentCooldownActive] = useState(false);
   const commentSendDisabled = isSubmittingComment || commentCooldownActive;
 
+  const statuses = STATUS;
+
   const fetchFullTicketData = useCallback(async () => {
     try {
       const res = await api.get(API_ROUTES.TICKETS.BY_ID(ticket.id));
@@ -124,12 +130,29 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   }, [ticket?.id, reset]);
 
   const handleSave = async (data: TicketUpdateFormData) => {
-    onTicketUpdate(
-      ticket.id,
-      data.statusId,
-      displayTicket?.status?.name,
-      columns.find((c) => c.id === data.statusId)?.name || "",
-    );
+    const targetStatus =
+      statuses.find((c) => c.id === data.statusId)?.name || "";
+    if (
+      displayTicket?.status?.name == StatusName.NEW &&
+      targetStatus == StatusName.OPEN &&
+      !data.assigneeId
+    ) {
+      showNotification("warning", "Please assign this ticket");
+      return;
+    }
+
+    const body = {
+      ticketId: ticket.id,
+      statusId: data.statusId,
+      targetStatusName: targetStatus,
+      currentStatusName: displayTicket?.status?.name || "",
+      priorityId: data.priorityId,
+      assigneeId: data.assigneeId || null,
+      dueDate: data.dueDate || null,
+      issue: data.issue,
+    };
+
+    onTicketUpdate(body);
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
@@ -594,7 +617,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     <CustomSelect
                       name="statusId"
                       control={control}
-                      options={getStatusOptions(columns)}
+                      options={getStatusOptions(statuses)}
                       style={{
                         minWidth: 180,
                         fontSize: "0.8rem",
@@ -846,7 +869,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             onChange={(val) => {
                               setValue("assigneeId", val);
                               if (val) {
-                                const openStatus = columns.find(
+                                const openStatus = statuses.find(
                                   (c) =>
                                     c.name.toLowerCase() ===
                                     StatusName.OPEN.toLowerCase(),

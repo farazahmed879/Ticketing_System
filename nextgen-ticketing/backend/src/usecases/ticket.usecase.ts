@@ -342,12 +342,33 @@ export const ticketUsecase = {
             StatusName.APPROVED,
             "Only resolved tickets can be approved.",
           ],
+          [
+            [
+              StatusName.OPEN,
+              StatusName.IN_PROCESS,
+              StatusName.RESOLVED,
+              StatusName.APPROVED,
+            ],
+            StatusName.IN_PROCESS,
+            "Unassigned tickets cannot be moved directly to In Progress.",
+          ],
+          [
+            [StatusName.IN_PROCESS],
+            StatusName.RESOLVED,
+            "Only tickets in progress can be marked as resolved.",
+          ],
         ];
 
-        for (const [requiredStatuses, ruleTarget, message] of rules) {
+        for (const [
+          allowedCurrentStatuses,
+          targetStatusName,
+          message,
+        ] of rules) {
           if (
-            target === ruleTarget.toLowerCase() &&
-            !requiredStatuses.map((s) => s.toLowerCase()).includes(current)
+            target === targetStatusName.toLowerCase() &&
+            !allowedCurrentStatuses.some(
+              (status) => status.toLowerCase() === current,
+            )
           ) {
             throw new Error(message);
           }

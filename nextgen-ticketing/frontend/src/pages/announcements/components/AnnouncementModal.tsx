@@ -2,6 +2,8 @@ import React, { useRef } from "react";
 import Modal from "../../../components/Modal";
 import AnnouncementForm from "./AnnouncementForm.tsx";
 import CustomButton from "../../../components/CustomButton";
+import { useAuth } from "../../../context/AuthContext";
+import { RoleName } from "../../../utils/constants";
 
 interface AnnouncementModalProps {
   isOpen: boolean;
@@ -18,6 +20,9 @@ const AnnouncementModal: React.FC<AnnouncementModalProps> = ({
   onSubmit,
   isLoading = false,
 }) => {
+  const { user } = useAuth();
+  const isCustomer = user?.role?.name === RoleName.CUSTOMER;
+  const entityName = isCustomer ? "Review" : "Shoutout";
   const formRef = useRef<any>(null);
 
   const handleReset = () => {
@@ -52,7 +57,7 @@ const AnnouncementModal: React.FC<AnnouncementModalProps> = ({
           variant="gradient"
           loading={isLoading}
         >
-          {announcement ? "Update Shoutout" : "Create Shoutout"}
+          {announcement ? `Update ${entityName}` : `Create ${entityName}`}
         </CustomButton>
       </div>
     </div>
@@ -62,7 +67,7 @@ const AnnouncementModal: React.FC<AnnouncementModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={announcement ? "Edit Shoutout" : "Create Shoutout"}
+      title={announcement ? `Edit ${entityName}` : `Create ${entityName}`}
       maxWidth="600px"
       footer={footer}
     >

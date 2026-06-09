@@ -30,10 +30,67 @@
   margin-bottom: 16px;
 }
 
+.titleInput {
+  display: block;
+  width: 100%;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  padding: 4px 8px;
+  margin-left: -8px; /* Offset padding to align text */
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  outline: none;
+  transition: var(--transition-fast);
+  font-family: inherit;
+}
+
+.titleInput:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--border-glass);
+}
+
+.titleInput:focus {
+  background: var(--bg-input);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
 .issue {
   color: var(--text-secondary);
   line-height: 1.6;
   white-space: pre-wrap;
+}
+
+.issueInput {
+  display: block;
+  width: 100%;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  padding: 8px;
+  margin-left: -8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  outline: none;
+  transition: var(--transition-fast);
+  font-family: inherit;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.issueInput:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--border-glass);
+}
+
+.issueInput:focus {
+  background: var(--bg-input);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+  color: var(--text-primary);
 }
 
 .tabs {

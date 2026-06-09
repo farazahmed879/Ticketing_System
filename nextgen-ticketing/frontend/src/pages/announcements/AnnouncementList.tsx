@@ -3,7 +3,8 @@ import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
 import { API_ROUTES } from "../../utils/apiRoutes";
-import { AnnouncementType } from "../../utils/constants";
+import { AnnouncementType, RoleName } from "../../utils/constants";
+import { useAuth } from "../../context/AuthContext";
 import type { TableColumn } from "../../components/types";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
@@ -24,11 +25,20 @@ interface Announcement {
   author: {
     fullname: string;
   };
+  project?: {
+    id: string;
+    name: string;
+  };
 }
 
 import StandardListLayout from "../../components/StandardListLayout";
 
 const AnnouncementList: React.FC = () => {
+  const { user } = useAuth();
+  const isCustomer = user?.role?.name === RoleName.CUSTOMER;
+  const entityName = isCustomer ? "Review" : "Shoutout";
+  const entityNamePlural = isCustomer ? "Reviews" : "Shoutouts";
+
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -144,7 +154,14 @@ const AnnouncementList: React.FC = () => {
         else if (ann.type === AnnouncementType.MOMENT) variant = "primary";
 
         return (
-          <CustomBadge variant={variant}>{ann.type.toUpperCase()}</CustomBadge>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <CustomBadge variant={variant}>{ann.type.toUpperCase()}</CustomBadge>
+            {ann.project && (
+              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 2 }}>
+                Project: {ann.project.name}
+              </span>
+            )}
+          </div>
         );
       },
     },
@@ -177,7 +194,7 @@ const AnnouncementList: React.FC = () => {
             size="sm"
             onClick={() => handleEdit(ann)}
             icon={<CustomIcon name="Edit2" size={16} />}
-            title="Edit Shoutout"
+            title={`Edit ${entityName}`}
           />
           <CustomButton
             variant="ghost"
@@ -190,7 +207,7 @@ const AnnouncementList: React.FC = () => {
                 color="var(--accent-danger)"
               />
             }
-            title="Delete Shoutout"
+            title={`Delete ${entityName}`}
           />
         </div>
       ),
@@ -209,7 +226,7 @@ const AnnouncementList: React.FC = () => {
             }}
           >
             <div>
-              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Shoutouts</h1>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>{entityNamePlural}</h1>
               <p style={{ color: "var(--text-muted)" }}>
                 Manage company-wide announcements and events
               </p>
@@ -222,14 +239,14 @@ const AnnouncementList: React.FC = () => {
                 setIsModalOpen(true);
               }}
             >
-              Create Shoutout
+              Create {entityName}
             </CustomButton>
           </div>
         }
         filters={
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
             <CustomInput
-              placeholder="Search shoutouts..."
+              placeholder={`Search ${entityNamePlural.toLowerCase()}...`}
               value={search}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setSearch(e.target.value);

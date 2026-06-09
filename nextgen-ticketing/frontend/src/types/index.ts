@@ -116,6 +116,7 @@ export interface Ticket {
   owner: { id: string; fullname: string; image?: string };
   assignee?: { id: string; fullname: string; image?: string };
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface TicketDetail extends Ticket {

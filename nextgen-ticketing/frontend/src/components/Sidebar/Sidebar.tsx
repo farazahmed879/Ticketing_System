@@ -71,6 +71,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
     // Admins always have access
     if (user.role.name === "Admin") return true;
 
+    // Grant Customer access to projects list
+    if (user.role.name === "Customer" && permPath === "projects.view") return true;
+
     const [module, action] = permPath.split(".");
     return user.role.permissions?.[module]?.[action] === true;
   };
@@ -275,7 +278,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
       <div
         className={styles.userProfile}
         onClick={() => navigate("/profile")}
-        style={{ cursor: "pointer" }}
+        style={{ 
+          cursor: "pointer",
+          flexDirection: isCollapsed ? "column" : "row",
+          gap: isCollapsed ? "16px" : "12px",
+          justifyContent: "center"
+        }}
       >
         <div className={styles.avatar}>
           <CustomIcon name="User" size={20} color="var(--text-secondary)" />

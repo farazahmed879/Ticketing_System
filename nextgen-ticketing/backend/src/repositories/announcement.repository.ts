@@ -21,6 +21,9 @@ export const announcementRepository = {
               }
             },
           },
+          project: {
+            select: { id: true, name: true }
+          }
         },
         orderBy: { date: "desc" },
         skip,
@@ -61,6 +64,9 @@ export const announcementRepository = {
             }
           },
         },
+        project: {
+          select: { id: true, name: true }
+        }
       },
     });
   },
@@ -80,6 +86,9 @@ export const announcementRepository = {
             }
           },
         },
+        project: {
+          select: { id: true, name: true }
+        }
       },
     });
   },
@@ -92,6 +101,9 @@ export const announcementRepository = {
         author: {
           select: { id: true, fullname: true, image: true },
         },
+        project: {
+          select: { id: true, name: true }
+        }
       },
     });
   },

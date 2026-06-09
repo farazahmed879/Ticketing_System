@@ -11,7 +11,7 @@ import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import {
   RoleName,
-  STATUS,
+  TICKET_STATUSES,
   StatusName,
   UIMessages,
 } from "../../../utils/constants";
@@ -109,7 +109,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const [commentCooldownActive, setCommentCooldownActive] = useState(false);
   const commentSendDisabled = isSubmittingComment || commentCooldownActive;
 
-  const statuses = STATUS;
+  const statuses = TICKET_STATUSES;
 
   const fetchFullTicketData = useCallback(async () => {
     try {
@@ -132,7 +132,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   const handleSave = async (data: TicketUpdateFormData) => {
     const targetStatus =
-      statuses.find((c) => c.id === data.statusId)?.name || "";
+      statuses.find((c: any) => c.id === data.statusId)?.name || "";
     if (
       displayTicket?.status?.name == StatusName.NEW &&
       targetStatus == StatusName.OPEN &&
@@ -820,7 +820,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           <span>Due Date</span>
                         </div>
                       }
-                      disabled={!canUpdate || isDisbaledMode || isClient }
+                      disabled={!canUpdate || isDisbaledMode || isClient}
                     />
 
                     {/* Assignment */}
@@ -875,7 +875,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                               setValue("assigneeId", val);
                               if (val) {
                                 const openStatus = statuses.find(
-                                  (c) =>
+                                  (c: any) =>
                                     c.name.toLowerCase() ===
                                     StatusName.OPEN.toLowerCase(),
                                 );

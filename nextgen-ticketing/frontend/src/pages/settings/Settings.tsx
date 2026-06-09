@@ -258,14 +258,14 @@ const Settings: React.FC = () => {
 
   const tabs = [
     {
-      id: "theme",
-      label: t("settings.theme"),
-      icon: <CustomIcon name="Palette" size={18} />,
-    },
-    {
       id: "profile",
       label: t("settings.profile"),
       icon: <CustomIcon name="User" size={18} />,
+    },
+    {
+      id: "security",
+      label: t("settings.security"),
+      icon: <CustomIcon name="Shield" size={18} />,
     },
     {
       id: "notifications",
@@ -273,9 +273,9 @@ const Settings: React.FC = () => {
       icon: <CustomIcon name="Bell" size={18} />,
     },
     {
-      id: "security",
-      label: t("settings.security"),
-      icon: <CustomIcon name="Shield" size={18} />,
+      id: "theme",
+      label: t("settings.theme"),
+      icon: <CustomIcon name="Palette" size={18} />,
     },
   ];
 

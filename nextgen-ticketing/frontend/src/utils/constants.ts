@@ -83,7 +83,7 @@ export const TICKET_TYPES = [
   },
 ];
 
-export const STATUS = [
+export const TICKET_STATUSES = [
   {
     id: "69e5da8a0e2d511b4eab95ea",
     name: "Unassigned",

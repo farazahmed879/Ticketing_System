@@ -17,7 +17,7 @@ import styles from "./Login.module.css";
 const Login: React.FC = () => {
   const { control, handleSubmit } = useForm({
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
     },
   });
@@ -48,7 +48,10 @@ const Login: React.FC = () => {
     setIsLoading(true, UIMessages.LOADING.LOGGING_IN);
 
     try {
-      const res = await api.post(API_ROUTES.AUTH.LOGIN, data);
+      const res = await api.post(API_ROUTES.AUTH.LOGIN, {
+        email: data.identifier,
+        password: data.password,
+      });
       login(res.data.token, res.data.user);
       navigate("/");
     } catch (err: any) {
@@ -113,18 +116,14 @@ const Login: React.FC = () => {
         {!showForgot ? (
           <form className={styles.form} onSubmit={handleSubmit(onLoginSubmit)}>
             <CustomInput
-              name="email"
+              name="identifier"
               control={control}
-              label="Email Address"
-              type="email"
-              placeholder="name@company.com"
-              icon={<CustomIcon name="Mail" size={18} />}
+              label="Email or Username"
+              type="text"
+              placeholder="name@company.com or username"
+              icon={<CustomIcon name="User" size={18} />}
               rules={{
-                required: "Email is required",
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: "Invalid email address",
-                },
+                required: "Email or username is required",
               }}
             />
 

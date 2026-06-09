@@ -1,5 +1,6 @@
 import React from "react";
 import { formatDistanceToNow, isToday, isYesterday } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Dashboard.module.css";
 
@@ -9,6 +10,7 @@ interface NewHiresSectionProps {
 }
 
 const NewHiresSection: React.FC<NewHiresSectionProps> = ({ newHires, onViewAll }) => {
+  const navigate = useNavigate();
   return (
     <div className={`${styles.welcomeSection} glass-card`} style={{ padding: "24px" }}>
       <div className={styles.welcomeHeader}>
@@ -29,6 +31,8 @@ const NewHiresSection: React.FC<NewHiresSectionProps> = ({ newHires, onViewAll }
             <div 
               key={hire.id} 
               className={`${styles.newHireCard} ${(isToday(new Date(hire.createdAt)) || isYesterday(new Date(hire.createdAt))) ? styles.featuredNewHire : ''}`}
+              onClick={() => navigate(`/profile/${hire.id}`)}
+              style={{ cursor: "pointer" }}
             >
               <div className={styles.avatarWrapper}>
                 {hire.image ? (

@@ -1,10 +1,12 @@
-import { useEffect, useImperativeHandle, forwardRef } from "react";
+import { useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import { useForm } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
 import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
 import { useAuth } from "../../../context/AuthContext";
 import { RoleName, AnnouncementType } from "../../../utils/constants";
+import api from "../../../services/api";
+import { API_ROUTES } from "../../../utils/apiRoutes";
 
 interface AnnouncementFormProps {
   initialData?: any;
@@ -18,11 +20,26 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
     const isEmployee = user?.role?.name === RoleName.EMPLOYEE;
     const isRestricted = isCustomer || isEmployee;
 
+    const currentDate = new Date().toISOString().split("T")[0];
+
+    const [projects, setProjects] = useState<any[]>([]);
+
+    useEffect(() => {
+      if (isCustomer) {
+        api.get(API_ROUTES.PROJECTS.BASE)
+          .then((res) => {
+            setProjects(res.data.projects || []);
+          })
+          .catch((err) => console.error("Failed to fetch projects", err));
+      }
+    }, [isCustomer]);
+
     const { handleSubmit, control, reset } = useForm({
       defaultValues: {
         title: "",
         description: "",
-        date: "",
+        projectId: isCustomer ? "" : undefined,
+        date: isCustomer ? currentDate : "",
         type: isCustomer
           ? AnnouncementType.REVIEW
           : isEmployee
@@ -36,9 +53,10 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
         reset({
           title: initialData.title,
           description: initialData.description,
+          projectId: initialData.projectId || (isCustomer ? "" : undefined),
           date: initialData.date
             ? new Date(initialData.date).toISOString().split("T")[0]
-            : "",
+            : (isCustomer ? currentDate : ""),
           type: isCustomer
             ? AnnouncementType.REVIEW
             : isEmployee
@@ -49,7 +67,8 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
         reset({
           title: "",
           description: "",
-          date: "",
+          projectId: isCustomer ? "" : undefined,
+          date: isCustomer ? currentDate : "",
           type: isCustomer
             ? AnnouncementType.REVIEW
             : isEmployee
@@ -88,8 +107,19 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
           placeholder="Detailed description"
           rows={4}
         />
+        {isCustomer && (
+          <CustomSelect
+            name="projectId"
+            control={control}
+            label="Project (Optional)"
+            options={[
+              { value: "", label: "Select a project..." },
+              ...projects.map(p => ({ value: p.id, label: p.name }))
+            ]}
+          />
+        )}
         <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}
+          style={{ display: isCustomer ? "none" : "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}
         >
           <CustomInput
             name="date"

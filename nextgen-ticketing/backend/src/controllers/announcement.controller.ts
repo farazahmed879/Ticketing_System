@@ -68,7 +68,7 @@ export const announcementController = {
 
   async createAnnouncement(req: Request, res: Response) {
     try {
-      const { title, description, date, type } = req.body;
+      const { title, description, date, type, projectId } = req.body;
       const authorId = (req as any).user.id;
 
       const announcement = await announcementRepository.create({
@@ -77,6 +77,7 @@ export const announcementController = {
         date: new Date(date),
         type,
         authorId,
+        projectId: projectId || null,
       });
 
       res.status(201).json({ announcement });
@@ -88,7 +89,7 @@ export const announcementController = {
   async updateAnnouncement(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { title, description, date, type } = req.body;
+      const { title, description, date, type, projectId } = req.body;
       const user = (req as any).user;
 
       const existing = await announcementRepository.findById(id as string);
@@ -109,6 +110,7 @@ export const announcementController = {
         description,
         date: date ? new Date(date) : undefined,
         type,
+        projectId: projectId || null,
       });
 
       res.json({ announcement });

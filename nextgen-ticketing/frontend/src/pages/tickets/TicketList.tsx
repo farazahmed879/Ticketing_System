@@ -7,7 +7,7 @@ import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import styles from "./TicketList.module.css";
-import { RoleName, STATUS, UIMessages } from "../../utils/constants";
+import { RoleName, TICKET_STATUSES, UIMessages } from "../../utils/constants";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { format, isBefore, startOfDay } from "date-fns";
 
@@ -181,7 +181,7 @@ const TicketList: React.FC = () => {
               value={status}
               onChange={(val) => setStatus(val)}
               placeholder="All Statuses"
-              options={STATUS.map((op) => ({
+              options={TICKET_STATUSES.map((op) => ({
                 label: op.name,
                 value: op.id,
               }))}

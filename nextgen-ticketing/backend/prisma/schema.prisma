@@ -243,6 +243,8 @@ model Project {
 
   timesheetTasks TimesheetTask[]
 
+  announcements Announcement[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   deleted     Boolean  @default(false)
@@ -280,6 +282,10 @@ model Announcement {
   description String
   date        DateTime
   type        String   @default("event") // event, important, info
+  
+  projectId   String?  @db.ObjectId
+  project     Project? @relation(fields: [projectId], references: [id])
+
   authorId    String   @db.ObjectId
   author      User     @relation(fields: [authorId], references: [id])
   createdAt   DateTime @default(now())

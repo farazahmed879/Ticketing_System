@@ -280,3 +280,14 @@ textarea:focus {
 .notification-badge {
   animation: notificationBadgePop 0.25s ease-out, notificationBadgePulse 2.4s ease-in-out 0.25s infinite;
 }
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

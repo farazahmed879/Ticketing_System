@@ -8,6 +8,7 @@ const UserCard = ({
   getRoleStyle,
   handleEdit,
   handleDelete,
+  canEditUsers = false,
 }: any) => {
   const navigate = useNavigate();
   return (
@@ -177,34 +178,38 @@ const UserCard = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <CustomButton
-          variant="ghost"
-          size="sm"
-          onClick={() => handleEdit(data)}
-          title="Edit User"
-          icon={<CustomIcon name="Edit2" size={16} />}
-          style={{ color: "var(--text-muted)", padding: "4px 8px" }}
-        />
-        <CustomButton
-          variant="ghost"
-          size="sm"
-          disabled={data.role.isAdmin}
-          onClick={() => handleDelete(data.id)}
-          title={
-            data.role.isAdmin
-              ? "Admin accounts cannot be deleted"
-              : "Delete User"
-          }
-          icon={<CustomIcon name="Trash2" size={16} />}
-          style={{
-            color: data.role.isAdmin
-              ? "var(--text-muted)"
-              : "var(--accent-danger)",
-            padding: "4px 8px",
-            opacity: data.role.isAdmin ? 0.5 : 1,
-            cursor: data.role.isAdmin ? "not-allowed" : "pointer",
-          }}
-        />
+        {canEditUsers && (
+          <CustomButton
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(data)}
+            title="Edit User"
+            icon={<CustomIcon name="Edit2" size={16} />}
+            style={{ color: "var(--text-muted)", padding: "4px 8px" }}
+          />
+        )}
+        {canEditUsers && (
+          <CustomButton
+            variant="ghost"
+            size="sm"
+            disabled={data.role.isAdmin}
+            onClick={() => handleDelete(data.id)}
+            title={
+              data.role.isAdmin
+                ? "Admin accounts cannot be deleted"
+                : "Delete User"
+            }
+            icon={<CustomIcon name="Trash2" size={16} />}
+            style={{
+              color: data.role.isAdmin
+                ? "var(--text-muted)"
+                : "var(--accent-danger)",
+              padding: "4px 8px",
+              opacity: data.role.isAdmin ? 0.5 : 1,
+              cursor: data.role.isAdmin ? "not-allowed" : "pointer",
+            }}
+          />
+        )}
       </div>
     </div>
   );

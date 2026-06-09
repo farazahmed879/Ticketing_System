@@ -2,38 +2,82 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import { useAuth } from "../../context/AuthContext";
+import { useNotification } from "../../context/NotificationContext";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import CustomButton from "../../components/CustomButton";
 import CustomBadge from "../../components/CustomBadge";
 import styles from "./Profile.module.css";
 import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
-import { RoleName } from "../../utils/constants";
+import { RoleName, UIMessages } from "../../utils/constants";
+import UserModal from "../users/components/UserModal";
+import type { Role, UserFormData } from "../../types";
 
 const Profile: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  const { showNotification, setIsLoading } = useNotification();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [roles, setRoles] = useState<Role[]>([]);
+
+  const canEdit =
+    currentUser?.role?.name === RoleName.ADMIN ||
+    currentUser?.role?.name === RoleName.HR;
+
+  const fetchUser = async () => {
+    try {
+      setLoading(true);
+      if (id) {
+        const res = await api.get(API_ROUTES.USERS.BY_ID(id));
+        setUser(res.data.account);
+      } else {
+        setUser(currentUser);
+      }
+    } catch (err) {
+      console.error("Failed to fetch user profile", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        if (id) {
-          const res = await api.get(API_ROUTES.USERS.BY_ID(id));
-          setUser(res.data.account);
-        } else {
-          setUser(currentUser);
-        }
-      } catch (err) {
-        console.error("Failed to fetch user profile", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, currentUser]);
+
+  // Roles list is needed by the edit modal; lazy-load once on first open.
+  const openEditModal = async () => {
+    if (roles.length === 0) {
+      try {
+        const res = await api.get(API_ROUTES.ROLES.BASE);
+        setRoles(res.data.roles || []);
+      } catch (err) {
+        console.error("Failed to load roles", err);
+      }
+    }
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (data: UserFormData) => {
+    if (!user?.id) return;
+    setIsLoading(true, UIMessages.LOADING.UPDATING_USER);
+    try {
+      await api.put(API_ROUTES.USERS.BY_ID(user.id), data);
+      showNotification("success", "Profile updated successfully");
+      setIsEditModalOpen(false);
+      fetchUser();
+    } catch (err: any) {
+      showNotification(
+        "error",
+        err.response?.data?.error || err.message || "Failed to update profile",
+      );
+    } finally {
+      setIsLoading(false, "");
+    }
+  };
 
   if (loading) return <DetailSkeleton />;
   if (!user)
@@ -94,6 +138,7 @@ const Profile: React.FC = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: 16,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
@@ -102,8 +147,9 @@ const Profile: React.FC = () => {
               width: 80,
               height: 80,
               borderRadius: "50%",
-              background:
-                "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
+              background: user.image
+                ? "transparent"
+                : "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -111,9 +157,23 @@ const Profile: React.FC = () => {
               fontWeight: 800,
               color: "white",
               boxShadow: "0 4px 15px rgba(124, 58, 237, 0.3)",
+              overflow: "hidden",
+              flexShrink: 0,
             }}
           >
-            {user.fullname.charAt(0)}
+            {user.image ? (
+              <img
+                src={user.image}
+                alt={user.fullname}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+            ) : (
+              user.fullname.charAt(0)
+            )}
           </div>
           <div>
             <h1
@@ -176,7 +236,7 @@ const Profile: React.FC = () => {
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
           {user.primaryResumeUrl && (
             <CustomButton
               variant="gradient"
@@ -184,6 +244,15 @@ const Profile: React.FC = () => {
               icon={<CustomIcon name="FileText" size={20} />}
             >
               View Resume
+            </CustomButton>
+          )}
+          {canEdit && (
+            <CustomButton
+              variant="outline"
+              onClick={openEditModal}
+              icon={<CustomIcon name="Edit2" size={18} />}
+            >
+              Edit Profile
             </CustomButton>
           )}
         </div>
@@ -526,6 +595,14 @@ const Profile: React.FC = () => {
           )}
         </div>
       </div>
+
+      <UserModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        user={user}
+        roles={roles}
+        onSubmit={handleEditSubmit}
+      />
     </div>
   );
 };

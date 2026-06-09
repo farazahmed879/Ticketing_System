@@ -410,6 +410,7 @@ export interface UserFormData {
   employeeType?: string;
   branch?: string;
   leaves?: number;
+  image?: string;
 }
 
 export interface ProjectFormData {

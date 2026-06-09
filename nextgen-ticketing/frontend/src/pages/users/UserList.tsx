@@ -17,6 +17,8 @@ import type { TableColumn } from "../../components/types";
 import UserModal from "./components/UserModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import StandardListLayout from "../../components/StandardListLayout";
+import { useAuth } from "../../context/AuthContext";
+import { RoleName } from "../../utils/constants";
 import UserCard from "./components/user-card";
 
 // Map each role to a distinct CustomBadge variant and matching text color.
@@ -45,6 +47,10 @@ const getRoleStyle = (
 
 const UserList: React.FC = () => {
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
+  const canEditUsers =
+    currentUser?.role?.name === RoleName.ADMIN ||
+    currentUser?.role?.name === RoleName.HR;
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
@@ -235,42 +241,46 @@ const UserList: React.FC = () => {
       key: "actions",
       render: (u) => (
         <div style={{ display: "flex", gap: 0 }}>
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEdit(u);
-            }}
-            title="Edit User"
-            style={{ color: "var(--text-muted)", padding: "4px 8px" }}
-          >
-            <CustomIcon name="Edit2" size={18} />
-          </CustomButton>
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            disabled={u.role.isAdmin}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(u.id);
-            }}
-            title={
-              u.role.isAdmin
-                ? "Admin accounts cannot be deleted"
-                : "Delete User"
-            }
-            style={{
-              color: u.role.isAdmin
-                ? "var(--text-muted)"
-                : "var(--accent-danger)",
-              padding: "4px 8px",
-              opacity: u.role.isAdmin ? 0.5 : 1,
-              cursor: u.role.isAdmin ? "not-allowed" : "pointer",
-            }}
-          >
-            <CustomIcon name="Trash2" size={18} />
-          </CustomButton>
+          {canEditUsers && (
+            <CustomButton
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEdit(u);
+              }}
+              title="Edit User"
+              style={{ color: "var(--text-muted)", padding: "4px 8px" }}
+            >
+              <CustomIcon name="Edit2" size={18} />
+            </CustomButton>
+          )}
+          {canEditUsers && (
+            <CustomButton
+              variant="ghost"
+              size="sm"
+              disabled={u.role.isAdmin}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(u.id);
+              }}
+              title={
+                u.role.isAdmin
+                  ? "Admin accounts cannot be deleted"
+                  : "Delete User"
+              }
+              style={{
+                color: u.role.isAdmin
+                  ? "var(--text-muted)"
+                  : "var(--accent-danger)",
+                padding: "4px 8px",
+                opacity: u.role.isAdmin ? 0.5 : 1,
+                cursor: u.role.isAdmin ? "not-allowed" : "pointer",
+              }}
+            >
+              <CustomIcon name="Trash2" size={18} />
+            </CustomButton>
+          )}
         </div>
       ),
     },
@@ -446,6 +456,7 @@ const UserList: React.FC = () => {
                 getRoleStyle={getRoleStyle}
                 handleEdit={handleEdit}
                 handleDelete={handleDelete}
+                canEditUsers={canEditUsers}
               />
             ))}
           </div>

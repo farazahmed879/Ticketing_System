@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
 import CustomSelect from "../../../components/CustomSelect";
@@ -6,7 +6,14 @@ import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
 import PhoneInput from "../../../components/PhoneInput";
 import { COUNTRY_CODES } from "../../../utils/constants";
+import {
+  ACCEPT_ATTRIBUTE,
+  ALLOWED_MIME_RE,
+  compressImage,
+} from "../../../utils/attachments";
 import type { User, Role, UserFormData } from "../../../types";
+
+const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2 MB upload cap
 
 interface UserFormProps {
   initialData?: User | null;
@@ -52,6 +59,44 @@ const UserForm: React.FC<UserFormProps> = ({
 
   const employeeType = watch("employeeType");
 
+  const [avatar, setAvatar] = useState<string>("");
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [isProcessingAvatar, setIsProcessingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setAvatarError(null);
+    if (!ALLOWED_MIME_RE.test(file.type)) {
+      setAvatarError("Please choose a PNG, JPEG, WebP, or GIF image.");
+      return;
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      setAvatarError("Image must be 2MB or smaller.");
+      return;
+    }
+    setIsProcessingAvatar(true);
+    try {
+      // Smaller cap for avatars — 400px max dimension is enough for any
+      // place we'd render this image.
+      const dataUrl = await compressImage(file, 400);
+      setAvatar(dataUrl);
+    } catch {
+      setAvatarError("Failed to read image.");
+    } finally {
+      setIsProcessingAvatar(false);
+    }
+  };
+
+  const removeAvatar = () => {
+    setAvatar("");
+    setAvatarError(null);
+  };
+
   useEffect(() => {
     if (initialData) {
       // Parse primary contact
@@ -96,6 +141,7 @@ const UserForm: React.FC<UserFormProps> = ({
         branch: initialData.branch || "",
         leaves: initialData.leaves ?? 20,
       });
+      setAvatar(initialData.image || "");
     } else {
       reset({
         fullname: "",
@@ -121,7 +167,9 @@ const UserForm: React.FC<UserFormProps> = ({
         branch: "",
         leaves: 20,
       });
+      setAvatar("");
     }
+    setAvatarError(null);
   }, [initialData, reset]);
 
   const handleNext = async () => {
@@ -173,6 +221,7 @@ const UserForm: React.FC<UserFormProps> = ({
             data.leaves !== undefined && (data.leaves as any) !== ""
               ? Number(data.leaves)
               : undefined,
+          image: avatar || undefined,
         };
         // Remove code fields from payload before sending
         delete payload.primaryContactCode;
@@ -184,6 +233,130 @@ const UserForm: React.FC<UserFormProps> = ({
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
               <CustomIcon name="User" size={20} style={{ color: "var(--primary-color)" }} />
               <h3 style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--text-main)" }}>Step 1: Primary Information</h3>
+            </div>
+
+            {/* Avatar picker */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept={ACCEPT_ATTRIBUTE}
+                onChange={handleAvatarSelect}
+                style={{ display: "none" }}
+              />
+              <div
+                onClick={() => avatarInputRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    avatarInputRef.current?.click();
+                  }
+                }}
+                title={avatar ? "Change profile image" : "Add profile image"}
+                style={{
+                  position: "relative",
+                  width: 96,
+                  height: 96,
+                  borderRadius: "50%",
+                  background: avatar
+                    ? "transparent"
+                    : "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  overflow: "hidden",
+                  border: "2px solid var(--border-glass)",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
+                  transition: "transform 0.18s ease, border-color 0.18s ease",
+                }}
+              >
+                {isProcessingAvatar ? (
+                  <CustomIcon name="Loader" size={28} color="white" />
+                ) : avatar ? (
+                  <img
+                    src={avatar}
+                    alt="Profile preview"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <CustomIcon name="Camera" size={32} color="white" />
+                )}
+                {/* Hover overlay hint */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: "50%",
+                    background: "rgba(0,0,0,0.55)",
+                    color: "white",
+                    fontSize: "0.7rem",
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: 0,
+                    transition: "opacity 0.18s ease",
+                    pointerEvents: "none",
+                  }}
+                  className="avatar-overlay"
+                >
+                  {avatar ? "Change" : "Upload"}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <CustomButton
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => avatarInputRef.current?.click()}
+                  icon={<CustomIcon name="Upload" size={14} />}
+                >
+                  {avatar ? "Replace" : "Upload Image"}
+                </CustomButton>
+                {avatar && (
+                  <CustomButton
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeAvatar}
+                    icon={<CustomIcon name="Trash2" size={14} />}
+                    style={{ color: "var(--accent-danger)" }}
+                  >
+                    Remove
+                  </CustomButton>
+                )}
+              </div>
+
+              {avatarError && (
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "var(--accent-danger)",
+                  }}
+                >
+                  {avatarError}
+                </span>
+              )}
+              <span
+                style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}
+              >
+                PNG, JPEG, WebP or GIF — up to 2MB
+              </span>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>

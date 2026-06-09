@@ -25,18 +25,21 @@ export function fileToDataUrl(file: File): Promise<string> {
 /**
  * Resize and re-encode an image to keep stored payload small.
  *
- * - Caps dimensions at 1600x1600 (preserving aspect ratio).
+ * - Caps dimensions at `maxDim`×`maxDim` (default 1600, preserving aspect ratio).
  * - Re-encodes JPEG/WebP/etc as JPEG at quality 0.85.
  * - Preserves PNG transparency (PNG in → PNG out, just resized).
  * - Skips GIFs (canvas would flatten any animation).
  */
-export async function compressImage(file: File): Promise<string> {
+export async function compressImage(
+  file: File,
+  maxDim: number = 1600,
+): Promise<string> {
   // Animated formats: don't run through canvas or animation is lost.
   if (file.type === "image/gif") {
     return fileToDataUrl(file);
   }
 
-  const MAX_DIM = 1600;
+  const MAX_DIM = maxDim;
   const isPng = file.type === "image/png";
   const outputType = isPng ? "image/png" : "image/jpeg";
   const quality = isPng ? undefined : 0.85;

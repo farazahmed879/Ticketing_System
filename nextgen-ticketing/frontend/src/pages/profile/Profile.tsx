@@ -102,8 +102,9 @@ const Profile: React.FC = () => {
               width: 80,
               height: 80,
               borderRadius: "50%",
-              background:
-                "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
+              background: user.image
+                ? "transparent"
+                : "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -111,9 +112,23 @@ const Profile: React.FC = () => {
               fontWeight: 800,
               color: "white",
               boxShadow: "0 4px 15px rgba(124, 58, 237, 0.3)",
+              overflow: "hidden",
+              flexShrink: 0,
             }}
           >
-            {user.fullname.charAt(0)}
+            {user.image ? (
+              <img
+                src={user.image}
+                alt={user.fullname}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+            ) : (
+              user.fullname.charAt(0)
+            )}
           </div>
           <div>
             <h1

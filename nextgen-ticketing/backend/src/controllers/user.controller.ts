@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthRequest } from "../types";
 import { userUsecase } from "../usecases/user.usecase";
+import { RoleName } from "../utils/constants";
 
 export const userController = {
   async getUsers(req: AuthRequest, res: Response) {
@@ -74,6 +75,13 @@ export const userController = {
 
   async updateUser(req: AuthRequest, res: Response) {
     try {
+      const callerRole = (req as any).user?.role;
+      if (callerRole !== RoleName.ADMIN && callerRole !== RoleName.HR) {
+        return res.status(403).json({
+          success: false,
+          error: "Only Admins and HR can edit user profiles.",
+        });
+      }
       const user = await userUsecase.updateUser(
         req.params.id as string,
         req.body,

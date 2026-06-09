@@ -24,6 +24,7 @@ import CreateTicketModal from "../components/CreateTicketModal";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import { BoardSkeleton } from "../../../components/CustomSkeleton/CustomSkeleton";
 import ColumnStatus from "./ColumnStatus";
+import { useScrollSnap } from "./useScrollSnap";
 import StandardListLayout from "../../../components/StandardListLayout";
 import ListAndKanbanSwitcher from "../components/ListAndKanbanSwitcher";
 
@@ -47,6 +48,8 @@ const TicketBoard: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const priorities = PRIORITIES;
   const types = TICKET_TYPES;
+  const { trackRef, canScrollLeft, canScrollRight, scrollByColumn } =
+    useScrollSnap();
 
   // Delete State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -477,8 +480,48 @@ const TicketBoard: React.FC = () => {
           }
         >
           <>
-            <div className={styles.kanbanBoard}>
-              {columns.map((column) => {
+            <div
+              className={styles.boardScroller}
+              role="region"
+              aria-label="Ticket board columns"
+              aria-roledescription="carousel"
+              onKeyDown={(e) => {
+                // Don't hijack arrow keys when the user is editing a field
+                // somewhere inside (or interacting with a select etc.).
+                const target = e.target as HTMLElement;
+                if (
+                  target.closest("input, textarea, select, [contenteditable]")
+                ) {
+                  return;
+                }
+                if (e.key === "ArrowRight") {
+                  e.preventDefault();
+                  scrollByColumn(1);
+                } else if (e.key === "ArrowLeft") {
+                  e.preventDefault();
+                  scrollByColumn(-1);
+                }
+              }}
+            >
+              <button
+                type="button"
+                aria-label="Scroll columns left"
+                onClick={() => scrollByColumn(-1)}
+                className={`${styles.scrollAffordance} ${styles.left} ${
+                  !canScrollLeft ? styles.disabled : ""
+                }`}
+                aria-disabled={!canScrollLeft}
+                tabIndex={canScrollLeft ? 0 : -1}
+                data-no-drag
+              >
+                <CustomIcon name="ChevronLeft" size={14} />
+              </button>
+              <div
+                ref={trackRef}
+                className={styles.kanbanBoard}
+                aria-live="polite"
+              >
+                {columns.map((column) => {
                 const isCollapsed = collapsedColumns.includes(column.id);
                 const isStatusAllowed =
                   user?.role?.name === RoleName.ADMIN ||
@@ -502,6 +545,20 @@ const TicketBoard: React.FC = () => {
                   />
                 );
               })}
+              </div>
+              <button
+                type="button"
+                aria-label="Scroll columns right"
+                onClick={() => scrollByColumn(1)}
+                className={`${styles.scrollAffordance} ${styles.right} ${
+                  !canScrollRight ? styles.disabled : ""
+                }`}
+                aria-disabled={!canScrollRight}
+                tabIndex={canScrollRight ? 0 : -1}
+                data-no-drag
+              >
+                <CustomIcon name="ChevronRight" size={14} />
+              </button>
             </div>
           </>
         </StandardListLayout>

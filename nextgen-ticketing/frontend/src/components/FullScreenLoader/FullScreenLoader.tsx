@@ -1,5 +1,4 @@
 import React from "react";
-import CustomIcon from "../CustomIcon";
 
 import type { FullScreenLoaderProps } from "../types";
 
@@ -59,22 +58,18 @@ const FullScreenLoader: React.FC<FullScreenLoaderProps> = ({
         {/* Logo/Icon */}
         <div
           style={{
-            background: "var(--bg-card)",
             width: 60,
             height: 60,
-            borderRadius: "50%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "var(--shadow-glass)",
-            border: "1px solid var(--border-glass)",
           }}
         >
-          <CustomIcon
-            name="Loader2"
-            size={32}
-            className="animate-spin"
-            color="var(--accent-primary)"
+          <img
+            src="/InsigniaStandalone.svg"
+            alt="Loading..."
+            style={{ width: 48, height: 48 }}
+            className="animate-pulse"
           />
         </div>
       </div>
@@ -113,8 +108,15 @@ const FullScreenLoader: React.FC<FullScreenLoaderProps> = ({
           @keyframes spin {
             to { transform: rotate(360deg); }
           }
+          @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .6; transform: scale(0.9); }
+          }
           .animate-spin {
             animation: spin 2s linear infinite;
+          }
+          .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
           }
         `}
       </style>

@@ -31,6 +31,25 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isNewHiresModalOpen, setIsNewHiresModalOpen] = useState(false);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsRes, annRes] = await Promise.all([
+          api.get(API_ROUTES.DASHBOARD.STATS),
+          api.get(API_ROUTES.ANNOUNCEMENTS.BASE, { params: { limit: -1 } }),
+        ]);
+        setStats(statsRes.data.stats);
+        setNewHires(statsRes.data.newHires || []);
+        setAnnouncements(annRes.data.announcements);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   if (loading) return <DashboardSkeleton />;
 
   const generalAnnouncements = announcements.filter(
@@ -79,25 +98,6 @@ const Dashboard: React.FC = () => {
   if (user?.role?.name === RoleName.CUSTOMER) {
     return <CustomerDashboard stats={stats} />;
   }
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [statsRes, annRes] = await Promise.all([
-          api.get(API_ROUTES.DASHBOARD.STATS),
-          api.get(API_ROUTES.ANNOUNCEMENTS.BASE, { params: { limit: -1 } }),
-        ]);
-        setStats(statsRes.data.stats);
-        setNewHires(statsRes.data.newHires || []);
-        setAnnouncements(annRes.data.announcements);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
 
   return (
     <div className="animate-fade-in">

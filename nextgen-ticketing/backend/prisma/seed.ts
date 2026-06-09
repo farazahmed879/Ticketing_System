@@ -6,6 +6,7 @@ import {
   StatusName,
   PriorityName,
   TicketType,
+  TICKET_STATUSES,
 } from "../src/utils/constants";
 
 const prisma = new PrismaClient();
@@ -14,186 +15,208 @@ async function main() {
   console.log("🌱 Seeding database...");
 
   // ========== ROLES ==========
+  const adminPermissions = {
+    tickets: { view: true, create: true, update: true, delete: true, assign: true, priority: true },
+    comments: { view: true, create: true },
+    users: { view: true, create: true, update: true, delete: true },
+    teams: { view: true, create: true, update: true, delete: true },
+    groups: { view: true, create: true, update: true, delete: true },
+    roles: { view: false, create: false, update: false, delete: false },
+    departments: { view: true, create: true, update: true, delete: true },
+    messages: { view: true, create: true },
+    dashboard: { view: true },
+    timesheets: { view: true, approve: true, report: true },
+    candidates: { view: true, create: true, update: true, delete: true },
+    interviews: { view: true, create: true, update: true, delete: true },
+    requests: { view: true, create: true, update: true, delete: true },
+    announcements: { view: true, create: true, update: true, delete: true },
+  };
+
+  const agentPermissions = {
+    tickets: { view: true, create: true, update: true, delete: false, assign: true, priority: true },
+    comments: { view: true, create: true },
+    users: { view: true, create: true, update: true, delete: false },
+    teams: { view: true, create: true, update: true, delete: false },
+    groups: { view: true, create: true, update: true, delete: false },
+    roles: { view: false, create: false, update: false, delete: false },
+    departments: { view: true, create: true, update: true, delete: false },
+    messages: { view: true, create: true },
+    dashboard: { view: true },
+    timesheets: { view: true, approve: true, report: true },
+    candidates: { view: true, create: true, update: true, delete: false },
+    interviews: { view: true, create: true, update: true, delete: false },
+    requests: { view: true, create: true, update: true, delete: false },
+    announcements: { view: true, create: true, update: true, delete: true },
+  };
+
+  const employeePermissions = {
+    tickets: { view: true, create: false, update: true, delete: false, assign: false, priority: false },
+    comments: { view: true, create: true },
+    users: { view: false, create: false, update: false, delete: false },
+    teams: { view: true, create: false, update: false, delete: false },
+    groups: { view: true, create: false, update: false, delete: false },
+    roles: { view: false, create: false, update: false, delete: false },
+    departments: { view: false, create: false, update: false, delete: false },
+    messages: { view: true, create: false },
+    dashboard: { view: true },
+    timesheets: { view: true, approve: false, report: true },
+    candidates: { view: false, create: false, update: false, delete: false },
+    interviews: { view: true, create: false, update: false, delete: false },
+    requests: { view: true, create: false, update: false, delete: false },
+    announcements: { view: true, create: true, update: true, delete: true },
+  };
+
+  const customerPermissions = {
+    tickets: { view: true, create: true, update: true, delete: false, assign: false, priority: true },
+    comments: { view: true, create: true },
+    users: { view: false, create: false, update: false, delete: false },
+    teams: { view: false, create: false, update: false, delete: false },
+    groups: { view: false, create: false, update: false, delete: false },
+    roles: { view: false, create: false, update: false, delete: false },
+    departments: { view: false, create: false, update: false, delete: false },
+    messages: { view: true, create: false },
+    dashboard: { view: true },
+    timesheets: { view: false, approve: false, report: false },
+    candidates: { view: false, create: false, update: false, delete: false },
+    interviews: { view: false, create: false, update: false, delete: false },
+    requests: { view: false, create: false, update: false, delete: false },
+    announcements: { view: true, create: true, update: true, delete: true },
+  };
+
   const adminRole = await prisma.role.upsert({
     where: { name: RoleName.ADMIN },
-    update: {},
+    update: { permissions: adminPermissions },
     create: {
       name: RoleName.ADMIN,
       description: "Full system access",
       isAdmin: true,
       isAgent: false,
-      permissions: {
-        tickets: {
-          view: true,
-          create: true,
-          update: true,
-          delete: true,
-          priority: true,
-        },
-        accounts: { view: true, create: true, update: true, delete: true },
-        groups: { view: true, create: true, update: true, delete: true },
-        teams: { view: true, create: true, update: true, delete: true },
-        departments: { view: true, create: true, update: true, delete: true },
-        notices: {
-          view: true,
-          create: true,
-          update: true,
-          delete: true,
-          activate: true,
-          deactivate: true,
-        },
-        reports: { view: true },
-        requests: { view: true, update: true, delete: true },
-      },
+      permissions: adminPermissions,
     },
   });
 
   const agentRole = await prisma.role.upsert({
     where: { name: RoleName.AGENT },
-    update: {},
+    update: { permissions: agentPermissions },
     create: {
       name: RoleName.AGENT,
       description: "Support agent with ticket management access",
       isAdmin: false,
       isAgent: true,
-      permissions: {
-        tickets: {
-          view: true,
-          create: true,
-          update: true,
-          delete: false,
-          priority: true,
-        },
-        accounts: { view: true, create: false, update: false, delete: false },
-        groups: { view: true, create: false, update: false, delete: false },
-        teams: { view: true, create: false, update: false, delete: false },
-        notices: { view: true, create: false, update: false, delete: false },
-        requests: { view: true, update: true },
-      },
+      permissions: agentPermissions,
     },
   });
 
   const employeeRole = await prisma.role.upsert({
     where: { name: RoleName.EMPLOYEE },
-    update: {},
+    update: { permissions: employeePermissions },
     create: {
       name: RoleName.EMPLOYEE,
       description: "Internal employee/developer",
       isAdmin: false,
       isAgent: true,
-      permissions: {
-        tickets: {
-          view: true,
-          create: true,
-          update: true,
-          delete: false,
-          priority: true,
-        },
-        messages: { view: true, create: true },
-        groups: { view: true },
-        teams: { view: true },
-      },
+      permissions: employeePermissions,
     },
   });
 
   const customerRole = await prisma.role.upsert({
     where: { name: RoleName.CUSTOMER },
-    update: {},
+    update: { permissions: customerPermissions },
     create: {
       name: RoleName.CUSTOMER,
       description: "End-user who submits tickets",
       isAdmin: false,
       isAgent: false,
-      permissions: {
-        tickets: { view: true, create: true, update: false, delete: false },
-      },
+      permissions: customerPermissions,
     },
   });
 
   console.log("  ✅ Roles seeded");
 
-  // ========== STATUSES ==========
-  const statuses = [
-    { name: StatusName.NEW, color: "#29b955", order: 0, isResolved: false },
-    { name: StatusName.OPEN, color: "#2196f3", order: 1, isResolved: false },
-    {
-      name: StatusName.FAILED,
-      color: "#ef4444",
-      order: 2,
-      isResolved: true,
-    },
-    {
-      name: StatusName.IN_PROCESS,
-      color: "#ff9800",
-      order: 3,
-      isResolved: false,
-    },
-    { name: StatusName.RESOLVED, color: "#4caf50", order: 4, isResolved: true },
-    {
-      name: StatusName.APPROVED,
-      color: "#00e676",
-      order: 5,
-      isResolved: true,
-    },
-    { name: StatusName.CLOSED, color: "#9e9e9e", order: 6, isResolved: true },
-    {
-      name: StatusName.TRASH,
-      color: "#ff5252",
-      order: 7,
-      isResolved: true,
-    },
-  ];
-
-  for (const s of statuses) {
-    await prisma.status.upsert({
-      where: { name: s.name },
-      update: { color: s.color, order: s.order, isResolved: s.isResolved },
-      create: s,
-    });
-  }
-  console.log("  ✅ Statuses seeded");
-
-  // Get all statuses to assign board permissions
-  const allStatuses = await prisma.status.findMany();
-  const statusMap = allStatuses.reduce(
+  // Get statuses from constants to assign board permissions
+  const statusMap = TICKET_STATUSES.reduce(
     (acc, s) => ({ ...acc, [s.name]: s.id }),
     {} as Record<string, string>,
   );
 
-  // Update Agent Role with board permissions
+  // Update Roles with board permissions
   await prisma.role.update({
-    where: { name: RoleName.AGENT },
+    where: { name: RoleName.ADMIN },
     data: {
       permissions: {
-        ...(agentRole.permissions as any),
+        ...adminPermissions,
         boardStatuses: {
           [statusMap[StatusName.NEW]]: true,
           [statusMap[StatusName.OPEN]]: true,
+          [statusMap[StatusName.TRASH]]: false,
+          [statusMap[StatusName.FAILED]]: true,
           [statusMap[StatusName.IN_PROCESS]]: true,
           [statusMap[StatusName.RESOLVED]]: true,
+          [statusMap[StatusName.CLOSED]]: false,
           [statusMap[StatusName.APPROVED]]: true,
         },
       },
     },
   });
-  console.log("  ✅ Agent role permissions updated with board transitions");
 
-  // ========== PRIORITIES ==========
-  const priorities = [
-    { name: PriorityName.LOW, color: "#4caf50", order: 0 },
-    { name: PriorityName.NORMAL, color: "#2196f3", order: 1 },
-    { name: PriorityName.HIGH, color: "#ff9800", order: 2 },
-    { name: PriorityName.URGENT, color: "#f44336", order: 3 },
-  ];
+  await prisma.role.update({
+    where: { name: RoleName.AGENT },
+    data: {
+      permissions: {
+        ...agentPermissions,
+        boardStatuses: {
+          [statusMap[StatusName.NEW]]: true,
+          [statusMap[StatusName.OPEN]]: true,
+          [statusMap[StatusName.TRASH]]: false,
+          [statusMap[StatusName.FAILED]]: true,
+          [statusMap[StatusName.IN_PROCESS]]: true,
+          [statusMap[StatusName.RESOLVED]]: true,
+          [statusMap[StatusName.CLOSED]]: false,
+          [statusMap[StatusName.APPROVED]]: true,
+        },
+      },
+    },
+  });
 
-  for (const p of priorities) {
-    await prisma.priority.upsert({
-      where: { name: p.name },
-      update: {},
-      create: p,
-    });
-  }
-  console.log("  ✅ Priorities seeded");
+  await prisma.role.update({
+    where: { name: RoleName.EMPLOYEE },
+    data: {
+      permissions: {
+        ...employeePermissions,
+        boardStatuses: {
+          [statusMap[StatusName.NEW]]: false,
+          [statusMap[StatusName.OPEN]]: false,
+          [statusMap[StatusName.TRASH]]: false,
+          [statusMap[StatusName.FAILED]]: false,
+          [statusMap[StatusName.IN_PROCESS]]: true,
+          [statusMap[StatusName.RESOLVED]]: true,
+          [statusMap[StatusName.CLOSED]]: false,
+          [statusMap[StatusName.APPROVED]]: false,
+        },
+      },
+    },
+  });
+
+  await prisma.role.update({
+    where: { name: RoleName.CUSTOMER },
+    data: {
+      permissions: {
+        ...customerPermissions,
+        boardStatuses: {
+          [statusMap[StatusName.NEW]]: true,
+          [statusMap[StatusName.OPEN]]: false,
+          [statusMap[StatusName.TRASH]]: true,
+          [statusMap[StatusName.FAILED]]: true,
+          [statusMap[StatusName.IN_PROCESS]]: false,
+          [statusMap[StatusName.RESOLVED]]: false,
+          [statusMap[StatusName.CLOSED]]: true,
+          [statusMap[StatusName.APPROVED]]: false,
+        },
+      },
+    },
+  });
+
+  console.log("  ✅ Role permissions updated with board transitions");
 
   // ========== TYPES ==========
   const types = [

@@ -8,6 +8,8 @@ import {
   PriorityName,
   TicketType,
   ActionName,
+  TICKET_STATUSES,
+  PRIORITIES,
 } from "../utils/constants";
 import { startOfDay, endOfDay } from "date-fns";
 
@@ -296,10 +298,8 @@ export const interviewUsecase = {
     interviewerIds: string[],
     creatorId: string
   ) {
-    const status = await ticketRepository.findStatusByName(StatusName.NEW);
-    const priority = await ticketRepository.findPriorityByName(
-      PriorityName.NORMAL
-    );
+    const status = TICKET_STATUSES.find(s => s.name === StatusName.NEW);
+    const priority = PRIORITIES.find(p => p.name === PriorityName.NORMAL);
     const type = await ticketRepository.findTypeByName(TicketType.TASK);
 
     if (!status || !priority || !type) {
@@ -326,8 +326,8 @@ export const interviewUsecase = {
           ).toLocaleString()}\nDuration: ${
             interview.duration
           } mins\nLocation: ${interview.location || "N/A"}`,
-          status: { connect: { id: status.id } },
-          priority: { connect: { id: priority.id } },
+          statusId: status.id,
+          priorityId: priority.id,
           type: { connect: { id: type.id } },
           owner: { connect: { id: creatorId } },
           assignee: { connect: { id: interviewerId } },

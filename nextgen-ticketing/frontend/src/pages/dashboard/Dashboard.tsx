@@ -6,6 +6,7 @@ import styles from "./Dashboard.module.css";
 import { RoleName, AnnouncementType } from "../../utils/constants";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 import type { DashboardStats as Stats } from "../../types";
 import { DashboardSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
@@ -23,30 +24,12 @@ import CustomerDashboard from "./CustomerDashboard";
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<Stats | null>(null);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [newHires, setNewHires] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isNewHiresModalOpen, setIsNewHiresModalOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [statsRes, annRes] = await Promise.all([
-          api.get(API_ROUTES.DASHBOARD.STATS),
-          api.get(API_ROUTES.ANNOUNCEMENTS.BASE, { params: { limit: -1 } }),
-        ]);
-        setStats(statsRes.data.stats);
-        setNewHires(statsRes.data.newHires || []);
-        setAnnouncements(annRes.data.announcements);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
 
   if (loading) return <DashboardSkeleton />;
 
@@ -69,18 +52,21 @@ const Dashboard: React.FC = () => {
       value: stats?.totalTickets,
       icon: <CustomIcon name="Ticket" size={24} />,
       color: "var(--accent-primary)",
+      onClick: () => navigate("/tickets/board"),
     },
     {
       label: "Open Tickets",
       value: stats?.openTickets,
       icon: <CustomIcon name="Clock" size={24} />,
       color: "var(--accent-warning)",
+      onClick: () => navigate("/tickets/board"),
     },
     {
       label: "Resolved",
       value: stats?.resolvedTickets,
       icon: <CustomIcon name="CheckCircle2" size={24} />,
       color: "var(--accent-success)",
+      onClick: () => navigate("/tickets/board"),
     },
     {
       label: "Total Users",
@@ -94,6 +80,25 @@ const Dashboard: React.FC = () => {
     return <CustomerDashboard stats={stats} />;
   }
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsRes, annRes] = await Promise.all([
+          api.get(API_ROUTES.DASHBOARD.STATS),
+          api.get(API_ROUTES.ANNOUNCEMENTS.BASE, { params: { limit: -1 } }),
+        ]);
+        setStats(statsRes.data.stats);
+        setNewHires(statsRes.data.newHires || []);
+        setAnnouncements(annRes.data.announcements);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <div className="animate-fade-in">
       <StatsCards cards={cards} />
@@ -106,9 +111,9 @@ const Dashboard: React.FC = () => {
 
       {/* Row 2: New Hires & Moments of Joy */}
       <div className={styles.heroSection}>
-        <NewHiresSection 
-          newHires={newHires} 
-          onViewAll={() => setIsNewHiresModalOpen(true)} 
+        <NewHiresSection
+          newHires={newHires}
+          onViewAll={() => setIsNewHiresModalOpen(true)}
         />
         <MomentsSection moments={moments} />
       </div>
@@ -121,10 +126,10 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <NewHiresModal 
-        isOpen={isNewHiresModalOpen} 
-        onClose={() => setIsNewHiresModalOpen(false)} 
-        newHires={newHires} 
+      <NewHiresModal
+        isOpen={isNewHiresModalOpen}
+        onClose={() => setIsNewHiresModalOpen(false)}
+        newHires={newHires}
       />
     </div>
   );

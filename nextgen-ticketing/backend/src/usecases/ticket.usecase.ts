@@ -38,29 +38,7 @@ function validateAttachments(attachments: any): string[] | undefined {
 }
 
 export const ticketUsecase = {
-  async autoFailOverdueTickets() {
-    const endOfYesterday = new Date();
-    endOfYesterday.setHours(0, 0, 0, 0);
-
-    const overdueTickets =
-      await ticketRepository.findOverdueTickets(endOfYesterday);
-
-    if (overdueTickets.length > 0) {
-      const failedStatus = await ticketRepository.findStatusByName(
-        StatusName.FAILED,
-      );
-      if (failedStatus) {
-        await ticketRepository.updateStatusMany(
-          overdueTickets.map((t) => t.id),
-          failedStatus.id,
-        );
-      }
-    }
-  },
-
   async getTickets(filters: any, user: any) {
-    // await this.autoFailOverdueTickets();
-
     const {
       status,
       priority,
@@ -117,9 +95,14 @@ export const ticketUsecase = {
     return { tickets, totalCount };
   },
 
-  async getTicketById(id: string) {
+  async getTicketById(id: string, user?: any) {
     const ticket = await ticketRepository.findTicketById(id);
     if (!ticket) throw new Error("Ticket not found");
+
+    if (user && user.role === RoleName.CUSTOMER && ticket.comments) {
+      ticket.comments = ticket.comments.filter((c: any) => !c.isNote);
+    }
+
     return ticket;
   },
 
@@ -678,10 +661,7 @@ export const ticketUsecase = {
     const ownerIsStaff = staff.some(
       (s: any) => s.id === ctx.existingTicket.ownerId,
     );
-    if (
-      ctx.existingTicket.ownerId &&
-      (ownerIsStaff || isStatusApproved)
-    ) {
+    if (ctx.existingTicket.ownerId && (ownerIsStaff || isStatusApproved)) {
       notifyIds.add(ctx.existingTicket.ownerId);
     }
 

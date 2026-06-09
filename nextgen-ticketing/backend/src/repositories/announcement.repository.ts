@@ -25,7 +25,7 @@ export const announcementRepository = {
             select: { id: true, name: true }
           }
         },
-        orderBy: { date: "desc" },
+        orderBy: { createdAt: "desc" },
         skip,
         take: take === -1 ? undefined : take,
       });

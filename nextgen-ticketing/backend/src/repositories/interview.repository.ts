@@ -26,7 +26,7 @@ export const interviewRepository = {
       },
       skip,
       take,
-      orderBy: { scheduledAt: "desc" },
+      orderBy: { createdAt: "desc" },
     });
   },
 

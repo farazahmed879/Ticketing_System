@@ -1,4 +1,5 @@
 import prisma from "../prisma";
+import { TICKET_STATUSES, PRIORITIES } from "../utils/constants";
 
 export const projectRepository = {
   async findMany(params: any = {}) {
@@ -20,7 +21,7 @@ export const projectRepository = {
   },
 
   async findById(id: string) {
-    return prisma.project.findFirst({
+    const project = await prisma.project.findFirst({
       where: { id, deleted: false },
       include: {
         department: { select: { id: true, name: true } },
@@ -32,14 +33,24 @@ export const projectRepository = {
             uid: true,
             subject: true,
             createdAt: true,
-            status: { select: { id: true, name: true, color: true } },
-            priority: { select: { id: true, name: true, color: true } },
+            statusId: true,
+            priorityId: true,
             assignee: { select: { id: true, fullname: true, image: true } },
           },
           orderBy: { createdAt: "desc" },
         },
       },
     });
+
+    if (!project) return null;
+
+    const mappedTickets = project.tickets.map((ticket: any) => ({
+      ...ticket,
+      status: TICKET_STATUSES.find(s => s.id === ticket.statusId) || null,
+      priority: PRIORITIES.find(p => p.id === ticket.priorityId) || null,
+    }));
+
+    return { ...project, tickets: mappedTickets };
   },
 
   async create(data: any) {

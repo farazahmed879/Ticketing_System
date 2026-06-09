@@ -1,13 +1,13 @@
 import prisma from "../prisma";
-import { RoleName } from "../utils/constants";
+import { RoleName, TICKET_STATUSES, PRIORITIES } from "../utils/constants";
 
 export const commonRepository = {
   async findStatuses() {
-    return prisma.status.findMany({ orderBy: { order: "asc" } });
+    return TICKET_STATUSES.sort((a, b) => a.order - b.order);
   },
 
   async findPriorities() {
-    return prisma.priority.findMany({ orderBy: { order: "asc" } });
+    return PRIORITIES.sort((a, b) => a.order - b.order);
   },
 
   async findTypes() {
@@ -101,13 +101,16 @@ export const commonRepository = {
 
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    return Promise.all([
+    const unresolvedStatusIds = TICKET_STATUSES.filter(s => !s.isResolved).map(s => s.id);
+    const resolvedStatusIds = TICKET_STATUSES.filter(s => s.isResolved).map(s => s.id);
+
+    const [totalTickets, openTickets, resolvedTickets, totalUsers, recentTickets, recentUsers] = await Promise.all([
       prisma.ticket.count({ where: ticketWhere }),
       prisma.ticket.count({
-        where: { ...ticketWhere, status: { isResolved: false } },
+        where: { ...ticketWhere, statusId: { in: unresolvedStatusIds } },
       }),
       prisma.ticket.count({
-        where: { ...ticketWhere, status: { isResolved: true } },
+        where: { ...ticketWhere, statusId: { in: resolvedStatusIds } },
       }),
       prisma.user.count({ where: { deleted: false } }),
       prisma.ticket.findMany({
@@ -115,8 +118,6 @@ export const commonRepository = {
         orderBy: { createdAt: "desc" },
         take: 10,
         include: {
-          status: true,
-          priority: true,
           owner: { select: { id: true, fullname: true, image: true } },
           assignee: { select: { id: true, fullname: true, image: true } },
         },
@@ -136,5 +137,13 @@ export const commonRepository = {
         },
       }),
     ]);
+
+    const mappedRecentTickets = recentTickets.map(ticket => ({
+      ...ticket,
+      status: TICKET_STATUSES.find(s => s.id === ticket.statusId) || null,
+      priority: PRIORITIES.find(p => p.id === ticket.priorityId) || null,
+    }));
+
+    return [totalTickets, openTickets, resolvedTickets, totalUsers, mappedRecentTickets, recentUsers];
   },
 };

@@ -183,7 +183,7 @@ const TicketList: React.FC = () => {
               placeholder="All Statuses"
               options={TICKET_STATUSES.map((op) => ({
                 label: op.name,
-                value: op.id,
+                value: op.name,
               }))}
               style={{ minWidth: "180px" }}
             />

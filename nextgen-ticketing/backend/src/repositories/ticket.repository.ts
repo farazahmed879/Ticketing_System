@@ -1,16 +1,22 @@
 import prisma from "../prisma";
-import { StatusName, ActionName, RoleName } from "../utils/constants";
+import { StatusName, ActionName, RoleName, TICKET_STATUSES, PRIORITIES } from "../utils/constants";
+
+// Helper function to map string IDs back to status and priority objects
+const mapTicketStatusAndPriority = (ticket: any) => {
+  if (!ticket) return ticket;
+  const status = TICKET_STATUSES.find(s => s.id === ticket.statusId) || null;
+  const priority = PRIORITIES.find(p => p.id === ticket.priorityId) || null;
+  return { ...ticket, status, priority };
+};
 
 export const ticketRepository = {
   async findMany(where: any, skip: number, take: number) {
-    return prisma.ticket.findMany({
+    const tickets = await prisma.ticket.findMany({
       where,
-      // Omit attachments here so list payloads stay small.
-      // Attachments are still fetched in findTicketById for the detail page.
-      omit: { attachments: true },
+      // Omit attachments and issue here so list payloads stay small.
+      // Attachments and issue are still fetched in findTicketById for the detail page.
+      omit: { attachments: true, issue: true },
       include: {
-        status: true,
-        priority: true,
         type: true,
         owner: {
           select: { id: true, fullname: true, email: true, image: true },
@@ -20,12 +26,12 @@ export const ticketRepository = {
         },
         group: { select: { id: true, name: true } },
         project: { select: { id: true, name: true } },
-        _count: { select: { comments: true } },
       },
       orderBy: { createdAt: "desc" },
       skip,
       take: take === -1 ? undefined : take,
     });
+    return tickets.map(mapTicketStatusAndPriority);
   },
 
   async count(where: any) {
@@ -37,9 +43,10 @@ export const ticketRepository = {
       where: {
         deleted: false,
         dueDate: { not: null, lt: endOfYesterday },
-        status: {
-          isResolved: false,
-          name: { not: StatusName.FAILED },
+        statusId: {
+          in: TICKET_STATUSES.filter(
+            (s) => !s.isResolved && s.name !== StatusName.FAILED,
+          ).map((s) => s.id),
         },
       },
       select: { id: true },
@@ -54,19 +61,19 @@ export const ticketRepository = {
   },
 
   async findStatusByName(name: string) {
-    return prisma.status.findUnique({ where: { name } });
+    return TICKET_STATUSES.find(s => s.name === name) || null;
   },
 
   async findStatusById(id: string) {
-    return prisma.status.findUnique({ where: { id } });
+    return TICKET_STATUSES.find(s => s.id === id) || null;
   },
 
   async findPriorityById(id: string) {
-    return prisma.priority.findUnique({ where: { id } });
+    return PRIORITIES.find(p => p.id === id) || null;
   },
 
   async findPriorityByName(name: string) {
-    return prisma.priority.findUnique({ where: { name } });
+    return PRIORITIES.find(p => p.name === name) || null;
   },
 
   async findUserById(id: string) {
@@ -82,11 +89,9 @@ export const ticketRepository = {
   },
 
   async findTicketById(id: string) {
-    return prisma.ticket.findUnique({
+    const ticket = await prisma.ticket.findUnique({
       where: { id },
       include: {
-        status: true,
-        priority: true,
         type: true,
         owner: {
           select: { id: true, fullname: true, email: true, image: true },
@@ -110,14 +115,13 @@ export const ticketRepository = {
         },
       },
     });
+    return mapTicketStatusAndPriority(ticket);
   },
 
   async createTicket(data: any) {
-    return prisma.ticket.create({
+    const ticket = await prisma.ticket.create({
       data,
       include: {
-        status: true,
-        priority: true,
         type: true,
         owner: true,
         group: true,
@@ -125,15 +129,14 @@ export const ticketRepository = {
         assignee: true,
       },
     });
+    return mapTicketStatusAndPriority(ticket);
   },
 
   async updateTicket(id: string, data: any) {
-    return prisma.ticket.update({
+    const ticket = await prisma.ticket.update({
       where: { id },
       data,
       include: {
-        status: true,
-        priority: true,
         type: true,
         owner: true,
         group: true,
@@ -141,6 +144,7 @@ export const ticketRepository = {
         assignee: true,
       },
     });
+    return mapTicketStatusAndPriority(ticket);
   },
 
   async deleteTicket(id: string) {

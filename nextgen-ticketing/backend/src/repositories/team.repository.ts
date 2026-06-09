@@ -13,7 +13,7 @@ export const teamRepository = {
         manager: { select: { id: true, fullname: true, email: true, image: true } },
         department: { select: { id: true, name: true } },
       },
-      orderBy: { name: "asc" },
+      orderBy: { createdAt: "desc" },
     });
   },
 

@@ -8,6 +8,7 @@ export const departmentRepository = {
         teams: { select: { id: true, name: true }, where: { deleted: false } },
         projects: { select: { id: true, name: true }, where: { deleted: false } },
       },
+      orderBy: { createdAt: "desc" },
     });
   },
 

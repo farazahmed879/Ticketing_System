@@ -103,43 +103,41 @@ const RoleForm = forwardRef<any, RoleFormProps>(
     };
 
     const handleRoleTypeChange = (selectedId: string) => {
-      setFormData((prev) => {
-        // Radio button logic: first set all role types to false
-        const updatedData = {
-          ...prev,
-          isAdmin: false,
-          isAgent: false,
-          isCustomer: false,
-          isEmployee: false,
-          isHR: false,
-        };
+      // Radio button logic: first set all role types to false
+      const updatedData: any = {
+        isAdmin: false,
+        isAgent: false,
+        isCustomer: false,
+        isEmployee: false,
+        isHR: false,
+        permissions: DEFAULT_PERMISSIONS,
+      };
 
-        // Always set the selected one to true (cannot deselect)
-        (updatedData as any)[selectedId] = true;
+      // Always set the selected one to true (cannot deselect)
+      (updatedData as any)[selectedId] = true;
 
-        // Apply default permissions based on role type
-        switch (selectedId) {
-          case "isAdmin":
-            updatedData.permissions = ADMIN_PERMISSIONS;
-            break;
-          case "isAgent":
-            updatedData.permissions = AGENT_PERMISSIONS;
-            break;
-          case "isEmployee":
-            updatedData.permissions = EMPLOYEE_PERMISSIONS;
-            break;
-          case "isCustomer":
-            updatedData.permissions = CUSTOMER_PERMISSIONS;
-            break;
-          case "isHR":
-            updatedData.permissions = HR_PERMISSIONS;
-            break;
-          default:
-            updatedData.permissions = DEFAULT_PERMISSIONS;
-        }
+      // Apply default permissions based on role type
+      switch (selectedId) {
+        case "isAdmin":
+          updatedData.permissions = ADMIN_PERMISSIONS;
+          break;
+        case "isAgent":
+          updatedData.permissions = AGENT_PERMISSIONS;
+          break;
+        case "isEmployee":
+          updatedData.permissions = EMPLOYEE_PERMISSIONS;
+          break;
+        case "isCustomer":
+          updatedData.permissions = CUSTOMER_PERMISSIONS;
+          break;
+        case "isHR":
+          updatedData.permissions = HR_PERMISSIONS;
+          break;
+        default:
+          updatedData.permissions = DEFAULT_PERMISSIONS;
+      }
 
-        return updatedData;
-      });
+      setFormData(updatedData);
     };
 
     const handleStatusPermissionChange = (statusId: string) => {

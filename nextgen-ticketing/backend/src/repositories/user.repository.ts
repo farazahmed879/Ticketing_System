@@ -36,7 +36,7 @@ export const userRepository = {
       },
       skip,
       take,
-      orderBy: { fullname: "asc" },
+      orderBy: { createdAt: "desc" },
     });
   },
 

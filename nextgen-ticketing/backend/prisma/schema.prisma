@@ -10,49 +10,49 @@ datasource db {
 // ==================== AUTH & USERS ====================
 
 model User {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  email         String    @unique
-  password      String
-  fullname      String
-  username      String?
-  image         String?
-  title         String?
-  workNumber    String?
-  mobileNumber  String?
-  
-  primaryContact    String?
-  secondaryContact  String?
-  cnic              String?
-  linkedInUrl       String?
-  gitUrl            String?
-  address           String?
-  emergencyContact  String?
-  primaryResumeUrl  String?
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  email        String  @unique
+  password     String
+  fullname     String
+  username     String?
+  image        String?
+  title        String?
+  workNumber   String?
+  mobileNumber String?
+
+  primaryContact     String?
+  secondaryContact   String?
+  cnic               String?
+  linkedInUrl        String?
+  gitUrl             String?
+  address            String?
+  emergencyContact   String?
+  primaryResumeUrl   String?
   jpPatternResumeUrl String?
-  nationality       String?
-  location          String?
-  employeeType      String?   @default("Onsite") // Onsite, Remote
-  branch            String?
-  leaves            Float     @default(20)
+  nationality        String?
+  location           String?
+  employeeType       String? @default("Onsite") // Onsite, Remote
+  branch             String?
+  leaves             Float   @default(20)
 
-  roleId        String    @db.ObjectId
-  role          Role      @relation(fields: [roleId], references: [id])
+  roleId String @db.ObjectId
+  role   Role   @relation(fields: [roleId], references: [id])
 
-  groupIds      String[]  @db.ObjectId
-  groups        Group[]   @relation(fields: [groupIds], references: [id])
+  groupIds String[] @db.ObjectId
+  groups   Group[]  @relation(fields: [groupIds], references: [id])
 
-  teamIds       String[]  @db.ObjectId
-  teams         Team[]    @relation(fields: [teamIds], references: [id])
+  teamIds String[] @db.ObjectId
+  teams   Team[]   @relation(fields: [teamIds], references: [id])
 
   ownedTickets    Ticket[] @relation("TicketOwner")
   assignedTickets Ticket[] @relation("TicketAssignee")
 
-  comments      Comment[]
-  history       History[]
+  comments Comment[]
+  history  History[]
 
-  chatMessages  ChatMessage[]
-  chatRoomIds   String[]      @db.ObjectId
-  chatRooms     ChatRoom[]    @relation(fields: [chatRoomIds], references: [id])
+  chatMessages ChatMessage[]
+  chatRoomIds  String[]      @db.ObjectId
+  chatRooms    ChatRoom[]    @relation(fields: [chatRoomIds], references: [id])
 
   notifications Notification[]
   requests      UserRequest[]
@@ -60,103 +60,83 @@ model User {
   timesheetEntries   TimesheetEntry[] @relation("UserTimesheets")
   approvedTimesheets TimesheetEntry[] @relation("TimesheetApprover")
 
-  announcements    Announcement[]
+  announcements Announcement[]
 
-  scheduledInterviews  Interview[]          @relation("InterviewScheduler")
-  interviewPanels      InterviewPanel[]
-  interviewFeedbacks   InterviewFeedback[]  @relation("InterviewFeedbackGiver")
+  scheduledInterviews Interview[]         @relation("InterviewScheduler")
+  interviewPanels     InterviewPanel[]
+  interviewFeedbacks  InterviewFeedback[] @relation("InterviewFeedbackGiver")
 
-  projectIds    String[]      @db.ObjectId
-  projects      Project[]     @relation(fields: [projectIds], references: [id])
+  projectIds String[]  @db.ObjectId
+  projects   Project[] @relation(fields: [projectIds], references: [id])
 
-  managedTeams   Team[]    @relation("TeamManager")
-  lastOnline    DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deleted       Boolean   @default(false)
+  managedTeams Team[]    @relation("TeamManager")
+  lastOnline   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deleted      Boolean   @default(false)
 }
 
 model Role {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String  @unique
   description String?
-  isAdmin     Boolean  @default(false)
-  isAgent     Boolean  @default(false)
-  isCustomer  Boolean  @default(false)
-  isEmployee  Boolean  @default(false)
-  isHR        Boolean  @default(false)
+  isAdmin     Boolean @default(false)
+  isAgent     Boolean @default(false)
+  isCustomer  Boolean @default(false)
+  isEmployee  Boolean @default(false)
+  isHR        Boolean @default(false)
   permissions Json
   users       User[]
-  deleted     Boolean  @default(false)
+  deleted     Boolean @default(false)
 }
 
 // ==================== TICKETS ====================
 
 model Ticket {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  uid         Int      @unique
-  subject     String
-  issue       String
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  uid     Int    @unique
+  subject String
+  issue   String
 
-  statusId    String   @db.ObjectId
-  status      Status   @relation(fields: [statusId], references: [id])
+  statusId   String @db.ObjectId
+  priorityId String @db.ObjectId
 
-  priorityId  String   @db.ObjectId
-  priority    Priority @relation(fields: [priorityId], references: [id])
+  typeId String @db.ObjectId
+  type   Type   @relation(fields: [typeId], references: [id])
 
-  typeId      String   @db.ObjectId
-  type        Type     @relation(fields: [typeId], references: [id])
+  ownerId String @db.ObjectId
+  owner   User   @relation("TicketOwner", fields: [ownerId], references: [id])
 
-  ownerId     String   @db.ObjectId
-  owner       User     @relation("TicketOwner", fields: [ownerId], references: [id])
+  assigneeId String? @db.ObjectId
+  assignee   User?   @relation("TicketAssignee", fields: [assigneeId], references: [id])
 
-  assigneeId  String?  @db.ObjectId
-  assignee    User?    @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  groupId String? @db.ObjectId
+  group   Group?  @relation(fields: [groupId], references: [id])
 
-  groupId     String?  @db.ObjectId
-  group       Group?   @relation(fields: [groupId], references: [id])
+  projectId String?  @db.ObjectId
+  project   Project? @relation(fields: [projectId], references: [id])
 
-  projectId   String?  @db.ObjectId
-  project     Project? @relation(fields: [projectId], references: [id])
-
-  tags        String[]
-  attachments String[]
-  comments    Comment[]
-  history     History[]
+  tags           String[]
+  attachments    String[]
+  comments       Comment[]
+  history        History[]
   timesheetTasks TimesheetTask[]
 
-  dueDate     DateTime?
-  closedAt    DateTime?
+  dueDate  DateTime?
+  closedAt DateTime?
 
-  interviewId String?  @db.ObjectId
+  interviewId String?    @db.ObjectId
   interview   Interview? @relation(fields: [interviewId], references: [id])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deleted     Boolean  @default(false)
-}
-
-model Status {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
-  color       String   @default("#000000")
-  order       Int      @default(0)
-  isResolved  Boolean  @default(false)
-  tickets     Ticket[]
-}
-
-model Priority {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
-  color       String   @default("#000000")
-  order       Int      @default(0)
-  tickets     Ticket[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deleted   Boolean  @default(false)
 }
 
 model Type {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
-  tickets     Ticket[]
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  name    String   @unique
+  tickets Ticket[]
 }
 
 model Comment {
@@ -185,14 +165,14 @@ model History {
 // ==================== ORGANIZATION ====================
 
 model Group {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
-  isPublic    Boolean  @default(false)
-  memberIds   String[] @db.ObjectId
-  members     User[]   @relation(fields: [memberIds], references: [id])
-  tickets     Ticket[]
-  createdAt   DateTime @default(now())
-  deleted     Boolean  @default(false)
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  isPublic  Boolean  @default(false)
+  memberIds String[] @db.ObjectId
+  members   User[]   @relation(fields: [memberIds], references: [id])
+  tickets   Ticket[]
+  createdAt DateTime @default(now())
+  deleted   Boolean  @default(false)
 }
 
 model Team {
@@ -202,78 +182,77 @@ model Team {
   memberIds   String[] @db.ObjectId
   members     User[]   @relation(fields: [memberIds], references: [id])
 
-  departmentId String? @db.ObjectId
+  departmentId String?     @db.ObjectId
   department   Department? @relation(fields: [departmentId], references: [id])
 
-  managerId    String? @db.ObjectId
-  manager      User?   @relation("TeamManager", fields: [managerId], references: [id])
+  managerId String? @db.ObjectId
+  manager   User?   @relation("TeamManager", fields: [managerId], references: [id])
 
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deleted     Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deleted   Boolean  @default(false)
 }
 
 model Department {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String  @unique
   description String?
-  
-  teams       Team[]
-  projects    Project[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deleted     Boolean  @default(false)
+  teams    Team[]
+  projects Project[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deleted   Boolean  @default(false)
 }
 
 model Project {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String   @unique
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  name        String  @unique
   description String?
-  status      String   @default("Active") // Active, On Hold, Completed, Cancelled
+  status      String  @default("Active") // Active, On Hold, Completed, Cancelled
 
-  departmentId String? @db.ObjectId
+  departmentId String?     @db.ObjectId
   department   Department? @relation(fields: [departmentId], references: [id])
 
-  clientIds   String[] @db.ObjectId
-  clients     User[]   @relation(fields: [clientIds], references: [id])
+  clientIds String[] @db.ObjectId
+  clients   User[]   @relation(fields: [clientIds], references: [id])
 
-  tickets     Ticket[]
+  tickets Ticket[]
 
   timesheetTasks TimesheetTask[]
 
   announcements Announcement[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deleted     Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deleted   Boolean  @default(false)
 }
 
 // ==================== NOTIFICATIONS ====================
 
 model Notification {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  message     String
-  type        String   @default("info")
-  unread      Boolean  @default(true)
-  userId      String   @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id])
-  data        Json?
-  createdAt   DateTime @default(now())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  message   String
+  type      String   @default("info")
+  unread    Boolean  @default(true)
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  data      Json?
+  createdAt DateTime @default(now())
 }
 
 model Notice {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  message     String
-  color       String   @default("#7c3aed")
-  fontColor   String   @default("#ffffff")
-  active      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deleted     Boolean  @default(false)
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  message   String
+  color     String   @default("#7c3aed")
+  fontColor String   @default("#ffffff")
+  active    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deleted   Boolean  @default(false)
 }
 
 model Announcement {
@@ -282,105 +261,106 @@ model Announcement {
   description String
   date        DateTime
   type        String   @default("event") // event, important, info
-  
-  projectId   String?  @db.ObjectId
-  project     Project? @relation(fields: [projectId], references: [id])
 
-  authorId    String   @db.ObjectId
-  author      User     @relation(fields: [authorId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deleted     Boolean  @default(false)
+  projectId String?  @db.ObjectId
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  authorId  String   @db.ObjectId
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deleted   Boolean  @default(false)
 }
 
 // ==================== CHAT ====================
 
 model ChatRoom {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String?
-  isGroup     Boolean  @default(false)
-  memberIds   String[] @db.ObjectId
-  members     User[]   @relation(fields: [memberIds], references: [id])
-  messages    ChatMessage[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  name      String?
+  isGroup   Boolean       @default(false)
+  memberIds String[]      @db.ObjectId
+  members   User[]        @relation(fields: [memberIds], references: [id])
+  messages  ChatMessage[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }
 
 model ChatMessage {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  body        String
-  senderId    String   @db.ObjectId
-  sender      User     @relation(fields: [senderId], references: [id])
-  roomId      String   @db.ObjectId
-  room        ChatRoom @relation(fields: [roomId], references: [id])
-  createdAt   DateTime @default(now())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  body      String
+  senderId  String   @db.ObjectId
+  sender    User     @relation(fields: [senderId], references: [id])
+  roomId    String   @db.ObjectId
+  room      ChatRoom @relation(fields: [roomId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 // ==================== REQUESTS ====================
 
 model UserRequest {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  type        String   // e.g., "FORGOT_PASSWORD"
-  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  message     String?
-  userId      String?  @db.ObjectId
-  user        User?    @relation(fields: [userId], references: [id])
-  email       String?
-  data        Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deleted     Boolean  @default(false)
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  type      String // e.g., "FORGOT_PASSWORD"
+  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  message   String?
+  userId    String?  @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id])
+  email     String?
+  data      Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deleted   Boolean  @default(false)
 }
+
 // ==================== TIMESHEET ====================
 
 model TimesheetEntry {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  date        DateTime
-  totalHours  Float    @default(0) // Manually entered by user
-  notes       String?
-  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
-  
-  userId      String   @db.ObjectId
-  user        User     @relation("UserTimesheets", fields: [userId], references: [id])
-  
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  date       DateTime
+  totalHours Float    @default(0) // Manually entered by user
+  notes      String?
+  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+
+  userId String @db.ObjectId
+  user   User   @relation("UserTimesheets", fields: [userId], references: [id])
+
   approvedById String? @db.ObjectId
   approvedBy   User?   @relation("TimesheetApprover", fields: [approvedById], references: [id])
-  
-  tasks       TimesheetTask[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+
+  tasks TimesheetTask[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([userId, date])
 }
 
 model TimesheetTask {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  description   String
-  hours         Float
-  
-  projectId     String?  @db.ObjectId
-  project       Project? @relation(fields: [projectId], references: [id])
-  
-  ticketId      String?  @db.ObjectId
-  ticket        Ticket?  @relation(fields: [ticketId], references: [id])
-  
-  entryId       String   @db.ObjectId
-  entry         TimesheetEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
-  
-  createdAt     DateTime @default(now())
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  description String
+  hours       Float
+
+  projectId String?  @db.ObjectId
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  ticketId String? @db.ObjectId
+  ticket   Ticket? @relation(fields: [ticketId], references: [id])
+
+  entryId String         @db.ObjectId
+  entry   TimesheetEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
 }
 
 // ==================== INTERVIEWS ====================
 
 model Candidate {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
   name            String
-  email           String   @unique
+  email           String      @unique
   phone           String?
   cnic            String?
   address         String?
-  isConverted     Boolean  @default(false)
+  isConverted     Boolean     @default(false)
   position        String
   resumeUrl       String?
   notes           String?
@@ -392,67 +372,67 @@ model Candidate {
   github          String?
   projects        String?
   observingSkills String?
-  status          String   @default("Active") // Active, Hired, Rejected, On Hold
+  status          String      @default("Active") // Active, Hired, Rejected, On Hold
   dob             DateTime?
   nationality     String?
   city            String?
   interviews      Interview[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  deleted         Boolean  @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deleted         Boolean     @default(false)
 }
 
 model Interview {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  title           String
-  scheduledAt     DateTime
-  duration        Int      @default(60)
-  location        String?
-  status          String   @default("Scheduled") // Scheduled, Completed, Cancelled
-  notes           String?
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  scheduledAt DateTime
+  duration    Int      @default(60)
+  location    String?
+  status      String   @default("Scheduled") // Scheduled, Completed, Cancelled
+  notes       String?
 
-  candidateId     String   @db.ObjectId
-  candidate       Candidate @relation(fields: [candidateId], references: [id])
+  candidateId String    @db.ObjectId
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
 
-  scheduledById   String   @db.ObjectId
-  scheduledBy     User     @relation("InterviewScheduler", fields: [scheduledById], references: [id])
+  scheduledById String @db.ObjectId
+  scheduledBy   User   @relation("InterviewScheduler", fields: [scheduledById], references: [id])
 
-  panelMembers    InterviewPanel[]
-  feedbacks       InterviewFeedback[]
-  tickets         Ticket[]
+  panelMembers InterviewPanel[]
+  feedbacks    InterviewFeedback[]
+  tickets      Ticket[]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  deleted         Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deleted   Boolean  @default(false)
 }
 
 model InterviewPanel {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  interviewId   String    @db.ObjectId
-  interview     Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
-  userId        String    @db.ObjectId
-  user          User      @relation(fields: [userId], references: [id])
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  interviewId String    @db.ObjectId
+  interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  userId      String    @db.ObjectId
+  user        User      @relation(fields: [userId], references: [id])
 
   @@unique([interviewId, userId])
 }
 
 model InterviewFeedback {
-  id                   String    @id @default(auto()) @map("_id") @db.ObjectId
-  interviewId          String    @db.ObjectId
-  interview            Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  interviewId String    @db.ObjectId
+  interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
 
-  interviewerId        String    @db.ObjectId
-  interviewer          User      @relation("InterviewFeedbackGiver", fields: [interviewerId], references: [id])
+  interviewerId String @db.ObjectId
+  interviewer   User   @relation("InterviewFeedbackGiver", fields: [interviewerId], references: [id])
 
-  communicationRating  Int
-  technicalRating      Int
-  leadershipRating     Int
-  overallRating        Float
-  comments             String?
-  recommendation       String   @default("Neutral") // Strong Hire, Hire, Neutral, No Hire, Strong No Hire
+  communicationRating Int
+  technicalRating     Int
+  leadershipRating    Int
+  overallRating       Float
+  comments            String?
+  recommendation      String  @default("Neutral") // Strong Hire, Hire, Neutral, No Hire, Strong No Hire
 
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([interviewId, interviewerId])
 }

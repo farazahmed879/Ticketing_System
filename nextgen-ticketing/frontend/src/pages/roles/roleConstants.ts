@@ -1,3 +1,8 @@
+import { TICKET_STATUSES, StatusName } from "../../utils/constants";
+
+const getStatusId = (name: StatusName) =>
+  TICKET_STATUSES.find((s) => s.name === name)?.id as string;
+
 export const DEFAULT_PERMISSIONS = {
   tickets: {
     view: false,
@@ -46,23 +51,21 @@ export const ADMIN_PERMISSIONS = {
   requests: { view: true, create: true, update: true, delete: true },
   announcements: { view: true, create: true, update: true, delete: true },
   boardStatuses: {
-    new: true,
-    open: true,
-    trash: true,
-    failed: true,
-    inProcess: true,
-    resolved: true,
-    closed: true,
-    approved: true,
-    pending: true,
-    rejected: true,
+    [getStatusId(StatusName.NEW)]: true,
+    [getStatusId(StatusName.OPEN)]: true,
+    [getStatusId(StatusName.TRASH)]: true,
+    [getStatusId(StatusName.FAILED)]: true,
+    [getStatusId(StatusName.IN_PROCESS)]: true,
+    [getStatusId(StatusName.RESOLVED)]: true,
+    [getStatusId(StatusName.CLOSED)]: true,
+    [getStatusId(StatusName.APPROVED)]: true,
   },
 };
 
 export const AGENT_PERMISSIONS = {
   tickets: {
     view: true,
-    create: false,
+    create: true,
     update: true,
     delete: false,
     assign: true,
@@ -72,7 +75,7 @@ export const AGENT_PERMISSIONS = {
   users: { view: true, create: true, update: true, delete: false },
   teams: { view: true, create: true, update: true, delete: false },
   groups: { view: true, create: true, update: true, delete: false },
-  roles: { view: true, create: false, update: false, delete: false },
+  roles: { view: false, create: false, update: false, delete: false },
   departments: { view: true, create: true, update: true, delete: false },
   messages: { view: true, create: true },
   dashboard: { view: true },
@@ -82,16 +85,14 @@ export const AGENT_PERMISSIONS = {
   requests: { view: true, create: true, update: true, delete: false },
   announcements: { view: true, create: true, update: true, delete: true },
   boardStatuses: {
-    new: true,
-    open: true,
-    trash: false,
-    failed: true,
-    inProcess: false,
-    resolved: false,
-    closed: false,
-    approved: true,
-    pending: true,
-    rejected: false,
+    [getStatusId(StatusName.NEW)]: true,
+    [getStatusId(StatusName.OPEN)]: true,
+    [getStatusId(StatusName.TRASH)]: false,
+    [getStatusId(StatusName.FAILED)]: true,
+    [getStatusId(StatusName.IN_PROCESS)]: true,
+    [getStatusId(StatusName.RESOLVED)]: true,
+    [getStatusId(StatusName.CLOSED)]: false,
+    [getStatusId(StatusName.APPROVED)]: true,
   },
 };
 
@@ -118,16 +119,14 @@ export const EMPLOYEE_PERMISSIONS = {
   requests: { view: true, create: false, update: false, delete: false },
   announcements: { view: true, create: true, update: true, delete: true },
   boardStatuses: {
-    new: false,
-    open: false,
-    trash: false,
-    failed: false,
-    inProcess: true,
-    resolved: true,
-    closed: false,
-    approved: false,
-    pending: false,
-    rejected: false,
+    [getStatusId(StatusName.NEW)]: false,
+    [getStatusId(StatusName.OPEN)]: false,
+    [getStatusId(StatusName.TRASH)]: false,
+    [getStatusId(StatusName.FAILED)]: false,
+    [getStatusId(StatusName.IN_PROCESS)]: true,
+    [getStatusId(StatusName.RESOLVED)]: true,
+    [getStatusId(StatusName.CLOSED)]: false,
+    [getStatusId(StatusName.APPROVED)]: false,
   },
 };
 
@@ -154,16 +153,14 @@ export const CUSTOMER_PERMISSIONS = {
   requests: { view: false, create: false, update: false, delete: false },
   announcements: { view: true, create: true, update: true, delete: true },
   boardStatuses: {
-    new: true,
-    open: false,
-    trash: true,
-    failed: false,
-    inProcess: true,
-    resolved: true,
-    closed: true,
-    approved: false,
-    pending: false,
-    rejected: false,
+    [getStatusId(StatusName.NEW)]: true,
+    [getStatusId(StatusName.OPEN)]: false,
+    [getStatusId(StatusName.TRASH)]: true,
+    [getStatusId(StatusName.FAILED)]: true,
+    [getStatusId(StatusName.IN_PROCESS)]: false,
+    [getStatusId(StatusName.RESOLVED)]: false,
+    [getStatusId(StatusName.CLOSED)]: true,
+    [getStatusId(StatusName.APPROVED)]: false,
   },
 };
 
@@ -190,16 +187,14 @@ export const HR_PERMISSIONS = {
   requests: { view: true, create: true, update: true, delete: false },
   announcements: { view: true, create: true, update: true, delete: true },
   boardStatuses: {
-    new: false,
-    open: false,
-    trash: false,
-    failed: false,
-    inProcess: true,
-    resolved: true,
-    closed: false,
-    approved: false,
-    pending: false,
-    rejected: false,
+    [getStatusId(StatusName.NEW)]: false,
+    [getStatusId(StatusName.OPEN)]: false,
+    [getStatusId(StatusName.TRASH)]: false,
+    [getStatusId(StatusName.FAILED)]: false,
+    [getStatusId(StatusName.IN_PROCESS)]: true,
+    [getStatusId(StatusName.RESOLVED)]: true,
+    [getStatusId(StatusName.CLOSED)]: false,
+    [getStatusId(StatusName.APPROVED)]: false,
   },
 };
 

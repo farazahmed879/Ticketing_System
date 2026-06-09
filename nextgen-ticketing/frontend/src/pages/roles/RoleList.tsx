@@ -9,7 +9,7 @@ import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomPagination from "../../components/CustomPagination";
 import type { TableColumn } from "../../components/types";
-import { RoleName, UIMessages } from "../../utils/constants";
+import { RoleName, TICKET_STATUSES, UIMessages } from "../../utils/constants";
 import RoleModal from "./components/RoleModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
@@ -19,7 +19,7 @@ const RoleList: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [statuses, setStatuses] = useState<any[]>([]);
+  const statuses = TICKET_STATUSES;
   const { showNotification, setIsLoading } = useNotification();
 
   const [editingRole, setEditingRole] = useState<Role | null>(null);
@@ -35,21 +35,19 @@ const RoleList: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [rolesRes, statusRes] = await Promise.all([
+      const [rolesRes] = await Promise.all([
         api.get(API_ROUTES.ROLES.BASE, {
           params: {
             limit: itemsPerPage,
             page: currentPage,
           },
         }),
-        api.get(API_ROUTES.COMMON.STATUSES),
       ]);
       setRoles(rolesRes.data.roles);
       setTotalItems(rolesRes.data.total);
-      setStatuses(statusRes.data.statuses);
     } catch (err) {
       console.error("Failed to fetch data", err);
-      showNotification("error", "Failed to load roles/statuses");
+      showNotification("error", "Failed to load roles");
     } finally {
       setLoading(false);
     }

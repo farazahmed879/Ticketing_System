@@ -170,7 +170,9 @@
   background: var(--bg-card);
   backdrop-filter: var(--blur-md);
   -webkit-backdrop-filter: var(--blur-md);
-  border: 1px solid var(--border-glass);
+  /* Accent-tinted border + ring so the circle stays clearly defined against
+     every theme's background (light bg-card on light bg-main was vanishing). */
+  border: 1.5px solid rgba(var(--primary-rgb), 0.55);
   /* Purple stays high-contrast on both dark and light backgrounds. */
   color: var(--accent-primary);
   display: flex;
@@ -178,10 +180,11 @@
   justify-content: center;
   cursor: pointer;
   z-index: 10;
-  opacity: 0.85;
+  opacity: 1;
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.08),
-    0 4px 12px rgba(0, 0, 0, 0.12);
+    0 0 0 1px rgba(var(--primary-rgb), 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.12),
+    0 4px 14px rgba(var(--primary-rgb), 0.22);
   transition:
     opacity 0.2s ease,
     transform 0.2s ease,

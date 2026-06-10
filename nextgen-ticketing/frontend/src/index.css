@@ -206,6 +206,23 @@ textarea:focus {
   border-style: solid !important;
 }
 
+/* Overdue: due date has already passed. Steady (non-pulsing) red highlight
+   with a red-tinted surface + left accent bar so it reads as more urgent
+   than the due-soon pulse. Works on light and dark themes. */
+.overdue-card {
+  border: 1.5px solid #ef4444 !important;
+  border-left-width: 4px !important;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(239, 68, 68, 0.12),
+      rgba(239, 68, 68, 0.04) 60%,
+      transparent
+    ),
+    var(--bg-card) !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.25) !important;
+}
+
 /* Skeleton Pulse Utility */
 .skeleton-pulse {
   position: relative;

@@ -1,5 +1,5 @@
 import CustomIcon from "../../../components/CustomIcon";
-import { isToday, isTomorrow, parseISO } from "date-fns";
+import { isToday, isTomorrow, isBefore, startOfDay, parseISO } from "date-fns";
 import styles from "./TicketBoard.module.css";
 import TicketCard from "./ticketCard";
 import { RoleName, StatusName } from "../../../utils/constants";
@@ -26,6 +26,21 @@ const ColumnStatus = ({
       ) &&
       (isToday(parseISO(ticket.dueDate)) ||
         isTomorrow(parseISO(ticket.dueDate)))
+    );
+  };
+
+  // Due date has passed (before today) — highlight as overdue in every column
+  // except terminal statuses (Resolved / Approved / Closed / Cancelled).
+  const handleCheckOverdue = (ticket: any) => {
+    return (
+      ticket.dueDate &&
+      ![
+        StatusName.RESOLVED,
+        StatusName.APPROVED,
+        StatusName.CLOSED,
+        StatusName.TRASH,
+      ].includes(column.name) &&
+      isBefore(startOfDay(parseISO(ticket.dueDate)), startOfDay(new Date()))
     );
   };
 
@@ -78,7 +93,11 @@ const ColumnStatus = ({
           <div
             key={ticket.id}
             className={`${styles.card} ${isCollapsed ? styles.miniCard : "glass-card"} ${
-              handleCheckTomorrow(ticket) ? "due-tomorrow-card" : ""
+              handleCheckOverdue(ticket)
+                ? "overdue-card"
+                : handleCheckTomorrow(ticket)
+                  ? "due-tomorrow-card"
+                  : ""
             }`}
             draggable={!isCollapsed}
             onDragStart={(e) => !isCollapsed && handleDragStart(e, ticket.id)}

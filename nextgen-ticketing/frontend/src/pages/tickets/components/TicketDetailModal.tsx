@@ -338,6 +338,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.tickets?.update ||
     user?.id === displayTicket.owner.id;
+
   const canViewComments =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.comments?.view;
@@ -347,21 +348,16 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   // Mirror TicketDetail's content-edit gate.
   const canEditContent = (() => {
-    if (!displayTicket || !user) return false;
+    if (!ticket || !user) return false;
     const role = user.role?.name;
     const isAdmin = role === RoleName.ADMIN;
     const isManager = role === RoleName.AGENT;
-    const isEmployee = role === RoleName.EMPLOYEE;
+    // const isEmployee = role === RoleName.EMPLOYEE;
     const isClient = role === RoleName.CUSTOMER;
-    const isOwner = displayTicket.owner?.id === user.id;
-    const isAssignee = displayTicket.assignee?.id === user.id;
-    const ticketIsNew = displayTicket.status?.name === StatusName.NEW;
-    return (
-      isAdmin ||
-      isManager ||
-      (isEmployee && (isOwner || isAssignee)) ||
-      (isClient && isOwner && ticketIsNew)
-    );
+    const isOwner = ticket.owner.id === user.id;
+    // const isAssignee = ticket.assignee?.id === user.id;
+    const ticketIsNew = ticket.status?.name === StatusName.NEW;
+    return isAdmin || isManager || (isClient && isOwner && ticketIsNew);
   })();
 
   const getStatusOptions = (columns: any[]) => {
@@ -431,25 +427,28 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           />
         }
         footer={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 12,
-              width: "100%",
-            }}
-          >
-            <CustomButton variant="ghost" onClick={onClose}>
-              Cancel
-            </CustomButton>
-            <CustomButton
-              variant="gradient"
-              onClick={handleSubmit(handleSave)}
-              icon={<CustomIcon name="Save" size={18} />}
+          isClient &&
+          displayTicket?.status?.name !== StatusName.NEW ? undefined : (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 12,
+                width: "100%",
+              }}
             >
-              Save Changes
-            </CustomButton>
-          </div>
+              <CustomButton variant="ghost" onClick={onClose}>
+                Close
+              </CustomButton>
+              <CustomButton
+                variant="gradient"
+                onClick={handleSubmit(handleSave)}
+                icon={<CustomIcon name="Save" size={18} />}
+              >
+                Save Changes
+              </CustomButton>
+            </div>
+          )
         }
       >
         {!fullTicketData ? (
@@ -801,9 +800,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         <span>Description</span>
                       </div>
                     }
-                    disabled={!canUpdate || isDisbaledMode}
+                    disabled={!canEditContent || isDisbaledMode}
                     placeholder={
-                      canUpdate
+                      canEditContent
                         ? "Add a description..."
                         : "No description provided"
                     }
@@ -812,8 +811,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     style={{
                       background: "rgba(255,255,255,0.02)",
                       fontSize: "0.95rem",
-                      cursor: !canUpdate ? "not-allowed" : "text",
-                      resize: !canUpdate ? "none" : "vertical",
+                      cursor: !canEditContent ? "not-allowed" : "text",
+                      resize: !canEditContent ? "none" : "vertical",
                       height: "100%",
                     }}
                   />

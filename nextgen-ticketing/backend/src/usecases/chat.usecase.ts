@@ -1,5 +1,4 @@
 import { chatRepository } from "../repositories/chat.repository";
-import prisma from "../prisma";
 import { RoleName } from "../utils/constants";
 
 export const chatUsecase = {
@@ -76,22 +75,8 @@ export const chatUsecase = {
         allowed = true;
       }
     } else if (isMeAgent) {
-      if (
-        partner.role.isAdmin ||
-        partner.role.name.toLowerCase() === RoleName.ADMIN ||
-        partner.role.isAgent ||
-        partner.role.name.toLowerCase() === RoleName.AGENT
-      ) {
-        allowed = true;
-      } else if (
-        partner.role.isCustomer ||
-        partner.role.name.toLowerCase() === RoleName.CUSTOMER
-      ) {
-        const assignment = await (prisma as any).ticket.findFirst({
-          where: { ownerId: partner.id, assigneeId: me.id },
-        });
-        if (assignment) allowed = true;
-      }
+      // Managers can chat with everyone.
+      allowed = true;
     }
 
     if (!allowed) {
@@ -139,9 +124,8 @@ export const chatUsecase = {
       // Employees can only message internal staff: Admin, Manager, Employee, HR.
       return chatRepository.findInternalUsersForChat(userId);
     } else if (isMeAgent) {
-      const staff = await chatRepository.findStaffForChat(userId);
-      const customers = await chatRepository.findAssignedCustomers(userId);
-      return [...staff, ...customers];
+      // Managers can chat with everyone (same as Admin).
+      return chatRepository.findAllUsersForChat(userId);
     }
 
     return [];

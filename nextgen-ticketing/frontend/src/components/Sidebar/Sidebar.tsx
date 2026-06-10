@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import styles from "./Sidebar.module.css";
 
 import type { SidebarProps } from "../../types";
+import { RoleName } from "../../utils/constants";
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
   const { user, logout } = useAuth();
@@ -69,10 +70,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
   const hasPermission = (permPath: string) => {
     if (!user || !user.role || !user.role.permissions) return false;
     // Admins always have access
-    if (user.role.name === "Admin") return true;
+    if (user.role.name === RoleName.ADMIN) return true;
 
     // Grant Customer access to projects list
-    if (user.role.name === "Customer" && permPath === "projects.view") return true;
+    if (user.role.name === RoleName.CUSTOMER && permPath === "groups.view")
+      return true;
 
     const [module, action] = permPath.split(".");
     return user.role.permissions?.[module]?.[action] === true;
@@ -127,7 +129,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
       icon: <CustomIcon name="Layers" size={20} />,
       label: t("sidebar.projects"),
       path: "/projects",
-      permission: "projects.view",
+      permission: "groups.view",
     },
 
     {
@@ -278,11 +280,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
       <div
         className={styles.userProfile}
         onClick={() => navigate("/profile")}
-        style={{ 
+        style={{
           cursor: "pointer",
           flexDirection: isCollapsed ? "column" : "row",
           gap: isCollapsed ? "16px" : "12px",
-          justifyContent: "center"
+          justifyContent: "center",
         }}
       >
         <div className={styles.avatar}>
@@ -313,7 +315,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
         onClose={() => setIsLogoutModalOpen(false)}
         onConfirm={handleLogout}
         title={t("sidebar.logout")}
-        message={t("logoutMessage", "Are you sure you want to log out of your account?")}
+        message={t(
+          "logoutMessage",
+          "Are you sure you want to log out of your account?",
+        )}
         confirmText={t("sidebar.logout", "Logout")}
         type="danger"
       />

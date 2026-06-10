@@ -192,6 +192,15 @@ export const ticketRepository = {
     });
   },
 
+  // Project ids a client is attached to (Project.clientIds contains the user).
+  async findClientProjectIds(userId: string) {
+    const projects = await prisma.project.findMany({
+      where: { deleted: false, clientIds: { has: userId } },
+      select: { id: true },
+    });
+    return projects.map((p) => p.id);
+  },
+
   async getTimeline(ticketId: string) {
     return prisma.history.findMany({
       where: { ticketId },

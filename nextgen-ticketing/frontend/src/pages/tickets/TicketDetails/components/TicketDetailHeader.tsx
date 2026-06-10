@@ -66,7 +66,31 @@ const TicketDetailHeader: React.FC<TicketDetailHeaderProps> = ({
 
       <div className={styles.ticketHeader}>
         <div style={{ flex: 1 }}>
-          <span className={styles.uid}>Ticket #{ticket.uid}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span className={styles.uid}>Ticket #{ticket.uid}</span>
+            {ticket.wasFailed && (
+              <span
+                title="This ticket was marked as Failed/Returned at some point"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "2px 10px",
+                  borderRadius: 20,
+                  fontSize: "0.7rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  color: "var(--accent-danger)",
+                  background: "rgba(239, 68, 68, 0.12)",
+                  border: "1px solid rgba(239, 68, 68, 0.4)",
+                }}
+              >
+                <CustomIcon name="Flag" size={12} />
+                Returned
+              </span>
+            )}
+          </div>
           {canEditContent ? (
             <input
               type="text"

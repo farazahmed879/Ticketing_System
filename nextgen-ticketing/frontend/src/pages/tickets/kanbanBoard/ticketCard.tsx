@@ -20,14 +20,38 @@ const TicketCard = ({
           alignItems: "center",
         }}
       >
-        <div
-          className={styles.cardPriority}
-          style={{
-            background: `${ticket.priority.color}20`,
-            color: ticket.priority.color,
-          }}
-        >
-          {ticket.priority.name}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div
+            className={styles.cardPriority}
+            style={{
+              background: `${ticket.priority.color}20`,
+              color: ticket.priority.color,
+            }}
+          >
+            {ticket.priority.name}
+          </div>
+          {ticket.wasFailed && (
+            <span
+              title="This ticket was marked as Failed/Returned at some point"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 3,
+                padding: "2px 7px",
+                borderRadius: 12,
+                fontSize: "0.65rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.4px",
+                color: "var(--accent-danger, #ef4444)",
+                background: "rgba(239, 68, 68, 0.12)",
+                border: "1px solid rgba(239, 68, 68, 0.4)",
+              }}
+            >
+              <CustomIcon name="Flag" size={11} />
+              Returned
+            </span>
+          )}
         </div>
         <div onClick={(e) => e.stopPropagation()}>
           <CustomDropdownMenu

@@ -125,6 +125,11 @@ model Ticket {
   dueDate  DateTime?
   closedAt DateTime?
 
+  // Sticky flag: set true the first time a ticket is moved to "Returned"
+  // (Failed). Stays true even after the ticket moves to another status, so the
+  // detail views can show that it was failed at some point.
+  wasFailed Boolean @default(false)
+
   interviewId String?    @db.ObjectId
   interview   Interview? @relation(fields: [interviewId], references: [id])
 

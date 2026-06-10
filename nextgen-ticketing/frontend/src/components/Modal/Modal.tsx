@@ -5,12 +5,13 @@ import styles from './Modal.module.css';
 
 import type { ModalProps } from '../types';
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer, maxWidth, minHeight, headerAction }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer, maxWidth, minHeight, height, headerAction }) => {
   if (!isOpen) return null;
 
   const modalStyle: React.CSSProperties = {
     maxWidth: maxWidth || '550px',
-    minHeight: minHeight || 'auto'
+    minHeight: minHeight || 'auto',
+    ...(height ? { height } : {}),
   };
 
   return ReactDOM.createPortal(

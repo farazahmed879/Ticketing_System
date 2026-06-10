@@ -50,7 +50,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const isClient = user?.role?.name === RoleName.CUSTOMER;
   const { showNotification, setIsLoading } = useNotification();
   const navigate = useNavigate();
-  const { control, handleSubmit, reset, watch, setValue } =
+  const { control, handleSubmit, reset, watch, setValue, formState } =
     useForm<TicketUpdateFormData>({
       defaultValues: {
         statusId: ticket?.status?.id || "",
@@ -68,6 +68,22 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const [fullTicketData, setFullTicketData] = useState<any>(null);
   const [newComment, setNewComment] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  // Close guard: warn before discarding unsaved ticket-field changes.
+  // Comments are separate state, so they never trigger this.
+  const handleRequestClose = () => {
+    if (formState.isDirty) {
+      setShowDiscardConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscardConfirm(false);
+    onClose();
+  };
 
   // Lightbox state
   const [lightbox, setLightbox] = useState<{
@@ -380,10 +396,52 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     <>
       <Modal
         isOpen={isOpen}
-        onClose={onClose}
+        onClose={handleRequestClose}
         maxWidth="1500px"
-        minHeight="60vh"
-        title={`Ticket #${displayTicket.uid}: ${displayTicket.subject}`}
+        height="85vh"
+        title={
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              minWidth: 0,
+            }}
+          >
+            <span
+              style={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {`Ticket #${displayTicket.uid}: ${displayTicket.subject}`}
+            </span>
+            {displayTicket?.wasFailed && (
+              <span
+                title="This ticket was marked as Failed/Returned at some point"
+                style={{
+                  flexShrink: 0,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "2px 10px",
+                  borderRadius: 12,
+                  fontSize: "0.7rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.4px",
+                  color: "var(--accent-danger, #ef4444)",
+                  background: "rgba(239, 68, 68, 0.12)",
+                  border: "1px solid rgba(239, 68, 68, 0.4)",
+                }}
+              >
+                <CustomIcon name="Flag" size={12} />
+                Returned
+              </span>
+            )}
+          </span>
+        }
         headerAction={
           <CustomDropdownMenu
             items={[
@@ -437,12 +495,13 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 width: "100%",
               }}
             >
-              <CustomButton variant="ghost" onClick={onClose}>
+              <CustomButton variant="ghost" onClick={handleRequestClose}>
                 Close
               </CustomButton>
               <CustomButton
                 variant="gradient"
                 onClick={handleSubmit(handleSave)}
+                disabled={!formState.isDirty}
                 icon={<CustomIcon name="Save" size={18} />}
               >
                 Save Changes
@@ -557,6 +616,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               style={{
                 display: "grid",
                 gridTemplateColumns: "1.6fr 1fr",
+                gridTemplateRows: "minmax(0, 1fr)",
                 gap: 30,
                 padding: "10px 0",
                 flex: 1,
@@ -569,7 +629,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   display: "flex",
                   flexDirection: "column",
                   gap: 24,
-                  overflowY: "visible",
+                  minHeight: 0,
+                  overflowY: "auto",
                   paddingRight: 10,
                 }}
               >
@@ -669,7 +730,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                     gap: 8,
                     fontSize: "0.9rem",
                     color: "var(--text-secondary)",
-                    marginTop: -8,
                   }}
                 >
                   <CustomIcon
@@ -1294,22 +1354,46 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         </div>
                       </div>
                     ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: 8,
-                        }}
-                      >
+                      <div>
                         <div
                           style={{
-                            flex: 1,
                             display: "flex",
-                            flexWrap: "wrap",
-                            gap: 10,
+                            alignItems: "center",
+                            gap: 8,
+                            marginBottom: 8,
                           }}
                         >
-                          {displayTicket.attachments &&
+                          <CustomIcon
+                            name="Paperclip"
+                            size={16}
+                            color="var(--accent-primary)"
+                          />
+                          <span
+                            style={{
+                              fontSize: "0.85rem",
+                              fontWeight: 600,
+                              color: "var(--text-secondary)",
+                            }}
+                          >
+                            Attachments
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 8,
+                          }}
+                        >
+                          <div
+                            style={{
+                              flex: 1,
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: 10,
+                            }}
+                          >
+                            {displayTicket.attachments &&
                           displayTicket.attachments.length > 0 ? (
                             displayTicket.attachments.map(
                               (src: string, idx: number) => (
@@ -1367,6 +1451,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             style={{ padding: 4 }}
                           />
                         )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1404,6 +1489,17 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         message="Are you sure you want to delete this ticket? This action cannot be undone."
         confirmText="Delete"
         type="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={showDiscardConfirm}
+        onClose={() => setShowDiscardConfirm(false)}
+        onConfirm={handleConfirmDiscard}
+        title="Discard changes?"
+        message="You have unsaved changes. If you close now, your changes will be discarded."
+        confirmText="Discard Changes"
+        cancelText="Keep Editing"
+        type="warning"
       />
 
       {lightbox &&

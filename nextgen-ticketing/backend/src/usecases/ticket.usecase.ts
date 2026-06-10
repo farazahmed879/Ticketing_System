@@ -54,8 +54,20 @@ export const ticketUsecase = {
 
     const where: any = { deleted: false };
 
-    if (user.role !== RoleName.ADMIN && user.role !== RoleName.AGENT) {
-      where.OR = [{ ownerId: user.id }, { assigneeId: user.id }];
+    // Visibility scoping by role. Kept inside AND so a `search` filter (which
+    // also uses OR) can never widen what a restricted user is allowed to see.
+    if (user.role === RoleName.CUSTOMER) {
+      // Clients see every ticket in their projects (regardless of status),
+      // plus any ticket they personally own.
+      const projectIds = await ticketRepository.findClientProjectIds(user.id);
+      const visibility: any[] = [{ ownerId: user.id }];
+      if (projectIds.length) visibility.push({ projectId: { in: projectIds } });
+      where.AND = [...(where.AND || []), { OR: visibility }];
+    } else if (user.role !== RoleName.ADMIN && user.role !== RoleName.AGENT) {
+      where.AND = [
+        ...(where.AND || []),
+        { OR: [{ ownerId: user.id }, { assigneeId: user.id }] },
+      ];
     }
 
     if (status) where.status = { name: status as string };
@@ -81,9 +93,14 @@ export const ticketUsecase = {
     }
 
     if (search) {
-      where.OR = [
-        { subject: { contains: search as string, mode: "insensitive" } },
-        { issue: { contains: search as string, mode: "insensitive" } },
+      where.AND = [
+        ...(where.AND || []),
+        {
+          OR: [
+            { subject: { contains: search as string, mode: "insensitive" } },
+            { issue: { contains: search as string, mode: "insensitive" } },
+          ],
+        },
       ];
     }
 
@@ -383,6 +400,9 @@ export const ticketUsecase = {
       if (newStatus?.isResolved) updateData.closedAt = new Date();
       else updateData.closedAt = null;
 
+      // Sticky failed flag: once returned/failed, keep the flag forever.
+      if (newStatus?.name === StatusName.FAILED) updateData.wasFailed = true;
+
       historyEntries.push({
         action: ActionName.STATUS_CHANGED,
         description: `Status changed from "${existingTicket.status.name}" to "${newStatus?.name}"`,
@@ -490,6 +510,15 @@ export const ticketUsecase = {
     if (groupId) updateData.groupId = groupId;
     if (projectId !== undefined) updateData.projectId = projectId;
     if (assigneeId !== undefined) updateData.assigneeId = assigneeId;
+
+    // Sticky failed flag when batch-moving tickets to "Returned" (Failed).
+    if (statusId) {
+      const batchTargetStatus = TICKET_STATUSES.find(
+        (s: any) => s.id === statusId,
+      );
+      if (batchTargetStatus?.name === StatusName.FAILED)
+        updateData.wasFailed = true;
+    }
 
     await ticketRepository.updateMany(ticketIds, updateData);
 

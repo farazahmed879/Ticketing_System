@@ -117,6 +117,8 @@ export interface Ticket {
   assignee?: { id: string; fullname: string; image?: string };
   createdAt: string;
   updatedAt: string;
+  // Sticky flag: true if the ticket was ever moved to "Returned" (Failed).
+  wasFailed?: boolean;
 }
 
 export interface TicketDetail extends Ticket {

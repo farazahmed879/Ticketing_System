@@ -71,11 +71,17 @@ export const ticketUsecase = {
       ];
     }
 
-    if (status) where.status = { name: status as string };
+    if (status) {
+      const statusObj = TICKET_STATUSES.find((s) => s.name === status);
+      if (statusObj) where.statusId = statusObj.id;
+    }
 
     if (priority) {
       const priorityList = (priority as string).split(",");
-      where.priority = { name: { in: priorityList } };
+      const priorityIds = PRIORITIES.filter((p) => priorityList.includes(p.name)).map((p) => p.id);
+      if (priorityIds.length > 0) {
+        where.priorityId = { in: priorityIds };
+      }
     }
 
     if (group) {

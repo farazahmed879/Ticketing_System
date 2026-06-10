@@ -408,4 +408,48 @@ export const DashboardSkeleton: React.FC = () => {
   );
 };
 
+export const NotificationSkeleton: React.FC = () => {
+  return (
+    <div className="animate-fade-in">
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "20px",
+        }}
+      >
+        <CustomSkeleton width={200} height={32} />
+      </div>
+      <div
+        className="glass-card"
+        style={{ borderRadius: "12px", overflow: "hidden" }}
+      >
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div
+            key={i}
+            style={{
+              padding: "20px 24px",
+              display: "flex",
+              gap: "16px",
+              borderBottom: "1px solid var(--border-glass)",
+              alignItems: "flex-start",
+            }}
+          >
+            <CustomSkeleton type="circle" width={40} height={40} />
+            <div style={{ flex: 1 }}>
+              <CustomSkeleton
+                width="40%"
+                height={16}
+                style={{ marginBottom: "8px" }}
+              />
+              <CustomSkeleton width="80%" height={14} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default CustomSkeleton;

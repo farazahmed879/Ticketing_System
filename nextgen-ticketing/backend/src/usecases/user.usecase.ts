@@ -138,6 +138,7 @@ export const userUsecase = {
       roleId: data.roleId,
       groupIds: data.groupIds || [],
       teamIds: data.teamIds || [],
+      companyEmail: data.companyEmail,
       primaryContact: data.primaryContact,
       secondaryContact: data.secondaryContact,
       cnic: data.cnic,
@@ -168,6 +169,8 @@ export const userUsecase = {
     if (data.teamIds !== undefined) updateData.teamIds = data.teamIds;
 
     // New profile fields
+    if (data.companyEmail !== undefined)
+      updateData.companyEmail = data.companyEmail;
     if (data.primaryContact !== undefined)
       updateData.primaryContact = data.primaryContact;
     if (data.secondaryContact !== undefined)

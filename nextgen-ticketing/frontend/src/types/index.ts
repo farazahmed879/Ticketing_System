@@ -2,6 +2,7 @@ export interface User {
   id: string;
   fullname: string;
   email: string;
+  companyEmail?: string;
   username?: string;
   title?: string;
   role: {
@@ -395,6 +396,7 @@ export interface TicketDetailModalProps {
 export interface UserFormData {
   fullname: string;
   email: string;
+  companyEmail?: string;
   password?: string;
   username?: string;
   title: string;

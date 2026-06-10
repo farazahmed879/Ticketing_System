@@ -443,11 +443,28 @@ const Profile: React.FC = () => {
                       fontWeight: 600,
                     }}
                   >
-                    EMAIL
+                    PERSONAL EMAIL
                   </span>
                   <span style={{ fontSize: "0.95rem" }}>{user.email}</span>
                 </div>
               </div>
+              {user.companyEmail && (
+                <div style={{ display: "flex", gap: 12 }}>
+                  <CustomIcon name="Mail" size={18} color="var(--accent-primary)" />
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    <span
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--text-muted)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      COMPANY EMAIL
+                    </span>
+                    <span style={{ fontSize: "0.95rem" }}>{user.companyEmail}</span>
+                  </div>
+                </div>
+              )}
               <div style={{ display: "flex", gap: 12 }}>
                 <CustomIcon name="Phone" size={18} color="var(--text-muted)" />
                 <div style={{ display: "flex", flexDirection: "column" }}>

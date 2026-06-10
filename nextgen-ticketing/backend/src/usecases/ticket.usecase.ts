@@ -78,7 +78,9 @@ export const ticketUsecase = {
 
     if (priority) {
       const priorityList = (priority as string).split(",");
-      const priorityIds = PRIORITIES.filter((p) => priorityList.includes(p.name)).map((p) => p.id);
+      const priorityIds = PRIORITIES.filter((p) =>
+        priorityList.includes(p.name),
+      ).map((p) => p.id);
       if (priorityIds.length > 0) {
         where.priorityId = { in: priorityIds };
       }
@@ -210,7 +212,7 @@ export const ticketUsecase = {
     const currentStatus = data?.currentStatusName?.toLowerCase() || "";
 
     if (currentStatus == StatusName.TRASH)
-      throw new Error("Trash Ticket can not be changed.");
+      throw new Error("Cancelled Ticket can not be changed.");
 
     // Status
     if (

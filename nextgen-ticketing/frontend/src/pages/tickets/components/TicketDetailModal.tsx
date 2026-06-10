@@ -772,7 +772,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       alignItems: "center",
                     }}
                   >
-                    {user.role.name !== RoleName.CUSTOMER ? (
+                    {user?.role?.name !== RoleName.CUSTOMER ? (
                       <CustomSelect
                         name="priorityId"
                         control={control}
@@ -805,7 +805,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         {displayTicket.priority.name}
                       </CustomBadge>
                     )}
-                    {user.role.name !== RoleName.CUSTOMER ? (
+                    {user?.role?.name !== RoleName.CUSTOMER ? (
                       <CustomSelect
                         name="statusId"
                         control={control}
@@ -1419,63 +1419,66 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             }}
                           >
                             {displayTicket.attachments &&
-                          displayTicket.attachments.length > 0 ? (
-                            displayTicket.attachments.map(
-                              (src: string, idx: number) => (
-                                <button
-                                  key={idx}
-                                  type="button"
-                                  onClick={() =>
-                                    openLightbox(displayTicket.attachments, idx)
-                                  }
-                                  title="View image"
-                                  style={{
-                                    display: "block",
-                                    width: 80,
-                                    height: 80,
-                                    borderRadius: 8,
-                                    overflow: "hidden",
-                                    border: "1px solid var(--border-glass)",
-                                    padding: 0,
-                                    cursor: "zoom-in",
-                                    background: "transparent",
-                                  }}
-                                >
-                                  <img
-                                    src={src}
-                                    alt={`attachment-${idx}`}
+                            displayTicket.attachments.length > 0 ? (
+                              displayTicket.attachments.map(
+                                (src: string, idx: number) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() =>
+                                      openLightbox(
+                                        displayTicket.attachments,
+                                        idx,
+                                      )
+                                    }
+                                    title="View image"
                                     style={{
-                                      width: "100%",
-                                      height: "100%",
-                                      objectFit: "cover",
                                       display: "block",
+                                      width: 80,
+                                      height: 80,
+                                      borderRadius: 8,
+                                      overflow: "hidden",
+                                      border: "1px solid var(--border-glass)",
+                                      padding: 0,
+                                      cursor: "zoom-in",
+                                      background: "transparent",
                                     }}
-                                  />
-                                </button>
-                              ),
-                            )
-                          ) : (
-                            <span
-                              style={{
-                                fontSize: "0.85rem",
-                                color: "var(--text-muted)",
-                                fontStyle: "italic",
-                              }}
-                            >
-                              No attachments
-                            </span>
+                                  >
+                                    <img
+                                      src={src}
+                                      alt={`attachment-${idx}`}
+                                      style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                        display: "block",
+                                      }}
+                                    />
+                                  </button>
+                                ),
+                              )
+                            ) : (
+                              <span
+                                style={{
+                                  fontSize: "0.85rem",
+                                  color: "var(--text-muted)",
+                                  fontStyle: "italic",
+                                }}
+                              >
+                                No attachments
+                              </span>
+                            )}
+                          </div>
+                          {canEditContent && (
+                            <CustomButton
+                              variant="ghost"
+                              size="sm"
+                              onClick={startEditAttachments}
+                              icon={<CustomIcon name="Edit2" size={14} />}
+                              title="Edit attachments"
+                              style={{ padding: 4 }}
+                            />
                           )}
-                        </div>
-                        {canEditContent && (
-                          <CustomButton
-                            variant="ghost"
-                            size="sm"
-                            onClick={startEditAttachments}
-                            icon={<CustomIcon name="Edit2" size={14} />}
-                            title="Edit attachments"
-                            style={{ padding: 4 }}
-                          />
-                        )}
                         </div>
                       </div>
                     )}

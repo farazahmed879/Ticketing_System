@@ -3,30 +3,18 @@ import { formatDistanceToNow } from "date-fns";
 import CustomIcon from "../../../../components/CustomIcon";
 import CustomButton from "../../../../components/CustomButton";
 import CustomTextArea from "../../../../components/CustomTextArea";
-import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENTS } from "../../../../utils/attachments";
+import {
+  ACCEPT_ATTRIBUTE,
+  MAX_ATTACHMENTS,
+} from "../../../../utils/attachments";
 import styles from "../TicketDetail.module.css";
 import tableStyles from "../../../dashboard/Dashboard.module.css";
-import type { TicketDetail as ITicketDetail } from "../../../../types";
-
-interface TicketDetailCommentsProps {
-  ticket: ITicketDetail;
-  newComment: string;
-  setNewComment: (val: string) => void;
-  isNote: boolean;
-  setIsNote: (val: boolean) => void;
-  commentAttachments: string[];
-  commentAttachmentError: string | null;
-  commentFileInputRef: React.RefObject<HTMLInputElement | null>;
-  handleCommentAttachmentSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  removeCommentAttachment: (idx: number) => void;
-  handleAddComment: (e: React.FormEvent) => void;
-  isSubmittingComment: boolean;
-  commentSendDisabled: boolean;
-  openLightbox: (images: string[], index: number) => void;
-}
+import { RoleName } from "../../../../utils/constants";
+import type { TicketDetailCommentsProps } from "../../../../components/types";
 
 const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
   ticket,
+  user,
   newComment,
   setNewComment,
   isNote,
@@ -48,53 +36,75 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
           <div className={tableStyles.avatar} style={{ width: 40, height: 40 }}>
             <CustomIcon name="User" size={20} />
           </div>
-          <div className={`${styles.commentContent} ${comment.isNote ? styles.isNote : ""}`}>
-            {comment.isNote && <span className={styles.noteLabel}>Internal Note</span>}
+          <div
+            className={`${styles.commentContent} ${comment.isNote ? styles.isNote : ""}`}
+          >
+            {comment.isNote && (
+              <span className={styles.noteLabel}>Internal Note</span>
+            )}
             <div className={styles.commentHeader}>
-              <span className={styles.authorName}>{comment.author.fullname}</span>
+              <span className={styles.authorName}>
+                {comment.author.fullname}
+              </span>
               <span className={styles.time}>
-                {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                {formatDistanceToNow(new Date(comment.createdAt), {
+                  addSuffix: true,
+                })}
               </span>
             </div>
             {comment.comment?.trim() && (
-              <div style={{ fontSize: "0.95rem", color: "var(--text-secondary)" }}>
+              <div
+                style={{ fontSize: "0.95rem", color: "var(--text-secondary)" }}
+              >
                 {comment.comment}
               </div>
             )}
-            {(comment as any).attachments && (comment as any).attachments.length > 0 && (
-              <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {(comment as any).attachments.map((src: string, idx: number) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => openLightbox((comment as any).attachments, idx)}
-                    title="View image"
-                    style={{
-                      display: "block",
-                      width: 72,
-                      height: 72,
-                      borderRadius: 6,
-                      overflow: "hidden",
-                      border: "1px solid var(--border-glass)",
-                      padding: 0,
-                      cursor: "zoom-in",
-                      background: "transparent",
-                    }}
-                  >
-                    <img
-                      src={src}
-                      alt={`attachment-${idx}`}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        display: "block",
-                      }}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
+            {(comment as any).attachments &&
+              (comment as any).attachments.length > 0 && (
+                <div
+                  style={{
+                    marginTop: 10,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                  }}
+                >
+                  {(comment as any).attachments.map(
+                    (src: string, idx: number) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() =>
+                          openLightbox((comment as any).attachments, idx)
+                        }
+                        title="View image"
+                        style={{
+                          display: "block",
+                          width: 72,
+                          height: 72,
+                          borderRadius: 6,
+                          overflow: "hidden",
+                          border: "1px solid var(--border-glass)",
+                          padding: 0,
+                          cursor: "zoom-in",
+                          background: "transparent",
+                        }}
+                      >
+                        <img
+                          src={src}
+                          alt={`attachment-${idx}`}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                        />
+                      </button>
+                    ),
+                  )}
+                </div>
+              )}
           </div>
         </div>
       ))}
@@ -109,7 +119,14 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
             style={{ width: "100%", resize: "none" }}
           />
           {commentAttachments.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 8,
+                marginTop: 8,
+              }}
+            >
               {commentAttachments.map((src, idx) => (
                 <div
                   key={idx}
@@ -125,7 +142,11 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
                   <img
                     src={src}
                     alt={`attachment-${idx}`}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
                   />
                   <button
                     type="button"
@@ -155,7 +176,13 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
             </div>
           )}
           {commentAttachmentError && (
-            <span style={{ fontSize: "0.75rem", color: "var(--accent-danger)", marginTop: 4 }}>
+            <span
+              style={{
+                fontSize: "0.75rem",
+                color: "var(--accent-danger)",
+                marginTop: 4,
+              }}
+            >
               {commentAttachmentError}
             </span>
           )}
@@ -168,24 +195,26 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
             style={{ display: "none" }}
           />
           <div className={styles.inputActions}>
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                cursor: "pointer",
-                fontSize: "0.9rem",
-                color: "var(--text-secondary)",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={isNote}
-                onChange={(e) => setIsNote(e.target.checked)}
-              />
-              <CustomIcon name="Lock" size={14} />
-              Internal Note
-            </label>
+            {user.role.name !== RoleName.CUSTOMER ? (
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isNote}
+                  onChange={(e) => setIsNote(e.target.checked)}
+                />
+                <CustomIcon name="Lock" size={14} />
+                Internal Note
+              </label>
+            ) : null}
             <CustomButton
               type="button"
               variant="ghost"
@@ -205,7 +234,8 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
               variant="gradient"
               icon={<CustomIcon name="Send" size={16} />}
               disabled={
-                commentSendDisabled || (!newComment.trim() && commentAttachments.length === 0)
+                commentSendDisabled ||
+                (!newComment.trim() && commentAttachments.length === 0)
               }
               loading={isSubmittingComment}
               title="Send comment"

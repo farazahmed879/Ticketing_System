@@ -87,6 +87,27 @@ const TicketBoard: React.FC = () => {
     setSelectedCustomerIds([]);
   };
 
+  const getStatuses = () => {
+    return user?.role?.name === RoleName.EMPLOYEE
+      ? TICKET_STATUSES.filter(
+          (s: any) => s.name !== StatusName.NEW && s.name !== StatusName.TRASH,
+        )
+      : user?.role?.name === RoleName.CUSTOMER
+        ? TICKET_STATUSES.filter((s) => s.name !== StatusName.RESOLVED).map(
+            (s) => {
+              return {
+                id: s.id,
+                name:
+                  s.name == StatusName.APPROVED ? StatusName.RESOLVED : s.name,
+                color: s.color,
+                order: s.order,
+                isResolved: s.isResolved,
+              };
+            },
+          )
+        : TICKET_STATUSES.filter((s: any) => s.name !== StatusName.TRASH);
+  };
+
   const fetchBoardData = useCallback(async () => {
     try {
       const [ticketsRes, usersRes, groupsRes] = await Promise.all([
@@ -132,13 +153,7 @@ const TicketBoard: React.FC = () => {
       ]);
 
       const allTickets = ticketsRes.data.tickets;
-      const allStatuses =
-        user?.role?.name === RoleName.EMPLOYEE
-          ? TICKET_STATUSES.filter(
-              (s: any) =>
-                s.name !== StatusName.NEW && s.name !== StatusName.TRASH,
-            )
-          : TICKET_STATUSES.filter((s: any) => s.name !== StatusName.TRASH);
+      const allStatuses = getStatuses();
       const allAccounts = usersRes.data.accounts;
 
       // Map agents (Staff) and customers separately
@@ -160,7 +175,13 @@ const TicketBoard: React.FC = () => {
         id: s.id,
         name: s.name,
         color: s.color,
-        tickets: allTickets.filter((t: Ticket) => t.status.id === s.id),
+        tickets:
+          user.role.name == RoleName.CUSTOMER && s.name == StatusName.IN_PROCESS
+            ? allTickets.filter(
+                (t: Ticket) =>
+                  t.status.id === s.id || t.status.name == StatusName.RESOLVED,
+              )
+            : allTickets.filter((t: Ticket) => t.status.id === s.id),
       }));
 
       setColumns(boardColumns);
@@ -334,6 +355,8 @@ const TicketBoard: React.FC = () => {
       socket.off("ticket:updated");
     };
   }, [fetchBoardData]);
+
+  console.log("columns", columns);
 
   return (
     <div className={styles.boardContainer}>
@@ -522,29 +545,30 @@ const TicketBoard: React.FC = () => {
                 aria-live="polite"
               >
                 {columns.map((column) => {
-                const isCollapsed = collapsedColumns.includes(column.id);
-                const isStatusAllowed =
-                  user?.role?.name === RoleName.ADMIN ||
-                  user?.role?.permissions?.boardStatuses?.[column.id] === true;
+                  const isCollapsed = collapsedColumns.includes(column.id);
+                  const isStatusAllowed =
+                    user?.role?.name === RoleName.ADMIN ||
+                    user?.role?.permissions?.boardStatuses?.[column.id] ===
+                      true;
 
-                return (
-                  <ColumnStatus
-                    key={column.id}
-                    column={column}
-                    handleDragStart={handleDragStart}
-                    handleDragOver={handleDragOver}
-                    handleDrop={handleDrop}
-                    toggleColumnCollapse={toggleColumnCollapse}
-                    openTicketDetail={openTicketDetail}
-                    isCollapsed={isCollapsed}
-                    isStatusAllowed={isStatusAllowed}
-                    setTicketToDelete={setTicketToDelete}
-                    setIsDeleteModalOpen={setIsDeleteModalOpen}
-                    showNotification={showNotification}
-                    user={user}
-                  />
-                );
-              })}
+                  return (
+                    <ColumnStatus
+                      key={column.id}
+                      column={column}
+                      handleDragStart={handleDragStart}
+                      handleDragOver={handleDragOver}
+                      handleDrop={handleDrop}
+                      toggleColumnCollapse={toggleColumnCollapse}
+                      openTicketDetail={openTicketDetail}
+                      isCollapsed={isCollapsed}
+                      isStatusAllowed={isStatusAllowed}
+                      setTicketToDelete={setTicketToDelete}
+                      setIsDeleteModalOpen={setIsDeleteModalOpen}
+                      showNotification={showNotification}
+                      user={user}
+                    />
+                  );
+                })}
               </div>
               <button
                 type="button"

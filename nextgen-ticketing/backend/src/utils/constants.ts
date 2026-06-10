@@ -39,7 +39,7 @@ export const TICKET_STATUSES = [
   },
   {
     id: "69e7608bc5508c8356cd4e0f",
-    name: "Failed",
+    name: "Returned",
     color: "#ef4444",
     order: 2,
     isResolved: true,
@@ -74,7 +74,7 @@ export const TICKET_STATUSES = [
   },
   {
     id: "69e5f24917cc1f4597f3d5c6",
-    name: "Trash",
+    name: "Cancelled",
     color: "#ff5252",
     order: 7,
     isResolved: true,
@@ -84,8 +84,8 @@ export const TICKET_STATUSES = [
 export const StatusName = {
   NEW: "Unassigned",
   OPEN: "Assigned",
-  TRASH: "Trash",
-  FAILED: "Failed",
+  TRASH: "Cancelled",
+  FAILED: "Returned",
   IN_PROCESS: "In Process",
   RESOLVED: "Resolved",
   CLOSED: "Closed",

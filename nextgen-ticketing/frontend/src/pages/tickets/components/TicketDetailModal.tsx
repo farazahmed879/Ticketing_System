@@ -160,6 +160,29 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     onTicketUpdate(body);
   };
 
+  const handleClientDecision = async (
+    decision: "satisfied" | "unsatisfied" | "cancel",
+  ) => {
+    let targetStatusName;
+    if (decision === "satisfied") targetStatusName = StatusName.CLOSED;
+    else if (decision === "unsatisfied") targetStatusName = StatusName.FAILED;
+    else targetStatusName = StatusName.TRASH;
+
+    const targetStatus = statuses.find((s: any) => s.name === targetStatusName);
+    if (!targetStatus) return;
+
+    const body = {
+      ticketId: ticket.id,
+      statusId: targetStatus.id,
+      targetStatusName: targetStatus.name,
+      currentStatusName: displayTicket?.status?.name || "",
+      priorityId: displayTicket?.priority?.id,
+      assigneeId: displayTicket?.assignee?.id || null,
+      issue: displayTicket?.issue,
+    };
+    onTicketUpdate(body);
+  };
+
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() && commentAttachments.length === 0) return;
@@ -310,9 +333,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const canAssign =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.tickets?.assign;
-  const canUpdatePriority =
-    user?.role?.name === RoleName.ADMIN ||
-    user?.role?.permissions?.tickets?.priority;
+
   const canUpdate =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.tickets?.update ||
@@ -553,6 +574,95 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   paddingRight: 10,
                 }}
               >
+                {isClient && displayTicket?.status?.name === StatusName.NEW && (
+                  <div
+                    className="glass-card"
+                    style={{
+                      padding: 20,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      borderLeft: "4px solid var(--accent-danger)",
+                    }}
+                  >
+                    <div>
+                      <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
+                        Cancel Ticket
+                      </h3>
+                      <p
+                        style={{
+                          margin: 0,
+                          color: "var(--text-secondary)",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        Your ticket is currently unassigned. You can cancel it
+                        if it's no longer needed.
+                      </p>
+                    </div>
+                    <CustomButton
+                      variant="outline"
+                      onClick={() => handleClientDecision("cancel")}
+                      icon={<CustomIcon name="Trash2" size={16} />}
+                      style={{
+                        borderColor: "var(--accent-danger)",
+                        color: "var(--accent-danger)",
+                      }}
+                    >
+                      Cancel Ticket
+                    </CustomButton>
+                  </div>
+                )}
+                {isClient &&
+                  displayTicket?.status?.name === StatusName.APPROVED && (
+                    <div
+                      className="glass-card"
+                      style={{
+                        padding: 20,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        borderLeft: "4px solid var(--accent-success)",
+                      }}
+                    >
+                      <div>
+                        <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
+                          Review Required
+                        </h3>
+                        <p
+                          style={{
+                            margin: 0,
+                            color: "var(--text-secondary)",
+                            fontSize: "0.9rem",
+                          }}
+                        >
+                          Your ticket has been marked as Resolved. Please let us
+                          know if you are satisfied with the resolution.
+                        </p>
+                      </div>
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <CustomButton
+                          variant="outline"
+                          onClick={() => handleClientDecision("unsatisfied")}
+                          icon={<CustomIcon name="XCircle" size={16} />}
+                          style={{
+                            borderColor: "var(--accent-danger)",
+                            color: "var(--accent-danger)",
+                          }}
+                        >
+                          Unsatisfied
+                        </CustomButton>
+                        <CustomButton
+                          variant="primary"
+                          onClick={() => handleClientDecision("satisfied")}
+                          icon={<CustomIcon name="CheckCircle2" size={16} />}
+                          style={{ background: "var(--accent-success)" }}
+                        >
+                          Satisfied
+                        </CustomButton>
+                      </div>
+                    </div>
+                  )}
                 <div
                   style={{
                     display: "flex",
@@ -586,7 +696,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       alignItems: "center",
                     }}
                   >
-                    {canUpdatePriority ? (
+                    {user.role.name !== RoleName.CUSTOMER ? (
                       <CustomSelect
                         name="priorityId"
                         control={control}
@@ -619,16 +729,33 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         {displayTicket.priority.name}
                       </CustomBadge>
                     )}
-                    <CustomSelect
-                      name="statusId"
-                      control={control}
-                      options={getStatusOptions(statuses)}
-                      style={{
-                        minWidth: 180,
-                        fontSize: "0.8rem",
-                      }}
-                      disabled={isDisbaledMode}
-                    />
+                    {user.role.name !== RoleName.CUSTOMER ? (
+                      <CustomSelect
+                        name="statusId"
+                        control={control}
+                        options={getStatusOptions(statuses)}
+                        style={{
+                          minWidth: 180,
+                          fontSize: "0.8rem",
+                        }}
+                        disabled={isDisbaledMode}
+                      />
+                    ) : (
+                      <CustomBadge
+                        color={displayTicket.status.color}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "6px 12px",
+                          borderRadius: 8,
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        <CustomIcon name="Status" size={16} />{" "}
+                        {displayTicket.status.name}
+                      </CustomBadge>
+                    )}
                   </div>
 
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>

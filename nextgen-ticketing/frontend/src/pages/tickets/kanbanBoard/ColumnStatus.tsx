@@ -2,7 +2,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import { isToday, isTomorrow, parseISO } from "date-fns";
 import styles from "./TicketBoard.module.css";
 import TicketCard from "./ticketCard";
-import { StatusName } from "../../../utils/constants";
+import { RoleName, StatusName } from "../../../utils/constants";
 
 const ColumnStatus = ({
   column,
@@ -45,7 +45,12 @@ const ColumnStatus = ({
             className={styles.statusDot}
             style={{ background: column.color }}
           ></div>
-          <h3>{column.name}</h3>
+          <h3>
+            {user.role.name !== RoleName.CUSTOMER &&
+            column.name == StatusName.RESOLVED
+              ? "Dev-Done"
+              : column.name}
+          </h3>
           {!isStatusAllowed && (
             <CustomIcon
               name="Lock"

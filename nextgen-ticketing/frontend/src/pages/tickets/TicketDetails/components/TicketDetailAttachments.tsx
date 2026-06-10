@@ -1,22 +1,11 @@
 import React from "react";
 import CustomIcon from "../../../../components/CustomIcon";
 import CustomButton from "../../../../components/CustomButton";
-import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENTS } from "../../../../utils/attachments";
-import type { TicketDetail as ITicketDetail } from "../../../../types";
-
-interface TicketDetailAttachmentsProps {
-  ticket: ITicketDetail;
-  canEditContent: boolean;
-  isEditingAttachments: boolean;
-  attachmentsDraft: string[];
-  attachmentsDraftError: string | null;
-  attachmentsEditFileInputRef: React.RefObject<HTMLInputElement | null>;
-  startEditAttachments: () => void;
-  cancelEditAttachments: () => void;
-  handleAttachmentsDraftSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  removeAttachmentDraft: (idx: number) => void;
-  openLightbox: (images: string[], index: number) => void;
-}
+import {
+  ACCEPT_ATTRIBUTE,
+  MAX_ATTACHMENTS,
+} from "../../../../utils/attachments";
+import type { TicketDetailAttachmentsProps } from "../../../../components/types";
 
 const TicketDetailAttachments: React.FC<TicketDetailAttachmentsProps> = ({
   ticket,
@@ -31,7 +20,10 @@ const TicketDetailAttachments: React.FC<TicketDetailAttachmentsProps> = ({
   removeAttachmentDraft,
   openLightbox,
 }) => {
-  if (!canEditContent && (!ticket.attachments || ticket.attachments.length === 0)) {
+  if (
+    !canEditContent &&
+    (!ticket.attachments || ticket.attachments.length === 0)
+  ) {
     return null;
   }
 
@@ -163,10 +155,7 @@ const TicketDetailAttachments: React.FC<TicketDetailAttachmentsProps> = ({
               marginTop: 10,
             }}
           >
-            <CustomButton
-              variant="ghost"
-              onClick={cancelEditAttachments}
-            >
+            <CustomButton variant="ghost" onClick={cancelEditAttachments}>
               Cancel
             </CustomButton>
           </div>

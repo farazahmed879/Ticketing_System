@@ -5,6 +5,7 @@ import type {
   Path,
 } from "react-hook-form";
 import * as Icons from "lucide-react";
+import type { TicketDetail } from "../types";
 
 export type IconName = keyof typeof Icons;
 
@@ -299,4 +300,40 @@ export interface StandardListLayoutProps {
   children: React.ReactNode; // Usually the scrollable table area
   pagination?: React.ReactNode;
   height?: string;
+}
+
+export interface TicketDetailCommentsProps {
+  ticket: TicketDetail;
+  user: any;
+  newComment: string;
+  setNewComment: (val: string) => void;
+  isNote: boolean;
+  setIsNote: (val: boolean) => void;
+  commentAttachments: string[];
+  commentAttachmentError: string | null;
+  commentFileInputRef: React.RefObject<HTMLInputElement | null>;
+  handleCommentAttachmentSelect: (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => void;
+  removeCommentAttachment: (idx: number) => void;
+  handleAddComment: (e: React.FormEvent) => void;
+  isSubmittingComment: boolean;
+  commentSendDisabled: boolean;
+  openLightbox: (images: string[], index: number) => void;
+}
+
+export interface TicketDetailAttachmentsProps {
+  ticket: TicketDetail;
+  canEditContent: boolean;
+  isEditingAttachments: boolean;
+  attachmentsDraft: string[];
+  attachmentsDraftError: string | null;
+  attachmentsEditFileInputRef: React.RefObject<HTMLInputElement | null>;
+  startEditAttachments: () => void;
+  cancelEditAttachments: () => void;
+  handleAttachmentsDraftSelect: (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => void;
+  removeAttachmentDraft: (idx: number) => void;
+  openLightbox: (images: string[], index: number) => void;
 }

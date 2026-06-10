@@ -254,6 +254,7 @@ export const ticketUsecase = {
               StatusName.IN_PROCESS,
               StatusName.RESOLVED,
               StatusName.APPROVED,
+              StatusName.FAILED,
             ],
             StatusName.IN_PROCESS,
             "Unassigned tickets cannot be moved directly to In Progress.",

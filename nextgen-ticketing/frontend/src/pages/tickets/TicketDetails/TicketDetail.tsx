@@ -152,17 +152,12 @@ const TicketDetail: React.FC = () => {
     const role = user.role?.name;
     const isAdmin = role === RoleName.ADMIN;
     const isManager = role === RoleName.AGENT;
-    const isEmployee = role === RoleName.EMPLOYEE;
+    // const isEmployee = role === RoleName.EMPLOYEE;
     const isClient = role === RoleName.CUSTOMER;
     const isOwner = ticket.owner.id === user.id;
-    const isAssignee = ticket.assignee?.id === user.id;
+    // const isAssignee = ticket.assignee?.id === user.id;
     const ticketIsNew = ticket.status?.name === StatusName.NEW;
-    return (
-      isAdmin ||
-      isManager ||
-      (isEmployee && (isOwner || isAssignee)) ||
-      (isClient && isOwner && ticketIsNew)
-    );
+    return isAdmin || isManager || (isClient && isOwner && ticketIsNew);
   })();
 
   // --- Initialize drafts from ticket data ---
@@ -230,7 +225,11 @@ const TicketDetail: React.FC = () => {
 
   // --- Sidebar draft handler ---
   const onSidebarDraftChange = (field: keyof SidebarDraft, value: string) => {
-    setSidebarDraft((prev) => ({ ...prev, [field]: value }));
+    setSidebarDraft((prev) => ({
+      ...prev,
+      [field]: value,
+      statusId: "69e5da8b0e2d511b4eab95eb",
+    }));
   };
 
   // --- Unified Update handler ---
@@ -460,6 +459,23 @@ const TicketDetail: React.FC = () => {
     }
   };
 
+  const handleClientDecision = async (
+    decision: "satisfied" | "unsatisfied" | "cancel",
+  ) => {
+    let targetStatusName;
+    if (decision === "satisfied") targetStatusName = StatusName.CLOSED;
+    else if (decision === "unsatisfied") targetStatusName = StatusName.FAILED;
+    else targetStatusName = StatusName.TRASH;
+
+    const targetStatus = statuses.find((s) => s.name === targetStatusName);
+    if (!targetStatus || !ticket) return;
+
+    await executeUpdate({
+      statusId: targetStatus.id,
+      statusName: ticket.status.name,
+    });
+  };
+
   useEffect(() => {
     fetchTicket();
     if (canAssign) fetchAgents();
@@ -475,6 +491,104 @@ const TicketDetail: React.FC = () => {
         subjectDraft={subjectDraft}
         setSubjectDraft={setSubjectDraft}
       />
+
+      {user?.role?.name === RoleName.CUSTOMER &&
+        ticket.status.name === StatusName.NEW && (
+          <div
+            className="glass-card"
+            style={{
+              padding: 20,
+              marginBottom: 24,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderLeft: "4px solid var(--accent-danger)",
+            }}
+          >
+            <div>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
+                Cancel Ticket
+              </h3>
+              <p
+                style={{
+                  margin: 0,
+                  color: "var(--text-secondary)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                Your ticket is currently unassigned. You can cancel it if it's
+                no longer needed.
+              </p>
+            </div>
+            <CustomButton
+              variant="outline"
+              onClick={() => handleClientDecision("cancel")}
+              icon={<CustomIcon name="Trash2" size={16} />}
+              style={{
+                borderColor: "var(--accent-danger)",
+                color: "var(--accent-danger)",
+              }}
+              loading={isSaving}
+            >
+              Cancel Ticket
+            </CustomButton>
+          </div>
+        )}
+
+      {user?.role?.name === RoleName.CUSTOMER &&
+        ticket.status.name === StatusName.APPROVED && (
+          <div
+            className="glass-card"
+            style={{
+              padding: 20,
+              marginBottom: 24,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              borderLeft: "4px solid var(--accent-success)",
+            }}
+          >
+            <div>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
+                Review Required
+              </h3>
+              <p
+                style={{
+                  margin: 0,
+                  color: "var(--text-secondary)",
+                  fontSize: "0.9rem",
+                }}
+              >
+                Your ticket has been marked as Resolved. Please let us know if
+                you are satisfied with the resolution.
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <CustomButton
+                variant="outline"
+                onClick={() => handleClientDecision("unsatisfied")}
+                icon={<CustomIcon name="XCircle" size={16} />}
+                style={{
+                  borderColor: "var(--accent-danger)",
+                  color: "var(--accent-danger)",
+                }}
+                loading={isSaving}
+              >
+                Unsatisfied
+              </CustomButton>
+              <CustomButton
+                variant="primary"
+                onClick={() => handleClientDecision("satisfied")}
+                icon={<CustomIcon name="CheckCircle2" size={16} />}
+                style={{ background: "var(--accent-success)" }}
+                loading={isSaving}
+              >
+                Satisfied
+              </CustomButton>
+            </div>
+          </div>
+        )}
+
       <div className={styles.container}>
         <div className={styles.leftColumn}>
           <div className={`${styles.ticketInfo} glass-card`}>
@@ -534,6 +648,7 @@ const TicketDetail: React.FC = () => {
           {activeTab === "comments" ? (
             <TicketDetailComments
               ticket={ticket}
+              user={user}
               newComment={newComment}
               setNewComment={setNewComment}
               isNote={isNote}

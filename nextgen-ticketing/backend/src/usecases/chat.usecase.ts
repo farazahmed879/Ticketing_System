@@ -1,5 +1,6 @@
 import { chatRepository } from "../repositories/chat.repository";
 import prisma from "../prisma";
+import { RoleName } from "../utils/constants";
 
 export const chatUsecase = {
   async getConversations(userId: string) {
@@ -46,32 +47,39 @@ export const chatUsecase = {
 
     if (!me || !partner) throw new Error("User not found");
 
-    const isMeAdmin = me.role.isAdmin || me.role.name.toLowerCase() === "admin";
-    const isMeAgent = me.role.isAgent || me.role.name.toLowerCase() === "agent";
+    const isMeAdmin =
+      me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN;
+    const isMeAgent =
+      me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT;
     const isMeCustomer =
-      me.role.isCustomer || me.role.name.toLowerCase() === "customer";
+      me.role.isCustomer || me.role.name.toLowerCase() === RoleName.CUSTOMER;
     const isMeEmployee =
-      me.role.isEmployee || me.role.name.toLowerCase() === "employee";
+      me.role.isEmployee || me.role.name.toLowerCase() === RoleName.EMPLOYEE;
 
     let allowed = false;
 
     if (isMeAdmin) {
       allowed = true;
     } else if (isMeCustomer) {
-      if (partner.role.isAdmin || partner.role.name.toLowerCase() === "admin") {
+      if (
+        partner.role.isAdmin ||
+        partner.role.name.toLowerCase() === RoleName.ADMIN ||
+        partner.role.isAgent ||
+        partner.role.name.toLowerCase() === RoleName.AGENT
+      ) {
         allowed = true;
       }
     } else if (isMeEmployee || isMeAgent) {
       if (
         partner.role.isAdmin ||
-        partner.role.name.toLowerCase() === "admin" ||
+        partner.role.name.toLowerCase() === RoleName.ADMIN ||
         partner.role.isAgent ||
-        partner.role.name.toLowerCase() === "agent"
+        partner.role.name.toLowerCase() === RoleName.AGENT
       ) {
         allowed = true;
       } else if (
         partner.role.isCustomer ||
-        partner.role.name.toLowerCase() === "customer"
+        partner.role.name.toLowerCase() === RoleName.CUSTOMER
       ) {
         const assignment = await (prisma as any).ticket.findFirst({
           where: { ownerId: partner.id, assigneeId: me.id },
@@ -82,7 +90,7 @@ export const chatUsecase = {
 
     if (!allowed) {
       throw new Error(
-        "You do not have permission to start a conversation with this user"
+        "You do not have permission to start a conversation with this user",
       );
     }
 
@@ -108,17 +116,19 @@ export const chatUsecase = {
     const me = await chatRepository.findUserWithRole(userId);
     if (!me) throw new Error("User not found");
 
-    const isMeAdmin = me.role.isAdmin || me.role.name.toLowerCase() === "admin";
-    const isMeAgent = me.role.isAgent || me.role.name.toLowerCase() === "agent";
+    const isMeAdmin =
+      me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN;
+    const isMeAgent =
+      me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT;
     const isMeCustomer =
-      me.role.isCustomer || me.role.name.toLowerCase() === "customer";
+      me.role.isCustomer || me.role.name.toLowerCase() === RoleName.CUSTOMER;
     const isMeEmployee =
-      me.role.isEmployee || me.role.name.toLowerCase() === "employee";
+      me.role.isEmployee || me.role.name.toLowerCase() === RoleName.EMPLOYEE;
 
     if (isMeAdmin) {
       return chatRepository.findAllUsersForChat(userId);
     } else if (isMeCustomer) {
-      return chatRepository.findAdminsForChat();
+      return chatRepository.findStaffForChat(userId);
     } else if (isMeEmployee || isMeAgent) {
       const staff = await chatRepository.findStaffForChat(userId);
       const customers = await chatRepository.findAssignedCustomers(userId);
@@ -132,8 +142,10 @@ export const chatUsecase = {
     const me = await chatRepository.findUserWithRole(userId);
     if (!me) throw new Error("User not found");
 
-    const isAdmin = me.role.isAdmin || me.role.name.toLowerCase() === "admin";
-    const isAgent = me.role.isAgent || me.role.name.toLowerCase() === "agent";
+    const isAdmin =
+      me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN;
+    const isAgent =
+      me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT;
     if (!isAdmin && !isAgent) {
       throw new Error("Only Admins and Agents can create group chats");
     }
@@ -151,13 +163,15 @@ export const chatUsecase = {
     id: string,
     userId: string,
     addMemberIds?: string[],
-    removeMemberIds?: string[]
+    removeMemberIds?: string[],
   ) {
     const me = await chatRepository.findUserWithRole(userId);
     if (!me) throw new Error("User not found");
 
-    const isAdmin = me.role.isAdmin || me.role.name.toLowerCase() === "admin";
-    const isAgent = me.role.isAgent || me.role.name.toLowerCase() === "agent";
+    const isAdmin =
+      me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN;
+    const isAgent =
+      me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT;
     if (!isAdmin && !isAgent) {
       throw new Error("Only Admins and Agents can manage group members");
     }
@@ -172,7 +186,7 @@ export const chatUsecase = {
     }
     if (removeMemberIds?.length) {
       newMemberIds = newMemberIds.filter(
-        (mid) => !removeMemberIds.includes(mid) || mid === userId
+        (mid) => !removeMemberIds.includes(mid) || mid === userId,
       );
     }
 

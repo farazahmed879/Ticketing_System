@@ -105,7 +105,7 @@ export const ticketRepository = {
           include: {
             author: { select: { id: true, fullname: true, image: true } },
           },
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: "asc" },
         },
         history: {
           include: {

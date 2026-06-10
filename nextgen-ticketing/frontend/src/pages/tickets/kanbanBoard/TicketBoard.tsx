@@ -285,6 +285,9 @@ const TicketBoard: React.FC = () => {
       setIsLoading(true, UIMessages.LOADING.UPDATING_STATUS);
       await api.put(API_ROUTES.TICKETS.BY_ID(body.ticketId), body);
       showNotification("success", "Ticket status updated");
+      // Close the detail modal after a successful save (harmless for the
+      // drag-drop path, where the modal is already closed).
+      setIsDetailModalOpen(false);
       fetchBoardData();
     } catch (err: any) {
       console.error("Failed to update status", err);

@@ -470,9 +470,16 @@ const TicketDetail: React.FC = () => {
     const targetStatus = statuses.find((s) => s.name === targetStatusName);
     if (!targetStatus || !ticket) return;
 
+    // The backend's client status rules key off targetStatusName +
+    // currentStatusName (same body the modal sends). Sending only `statusName`
+    // left both empty, so the "allowed targets" check rejected the change.
     await executeUpdate({
       statusId: targetStatus.id,
-      statusName: ticket.status.name,
+      targetStatusName: targetStatus.name,
+      currentStatusName: ticket.status.name,
+      priorityId: ticket.priority?.id,
+      assigneeId: ticket.assignee?.id || null,
+      issue: ticket.issue,
     });
   };
 

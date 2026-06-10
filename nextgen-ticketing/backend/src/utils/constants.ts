@@ -200,6 +200,12 @@ export const NotificationMessages = {
   CUSTOMER_TICKET_CREATED: (uid: number, owner: string) =>
     `A new ticket #${uid} has been created by ${owner}.`,
   TICKET_ASSIGNED: (uid: number) => `Ticket #${uid} has been assigned to you`,
+  TICKET_ASSIGNED_TO_OWNER: (uid: number, assignee: string) =>
+    `Your ticket #${uid} has been assigned to ${assignee}`,
+  TICKET_IN_PROCESS_OWNER: (uid: number) =>
+    `Work has started on your ticket #${uid} (In Process)`,
+  TICKET_RESOLVED_OWNER: (uid: number) =>
+    `Your ticket #${uid} has been resolved`,
   TICKET_UPDATED: (uid: number) => `Ticket #${uid} has been updated`,
   NEW_COMMENT: (uid: number) => `A new comment was added to Ticket #${uid}`,
   TITLES: {
@@ -207,6 +213,7 @@ export const NotificationMessages = {
     CUSTOMER_TICKET: "New Client Ticket",
     ASSIGNMENT: "Ticket Assigned",
     UPDATE: "Ticket Updated",
+    RESOLVED: "Ticket Resolved",
     COMMENT: "New Comment",
   },
 } as const;

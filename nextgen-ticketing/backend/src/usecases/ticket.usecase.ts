@@ -526,7 +526,11 @@ export const ticketUsecase = {
           assigneeId: existingTicket.assigneeId,
           statusId: existingTicket.statusId,
         },
-        data: { statusId: data.statusId, assigneeId: data.assigneeId },
+        data: {
+          statusId: data.statusId,
+          assigneeId: data.assigneeId,
+          newAssigneeName: data.newAssigneeName,
+        },
         historyEntries,
         actorId,
         isStaff,
@@ -703,6 +707,14 @@ export const ticketUsecase = {
     const changeSummary =
       changes.length > 0 ? changes.join("; ") : "Ticket details updated";
 
+    // Staff (Admin, Manager, Employee) see the "Resolved" status as "Dev-Done",
+    // so relabel it in their notification text (e.g. "Dev-Done → In Process"
+    // instead of "Resolved → In Process"). Clients still see "Resolved".
+    const summaryMentionsResolved = changeSummary.includes(StatusName.RESOLVED);
+    const staffChangeSummary = summaryMentionsResolved
+      ? changeSummary.split(StatusName.RESOLVED).join("Dev-Done")
+      : changeSummary;
+
     // Collect all user IDs to notify (admins, managers, employees + assignee)
     const notifyIds = new Set<string>();
 
@@ -718,16 +730,62 @@ export const ticketUsecase = {
       notifyIds.add(assigneeId);
     }
 
-    // Notify the ticket owner (client) only when status changes to Approved
-    // Staff owners are already included via findStaff() above
+    // A new (non-null) assignee, different from before, counts as an assignment.
+    const isAssignmentChange =
+      !!ctx.data.assigneeId &&
+      ctx.data.assigneeId !== ctx.existingTicket.assigneeId;
+
+    // Resolve the assignee's name for the owner's notification. Prefer the name
+    // the client sent; otherwise look it up so the message is accurate no
+    // matter which UI (or role) triggered the assignment.
+    let assigneeName: string = ctx.data.newAssigneeName || "";
+    if (isAssignmentChange && !assigneeName) {
+      const assignee = await prisma.user.findUnique({
+        where: { id: ctx.data.assigneeId },
+        select: { fullname: true },
+      });
+      assigneeName = assignee?.fullname || "";
+    }
+
+    // Status transitions that matter to the owner.
+    const isStatusChange =
+      ctx.data.statusId && ctx.data.statusId !== ctx.existingTicket.statusId;
     const isStatusApproved =
-      ctx.data.statusId &&
-      ctx.data.statusId !== ctx.existingTicket.statusId &&
-      ctx.statusName === StatusName.APPROVED;
+      isStatusChange && ctx.statusName === StatusName.APPROVED;
+    const isStatusInProcess =
+      isStatusChange && ctx.statusName === StatusName.IN_PROCESS;
+
+    // Notify the ticket owner when:
+    //  - the status changes to Approved or In Process, or
+    //  - the ticket is (re)assigned to a user, or
+    //  - the owner is staff (already covered via findStaff() above).
     const ownerIsStaff = staff.some(
       (s: any) => s.id === ctx.existingTicket.ownerId,
     );
-    if (ctx.existingTicket.ownerId && (ownerIsStaff || isStatusApproved)) {
+
+    // Whether the owner is a client. Needed both to send the client-specific
+    // "resolved" message on Approve, and to keep showing "Resolved" (not
+    // "Dev-Done") to a client owner. Look it up only when it can matter.
+    let ownerIsClient = false;
+    if (
+      (isStatusApproved || summaryMentionsResolved) &&
+      ctx.existingTicket.ownerId &&
+      !ownerIsStaff
+    ) {
+      const owner = await prisma.user.findUnique({
+        where: { id: ctx.existingTicket.ownerId },
+        select: { role: { select: { isCustomer: true } } },
+      });
+      ownerIsClient = !!owner?.role?.isCustomer;
+    }
+
+    if (
+      ctx.existingTicket.ownerId &&
+      (ownerIsStaff ||
+        isStatusApproved ||
+        isStatusInProcess ||
+        isAssignmentChange)
+    ) {
       notifyIds.add(ctx.existingTicket.ownerId);
     }
 
@@ -737,18 +795,51 @@ export const ticketUsecase = {
     // Create all notifications in parallel
     const notifications = await Promise.all(
       Array.from(notifyIds).map(async (targetUserId) => {
+        // The newly-assigned user gets the "assigned to you" message.
         const isAssignment =
-          ctx.data.assigneeId &&
-          ctx.data.assigneeId !== ctx.existingTicket.assigneeId &&
-          targetUserId === ctx.data.assigneeId;
+          isAssignmentChange && targetUserId === ctx.data.assigneeId;
+        // The owner (when it's not them being assigned) gets a tailored
+        // "your ticket has been assigned to X" message.
+        const isOwnerAssignmentNotice =
+          isAssignmentChange &&
+          targetUserId === ctx.existingTicket.ownerId &&
+          targetUserId !== ctx.data.assigneeId;
+
+        const isOwner = targetUserId === ctx.existingTicket.ownerId;
+
+        // Staff see the "Dev-Done" relabel; a client owner keeps "Resolved".
+        const recipientSummary =
+          isOwner && ownerIsClient ? changeSummary : staffChangeSummary;
+
+        let title: string = NotificationMessages.TITLES.UPDATE;
+        let message = `Ticket #${ctx.ticketUid} updated: ${recipientSummary}`;
+        let type = "ticket_updated";
+
+        if (isAssignment) {
+          title = NotificationMessages.TITLES.ASSIGNMENT;
+          message = NotificationMessages.TICKET_ASSIGNED(ctx.ticketUid);
+          type = "assignment";
+        } else if (isOwnerAssignmentNotice) {
+          title = NotificationMessages.TITLES.ASSIGNMENT;
+          message = NotificationMessages.TICKET_ASSIGNED_TO_OWNER(
+            ctx.ticketUid,
+            assigneeName || "a team member",
+          );
+          type = "assignment";
+        } else if (isStatusInProcess && isOwner) {
+          title = NotificationMessages.TITLES.UPDATE;
+          message = NotificationMessages.TICKET_IN_PROCESS_OWNER(ctx.ticketUid);
+          type = "ticket_updated";
+        } else if (isStatusApproved && isOwner && ownerIsClient) {
+          title = NotificationMessages.TITLES.RESOLVED;
+          message = NotificationMessages.TICKET_RESOLVED_OWNER(ctx.ticketUid);
+          type = "ticket_updated";
+        }
+
         const notification = await ticketRepository.createNotification({
-          title: isAssignment
-            ? NotificationMessages.TITLES.ASSIGNMENT
-            : NotificationMessages.TITLES.UPDATE,
-          message: isAssignment
-            ? NotificationMessages.TICKET_ASSIGNED(ctx.ticketUid)
-            : `Ticket #${ctx.ticketUid} updated: ${changeSummary}`,
-          type: isAssignment ? "assignment" : "ticket_updated",
+          title,
+          message,
+          type,
           userId: targetUserId,
           data: { ticketId: ctx.ticketId, uid: ctx.ticketUid },
         });

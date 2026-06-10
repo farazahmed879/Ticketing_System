@@ -146,8 +146,10 @@ export interface Conversation {
 export interface Message {
   id: string;
   body: string;
+  attachments?: string[];
   senderId: string;
   createdAt: string;
+  sender?: { id: string; fullname: string; image?: string };
 }
 
 export interface UserRequest {

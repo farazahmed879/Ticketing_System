@@ -121,6 +121,25 @@ export const chatRepository = {
     });
   },
 
+  // Internal users only: Admin, Manager, Employee, HR (anyone who is not a
+  // client). Used for the Employee chat partner list.
+  async findInternalUsersForChat(userId: string) {
+    return prisma.user.findMany({
+      where: {
+        id: { not: userId },
+        deleted: false,
+        role: { isCustomer: false },
+      },
+      select: {
+        id: true,
+        fullname: true,
+        email: true,
+        image: true,
+        role: { select: { name: true, isAdmin: true, isAgent: true } },
+      },
+    });
+  },
+
   async findAdminsForChat() {
     return prisma.user.findMany({
       where: {

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import CustomIcon from "../../components/CustomIcon";
 import { useSearchParams } from "react-router-dom";
 import api from "../../services/api";
@@ -10,6 +11,11 @@ import { format } from "date-fns";
 import CustomInput from "../../components/CustomInput";
 import NewChatModal from "./components/NewChatModal";
 import NewGroupModal from "./components/NewGroupModal";
+import {
+  ACCEPT_ATTRIBUTE,
+  MAX_ATTACHMENTS,
+  readAttachmentFiles,
+} from "../../utils/attachments";
 
 import type { Conversation, Message } from "../../types";
 import { ChatSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
@@ -30,10 +36,17 @@ const Messages: React.FC = () => {
     [],
   );
   const [showScrollBottom, setShowScrollBottom] = useState(false);
+  const [attachments, setAttachments] = useState<string[]>([]);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<{
+    images: string[];
+    index: number;
+  } | null>(null);
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchConversations = async () => {
     try {
@@ -122,11 +135,40 @@ const Messages: React.FC = () => {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeConv) return;
+    if ((!newMessage.trim() && attachments.length === 0) || !activeConv) return;
 
-    socket.emit("chat:send", { roomId: activeConv, body: newMessage });
+    socket.emit("chat:send", {
+      roomId: activeConv,
+      body: newMessage,
+      attachments,
+    });
     setNewMessage("");
+    setAttachments([]);
+    setAttachmentError(null);
   };
+
+  const handleAttachmentSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    if (!e.target.files?.length) return;
+    setAttachmentError(null);
+    const { accepted, errors } = await readAttachmentFiles(
+      e.target.files,
+      attachments.length,
+    );
+    if (accepted.length) setAttachments((prev) => [...prev, ...accepted]);
+    if (errors.length) setAttachmentError(errors.join(" "));
+    e.target.value = "";
+  };
+
+  const removeAttachment = (idx: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== idx));
+    setAttachmentError(null);
+  };
+
+  const openLightbox = (images: string[], index: number) =>
+    setLightbox({ images, index });
+  const closeLightbox = () => setLightbox(null);
 
   const startChatWithUser = async (partnerId: string) => {
     try {
@@ -459,17 +501,67 @@ const Messages: React.FC = () => {
                 ref={messagesContainerRef}
                 onScroll={handleScroll}
               >
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`${styles.messageWrapper} ${msg.senderId === user?.id ? styles.messageOwn : styles.messageOther}`}
-                  >
-                    <div className={styles.messageBubble}>{msg.body}</div>
-                    <span className={styles.messageTime}>
-                      {format(new Date(msg.createdAt), "HH:mm")}
-                    </span>
-                  </div>
-                ))}
+                {messages.map((msg) => {
+                  const isOwn = msg.senderId === user?.id;
+                  const hasAttachments =
+                    msg.attachments && msg.attachments.length > 0;
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`${styles.messageWrapper} ${isOwn ? styles.messageOwn : styles.messageOther}`}
+                    >
+                      {selectedConv?.isGroup && !isOwn && msg.sender && (
+                        <span className={styles.senderName}>
+                          {msg.sender.fullname}
+                        </span>
+                      )}
+                      <div
+                        className={`${styles.messageBubble} ${
+                          hasAttachments && !msg.body
+                            ? styles.messageBubbleMedia
+                            : ""
+                        }`}
+                      >
+                        {hasAttachments &&
+                          (msg.attachments!.length === 1 ? (
+                            <button
+                              type="button"
+                              className={styles.attachmentSingle}
+                              onClick={() => openLightbox(msg.attachments!, 0)}
+                              title="View image"
+                            >
+                              <img
+                                src={msg.attachments![0]}
+                                alt="attachment"
+                              />
+                            </button>
+                          ) : (
+                            <div className={styles.attachmentGrid}>
+                              {msg.attachments!.map((src, i) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  className={styles.attachmentThumb}
+                                  onClick={() =>
+                                    openLightbox(msg.attachments!, i)
+                                  }
+                                  title="View image"
+                                >
+                                  <img src={src} alt={`attachment-${i}`} />
+                                </button>
+                              ))}
+                            </div>
+                          ))}
+                        {msg.body && (
+                          <span className={styles.messageText}>{msg.body}</span>
+                        )}
+                      </div>
+                      <span className={styles.messageTime}>
+                        {format(new Date(msg.createdAt), "HH:mm")}
+                      </span>
+                    </div>
+                  );
+                })}
                 <div ref={messagesEndRef} />
               </div>
 
@@ -484,6 +576,26 @@ const Messages: React.FC = () => {
             </div>
 
             <div className={styles.chatInput}>
+              {attachments.length > 0 && (
+                <div className={styles.attachmentPreviewBar}>
+                  {attachments.map((src, idx) => (
+                    <div key={idx} className={styles.attachmentPreview}>
+                      <img src={src} alt={`preview-${idx}`} />
+                      <button
+                        type="button"
+                        onClick={() => removeAttachment(idx)}
+                        title="Remove"
+                        className={styles.attachmentRemove}
+                      >
+                        <CustomIcon name="X" size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {attachmentError && (
+                <div className={styles.attachmentError}>{attachmentError}</div>
+              )}
               <form
                 onSubmit={handleSendMessage}
                 className="glass-card"
@@ -495,6 +607,27 @@ const Messages: React.FC = () => {
                 }}
               >
                 <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={ACCEPT_ATTRIBUTE}
+                  multiple
+                  onChange={handleAttachmentSelect}
+                  style={{ display: "none" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={attachments.length >= MAX_ATTACHMENTS}
+                  title={
+                    attachments.length >= MAX_ATTACHMENTS
+                      ? `Maximum ${MAX_ATTACHMENTS} images`
+                      : "Attach image"
+                  }
+                  className={styles.attachButton}
+                >
+                  <CustomIcon name="Paperclip" size={18} />
+                </button>
+                <input
                   type="text"
                   placeholder="Type a message..."
                   value={newMessage}
@@ -504,6 +637,7 @@ const Messages: React.FC = () => {
                     background: "transparent",
                     border: "none",
                     color: "var(--text-primary)",
+                    outline: "none",
                   }}
                 />
                 <button
@@ -518,8 +652,9 @@ const Messages: React.FC = () => {
                     justifyContent: "center",
                     color: "white",
                     cursor: "pointer",
+                    flexShrink: 0,
                   }}
-                  disabled={!newMessage.trim()}
+                  disabled={!newMessage.trim() && attachments.length === 0}
                 >
                   <CustomIcon name="Send" size={18} />
                 </button>
@@ -629,6 +764,60 @@ const Messages: React.FC = () => {
         onToggleMember={toggleGroupMember}
         onCreateGroup={createGroupChat}
       />
+
+      {lightbox &&
+        createPortal(
+          <div
+            onClick={closeLightbox}
+            role="dialog"
+            aria-modal="true"
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 11000,
+              background: "rgba(0, 0, 0, 0.85)",
+              backdropFilter: "blur(4px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 24,
+            }}
+          >
+            <button
+              onClick={closeLightbox}
+              title="Close"
+              style={{
+                position: "absolute",
+                top: 20,
+                right: 20,
+                width: 44,
+                height: 44,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.1)",
+                border: "none",
+                color: "white",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <CustomIcon name="X" size={24} />
+            </button>
+            <img
+              src={lightbox.images[lightbox.index]}
+              alt="attachment"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                maxWidth: "90vw",
+                maxHeight: "90vh",
+                objectFit: "contain",
+                borderRadius: 8,
+              }}
+            />
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };

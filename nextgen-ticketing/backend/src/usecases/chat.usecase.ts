@@ -69,7 +69,13 @@ export const chatUsecase = {
       ) {
         allowed = true;
       }
-    } else if (isMeEmployee || isMeAgent) {
+    } else if (isMeEmployee) {
+      // Employees may only chat with internal staff (Admin, Manager,
+      // Employee, HR) — never clients.
+      if (!partner.role.isCustomer) {
+        allowed = true;
+      }
+    } else if (isMeAgent) {
       if (
         partner.role.isAdmin ||
         partner.role.name.toLowerCase() === RoleName.ADMIN ||
@@ -129,7 +135,10 @@ export const chatUsecase = {
       return chatRepository.findAllUsersForChat(userId);
     } else if (isMeCustomer) {
       return chatRepository.findStaffForChat(userId);
-    } else if (isMeEmployee || isMeAgent) {
+    } else if (isMeEmployee) {
+      // Employees can only message internal staff: Admin, Manager, Employee, HR.
+      return chatRepository.findInternalUsersForChat(userId);
+    } else if (isMeAgent) {
       const staff = await chatRepository.findStaffForChat(userId);
       const customers = await chatRepository.findAssignedCustomers(userId);
       return [...staff, ...customers];

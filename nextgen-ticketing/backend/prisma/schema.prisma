@@ -291,13 +291,14 @@ model ChatRoom {
 }
 
 model ChatMessage {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  body      String
-  senderId  String   @db.ObjectId
-  sender    User     @relation(fields: [senderId], references: [id])
-  roomId    String   @db.ObjectId
-  room      ChatRoom @relation(fields: [roomId], references: [id])
-  createdAt DateTime @default(now())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  body        String   @default("")
+  attachments String[]
+  senderId    String   @db.ObjectId
+  sender      User     @relation(fields: [senderId], references: [id])
+  roomId      String   @db.ObjectId
+  room        ChatRoom @relation(fields: [roomId], references: [id])
+  createdAt   DateTime @default(now())
 }
 
 // ==================== REQUESTS ====================

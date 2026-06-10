@@ -23,6 +23,7 @@ import CustomDropdownMenu from "../../../components/CustomDropdownMenu";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import CustomSkeleton from "../../../components/CustomSkeleton";
 import CustomBadge from "../../../components/CustomBadge";
+import { socket } from "../../../services/socket";
 import type {
   TicketUpdateFormData,
   TicketDetailModalProps,
@@ -347,6 +348,18 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   useEffect(() => {
     if (isOpen && ticket?.id) {
       fetchFullTicketData();
+
+      // Listen for socket updates for this ticket
+      const handleTicketUpdate = (data: any) => {
+        if (data.ticketId === ticket.id) {
+          fetchFullTicketData();
+        }
+      };
+
+      socket.on("ticket:updated", handleTicketUpdate);
+      return () => {
+        socket.off("ticket:updated", handleTicketUpdate);
+      };
     } else {
       setFullTicketData(null);
     }

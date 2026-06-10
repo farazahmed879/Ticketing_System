@@ -761,6 +761,43 @@ export const ticketUsecase = {
     if (ticket.ownerId && ticket.ownerId !== ctx.authorId)
       notifyIds.add(ticket.ownerId);
 
+    // If a client commented, notify managers
+    const author = await prisma.user.findUnique({
+      where: { id: ctx.authorId },
+      include: { role: true },
+    });
+
+    if (author?.role?.name === RoleName.CUSTOMER) {
+      // 1. Notify all users with role 'Manager' (RoleName.AGENT)
+      const managers = await prisma.user.findMany({
+        where: {
+          role: { name: RoleName.AGENT },
+          deleted: false,
+        },
+      });
+      for (const m of managers) {
+        if (m.id !== ctx.authorId) {
+          notifyIds.add(m.id);
+        }
+      }
+
+      // 2. Notify team managers of the assignee's teams (if assigned)
+      if (ticket.assigneeId) {
+        const assigneeTeams = await prisma.team.findMany({
+          where: {
+            memberIds: { has: ticket.assigneeId },
+            deleted: false,
+          },
+          select: { managerId: true },
+        });
+        for (const team of assigneeTeams) {
+          if (team.managerId && team.managerId !== ctx.authorId) {
+            notifyIds.add(team.managerId);
+          }
+        }
+      }
+    }
+
     // Create all notifications in parallel
     const notifications = await Promise.all(
       Array.from(notifyIds).map(async (targetUserId) => {

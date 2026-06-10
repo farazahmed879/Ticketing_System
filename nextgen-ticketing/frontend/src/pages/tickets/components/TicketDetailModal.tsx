@@ -71,10 +71,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
-  // Close guard: warn before discarding unsaved ticket-field changes.
-  // Comments are separate state, so they never trigger this.
+  // Close guard: warn before discarding unsaved ticket-field changes (form
+  // fields or pending attachment edits). Comments are separate state, so they
+  // never trigger this.
   const handleRequestClose = () => {
-    if (formState.isDirty) {
+    if (formState.isDirty || attachmentsDirty) {
       setShowDiscardConfirm(true);
     } else {
       onClose();
@@ -162,7 +163,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     const newAssigneeName =
       users.find((agent) => agent.id === data.assigneeId)?.fullname || "";
 
-    const body = {
+    const body: any = {
       ticketId: ticket.id,
       statusId: data.statusId,
       targetStatusName: targetStatus,
@@ -173,6 +174,15 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       issue: data.issue,
       newAssigneeName: newAssigneeName,
     };
+
+    // Persist attachment edits through the same Save when the draft changed.
+    if (
+      isEditingAttachments &&
+      JSON.stringify(attachmentsDraft) !==
+        JSON.stringify(displayTicket?.attachments || [])
+    ) {
+      body.attachments = attachmentsDraft;
+    }
 
     onTicketUpdate(body);
   };
@@ -359,6 +369,13 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   const displayTicket = fullTicketData || ticket;
 
+  // Attachments have their own editor; treat a changed draft as a pending
+  // change so the main "Save Changes" button enables (and saves) too.
+  const attachmentsDirty =
+    isEditingAttachments &&
+    JSON.stringify(attachmentsDraft) !==
+      JSON.stringify(displayTicket?.attachments || []);
+
   const canAssign =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.tickets?.assign;
@@ -514,7 +531,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               <CustomButton
                 variant="gradient"
                 onClick={handleSubmit(handleSave)}
-                disabled={!formState.isDirty}
+                disabled={!formState.isDirty && !attachmentsDirty}
                 icon={<CustomIcon name="Save" size={18} />}
               >
                 Save Changes
@@ -1071,7 +1088,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                               })),
                             ]}
                             onChange={(val) => {
-                              setValue("assigneeId", val);
+                              setValue("assigneeId", val, {
+                                shouldDirty: true,
+                              });
                               if (val) {
                                 const openStatus = statuses.find(
                                   (c: any) =>
@@ -1082,8 +1101,14 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                   openStatus &&
                                   watch("statusId") !== openStatus.id
                                 ) {
-                                  setValue("statusId", openStatus.id);
-                                  setValue("targetStatusName", openStatus.name);
+                                  setValue("statusId", openStatus.id, {
+                                    shouldDirty: true,
+                                  });
+                                  setValue(
+                                    "targetStatusName",
+                                    openStatus.name,
+                                    { shouldDirty: true },
+                                  );
                                 }
                               }
                             }}

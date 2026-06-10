@@ -35,6 +35,7 @@ export const projectRepository = {
             createdAt: true,
             statusId: true,
             priorityId: true,
+            owner: { select: { id: true, fullname: true, image: true } },
             assignee: { select: { id: true, fullname: true, image: true } },
           },
           orderBy: { createdAt: "desc" },

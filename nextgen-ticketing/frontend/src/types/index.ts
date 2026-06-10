@@ -84,6 +84,7 @@ export interface Project {
     createdAt: string;
     status?: { id: string; name: string; color?: string };
     priority?: { id: string; name: string; color?: string };
+    owner?: { id: string; fullname: string; image?: string };
     assignee?: { id: string; fullname: string; image?: string };
   }[];
   createdAt: string;

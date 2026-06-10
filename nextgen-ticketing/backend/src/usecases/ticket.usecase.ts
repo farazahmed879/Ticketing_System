@@ -237,6 +237,14 @@ export const ticketUsecase = {
       const target = targetStatus.toLowerCase();
 
       if (isClient) {
+        // Clients can act only on tickets they created, even though they can
+        // now view every ticket in their projects.
+        if (!isOwner) {
+          throw new Error(
+            "You can only change the status of tickets you created.",
+          );
+        }
+
         const ALLOWED_TARGETS = new Set(
           [StatusName.CLOSED, StatusName.TRASH, StatusName.FAILED].map((s) =>
             s.toLowerCase(),

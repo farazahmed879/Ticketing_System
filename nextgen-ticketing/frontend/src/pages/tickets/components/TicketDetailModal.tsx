@@ -369,6 +369,10 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   const displayTicket = fullTicketData || ticket;
 
+  // Client decisions (Cancel / Satisfied / Unsatisfied) are personal to the
+  // person who raised the ticket — other client team members must not see them.
+  const isTicketOwner = displayTicket?.owner?.id === user?.id;
+
   // Attachments have their own editor; treat a changed draft as a pending
   // change so the main "Save Changes" button enables (and saves) too.
   const attachmentsDirty =
@@ -664,7 +668,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   paddingRight: 10,
                 }}
               >
-                {isClient && displayTicket?.status?.name === StatusName.NEW && (
+                {isClient &&
+                  isTicketOwner &&
+                  displayTicket?.status?.name === StatusName.NEW && (
                   <div
                     className="glass-card"
                     style={{
@@ -704,6 +710,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   </div>
                 )}
                 {isClient &&
+                  isTicketOwner &&
                   displayTicket?.status?.name === StatusName.APPROVED && (
                     <div
                       className="glass-card"

@@ -15,6 +15,7 @@ model User {
   password     String
   fullname     String
   username     String?
+  companyEmail String?
   image        String?
   title        String?
   workNumber   String?

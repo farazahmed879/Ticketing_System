@@ -35,6 +35,7 @@ const UserForm: React.FC<UserFormProps> = ({
       defaultValues: {
         fullname: "",
         email: "",
+        companyEmail: "",
         username: "",
         password: "",
         title: "",
@@ -132,6 +133,7 @@ const UserForm: React.FC<UserFormProps> = ({
       reset({
         fullname: initialData.fullname,
         email: initialData.email,
+        companyEmail: initialData.companyEmail ? initialData.companyEmail.replace("@jamipartners.com", "") : "",
         username: initialData.username || "",
         password: "",
         title: initialData.title || "",
@@ -158,6 +160,7 @@ const UserForm: React.FC<UserFormProps> = ({
       reset({
         fullname: "",
         email: "",
+        companyEmail: "",
         username: "",
         password: "",
         title: "",
@@ -287,6 +290,7 @@ const UserForm: React.FC<UserFormProps> = ({
         onSubmit={handleSubmit((data) => {
           const payload = {
             ...data,
+            companyEmail: data.companyEmail ? `${data.companyEmail.trim()}@jamipartners.com` : "",
             primaryContact: data.primaryContact
               ? `${data.primaryContactCode} ${data.primaryContact.trim()}`
               : "",
@@ -511,6 +515,25 @@ const UserForm: React.FC<UserFormProps> = ({
                   required
                   autoComplete="email"
                 />
+                <CustomInput
+                  name="companyEmail"
+                  control={control}
+                  label="Company Email"
+                  placeholder="username"
+                  suffix={
+                    <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", paddingRight: "8px" }}>
+                      @jamipartners.com
+                    </span>
+                  }
+                />
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 16,
+                }}
+              >
                 <CustomInput
                   name="password"
                   control={control}

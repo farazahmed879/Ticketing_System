@@ -71,6 +71,20 @@ export const ticketUsecase = {
       ];
     }
 
+    if (filters.myTickets === "true") {
+      if (user.role === RoleName.CUSTOMER) {
+        where.AND = [
+          ...(where.AND || []),
+          { ownerId: user.id },
+        ];
+      } else {
+        where.AND = [
+          ...(where.AND || []),
+          { OR: [{ ownerId: user.id }, { assigneeId: user.id }] },
+        ];
+      }
+    }
+
     if (status) {
       const statusObj = TICKET_STATUSES.find((s) => s.name === status);
       if (statusObj) where.statusId = statusObj.id;

@@ -93,8 +93,19 @@ export const commonRepository = {
       user?.role.toLowerCase() === RoleName.EMPLOYEE.toLowerCase();
     const userId = user?.id;
     const ticketWhere: any = { deleted: false };
+    
+    let clientProjectIds: string[] = [];
     if (isCustomer) {
-      ticketWhere.ownerId = userId;
+      const clientProjects = await prisma.project.findMany({
+        where: { deleted: false, clientIds: { has: userId } },
+        select: { id: true },
+      });
+      clientProjectIds = clientProjects.map((p) => p.id);
+      const visibility: any[] = [{ ownerId: userId }];
+      if (clientProjectIds.length > 0) {
+        visibility.push({ projectId: { in: clientProjectIds } });
+      }
+      ticketWhere.OR = visibility;
     } else if (isEmployee) {
       ticketWhere.OR = [{ ownerId: userId }, { assigneeId: userId }];
     }
@@ -104,14 +115,66 @@ export const commonRepository = {
     const unresolvedStatusIds = TICKET_STATUSES.filter(s => !s.isResolved).map(s => s.id);
     const resolvedStatusIds = TICKET_STATUSES.filter(s => s.isResolved).map(s => s.id);
 
-    const [totalTickets, openTickets, resolvedTickets, totalUsers, recentTickets, recentUsers] = await Promise.all([
-      prisma.ticket.count({ where: ticketWhere }),
-      prisma.ticket.count({
-        where: { ...ticketWhere, statusId: { in: unresolvedStatusIds } },
-      }),
-      prisma.ticket.count({
-        where: { ...ticketWhere, statusId: { in: resolvedStatusIds } },
-      }),
+    // Dynamic stats depending on role
+    let totalTicketsPromise;
+    let openTicketsPromise;
+    let resolvedTicketsPromise;
+    
+    let projectTicketsPromise = Promise.resolve(0);
+    let projectOpenTicketsPromise = Promise.resolve(0);
+    let projectResolvedTicketsPromise = Promise.resolve(0);
+
+    if (isCustomer) {
+      // Count for client's own created tickets
+      totalTicketsPromise = prisma.ticket.count({
+        where: { deleted: false, ownerId: userId }
+      });
+      openTicketsPromise = prisma.ticket.count({
+        where: { deleted: false, ownerId: userId, statusId: { in: unresolvedStatusIds } }
+      });
+      resolvedTicketsPromise = prisma.ticket.count({
+        where: { deleted: false, ownerId: userId, statusId: { in: resolvedStatusIds } }
+      });
+
+      // Count for client's project tickets
+      if (clientProjectIds.length > 0) {
+        projectTicketsPromise = prisma.ticket.count({
+          where: { deleted: false, projectId: { in: clientProjectIds } }
+        });
+        projectOpenTicketsPromise = prisma.ticket.count({
+          where: { deleted: false, projectId: { in: clientProjectIds }, statusId: { in: unresolvedStatusIds } }
+        });
+        projectResolvedTicketsPromise = prisma.ticket.count({
+          where: { deleted: false, projectId: { in: clientProjectIds }, statusId: { in: resolvedStatusIds } }
+        });
+      }
+    } else {
+      totalTicketsPromise = prisma.ticket.count({ where: ticketWhere });
+      openTicketsPromise = prisma.ticket.count({
+        where: { ...ticketWhere, statusId: { in: unresolvedStatusIds } }
+      });
+      resolvedTicketsPromise = prisma.ticket.count({
+        where: { ...ticketWhere, statusId: { in: resolvedStatusIds } }
+      });
+    }
+
+    const [
+      totalTickets,
+      openTickets,
+      resolvedTickets,
+      projectTickets,
+      projectOpenTickets,
+      projectResolvedTickets,
+      totalUsers,
+      recentTickets,
+      recentUsers
+    ] = await Promise.all([
+      totalTicketsPromise,
+      openTicketsPromise,
+      resolvedTicketsPromise,
+      projectTicketsPromise,
+      projectOpenTicketsPromise,
+      projectResolvedTicketsPromise,
       prisma.user.count({ where: { deleted: false } }),
       prisma.ticket.findMany({
         where: ticketWhere,
@@ -144,6 +207,16 @@ export const commonRepository = {
       priority: PRIORITIES.find(p => p.id === ticket.priorityId) || null,
     }));
 
-    return [totalTickets, openTickets, resolvedTickets, totalUsers, mappedRecentTickets, recentUsers];
+    return {
+      totalTickets,
+      openTickets,
+      resolvedTickets,
+      projectTickets,
+      projectOpenTickets,
+      projectResolvedTickets,
+      totalUsers,
+      recentTickets: mappedRecentTickets,
+      recentUsers,
+    };
   },
 };

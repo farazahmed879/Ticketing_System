@@ -183,6 +183,9 @@ export interface DashboardStats {
   openTickets: number;
   resolvedTickets: number;
   users: number;
+  projectTickets?: number;
+  projectOpenTickets?: number;
+  projectResolvedTickets?: number;
 }
 
 export interface RecentTicket {

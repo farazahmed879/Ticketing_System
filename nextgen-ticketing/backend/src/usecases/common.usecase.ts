@@ -53,13 +53,20 @@ export const commonUsecase = {
   },
 
   async getDashboardStats(user?: any) {
-    const [totalTickets, openTickets, resolvedTickets, users, recentTickets, newHires] =
-      await commonRepository.getDashboardStats(user);
+    const result = await commonRepository.getDashboardStats(user);
 
     return {
-      stats: { totalTickets, openTickets, resolvedTickets, users },
-      recentTickets,
-      newHires,
+      stats: {
+        totalTickets: result.totalTickets,
+        openTickets: result.openTickets,
+        resolvedTickets: result.resolvedTickets,
+        projectTickets: result.projectTickets,
+        projectOpenTickets: result.projectOpenTickets,
+        projectResolvedTickets: result.projectResolvedTickets,
+        users: result.totalUsers,
+      },
+      recentTickets: result.recentTickets,
+      newHires: result.recentUsers,
     };
   },
 };

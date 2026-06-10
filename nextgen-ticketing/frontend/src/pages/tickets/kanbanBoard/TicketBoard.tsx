@@ -43,6 +43,7 @@ const TicketBoard: React.FC = () => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [myTicketsOnly, setMyTicketsOnly] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -75,12 +76,14 @@ const TicketBoard: React.FC = () => {
   };
 
   const hasActiveFilters =
+    myTicketsOnly ||
     selectedAgentIds.length > 0 ||
     selectedPriorityNames.length > 0 ||
     selectedProjectIds.length > 0 ||
     selectedCustomerIds.length > 0;
 
   const handleResetFilters = () => {
+    setMyTicketsOnly(false);
     setSelectedAgentIds([]);
     setSelectedPriorityNames([]);
     setSelectedProjectIds([]);
@@ -159,6 +162,7 @@ const TicketBoard: React.FC = () => {
       const ticketsRes = await api.get(API_ROUTES.TICKETS.BASE, {
         params: {
           limit: -1,
+          myTickets: myTicketsOnly ? "true" : undefined,
           assignee:
             selectedAgentIds.length > 0
               ? selectedAgentIds.join(",")
@@ -203,6 +207,7 @@ const TicketBoard: React.FC = () => {
       setIsLoading(false, "");
     }
   }, [
+    myTicketsOnly,
     selectedAgentIds,
     selectedPriorityNames,
     selectedProjectIds,
@@ -439,6 +444,16 @@ const TicketBoard: React.FC = () => {
               />
 
               <div className={styles.filterGroup}>
+                <CustomButton
+                  variant={myTicketsOnly ? "gradient" : "outline"}
+                  size="sm"
+                  onClick={() => setMyTicketsOnly((prev) => !prev)}
+                  icon={<CustomIcon name="User" size={18} />}
+                  style={{ minHeight: 48, borderRadius: 12 }}
+                >
+                  My Tickets
+                </CustomButton>
+
                 {user?.role?.name !== RoleName.CUSTOMER &&
                   user?.role?.name !== RoleName.EMPLOYEE && (
                     <CustomSelect

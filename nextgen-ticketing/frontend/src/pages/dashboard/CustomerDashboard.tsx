@@ -30,22 +30,29 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
 
   const cards = [
     {
+      label: "Project Total Tickets",
+      value: stats?.projectTickets || 0,
+      icon: <CustomIcon name="FolderKanban" size={24} />,
+      color: "var(--accent-secondary)",
+      onClick: () => navigate("/tickets/board"),
+    },
+    {
       label: "My Total Tickets",
-      value: stats?.totalTickets,
+      value: stats?.totalTickets || 0,
       icon: <CustomIcon name="Ticket" size={24} />,
       color: "var(--accent-primary)",
       onClick: () => navigate("/tickets/board"),
     },
     {
       label: "My Open Tickets",
-      value: stats?.openTickets,
+      value: stats?.openTickets || 0,
       icon: <CustomIcon name="Clock" size={24} />,
       color: "var(--accent-warning)",
       onClick: () => navigate("/tickets/board"),
     },
     {
       label: "My Resolved Tickets",
-      value: stats?.resolvedTickets,
+      value: stats?.resolvedTickets || 0,
       icon: <CustomIcon name="CheckCircle2" size={24} />,
       color: "var(--accent-success)",
       onClick: () => navigate("/tickets/board"),

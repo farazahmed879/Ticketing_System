@@ -122,7 +122,7 @@ const TicketBoard: React.FC = () => {
               selectedPriorityNames.length > 0
                 ? selectedPriorityNames.join(",")
                 : undefined,
-            group:
+            project:
               selectedProjectIds.length > 0
                 ? selectedProjectIds.join(",")
                 : undefined,
@@ -427,19 +427,21 @@ const TicketBoard: React.FC = () => {
               />
 
               <div className={styles.filterGroup}>
-                <CustomSelect
-                  isMulti
-                  placeholder="Agents"
-                  options={agents.map((a) => ({
-                    value: a.id,
-                    label: a.fullname,
-                    image: a.image,
-                  }))}
-                  value={selectedAgentIds}
-                  onChange={setSelectedAgentIds}
-                  icon={<CustomIcon name="User" size={18} />}
-                  style={{ width: 200 }}
-                />
+                {user?.role?.name !== RoleName.CUSTOMER && (
+                  <CustomSelect
+                    isMulti
+                    placeholder="Agents"
+                    options={agents.map((a) => ({
+                      value: a.id,
+                      label: a.fullname,
+                      image: a.image,
+                    }))}
+                    value={selectedAgentIds}
+                    onChange={setSelectedAgentIds}
+                    icon={<CustomIcon name="User" size={18} />}
+                    style={{ width: 200 }}
+                  />
+                )}
 
                 <CustomSelect
                   isMulti
@@ -473,19 +475,21 @@ const TicketBoard: React.FC = () => {
                   style={{ width: 200 }}
                 />
 
-                <CustomSelect
-                  isMulti
-                  placeholder="Customers"
-                  options={customers.map((c) => ({
-                    value: c.id,
-                    label: c.fullname,
-                    image: c.image,
-                  }))}
-                  value={selectedCustomerIds}
-                  onChange={setSelectedCustomerIds}
-                  icon={<CustomIcon name="UserCheck" size={18} />}
-                  style={{ width: 200 }}
-                />
+                {user?.role?.name !== RoleName.CUSTOMER && (
+                  <CustomSelect
+                    isMulti
+                    placeholder="Customers"
+                    options={customers.map((c) => ({
+                      value: c.id,
+                      label: c.fullname,
+                      image: c.image,
+                    }))}
+                    value={selectedCustomerIds}
+                    onChange={setSelectedCustomerIds}
+                    icon={<CustomIcon name="UserCheck" size={18} />}
+                    style={{ width: 200 }}
+                  />
+                )}
 
                 {hasActiveFilters && (
                   <CustomButton

@@ -43,6 +43,7 @@ export const ticketUsecase = {
       status,
       priority,
       group,
+      project,
       owner,
       assignee,
       search,
@@ -80,6 +81,11 @@ export const ticketUsecase = {
     if (group) {
       const groupList = (group as string).split(",");
       where.groupId = { in: groupList };
+    }
+
+    if (project) {
+      const projectList = (project as string).split(",");
+      where.projectId = { in: projectList };
     }
 
     if (owner) {

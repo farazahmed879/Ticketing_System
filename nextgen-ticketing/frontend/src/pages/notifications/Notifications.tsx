@@ -6,7 +6,8 @@ import { socket } from "../../services/socket";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import styles from "./Notifications.module.css";
 import { useNavigate } from "react-router-dom";
-import CustomButton from "../../components/CustomButton";
+import CustomSkeleton, { NotificationSkeleton } from "../../components/CustomSkeleton";
+import CustomPagination from "../../components/CustomPagination";
 
 import type { NotificationItem } from "../../types";
 
@@ -15,13 +16,14 @@ const Notifications: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
   const navigate = useNavigate();
-
-  const LIMIT = 15;
 
   const fetchNotifications = async () => {
     try {
-      const res = await api.get(`${API_ROUTES.NOTIFICATIONS.BASE}?limit=${LIMIT}&page=${page}`);
+      const res = await api.get(
+        `${API_ROUTES.NOTIFICATIONS.BASE}?limit=${itemsPerPage}&page=${page}`,
+      );
       setNotifications(res.data.items);
       setTotalCount(res.data.totalCount);
     } catch (err) {
@@ -33,7 +35,7 @@ const Notifications: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
-  }, [page]);
+  }, [page, itemsPerPage]);
 
   useEffect(() => {
     const handleNewNotification = (notification: NotificationItem) => {
@@ -108,8 +110,9 @@ const Notifications: React.FC = () => {
     }
   };
 
-  if (loading)
-    return <div className="animate-fade-in">Loading notifications...</div>;
+  if (loading) {
+    return <NotificationSkeleton />;
+  }
 
   return (
     <div className="animate-fade-in">
@@ -137,7 +140,11 @@ const Notifications: React.FC = () => {
       <div className={`${styles.listContainer} glass-card`}>
         {notifications.length === 0 ? (
           <div className={styles.emptyState}>
-            <CustomIcon name="Bell" size={48} style={{ opacity: 0.1, marginBottom: 16 }} />
+            <CustomIcon
+              name="Bell"
+              size={48}
+              style={{ opacity: 0.1, marginBottom: 16 }}
+            />
             <p>You have no notifications at the moment.</p>
           </div>
         ) : (
@@ -172,7 +179,11 @@ const Notifications: React.FC = () => {
                 <p className={styles.message}>{n.message}</p>
               </div>
               <div className={styles.itemActions}>
-                <CustomIcon name="ChevronRight" size={18} color="var(--text-muted)" />
+                <CustomIcon
+                  name="ChevronRight"
+                  size={18}
+                  color="var(--text-muted)"
+                />
               </div>
             </div>
           ))
@@ -180,43 +191,18 @@ const Notifications: React.FC = () => {
       </div>
 
       {notifications.length > 0 && (
-        <div
-          className="glass-card"
-          style={{
-            marginTop: 16,
-            padding: "16px 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div
-            style={{
-              color: "var(--text-secondary)",
-              fontSize: "0.95rem",
-              fontWeight: 500,
+        <div style={{ marginTop: 24 }}>
+          <CustomPagination
+            currentPage={page}
+            totalPages={Math.ceil(totalCount / itemsPerPage)}
+            onPageChange={setPage}
+            totalItems={totalCount}
+            itemsPerPage={itemsPerPage}
+            onPageSizeChange={(size) => {
+              setItemsPerPage(size);
+              setPage(0);
             }}
-          >
-            Showing {notifications.length} of {totalCount} notifications
-          </div>
-          <div style={{ display: "flex", gap: 12 }}>
-            <CustomButton
-              variant="secondary"
-              size="sm"
-              style={{ padding: 8, borderRadius: 10 }}
-              disabled={page === 0}
-              onClick={() => setPage(page - 1)}
-              icon={<CustomIcon name="ChevronLeft" size={20} />}
-            />
-            <CustomButton
-              variant="secondary"
-              size="sm"
-              style={{ padding: 8, borderRadius: 10 }}
-              disabled={(page + 1) * LIMIT >= totalCount}
-              onClick={() => setPage(page + 1)}
-              icon={<CustomIcon name="ChevronRight" size={20} />}
-            />
-          </div>
+          />
         </div>
       )}
     </div>

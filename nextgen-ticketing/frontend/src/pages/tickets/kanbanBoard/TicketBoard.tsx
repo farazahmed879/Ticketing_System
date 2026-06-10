@@ -108,30 +108,9 @@ const TicketBoard: React.FC = () => {
         : TICKET_STATUSES.filter((s: any) => s.name !== StatusName.TRASH);
   };
 
-  const fetchBoardData = useCallback(async () => {
+  const fetchMetadata = useCallback(async () => {
     try {
-      const [ticketsRes, usersRes, groupsRes] = await Promise.all([
-        api.get(API_ROUTES.TICKETS.BASE, {
-          params: {
-            limit: -1,
-            assignee:
-              selectedAgentIds.length > 0
-                ? selectedAgentIds.join(",")
-                : undefined,
-            priority:
-              selectedPriorityNames.length > 0
-                ? selectedPriorityNames.join(",")
-                : undefined,
-            project:
-              selectedProjectIds.length > 0
-                ? selectedProjectIds.join(",")
-                : undefined,
-            owner:
-              selectedCustomerIds.length > 0
-                ? selectedCustomerIds.join(",")
-                : undefined,
-          },
-        }),
+      const [usersRes, groupsRes] = await Promise.all([
         api.get(API_ROUTES.USERS.GET_BY_ROLES, {
           params: {
             roles: [
@@ -143,7 +122,6 @@ const TicketBoard: React.FC = () => {
             limit: -1,
           },
         }),
-        // api.get(API_ROUTES.COMMON.PRIORITIES),
         api.get(API_ROUTES.PROJECTS.BASE, {
           params: {
             role: user?.role?.name,
@@ -152,11 +130,8 @@ const TicketBoard: React.FC = () => {
         }),
       ]);
 
-      const allTickets = ticketsRes.data.tickets;
-      const allStatuses = getStatuses();
       const allAccounts = usersRes.data.accounts;
 
-      // Map agents (Staff) and customers separately
       setAgents(
         allAccounts.filter(
           (u: any) =>
@@ -170,13 +145,48 @@ const TicketBoard: React.FC = () => {
       );
 
       setProjects(groupsRes.data.projects);
+    } catch (err) {
+      console.error("Failed to fetch metadata", err);
+    }
+  }, [user?.role?.name, user?.id]);
+
+  useEffect(() => {
+    fetchMetadata();
+  }, [fetchMetadata]);
+
+  const fetchBoardData = useCallback(async () => {
+    try {
+      const ticketsRes = await api.get(API_ROUTES.TICKETS.BASE, {
+        params: {
+          limit: -1,
+          assignee:
+            selectedAgentIds.length > 0
+              ? selectedAgentIds.join(",")
+              : undefined,
+          priority:
+            selectedPriorityNames.length > 0
+              ? selectedPriorityNames.join(",")
+              : undefined,
+          project:
+            selectedProjectIds.length > 0
+              ? selectedProjectIds.join(",")
+              : undefined,
+          owner:
+            selectedCustomerIds.length > 0
+              ? selectedCustomerIds.join(",")
+              : undefined,
+        },
+      });
+
+      const allTickets = ticketsRes.data.tickets;
+      const allStatuses = getStatuses();
 
       const boardColumns: Column[] = allStatuses.map((s: any) => ({
         id: s.id,
         name: s.name,
         color: s.color,
         tickets:
-          user.role.name == RoleName.CUSTOMER && s.name == StatusName.IN_PROCESS
+          user?.role?.name == RoleName.CUSTOMER && s.name == StatusName.IN_PROCESS
             ? allTickets.filter(
                 (t: Ticket) =>
                   t.status.id === s.id || t.status.name == StatusName.RESOLVED,
@@ -197,6 +207,7 @@ const TicketBoard: React.FC = () => {
     selectedPriorityNames,
     selectedProjectIds,
     selectedCustomerIds,
+    user?.role?.name,
     showNotification,
     setIsLoading,
   ]);
@@ -359,8 +370,6 @@ const TicketBoard: React.FC = () => {
     };
   }, [fetchBoardData]);
 
-  console.log("columns", columns);
-
   return (
     <div className={styles.boardContainer}>
       {loading ? (
@@ -430,21 +439,22 @@ const TicketBoard: React.FC = () => {
               />
 
               <div className={styles.filterGroup}>
-                {user?.role?.name !== RoleName.CUSTOMER && (
-                  <CustomSelect
-                    isMulti
-                    placeholder="Agents"
-                    options={agents.map((a) => ({
-                      value: a.id,
-                      label: a.fullname,
-                      image: a.image,
-                    }))}
-                    value={selectedAgentIds}
-                    onChange={setSelectedAgentIds}
-                    icon={<CustomIcon name="User" size={18} />}
-                    style={{ width: 200 }}
-                  />
-                )}
+                {user?.role?.name !== RoleName.CUSTOMER &&
+                  user?.role?.name !== RoleName.EMPLOYEE && (
+                    <CustomSelect
+                      isMulti
+                      placeholder="Developers"
+                      options={agents.map((a) => ({
+                        value: a.id,
+                        label: a.fullname,
+                        image: a.image,
+                      }))}
+                      value={selectedAgentIds}
+                      onChange={setSelectedAgentIds}
+                      icon={<CustomIcon name="User" size={18} />}
+                      style={{ width: 200 }}
+                    />
+                  )}
 
                 <CustomSelect
                   isMulti
@@ -481,7 +491,7 @@ const TicketBoard: React.FC = () => {
                 {user?.role?.name !== RoleName.CUSTOMER && (
                   <CustomSelect
                     isMulti
-                    placeholder="Customers"
+                    placeholder="Clients"
                     options={customers.map((c) => ({
                       value: c.id,
                       label: c.fullname,

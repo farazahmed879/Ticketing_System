@@ -5,6 +5,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
+import { socket } from "../../../services/socket";
 import styles from "./TicketDetail.module.css";
 import { useAuth } from "../../../context/AuthContext";
 import { useNotification } from "../../../context/NotificationContext";
@@ -487,6 +488,20 @@ const TicketDetail: React.FC = () => {
     fetchTicket();
     if (canAssign) fetchAgents();
   }, [id, canAssign]);
+
+  useEffect(() => {
+    const handleTicketUpdate = (data: { ticketId: string }) => {
+      if (data.ticketId === id) {
+        fetchTicket();
+      }
+    };
+
+    socket.on("ticket:updated", handleTicketUpdate);
+
+    return () => {
+      socket.off("ticket:updated", handleTicketUpdate);
+    };
+  }, [id]);
 
   if (loading || !ticket) return <TicketDetailSkeleton />;
 

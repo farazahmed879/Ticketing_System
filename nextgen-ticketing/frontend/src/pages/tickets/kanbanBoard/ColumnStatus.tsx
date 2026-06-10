@@ -55,7 +55,34 @@ const ColumnStatus = ({
         <CustomIcon name="Lock" className={styles.bgLockIcon} />
       )}
       <div className={styles.columnHeader}>
-        <div className={styles.statusInfo}>
+        {isCollapsed && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "12px",
+              paddingBottom: "16px",
+              borderBottom: "1px solid var(--border-glass)",
+              width: "100%",
+              marginBottom: "8px",
+            }}
+          >
+            <span className={styles.count}>{column.tickets.length}</span>
+            <button
+              className={styles.columnToggle}
+              onClick={() => toggleColumnCollapse(column.id)}
+              title="Expand Column"
+            >
+              <CustomIcon name="ChevronRight" size={20} />
+            </button>
+          </div>
+        )}
+        <div
+          className={styles.statusInfo}
+          style={isCollapsed ? { flexDirection: "row", flexWrap: "wrap", justifyContent: "center" } : {}}
+        >
           <div
             className={styles.statusDot}
             style={{ background: column.color }}
@@ -128,18 +155,7 @@ const ColumnStatus = ({
         )}
       </div>
 
-      {isCollapsed && (
-        <div className={styles.collapsedActions}>
-          <span className={styles.count}>{column.tickets.length}</span>
-          <button
-            className={styles.columnToggle}
-            onClick={() => toggleColumnCollapse(column.id)}
-            title="Expand Column"
-          >
-            <CustomIcon name="ChevronRight" size={20} />
-          </button>
-        </div>
-      )}
+
     </div>
   );
 };

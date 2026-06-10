@@ -6,7 +6,7 @@ import { socket } from "../../services/socket";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import styles from "./Notifications.module.css";
 import { useNavigate } from "react-router-dom";
-import CustomSkeleton, { NotificationSkeleton } from "../../components/CustomSkeleton";
+import { NotificationSkeleton } from "../../components/CustomSkeleton";
 import CustomPagination from "../../components/CustomPagination";
 
 import type { NotificationItem } from "../../types";

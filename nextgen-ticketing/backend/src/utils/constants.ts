@@ -204,7 +204,7 @@ export const NotificationMessages = {
   NEW_COMMENT: (uid: number) => `A new comment was added to Ticket #${uid}`,
   TITLES: {
     NEW_TICKET: "New Ticket",
-    CUSTOMER_TICKET: "New Customer Ticket",
+    CUSTOMER_TICKET: "New Client Ticket",
     ASSIGNMENT: "Ticket Assigned",
     UPDATE: "Ticket Updated",
     COMMENT: "New Comment",

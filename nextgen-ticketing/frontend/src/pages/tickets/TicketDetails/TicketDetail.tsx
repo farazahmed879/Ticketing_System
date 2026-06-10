@@ -493,6 +493,7 @@ const TicketDetail: React.FC = () => {
       />
 
       {user?.role?.name === RoleName.CUSTOMER &&
+        ticket.owner?.id === user?.id &&
         ticket.status.name === StatusName.NEW && (
           <div
             className="glass-card"
@@ -536,6 +537,7 @@ const TicketDetail: React.FC = () => {
         )}
 
       {user?.role?.name === RoleName.CUSTOMER &&
+        ticket.owner?.id === user?.id &&
         ticket.status.name === StatusName.APPROVED && (
           <div
             className="glass-card"

@@ -6,6 +6,8 @@ import CustomBadge from "../../components/CustomBadge";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
+import { useAuth } from "../../context/AuthContext";
+import { RoleName } from "../../utils/constants";
 import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import type { Project } from "../../types";
 
@@ -28,6 +30,11 @@ const ProjectDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
+  // Clients see their project peers as "Team Members"; everyone else sees
+  // them labelled as "Clients".
+  const peopleLabel =
+    user?.role?.name === RoleName.CUSTOMER ? "Team Members" : "Clients";
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -211,7 +218,7 @@ const ProjectDetail: React.FC = () => {
           >
             <CustomIcon name="Users" size={20} color="var(--accent-primary)" />
             <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
-              Clients ({project.clients?.length || 0})
+              {peopleLabel} ({project.clients?.length || 0})
             </h3>
           </div>
           {project.clients && project.clients.length > 0 ? (
@@ -342,13 +349,28 @@ const ProjectDetail: React.FC = () => {
                   {t.status && (
                     <CustomBadge variant="info">{t.status.name}</CustomBadge>
                   )}
+                  {t.owner && (
+                    <span
+                      style={{
+                        fontSize: "0.85rem",
+                        color: "var(--text-muted)",
+                        whiteSpace: "nowrap",
+                      }}
+                      title={`Created by ${t.owner.fullname}`}
+                    >
+                      <CustomIcon name="User" size={12} /> {t.owner.fullname}
+                    </span>
+                  )}
                   {t.assignee && (
                     <span
                       style={{
                         fontSize: "0.85rem",
                         color: "var(--text-muted)",
+                        whiteSpace: "nowrap",
                       }}
+                      title={`Assigned to ${t.assignee.fullname}`}
                     >
+                      <CustomIcon name="UserCheck" size={12} />{" "}
                       {t.assignee.fullname}
                     </span>
                   )}

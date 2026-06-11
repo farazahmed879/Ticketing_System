@@ -1,12 +1,13 @@
 import { useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
-import CustomIcon from "../../../components/CustomIcon";
-import CustomInput from "../../../components/CustomInput";
-import CustomButton from "../../../components/CustomButton";
+import CustomIcon from "../../../../components/CustomIcon";
+import CustomInput from "../../../../components/CustomInput";
+import CustomButton from "../../../../components/CustomButton";
+import styles from "../TicketDetailModal.module.css";
 import {
   ACCEPT_ATTRIBUTE,
   MAX_ATTACHMENTS,
-} from "../../../utils/attachments";
+} from "../../../../utils/attachments";
 
 const CommentSection = ({
   fullTicketData,
@@ -30,17 +31,7 @@ const CommentSection = ({
     commentSendDisabled;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 16,
-        borderLeft: "1px solid var(--border-glass)",
-        paddingLeft: 24,
-        height: "100%",
-        minHeight: 0,
-      }}
-    >
+    <div className={styles.commentsContainer}>
       <label
         style={{
           fontSize: "1rem",
@@ -73,17 +64,7 @@ const CommentSection = ({
       >
         {fullTicketData ? (
           <>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-                flex: 1,
-                minHeight: 0,
-                overflowY: "auto",
-                paddingRight: 8,
-              }}
-            >
+            <div className={styles.commentsList}>
               {fullTicketData.comments?.length > 0 ? (
                 fullTicketData.comments.map((comment: any) => (
                   <div

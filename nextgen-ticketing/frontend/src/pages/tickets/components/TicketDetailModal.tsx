@@ -28,12 +28,13 @@ import type {
   TicketUpdateFormData,
   TicketDetailModalProps,
 } from "../../../types";
-import CommentSection from "./CommentsSection";
+import styles from "../ticketDetailsModal/TicketDetailModal.module.css";
 import {
   ACCEPT_ATTRIBUTE,
   MAX_ATTACHMENTS,
   readAttachmentFiles,
 } from "../../../utils/attachments";
+import CommentSection from "../ticketDetailsModal/components/CommentsSection";
 
 const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   isOpen,
@@ -166,8 +167,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     const newAssigneeName =
       users.find((agent) => agent.id === data.assigneeId)?.fullname || "";
 
-    const newQaName =
-      qaList.find((qa) => qa.id === data.qaId)?.fullname || "";
+    const newQaName = qaList.find((qa) => qa.id === data.qaId)?.fullname || "";
 
     const body: any = {
       ticketId: ticket.id,
@@ -393,8 +393,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     user?.role?.permissions?.tickets?.assign;
 
   const canAssignQA =
-    user?.role?.name === RoleName.ADMIN ||
-    user?.role?.name === RoleName.AGENT;
+    user?.role?.name === RoleName.ADMIN || user?.role?.name === RoleName.AGENT;
 
   const canUpdate =
     user?.role?.name === RoleName.ADMIN ||
@@ -444,7 +443,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         isOpen={isOpen}
         onClose={handleRequestClose}
         maxWidth="1500px"
-        height="85vh"
+        className={styles.ticketModal}
         title={
           <span
             style={{
@@ -649,81 +648,13 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             </div>
           </div>
         ) : (
-          <div
-            style={{
-              position: "relative",
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              minHeight: 0,
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1.6fr 1fr",
-                gridTemplateRows: "minmax(0, 1fr)",
-                gap: 30,
-                padding: "10px 0",
-                flex: 1,
-                minHeight: 0,
-              }}
-            >
+          <div className={styles.modalContainer}>
+            <div className={styles.grid}>
               {/* Left Column: Details */}
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 24,
-                  minHeight: 0,
-                  overflowY: "auto",
-                  paddingRight: 10,
-                }}
-              >
+              <div className={styles.leftColumn}>
                 {isClient &&
                   isTicketOwner &&
                   displayTicket?.status?.name === StatusName.NEW && (
-                  <div
-                    className="glass-card"
-                    style={{
-                      padding: 20,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      borderLeft: "4px solid var(--accent-danger)",
-                    }}
-                  >
-                    <div>
-                      <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
-                        Cancel Ticket
-                      </h3>
-                      <p
-                        style={{
-                          margin: 0,
-                          color: "var(--text-secondary)",
-                          fontSize: "0.9rem",
-                        }}
-                      >
-                        Your ticket is currently unassigned. You can cancel it
-                        if it's no longer needed.
-                      </p>
-                    </div>
-                    <CustomButton
-                      variant="outline"
-                      onClick={() => handleClientDecision("cancel")}
-                      icon={<CustomIcon name="Trash2" size={16} />}
-                      style={{
-                        borderColor: "var(--accent-danger)",
-                        color: "var(--accent-danger)",
-                      }}
-                    >
-                      Cancel Ticket
-                    </CustomButton>
-                  </div>
-                )}
-                {isClient &&
-                  isTicketOwner &&
-                  displayTicket?.status?.name === StatusName.APPROVED && (
                     <div
                       className="glass-card"
                       style={{
@@ -731,12 +662,12 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
-                        borderLeft: "4px solid var(--accent-success)",
+                        borderLeft: "4px solid var(--accent-danger)",
                       }}
                     >
                       <div>
                         <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
-                          Review Required
+                          Cancel Ticket
                         </h3>
                         <p
                           style={{
@@ -745,33 +676,107 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             fontSize: "0.9rem",
                           }}
                         >
-                          Your ticket has been marked as Resolved. Please let us
-                          know if you are satisfied with the resolution.
+                          Your ticket is currently unassigned. You can cancel it
+                          if it's no longer needed.
                         </p>
                       </div>
-                      <div style={{ display: "flex", gap: 12 }}>
-                        <CustomButton
-                          variant="outline"
-                          onClick={() => handleClientDecision("unsatisfied")}
-                          icon={<CustomIcon name="XCircle" size={16} />}
-                          style={{
-                            borderColor: "var(--accent-danger)",
-                            color: "var(--accent-danger)",
-                          }}
-                        >
-                          Unsatisfied
-                        </CustomButton>
-                        <CustomButton
-                          variant="primary"
-                          onClick={() => handleClientDecision("satisfied")}
-                          icon={<CustomIcon name="CheckCircle2" size={16} />}
-                          style={{ background: "var(--accent-success)" }}
-                        >
-                          Satisfied
-                        </CustomButton>
-                      </div>
+                      <CustomButton
+                        variant="outline"
+                        onClick={() => handleClientDecision("cancel")}
+                        icon={<CustomIcon name="Trash2" size={16} />}
+                        style={{
+                          borderColor: "var(--accent-danger)",
+                          color: "var(--accent-danger)",
+                        }}
+                      >
+                        Cancel Ticket
+                      </CustomButton>
                     </div>
                   )}
+                {isClient &&
+                  isTicketOwner &&
+                  displayTicket?.status?.name === StatusName.APPROVED &&
+                  (() => {
+                    const daysLeft = (() => {
+                      const updatedAt = displayTicket.updatedAt;
+                      if (!updatedAt) return 20;
+                      const diffTime = Math.abs(
+                        new Date().getTime() - new Date(updatedAt).getTime(),
+                      );
+                      const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                      return Math.max(0, Math.ceil(20 - diffDays));
+                    })();
+
+                    return (
+                      <div
+                        className="glass-card"
+                        style={{
+                          padding: 20,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          borderLeft: "4px solid var(--accent-success)",
+                        }}
+                      >
+                        <div>
+                          <h3
+                            style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}
+                          >
+                            Review Required
+                          </h3>
+                          <p
+                            style={{
+                              margin: 0,
+                              color: "var(--text-secondary)",
+                              fontSize: "0.9rem",
+                            }}
+                          >
+                            Your ticket has been marked as Resolved. Please let
+                            us know if you are satisfied with the resolution.
+                          </p>
+                          <div
+                            style={{
+                              marginTop: 12,
+                              paddingTop: 12,
+                              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                              fontSize: "0.8rem",
+                              color: "var(--text-muted)",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            <CustomIcon name="Clock" size={14} />
+                            <span>
+                              The ticket will automatically closed in 20 days if
+                              no response. ({daysLeft} days remaining)
+                            </span>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: 12 }}>
+                          <CustomButton
+                            variant="outline"
+                            onClick={() => handleClientDecision("unsatisfied")}
+                            icon={<CustomIcon name="XCircle" size={16} />}
+                            style={{
+                              borderColor: "var(--accent-danger)",
+                              color: "var(--accent-danger)",
+                            }}
+                          >
+                            Unsatisfied
+                          </CustomButton>
+                          <CustomButton
+                            variant="primary"
+                            onClick={() => handleClientDecision("satisfied")}
+                            icon={<CustomIcon name="CheckCircle2" size={16} />}
+                            style={{ background: "var(--accent-success)" }}
+                          >
+                            Satisfied
+                          </CustomButton>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 <div
                   style={{
                     display: "flex",
@@ -1331,9 +1336,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                         variant="ghost"
                                         size="sm"
                                         onClick={() =>
-                                          handleStartChat(
-                                            displayTicket.qa.id,
-                                          )
+                                          handleStartChat(displayTicket.qa.id)
                                         }
                                         icon={
                                           <CustomIcon

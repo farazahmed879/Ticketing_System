@@ -1,0 +1,89 @@
+.ticketModal {
+  height: 85vh;
+}
+
+.modalContainer {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 30px;
+  padding: 10px 0;
+  flex: 1;
+  min-height: 0;
+}
+
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.commentsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-left: 1px solid var(--border-glass);
+  padding-left: 24px;
+  height: 100%;
+  min-height: 0;
+}
+
+.commentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+@media (max-width: 900px) {
+  .ticketModal {
+    height: auto !important;
+    max-height: 95vh;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 24px;
+    flex: none;
+    min-height: auto;
+  }
+
+  .leftColumn {
+    overflow-y: visible;
+    padding-right: 0;
+    flex: none;
+    min-height: auto;
+  }
+
+  .commentsContainer {
+    border-left: none;
+    border-top: 1px solid var(--border-glass);
+    padding-left: 0;
+    padding-top: 24px;
+    height: auto;
+    min-height: auto;
+    flex: none;
+  }
+
+  .commentsList {
+    overflow-y: visible;
+    padding-right: 0;
+    flex: none;
+    min-height: auto;
+  }
+}

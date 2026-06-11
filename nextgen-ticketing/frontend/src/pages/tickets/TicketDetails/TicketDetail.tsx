@@ -583,58 +583,85 @@ const TicketDetail: React.FC = () => {
 
       {user?.role?.name === RoleName.CUSTOMER &&
         ticket.owner?.id === user?.id &&
-        ticket.status.name === StatusName.APPROVED && (
-          <div
-            className="glass-card"
-            style={{
-              padding: 20,
-              marginBottom: 24,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderLeft: "4px solid var(--accent-success)",
-            }}
-          >
-            <div>
-              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
-                Review Required
-              </h3>
-              <p
-                style={{
-                  margin: 0,
-                  color: "var(--text-secondary)",
-                  fontSize: "0.9rem",
-                }}
-              >
-                Your ticket has been marked as Resolved. Please let us know if
-                you are satisfied with the resolution.
-              </p>
+        ticket.status.name === StatusName.APPROVED && (() => {
+          const daysLeft = (() => {
+            const updatedAt = ticket.updatedAt;
+            if (!updatedAt) return 20;
+            const diffTime = Math.abs(new Date().getTime() - new Date(updatedAt).getTime());
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            return Math.max(0, Math.ceil(20 - diffDays));
+          })();
+
+          return (
+            <div
+              className="glass-card"
+              style={{
+                padding: 20,
+                marginBottom: 24,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderLeft: "4px solid var(--accent-success)",
+              }}
+            >
+              <div>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
+                  Review Required
+                </h3>
+                <p
+                  style={{
+                    margin: 0,
+                    color: "var(--text-secondary)",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  Your ticket has been marked as Resolved. Please let us know if
+                  you are satisfied with the resolution.
+                </p>
+                <div
+                  style={{
+                    marginTop: 12,
+                    paddingTop: 12,
+                    borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                    fontSize: "0.8rem",
+                    color: "var(--text-muted)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <CustomIcon name="Clock" size={14} />
+                  <span>
+                    The ticket will automatically closed in 20 days if no response. ({daysLeft} days remaining)
+                  </span>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 12 }}>
+                <CustomButton
+                  variant="outline"
+                  onClick={() => handleClientDecision("unsatisfied")}
+                  icon={<CustomIcon name="XCircle" size={16} />}
+                  style={{
+                    borderColor: "var(--accent-danger)",
+                    color: "var(--accent-danger)",
+                  }}
+                  loading={isSaving}
+                >
+                  Unsatisfied
+                </CustomButton>
+                <CustomButton
+                  variant="primary"
+                  onClick={() => handleClientDecision("satisfied")}
+                  icon={<CustomIcon name="CheckCircle2" size={16} />}
+                  style={{ background: "var(--accent-success)" }}
+                  loading={isSaving}
+                >
+                  Satisfied
+                </CustomButton>
+              </div>
             </div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <CustomButton
-                variant="outline"
-                onClick={() => handleClientDecision("unsatisfied")}
-                icon={<CustomIcon name="XCircle" size={16} />}
-                style={{
-                  borderColor: "var(--accent-danger)",
-                  color: "var(--accent-danger)",
-                }}
-                loading={isSaving}
-              >
-                Unsatisfied
-              </CustomButton>
-              <CustomButton
-                variant="primary"
-                onClick={() => handleClientDecision("satisfied")}
-                icon={<CustomIcon name="CheckCircle2" size={16} />}
-                style={{ background: "var(--accent-success)" }}
-                loading={isSaving}
-              >
-                Satisfied
-              </CustomButton>
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
       <div className={styles.container}>
         <div className={styles.leftColumn}>

@@ -96,6 +96,12 @@ export const userUsecase = {
       });
     }
 
+    if (roles.includes(RoleName.QA)) {
+      roleConditions.push({
+        role: { name: RoleName.QA },
+      });
+    }
+
     const where: any = {
       deleted: showDeleted === "true" ? undefined : false,
     };

@@ -261,6 +261,7 @@ export interface ModalProps {
   minHeight?: string;
   height?: string;
   headerAction?: React.ReactNode;
+  className?: string;
 }
 
 export interface ConfirmationModalProps {

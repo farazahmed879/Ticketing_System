@@ -9,7 +9,6 @@ import {
   PRIORITIES,
 } from "../utils/constants";
 import { startOfDay } from "date-fns";
-import { STATUS_CODES } from "http";
 
 const MAX_ATTACHMENTS = 5;
 const MAX_ATTACHMENT_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB binary, after base64 decode
@@ -64,6 +63,17 @@ export const ticketUsecase = {
       const visibility: any[] = [{ ownerId: user.id }];
       if (projectIds.length) visibility.push({ projectId: { in: projectIds } });
       where.AND = [...(where.AND || []), { OR: visibility }];
+    } else if (user.role === RoleName.QA) {
+      where.AND = [
+        ...(where.AND || []),
+        {
+          OR: [
+            { ownerId: user.id },
+            { assigneeId: user.id },
+            { qaId: user.id },
+          ],
+        },
+      ];
     } else if (user.role !== RoleName.ADMIN && user.role !== RoleName.AGENT) {
       where.AND = [
         ...(where.AND || []),
@@ -73,9 +83,17 @@ export const ticketUsecase = {
 
     if (filters.myTickets === "true") {
       if (user.role === RoleName.CUSTOMER) {
+        where.AND = [...(where.AND || []), { ownerId: user.id }];
+      } else if (user.role === RoleName.QA) {
         where.AND = [
           ...(where.AND || []),
-          { ownerId: user.id },
+          {
+            OR: [
+              { ownerId: user.id },
+              { assigneeId: user.id },
+              { qaId: user.id },
+            ],
+          },
         ];
       } else {
         where.AND = [
@@ -217,6 +235,7 @@ export const ticketUsecase = {
     const isManager = user?.role === RoleName.AGENT;
     const isEmployee = user.role === RoleName.EMPLOYEE;
     const isClient = user.role === RoleName.CUSTOMER;
+    const isQA = user.role === RoleName.QA;
 
     const isStaff = isAdmin || isManager || isEmployee; // kept for downstream uses
     const isOwner = existingTicket.ownerId === user.id;
@@ -358,6 +377,35 @@ export const ticketUsecase = {
           }
         }
       }
+      if (isQA) {
+        const rules: Array<[string[], string, string]> = [
+          [
+            [StatusName.RESOLVED],
+            StatusName.IN_PROCESS,
+            "Only Dev-Done tickets can be moved to In-Process",
+          ],
+          [
+            [StatusName.RESOLVED],
+            StatusName.APPROVED,
+            "Only Dev-Done tickets can be moved to Approved.",
+          ],
+        ];
+
+        for (const [requiredStatuses, ruleTarget, message] of rules) {
+          // 1. Lowercase the rule's target status
+          const isTargetMatch = target === ruleTarget.toLowerCase();
+
+          // 2. Map required statuses to lowercase to ensure a fair comparison
+          const lowercaseRequiredStatuses = requiredStatuses.map((status) =>
+            status.toLowerCase(),
+          );
+          const isCurrentValid = lowercaseRequiredStatuses.includes(current);
+
+          if (isTargetMatch && !isCurrentValid) {
+            throw new Error(message);
+          }
+        }
+      }
     }
 
     // Priority
@@ -388,10 +436,7 @@ export const ticketUsecase = {
     }
 
     // QA Assignee
-    if (
-      data.qaId !== undefined &&
-      data.qaId !== existingTicket.qaId
-    ) {
+    if (data.qaId !== undefined && data.qaId !== existingTicket.qaId) {
       if (!isAdmin && !isManager) {
         throw new Error("Only Admins and Managers can assign QA.");
       }
@@ -493,10 +538,7 @@ export const ticketUsecase = {
       });
     }
 
-    if (
-      data.qaId !== undefined &&
-      data.qaId !== existingTicket.qaId
-    ) {
+    if (data.qaId !== undefined && data.qaId !== existingTicket.qaId) {
       updateData.qaId = data.qaId;
       let description = "";
       if (!data.qaId) {

@@ -61,34 +61,51 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
         <div className={styles.sidebarItem}>
           <span className={styles.sidebarLabel}>Status</span>
 
-          <CustomSelect
-            options={statuses.map((s) => ({
-              value: s.id,
-              label: s.name,
-              disabled: !(
-                user?.role?.name === RoleName.ADMIN ||
-                user?.role?.permissions?.boardStatuses?.[s.id] === true ||
-                (ticket.owner.id === user?.id &&
-                  ((s.name.toLowerCase() === StatusName.OPEN.toLowerCase() &&
-                    canAssign) ||
-                    s.name.toLowerCase() === StatusName.TRASH.toLowerCase() ||
-                    s.name.toLowerCase() === StatusName.FAILED.toLowerCase()))
-              ),
-              icon: (
-                <div
-                  style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    background: s.color,
-                  }}
-                />
-              ),
-            }))}
-            value={sidebarDraft.statusId}
-            onChange={(val) => onSidebarDraftChange("statusId", val)}
-            placeholder="Change status..."
-          />
+          {user?.role?.name === RoleName.EMPLOYEE &&
+          ticket.status?.name === StatusName.APPROVED ? (
+            // Employees cannot change the status of an Approved ticket.
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: ticket.status.color,
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ fontSize: "0.9rem" }}>{ticket.status.name}</span>
+            </div>
+          ) : (
+            <CustomSelect
+              options={statuses.map((s) => ({
+                value: s.id,
+                label: s.name,
+                disabled: !(
+                  user?.role?.name === RoleName.ADMIN ||
+                  user?.role?.permissions?.boardStatuses?.[s.id] === true ||
+                  (ticket.owner.id === user?.id &&
+                    ((s.name.toLowerCase() === StatusName.OPEN.toLowerCase() &&
+                      canAssign) ||
+                      s.name.toLowerCase() === StatusName.TRASH.toLowerCase() ||
+                      s.name.toLowerCase() === StatusName.FAILED.toLowerCase()))
+                ),
+                icon: (
+                  <div
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: s.color,
+                    }}
+                  />
+                ),
+              }))}
+              value={sidebarDraft.statusId}
+              onChange={(val) => onSidebarDraftChange("statusId", val)}
+              placeholder="Change status..."
+            />
+          )}
         </div>
 
         <div className={styles.sidebarItem}>

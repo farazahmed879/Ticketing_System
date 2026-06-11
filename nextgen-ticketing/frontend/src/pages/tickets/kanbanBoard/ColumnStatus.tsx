@@ -29,17 +29,18 @@ const ColumnStatus = ({
     );
   };
 
-  // Due date has passed (before today) — highlight as overdue in every column
-  // except terminal statuses (Resolved / Approved / Closed / Cancelled).
+  // Due date has passed (before today) — keep the ticket highlighted red until
+  // it is Approved by the client (Closed / Cancelled are terminal too). Checks
+  // the ticket's real status so it's correct regardless of how columns are
+  // relabelled per role (e.g. Resolved shown as "Done"/"Resolved").
   const handleCheckOverdue = (ticket: any) => {
+    const stopHighlightStatuses = [
+      StatusName.CLOSED,
+      StatusName.TRASH,
+    ];
     return (
       ticket.dueDate &&
-      ![
-        StatusName.RESOLVED,
-        StatusName.APPROVED,
-        StatusName.CLOSED,
-        StatusName.TRASH,
-      ].includes(column.name) &&
+      !stopHighlightStatuses.includes(ticket.status?.name) &&
       isBefore(startOfDay(parseISO(ticket.dueDate)), startOfDay(new Date()))
     );
   };
@@ -90,7 +91,7 @@ const ColumnStatus = ({
           <h3>
             {user.role.name !== RoleName.CUSTOMER &&
             column.name == StatusName.RESOLVED
-              ? "Dev-Done"
+              ? "Done"
               : column.name}
           </h3>
           {!isStatusAllowed && (
@@ -137,6 +138,21 @@ const ColumnStatus = ({
                   style={{ background: ticket.priority.color }}
                 ></div>
                 <span className={styles.miniUid}>#{ticket.uid}</span>
+                <CustomIcon
+                  name={ticket.qa ? "ShieldCheck" : "ShieldOff"}
+                  size={12}
+                  style={{ marginLeft: "auto" }}
+                  color={
+                    ticket.qa
+                      ? "var(--accent-success, #10b981)"
+                      : "var(--text-muted)"
+                  }
+                  title={
+                    ticket.qa
+                      ? `QA assigned: ${ticket.qa.fullname}`
+                      : "QA not assigned"
+                  }
+                />
               </div>
             ) : (
               <TicketCard

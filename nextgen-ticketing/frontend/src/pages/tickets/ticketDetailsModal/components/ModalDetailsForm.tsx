@@ -132,7 +132,11 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
               <CustomIcon name="Tag" size={16} /> {displayTicket.priority.name}
             </CustomBadge>
           )}
-          {user?.role?.name !== RoleName.CUSTOMER ? (
+          {user?.role?.name !== RoleName.CUSTOMER &&
+          !(
+            user?.role?.name === RoleName.EMPLOYEE &&
+            displayTicket?.status?.name === StatusName.APPROVED
+          ) ? (
             <CustomSelect
               name="statusId"
               control={control}

@@ -355,6 +355,24 @@ export const ticketUsecase = {
       }
 
       if (isEmployee) {
+        if (
+          current === StatusName.APPROVED.toLowerCase() &&
+          target === StatusName.IN_PROCESS.toLowerCase()
+        ) {
+          throw new Error(
+            "Employees cannot move Approved tickets back to In Process.",
+          );
+        }
+
+        if (
+          current === StatusName.APPROVED.toLowerCase() &&
+          target === StatusName.RESOLVED.toLowerCase()
+        ) {
+          throw new Error(
+            "Employees cannot move Approved tickets back to Done.",
+          );
+        }
+
         const rules: Array<[string[], string, string]> = [
           [
             [StatusName.OPEN],
@@ -382,12 +400,12 @@ export const ticketUsecase = {
           [
             [StatusName.RESOLVED],
             StatusName.IN_PROCESS,
-            "Only Dev-Done tickets can be moved to In-Process",
+            "Only Done tickets can be moved to In-Process",
           ],
           [
             [StatusName.RESOLVED],
             StatusName.APPROVED,
-            "Only Dev-Done tickets can be moved to Approved.",
+            "Only Done tickets can be moved to Approved.",
           ],
         ];
 
@@ -785,12 +803,12 @@ export const ticketUsecase = {
     const changeSummary =
       changes.length > 0 ? changes.join("; ") : "Ticket details updated";
 
-    // Staff (Admin, Manager, Employee) see the "Resolved" status as "Dev-Done",
-    // so relabel it in their notification text (e.g. "Dev-Done → In Process"
+    // Staff (Admin, Manager, Employee) see the "Resolved" status as "Done",
+    // so relabel it in their notification text (e.g. "Done → In Process"
     // instead of "Resolved → In Process"). Clients still see "Resolved".
     const summaryMentionsResolved = changeSummary.includes(StatusName.RESOLVED);
     const staffChangeSummary = summaryMentionsResolved
-      ? changeSummary.split(StatusName.RESOLVED).join("Dev-Done")
+      ? changeSummary.split(StatusName.RESOLVED).join("Done")
       : changeSummary;
 
     // Collect all user IDs to notify (admins, managers, employees + assignee)
@@ -854,7 +872,7 @@ export const ticketUsecase = {
 
     // Whether the owner is a client. Needed both to send the client-specific
     // "resolved" message on Approve, and to keep showing "Resolved" (not
-    // "Dev-Done") to a client owner. Look it up only when it can matter.
+    // "Done") to a client owner. Look it up only when it can matter.
     let ownerIsClient = false;
     if (
       (isStatusApproved || summaryMentionsResolved) &&
@@ -899,7 +917,7 @@ export const ticketUsecase = {
 
         const isOwner = targetUserId === ctx.existingTicket.ownerId;
 
-        // Staff see the "Dev-Done" relabel; a client owner keeps "Resolved".
+        // Staff see the "Done" relabel; a client owner keeps "Resolved".
         const recipientSummary =
           isOwner && ownerIsClient ? changeSummary : staffChangeSummary;
 

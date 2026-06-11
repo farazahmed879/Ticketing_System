@@ -95,6 +95,25 @@ const TicketCard = ({
       <div className={styles.cardSubject}>{ticket.subject}</div>
 
       <div className={styles.cardMeta}>
+        <div
+          className={styles.metaItem}
+          title={
+            ticket.qa
+              ? `QA assigned: ${ticket.qa.fullname}`
+              : "QA not assigned"
+          }
+          style={{
+            color: ticket.qa
+              ? "var(--accent-success, #10b981)"
+              : "var(--text-muted)",
+            fontWeight: 600,
+          }}
+        >
+          <CustomIcon name={ticket.qa ? "ShieldCheck" : "ShieldOff"} size={12} />
+          <span>
+            QA: {ticket.qa ? ticket.qa.fullname.split(" ")[0] : "Unassigned"}
+          </span>
+        </div>
         {ticket.project && (
           <div className={styles.metaItem} title="Project">
             <CustomIcon name="FolderKanban" size={12} />

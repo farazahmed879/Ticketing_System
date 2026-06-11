@@ -278,14 +278,11 @@ const TicketBoard: React.FC = () => {
 
   const handleUpdateStatus = async (body: any) => {
     try {
-      // Only gate on the board-status permission when the status is actually
-      // changing. Otherwise an edit that merely keeps the current status (e.g.
-      // changing only the due date) would be wrongly blocked.
       const isStatusChanging =
         !!body.targetStatusName &&
         !!body.currentStatusName &&
         body.targetStatusName !== body.currentStatusName;
-        
+
       if (body.currentStatusName == StatusName.CLOSED) return;
 
       const isStatusAllowed =

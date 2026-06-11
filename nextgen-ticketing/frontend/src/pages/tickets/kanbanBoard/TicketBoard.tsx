@@ -138,14 +138,9 @@ const TicketBoard: React.FC = () => {
       const allAccounts = usersRes.data.accounts;
 
       setAgents(
-        allAccounts.filter(
-          (u: any) =>
-            u.role.name === RoleName.EMPLOYEE,
-        ),
+        allAccounts.filter((u: any) => u.role.name === RoleName.EMPLOYEE),
       );
-      setQaList(
-        allAccounts.filter((u: any) => u.role.name === RoleName.QA),
-      );
+      setQaList(allAccounts.filter((u: any) => u.role.name === RoleName.QA));
       setCustomers(
         allAccounts.filter((u: any) => u.role.name === RoleName.CUSTOMER),
       );
@@ -193,7 +188,8 @@ const TicketBoard: React.FC = () => {
         name: s.name,
         color: s.color,
         tickets:
-          user?.role?.name == RoleName.CUSTOMER && s.name == StatusName.IN_PROCESS
+          user?.role?.name == RoleName.CUSTOMER &&
+          s.name == StatusName.IN_PROCESS
             ? allTickets.filter(
                 (t: Ticket) =>
                   t.status.id === s.id || t.status.name == StatusName.RESOLVED,
@@ -282,6 +278,8 @@ const TicketBoard: React.FC = () => {
 
   const handleUpdateStatus = async (body: any) => {
     try {
+      if (body.currentStatusName == StatusName.CLOSED) return;
+
       const isStatusAllowed =
         user?.role?.name === RoleName.ADMIN ||
         user?.role?.permissions?.boardStatuses?.[body?.statusId] === true;

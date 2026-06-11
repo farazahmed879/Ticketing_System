@@ -39,7 +39,12 @@ const Dashboard: React.FC = () => {
           api.get(API_ROUTES.ANNOUNCEMENTS.BASE, { params: { limit: -1 } }),
         ]);
         setStats(statsRes.data.stats);
-        setNewHires(statsRes.data.newHires || []);
+        // Clients aren't "new hires" — exclude them from the dashboard.
+        setNewHires(
+          (statsRes.data.newHires || []).filter(
+            (hire: any) => hire?.role?.name !== RoleName.CUSTOMER,
+          ),
+        );
         setAnnouncements(annRes.data.announcements);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);

@@ -197,6 +197,7 @@ export const commonRepository = {
           image: true,
           title: true,
           createdAt: true,
+          role: { select: { id: true, name: true } },
         },
       }),
     ]);

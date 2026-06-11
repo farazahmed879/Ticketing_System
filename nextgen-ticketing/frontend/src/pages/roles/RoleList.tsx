@@ -148,7 +148,7 @@ const RoleList: React.FC = () => {
     {
       header: "Type",
       key: "type",
-      render: (role) => (
+      render: (role: any) => (
         <div style={{ display: "flex", gap: 8 }}>
           {role.isAdmin && (
             <CustomBadge variant="danger">{RoleName.ADMIN}</CustomBadge>
@@ -163,11 +163,13 @@ const RoleList: React.FC = () => {
             <CustomBadge variant="warning">{RoleName.EMPLOYEE}</CustomBadge>
           )}
           {role.isHR && <CustomBadge variant="info">{RoleName.HR}</CustomBadge>}
+          {role.isQA && <CustomBadge variant="info">{RoleName.QA}</CustomBadge>}
           {!role.isAdmin &&
             !role.isAgent &&
             !role.isCustomer &&
             !role.isEmployee &&
-            !role.isHR && <CustomBadge variant="neutral">Other</CustomBadge>}
+            !role.isHR &&
+            !role.isQA && <CustomBadge variant="neutral">Other</CustomBadge>}
         </div>
       ),
     },

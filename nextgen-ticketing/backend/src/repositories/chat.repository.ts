@@ -105,8 +105,8 @@ export const chatRepository = {
         deleted: false,
         role: {
           OR: [
-            { isAdmin: true },
-            { isAgent: true },
+            { roleType: "isAdmin" },
+            { roleType: "isAgent" },
             { name: { in: ["Admin", "Agent"], mode: "insensitive" } },
           ],
         },
@@ -116,7 +116,7 @@ export const chatRepository = {
         fullname: true,
         email: true,
         image: true,
-        role: { select: { name: true, isAdmin: true, isAgent: true } },
+        role: { select: { name: true, roleType: true } },
       },
     });
   },
@@ -128,14 +128,14 @@ export const chatRepository = {
       where: {
         id: { not: userId },
         deleted: false,
-        role: { isCustomer: false },
+        role: { roleType: { not: "isCustomer" } },
       },
       select: {
         id: true,
         fullname: true,
         email: true,
         image: true,
-        role: { select: { name: true, isAdmin: true, isAgent: true } },
+        role: { select: { name: true, roleType: true } },
       },
     });
   },
@@ -146,7 +146,7 @@ export const chatRepository = {
         deleted: false,
         role: {
           OR: [
-            { isAdmin: true },
+            { roleType: "isAdmin" },
             { name: { equals: "Admin", mode: "insensitive" } },
           ],
         },
@@ -156,7 +156,7 @@ export const chatRepository = {
         fullname: true,
         email: true,
         image: true,
-        role: { select: { name: true, isAdmin: true, isAgent: true } },
+        role: { select: { name: true, roleType: true } },
       },
     });
   },
@@ -175,7 +175,7 @@ export const chatRepository = {
         fullname: true,
         email: true,
         image: true,
-        role: { select: { name: true, isAdmin: true, isAgent: true } },
+        role: { select: { name: true, roleType: true } },
       },
     });
   },
@@ -188,7 +188,7 @@ export const chatRepository = {
         fullname: true,
         email: true,
         image: true,
-        role: { select: { name: true, isAdmin: true, isAgent: true } },
+        role: { select: { name: true, roleType: true } },
       },
     });
   },

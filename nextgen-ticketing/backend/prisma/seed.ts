@@ -89,8 +89,7 @@ async function main() {
     create: {
       name: RoleName.ADMIN,
       description: "Full system access",
-      isAdmin: true,
-      isAgent: false,
+      roleType: "isAdmin",
       permissions: adminPermissions,
     },
   });
@@ -101,8 +100,7 @@ async function main() {
     create: {
       name: RoleName.AGENT,
       description: "Support agent with ticket management access",
-      isAdmin: false,
-      isAgent: true,
+      roleType: "isAgent",
       permissions: agentPermissions,
     },
   });
@@ -113,8 +111,7 @@ async function main() {
     create: {
       name: RoleName.EMPLOYEE,
       description: "Internal employee/developer",
-      isAdmin: false,
-      isAgent: true,
+      roleType: "isEmployee",
       permissions: employeePermissions,
     },
   });
@@ -125,8 +122,7 @@ async function main() {
     create: {
       name: RoleName.CUSTOMER,
       description: "End-user who submits tickets",
-      isAdmin: false,
-      isAgent: false,
+      roleType: "isCustomer",
       permissions: customerPermissions,
     },
   });

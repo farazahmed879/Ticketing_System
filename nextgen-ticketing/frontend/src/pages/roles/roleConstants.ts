@@ -130,6 +130,40 @@ export const EMPLOYEE_PERMISSIONS = {
   },
 };
 
+export const QA_PERMISSIONS = {
+  tickets: {
+    view: true,
+    create: false,
+    update: true,
+    delete: false,
+    assign: false,
+    priority: false,
+  },
+  comments: { view: true, create: true },
+  users: { view: false, create: false, update: false, delete: false },
+  teams: { view: true, create: false, update: false, delete: false },
+  groups: { view: true, create: false, update: false, delete: false },
+  roles: { view: false, create: false, update: false, delete: false },
+  departments: { view: false, create: false, update: false, delete: false },
+  messages: { view: true, create: false },
+  dashboard: { view: true },
+  timesheets: { view: true, approve: false, report: true },
+  candidates: { view: false, create: false, update: false, delete: false },
+  interviews: { view: true, create: false, update: false, delete: false },
+  requests: { view: true, create: false, update: false, delete: false },
+  announcements: { view: true, create: true, update: true, delete: true },
+  boardStatuses: {
+    [getStatusId(StatusName.NEW)]: false,
+    [getStatusId(StatusName.OPEN)]: false,
+    [getStatusId(StatusName.TRASH)]: false,
+    [getStatusId(StatusName.FAILED)]: false,
+    [getStatusId(StatusName.IN_PROCESS)]: false,
+    [getStatusId(StatusName.RESOLVED)]: false,
+    [getStatusId(StatusName.APPROVED)]: true,
+    [getStatusId(StatusName.CLOSED)]: false,
+  },
+};
+
 export const CUSTOMER_PERMISSIONS = {
   tickets: {
     view: true,
@@ -269,7 +303,7 @@ export const ROLE_TYPES = [
   },
   {
     id: "isAgent",
-    label: "Agent",
+    label: "Project Manager",
     icon: "ShieldCheck",
     color: "#2196f3",
     activeBg: "rgba(33, 150, 243, 0.05)",
@@ -294,5 +328,12 @@ export const ROLE_TYPES = [
     icon: "UserCheck",
     color: "#9c27b0",
     activeBg: "rgba(156, 39, 176, 0.05)",
+  },
+  {
+    id: "isQA",
+    label: "QA",
+    icon: "UserCheck",
+    color: "#4600c4ff",
+    activeBg: "rgba(70, 0, 196, 0.05)",
   },
 ];

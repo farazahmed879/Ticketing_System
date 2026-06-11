@@ -18,6 +18,7 @@ import {
   EMPLOYEE_PERMISSIONS,
   CUSTOMER_PERMISSIONS,
   HR_PERMISSIONS,
+  QA_PERMISSIONS,
 } from "../roleConstants";
 import type { RoleFormProps } from "../types";
 
@@ -110,6 +111,7 @@ const RoleForm = forwardRef<any, RoleFormProps>(
         isCustomer: false,
         isEmployee: false,
         isHR: false,
+        isQA: false,
         permissions: DEFAULT_PERMISSIONS,
       };
 
@@ -133,11 +135,14 @@ const RoleForm = forwardRef<any, RoleFormProps>(
         case "isHR":
           updatedData.permissions = HR_PERMISSIONS;
           break;
+        case "isQA":
+          updatedData.permissions = QA_PERMISSIONS;
+          break;
         default:
           updatedData.permissions = DEFAULT_PERMISSIONS;
       }
 
-      setFormData(updatedData);
+      setFormData((prev) => ({ ...prev, ...updatedData }));
     };
 
     const handleStatusPermissionChange = (statusId: string) => {
@@ -156,7 +161,8 @@ const RoleForm = forwardRef<any, RoleFormProps>(
 
     const validate = () => {
       const newErrors: Record<string, string> = {};
-      if (!formData.name.trim()) newErrors.name = "Role name is required";
+      if (!formData.name || !formData.name.trim())
+        newErrors.name = "Role name is required";
       setErrors(newErrors);
       return Object.keys(newErrors).length === 0;
     };

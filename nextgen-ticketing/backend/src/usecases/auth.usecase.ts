@@ -89,7 +89,7 @@ export const authUsecase = {
       username,
       password: hashedPassword,
       fullname,
-      roleId: role.id,
+      roleId: role!.id,
     });
 
     const token = jwt.sign(

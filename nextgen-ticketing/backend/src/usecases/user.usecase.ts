@@ -15,8 +15,8 @@ export const userUsecase = {
 
     let roleFilter: any = {};
     if (type === RoleType.AGENTS)
-      roleFilter = { role: { OR: [{ isAgent: true }, { isEmployee: true }] } };
-    else if (type === RoleType.ADMINS) roleFilter = { role: { isAdmin: true } };
+      roleFilter = { role: { roleType: { in: ["isAgent", "isEmployee"] } } };
+    else if (type === RoleType.ADMINS) roleFilter = { role: { roleType: "isAdmin" } };
     else if (type === RoleType.CUSTOMERS)
       roleFilter = { role: { name: RoleName.CUSTOMER } };
     else if (type && type.toLowerCase() !== "all")
@@ -58,7 +58,7 @@ export const userUsecase = {
     if (roles.includes(RoleName.EMPLOYEE)) {
       roleConditions.push({
         role: {
-          OR: [{ isAgent: true }, { isEmployee: true }],
+          roleType: { in: ["isAgent", "isEmployee"] },
         },
       });
     }
@@ -67,7 +67,7 @@ export const userUsecase = {
       roleConditions.push({
         role: { 
           OR: [
-            { isAdmin: true },
+            { roleType: "isAdmin" },
             { name: RoleName.ADMIN }
           ]
         },

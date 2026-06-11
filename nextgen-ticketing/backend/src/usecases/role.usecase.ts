@@ -17,11 +17,12 @@ export const roleUsecase = {
     const roleData = {
       name: data.name,
       description: data.description,
-      isAdmin: data.isAdmin,
-      isAgent: data.isAgent,
-      isCustomer: data.isCustomer,
-      isEmployee: data.isEmployee,
-      isHR: data.isHR,
+      roleType: data.isAdmin ? "isAdmin" :
+                data.isAgent ? "isAgent" :
+                data.isCustomer ? "isCustomer" :
+                data.isEmployee ? "isEmployee" :
+                data.isHR ? "isHR" :
+                data.isQA ? "isQA" : "isEmployee",
       permissions: data.permissions || {},
     };
     return roleRepository.create(roleData);
@@ -31,11 +32,12 @@ export const roleUsecase = {
     const roleData = {
       name: data.name,
       description: data.description,
-      isAdmin: data.isAdmin,
-      isAgent: data.isAgent,
-      isCustomer: data.isCustomer,
-      isEmployee: data.isEmployee,
-      isHR: data.isHR,
+      roleType: data.isAdmin ? "isAdmin" :
+                data.isAgent ? "isAgent" :
+                data.isCustomer ? "isCustomer" :
+                data.isEmployee ? "isEmployee" :
+                data.isHR ? "isHR" :
+                data.isQA ? "isQA" : undefined,
       permissions: data.permissions || {},
     };
     return roleRepository.update(id, roleData);

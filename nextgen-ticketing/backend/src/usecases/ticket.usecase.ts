@@ -772,11 +772,11 @@ export const ticketUsecase = {
       ctx.existingTicket.ownerId &&
       !ownerIsStaff
     ) {
-      const owner = await prisma.user.findUnique({
+      const owner = (await prisma.user.findUnique({
         where: { id: ctx.existingTicket.ownerId },
-        select: { role: { select: { isCustomer: true } } },
-      });
-      ownerIsClient = !!owner?.role?.isCustomer;
+        select: { role: { select: { roleType: true } } },
+      })) as any;
+      ownerIsClient = owner?.role?.roleType === "isCustomer";
     }
 
     if (

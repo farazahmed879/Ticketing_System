@@ -387,6 +387,16 @@ export const ticketUsecase = {
       }
     }
 
+    // QA Assignee
+    if (
+      data.qaId !== undefined &&
+      data.qaId !== existingTicket.qaId
+    ) {
+      if (!isAdmin && !isManager) {
+        throw new Error("Only Admins and Managers can assign QA.");
+      }
+    }
+
     // Project
     if (data.projectId !== undefined) {
       if (!!isAdmin && !isManager) {
@@ -474,6 +484,29 @@ export const ticketUsecase = {
         description = `Ticket assigned to ${
           data?.newAssigneeName || "Unknown"
         } (previously ${existingTicket.assignee?.fullname || "Unassigned"})`;
+      }
+
+      historyEntries.push({
+        action: ActionName.ASSIGNEE_CHANGED,
+        description,
+        actorId,
+      });
+    }
+
+    if (
+      data.qaId !== undefined &&
+      data.qaId !== existingTicket.qaId
+    ) {
+      updateData.qaId = data.qaId;
+      let description = "";
+      if (!data.qaId) {
+        description = `QA tester unassigned (previously QA was ${
+          existingTicket.qa?.fullname || "Unknown"
+        })`;
+      } else {
+        description = `QA tester assigned to ${
+          data?.newQaName || "Unknown"
+        } (previously ${existingTicket.qa?.fullname || "Unassigned"})`;
       }
 
       historyEntries.push({

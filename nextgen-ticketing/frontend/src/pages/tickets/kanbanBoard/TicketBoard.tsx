@@ -33,6 +33,7 @@ const TicketBoard: React.FC = () => {
   const [columns, setColumns] = useState<Column[]>([]);
   const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
+  const [qaList, setQaList] = useState<any[]>([]);
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
   // const [priorities, setPriorities] = useState<any[]>([]);
   const [selectedPriorityNames, setSelectedPriorityNames] = useState<string[]>(
@@ -121,6 +122,7 @@ const TicketBoard: React.FC = () => {
               RoleName.CUSTOMER,
               RoleName.EMPLOYEE,
               RoleName.ADMIN,
+              RoleName.QA,
             ],
             limit: -1,
           },
@@ -138,10 +140,11 @@ const TicketBoard: React.FC = () => {
       setAgents(
         allAccounts.filter(
           (u: any) =>
-            u.role.name === RoleName.AGENT ||
-            u.role.name === RoleName.EMPLOYEE ||
-            u.role.name === RoleName.HR,
+            u.role.name === RoleName.EMPLOYEE,
         ),
+      );
+      setQaList(
+        allAccounts.filter((u: any) => u.role.name === RoleName.QA),
       );
       setCustomers(
         allAccounts.filter((u: any) => u.role.name === RoleName.CUSTOMER),
@@ -625,6 +628,7 @@ const TicketBoard: React.FC = () => {
         onClose={() => setIsDetailModalOpen(false)}
         ticket={selectedTicket}
         users={agents}
+        qaList={qaList}
         priorities={priorities}
         onTicketUpdate={handleUpdateStatus}
       />

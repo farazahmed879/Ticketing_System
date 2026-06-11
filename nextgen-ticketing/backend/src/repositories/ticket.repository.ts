@@ -24,6 +24,9 @@ export const ticketRepository = {
         assignee: {
           select: { id: true, fullname: true, email: true, image: true },
         },
+        qa: {
+          select: { id: true, fullname: true, email: true, image: true },
+        },
         group: { select: { id: true, name: true } },
         project: { select: { id: true, name: true } },
       },
@@ -99,6 +102,9 @@ export const ticketRepository = {
         assignee: {
           select: { id: true, fullname: true, email: true, image: true },
         },
+        qa: {
+          select: { id: true, fullname: true, email: true, image: true },
+        },
         group: { select: { id: true, name: true } },
         project: { select: { id: true, name: true } },
         comments: {
@@ -127,6 +133,7 @@ export const ticketRepository = {
         group: true,
         project: true,
         assignee: true,
+        qa: true,
       },
     });
     return mapTicketStatusAndPriority(ticket);
@@ -142,6 +149,7 @@ export const ticketRepository = {
         group: true,
         project: true,
         assignee: true,
+        qa: true,
       },
     });
     return mapTicketStatusAndPriority(ticket);

@@ -47,6 +47,7 @@ model User {
 
   ownedTickets    Ticket[] @relation("TicketOwner")
   assignedTickets Ticket[] @relation("TicketAssignee")
+  assignedQATickets Ticket[] @relation("TicketQA")
 
   comments Comment[]
   history  History[]
@@ -106,6 +107,9 @@ model Ticket {
 
   assigneeId String? @db.ObjectId
   assignee   User?   @relation("TicketAssignee", fields: [assigneeId], references: [id])
+
+  qaId       String? @db.ObjectId
+  qa         User?   @relation("TicketQA", fields: [qaId], references: [id])
 
   groupId String? @db.ObjectId
   group   Group?  @relation(fields: [groupId], references: [id])

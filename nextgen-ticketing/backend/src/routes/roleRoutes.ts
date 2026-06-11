@@ -5,11 +5,10 @@ import { authMiddleware, checkRole } from '../middleware/auth';
 const router = Router();
 
 router.use(authMiddleware);
-router.use(checkRole(['Admin'])); // Only admins can manage roles
 
 router.get('/', roleController.getRoles);
-router.post('/', roleController.createRole);
-router.put('/:id', roleController.updateRole);
-router.delete('/:id', roleController.deleteRole);
+router.post('/', checkRole(['Admin']), roleController.createRole);
+router.put('/:id', checkRole(['Admin']), roleController.updateRole);
+router.delete('/:id', checkRole(['Admin']), roleController.deleteRole);
 
 export default router;

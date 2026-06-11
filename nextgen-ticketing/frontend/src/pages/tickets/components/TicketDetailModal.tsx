@@ -40,6 +40,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   onClose,
   ticket,
   users,
+  qaList,
   priorities,
   onTicketUpdate,
 }) => {
@@ -59,6 +60,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         currentStatusName: ticket?.status?.name || "",
         priorityId: ticket?.priority?.id || "",
         assigneeId: ticket?.assignee?.id || "",
+        qaId: ticket?.qa?.id || "",
         dueDate: ticket?.dueDate
           ? new Date(ticket.dueDate).toISOString().split("T")[0]
           : "",
@@ -138,6 +140,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         statusId: t.status?.id || "",
         priorityId: t.priority?.id || "",
         assigneeId: t.assignee?.id || "",
+        qaId: t.qa?.id || "",
         dueDate: t.dueDate
           ? new Date(t.dueDate).toISOString().split("T")[0]
           : "",
@@ -163,6 +166,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     const newAssigneeName =
       users.find((agent) => agent.id === data.assigneeId)?.fullname || "";
 
+    const newQaName =
+      qaList.find((qa) => qa.id === data.qaId)?.fullname || "";
+
     const body: any = {
       ticketId: ticket.id,
       statusId: data.statusId,
@@ -170,9 +176,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       currentStatusName: displayTicket?.status?.name || "",
       priorityId: data.priorityId,
       assigneeId: data.assigneeId || null,
+      qaId: data.qaId || null,
       dueDate: data.dueDate || null,
       issue: data.issue,
       newAssigneeName: newAssigneeName,
+      newQaName: newQaName,
     };
 
     // Persist attachment edits through the same Save when the draft changed.
@@ -383,6 +391,10 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const canAssign =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.tickets?.assign;
+
+  const canAssignQA =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.name === RoleName.AGENT;
 
   const canUpdate =
     user?.role?.name === RoleName.ADMIN ||
@@ -1185,6 +1197,151 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                           />
                                         }
                                         title="Chat with Assignee"
+                                        style={{
+                                          padding: 0,
+                                          minHeight: "auto",
+                                          color: "var(--accent-secondary)",
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                </div>
+                              </>
+                            ) : (
+                              <div
+                                style={{
+                                  color: "var(--text-muted)",
+                                  fontSize: "0.85rem",
+                                  fontStyle: "italic",
+                                }}
+                              >
+                                Unassigned
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* QA Assignment */}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 10,
+                      }}
+                    >
+                      <label
+                        style={{
+                          fontSize: "0.9rem",
+                          color: "var(--text-secondary)",
+                          fontWeight: 600,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                        }}
+                      >
+                        <CustomIcon
+                          name="UserPlus"
+                          size={18}
+                          color="var(--accent-secondary)"
+                        />{" "}
+                        QA Assignee
+                      </label>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 12,
+                        }}
+                      >
+                        {canAssignQA && (
+                          <CustomSelect
+                            name="qaId"
+                            control={control}
+                            options={[
+                              {
+                                value: "",
+                                label: "Unassigned",
+                                icon: <CustomIcon name="UserPlus" size={14} />,
+                              },
+                              ...qaList.map((qaUser) => ({
+                                value: qaUser.id,
+                                label: qaUser.fullname,
+                                image: qaUser.image,
+                              })),
+                            ]}
+                            onChange={(val) => {
+                              setValue("qaId", val, {
+                                shouldDirty: true,
+                              });
+                            }}
+                            disabled={!canAssignQA}
+                            placeholder="Assign QA..."
+                          />
+                        )}
+
+                        {!canAssignQA && (
+                          <div
+                            className="glass-card"
+                            style={{
+                              padding: 12,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 12,
+                              minHeight: 64,
+                              background: "rgba(255,255,255,0.03)",
+                              border: "1px solid var(--border-glass)",
+                              borderRadius: 12,
+                            }}
+                          >
+                            {displayTicket.qa ? (
+                              <>
+                                <div
+                                  style={{
+                                    width: 36,
+                                    height: 36,
+                                    borderRadius: "50%",
+                                    background: "rgba(6, 182, 212, 0.1)",
+                                    color: "var(--accent-secondary)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontWeight: 700,
+                                    fontSize: "1rem",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {displayTicket.qa.fullname.charAt(0)}
+                                </div>
+                                <div style={{ minWidth: 0 }}>
+                                  <div
+                                    style={{
+                                      fontWeight: 600,
+                                      fontSize: "0.85rem",
+                                      color: "var(--text-primary)",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 8,
+                                    }}
+                                  >
+                                    {displayTicket.qa.fullname}
+                                    {displayTicket.qa.id !== user?.id && (
+                                      <CustomButton
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleStartChat(
+                                            displayTicket.qa.id,
+                                          )
+                                        }
+                                        icon={
+                                          <CustomIcon
+                                            name="MessageSquare"
+                                            size={14}
+                                          />
+                                        }
+                                        title="Chat with QA"
                                         style={{
                                           padding: 0,
                                           minHeight: "auto",

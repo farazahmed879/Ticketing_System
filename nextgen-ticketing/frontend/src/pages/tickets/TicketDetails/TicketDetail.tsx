@@ -33,6 +33,7 @@ interface SidebarDraft {
   statusId: string;
   priorityId: string;
   assigneeId: string;
+  qaId: string;
   dueDate: string;
 }
 
@@ -61,6 +62,7 @@ const TicketDetail: React.FC = () => {
     statusId: "",
     priorityId: "",
     assigneeId: "",
+    qaId: "",
     dueDate: "",
   });
 
@@ -117,6 +119,7 @@ const TicketDetail: React.FC = () => {
   const statuses = TICKET_STATUSES;
   const priorities = PRIORITIES;
   const [agents, setAgents] = useState<any[]>([]);
+  const [qaList, setQaList] = useState<any[]>([]);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState<any>(null);
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -170,6 +173,7 @@ const TicketDetail: React.FC = () => {
       statusId: t.status.id,
       priorityId: t.priority.id,
       assigneeId: t.assignee?.id || "",
+      qaId: t.qa?.id || "",
       dueDate: t.dueDate ? new Date(t.dueDate).toISOString().split("T")[0] : "",
     });
   };
@@ -190,11 +194,22 @@ const TicketDetail: React.FC = () => {
   const fetchAgents = async () => {
     try {
       const res = await api.get(API_ROUTES.USERS.BASE, {
-        params: { type: "agents", limit: -1 },
+        params: { type: "employees", limit: -1 },
       });
       setAgents(res.data.accounts);
     } catch (err) {
       console.error("Failed to fetch agents", err);
+    }
+  };
+
+  const fetchQaList = async () => {
+    try {
+      const res = await api.get(API_ROUTES.USERS.BASE, {
+        params: { type: "qa", limit: -1 },
+      });
+      setQaList(res.data.accounts);
+    } catch (err) {
+      console.error("Failed to fetch QA list", err);
     }
   };
 
@@ -218,6 +233,7 @@ const TicketDetail: React.FC = () => {
       sidebarDraft.statusId !== ticket.status.id ||
       sidebarDraft.priorityId !== ticket.priority.id ||
       sidebarDraft.assigneeId !== (ticket.assignee?.id || "") ||
+      sidebarDraft.qaId !== (ticket.qa?.id || "") ||
       sidebarDraft.dueDate !== origDueDate
     );
   })();
@@ -229,7 +245,7 @@ const TicketDetail: React.FC = () => {
     setSidebarDraft((prev) => ({
       ...prev,
       [field]: value,
-      statusId: "69e5da8b0e2d511b4eab95eb",
+      ...(field === "assigneeId" && value ? { statusId: "69e5da8b0e2d511b4eab95eb" } : {}),
     }));
   };
 
@@ -336,6 +352,10 @@ const TicketDetail: React.FC = () => {
     }
     if (sidebarDraft.assigneeId !== (ticket!.assignee?.id || "")) {
       payload.assigneeId = sidebarDraft.assigneeId;
+    }
+    if (sidebarDraft.qaId !== (ticket!.qa?.id || "")) {
+      payload.qaId = sidebarDraft.qaId;
+      payload.newQaName = qaList.find((q) => q.id === sidebarDraft.qaId)?.fullname || "";
     }
     const origDueDate = ticket!.dueDate
       ? new Date(ticket!.dueDate).toISOString().split("T")[0]
@@ -486,7 +506,10 @@ const TicketDetail: React.FC = () => {
 
   useEffect(() => {
     fetchTicket();
-    if (canAssign) fetchAgents();
+    if (canAssign) {
+      fetchAgents();
+      fetchQaList();
+    }
   }, [id, canAssign]);
 
   useEffect(() => {
@@ -698,6 +721,7 @@ const TicketDetail: React.FC = () => {
           statuses={statuses}
           priorities={priorities}
           agents={agents}
+          qaList={qaList}
           canUpdatePriority={canUpdatePriority}
           canAssign={canAssign}
           sidebarDraft={sidebarDraft}

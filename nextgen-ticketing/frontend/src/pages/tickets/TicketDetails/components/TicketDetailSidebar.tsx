@@ -12,6 +12,7 @@ interface SidebarDraft {
   statusId: string;
   priorityId: string;
   assigneeId: string;
+  qaId: string;
   dueDate: string;
 }
 
@@ -21,6 +22,7 @@ interface TicketDetailSidebarProps {
   statuses: any[];
   priorities: any[];
   agents: any[];
+  qaList: any[];
   canUpdatePriority: boolean;
   canAssign: boolean;
   sidebarDraft: SidebarDraft;
@@ -34,12 +36,17 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
   statuses,
   priorities,
   agents,
+  qaList,
   canUpdatePriority,
   canAssign,
   sidebarDraft,
   onSidebarDraftChange,
   handleStartChat,
 }) => {
+  const canAssignQA =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.name === RoleName.AGENT;
+
   return (
     <div className={styles.rightColumn}>
       <div
@@ -211,6 +218,73 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
                   onClick={() => handleStartChat(ticket.assignee!.id)}
                   icon={<CustomIcon name="MessageSquare" size={14} />}
                   title="Chat with Assignee"
+                  style={{
+                    padding: 0,
+                    minHeight: "auto",
+                    color: "var(--accent-secondary)",
+                  }}
+                />
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className={styles.sidebarItem}>
+          <span className={styles.sidebarLabel}>QA Assignee</span>
+          {canAssignQA ? (
+            <CustomSelect
+              options={[
+                {
+                  value: "",
+                  label: "Unassigned",
+                  icon: <CustomIcon name="UserPlus" size={16} />,
+                },
+                ...qaList.map((qaUser) => ({
+                  value: qaUser.id,
+                  label: qaUser.fullname,
+                  image: qaUser.image,
+                })),
+              ]}
+              value={sidebarDraft.qaId}
+              onChange={(val) => onSidebarDraftChange("qaId", val)}
+              placeholder="Assign QA..."
+            />
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                className={tableStyles.avatar}
+                style={{
+                  width: 32,
+                  height: 32,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {ticket?.qa?.image ? (
+                  <img
+                    src={ticket?.qa?.image}
+                    alt=""
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                    }}
+                  />
+                ) : (
+                  <CustomIcon name="UserPlus" size={16} />
+                )}
+              </div>
+              <span style={{ fontSize: "0.9rem" }}>
+                {ticket?.qa?.fullname || "Unassigned"}
+              </span>
+              {ticket?.qa && ticket?.qa?.id !== user?.id && (
+                <CustomButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleStartChat(ticket.qa!.id)}
+                  icon={<CustomIcon name="MessageSquare" size={14} />}
+                  title="Chat with QA"
                   style={{
                     padding: 0,
                     minHeight: "auto",

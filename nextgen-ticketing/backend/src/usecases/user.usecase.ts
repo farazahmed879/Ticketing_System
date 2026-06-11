@@ -19,6 +19,10 @@ export const userUsecase = {
     else if (type === RoleType.ADMINS) roleFilter = { role: { roleType: "isAdmin" } };
     else if (type === RoleType.CUSTOMERS)
       roleFilter = { role: { name: RoleName.CUSTOMER } };
+    else if (type === RoleType.QA)
+      roleFilter = { role: { roleType: "isQA" } };
+    else if (type === RoleType.EMPLOYEES)
+      roleFilter = { role: { roleType: "isEmployee" } };
     else if (type && type.toLowerCase() !== "all")
       roleFilter = { roleId: type };
 

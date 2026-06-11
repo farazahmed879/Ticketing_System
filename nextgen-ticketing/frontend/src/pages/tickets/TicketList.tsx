@@ -62,7 +62,7 @@ const TicketList: React.FC = () => {
             },
           }),
           api.get(API_ROUTES.COMMON.TYPES),
-          api.get(API_ROUTES.USERS.BASE, { params: { type: "agents" } }),
+          api.get(API_ROUTES.USERS.BASE, { params: { type: "employees" } }),
         ]);
         setPriorities(pRes.data.priorities);
         setProjects(gRes.data.projects);

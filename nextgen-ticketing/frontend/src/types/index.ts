@@ -117,6 +117,8 @@ export interface Ticket {
   attachments?: string[];
   owner: { id: string; fullname: string; image?: string };
   assignee?: { id: string; fullname: string; image?: string };
+  qaId?: string;
+  qa?: { id: string; fullname: string; image?: string };
   createdAt: string;
   updatedAt: string;
   // Sticky flag: true if the ticket was ever moved to "Returned" (Failed).
@@ -382,6 +384,7 @@ export interface TicketUpdateFormData {
   statusId: string;
   priorityId: string;
   assigneeId: string;
+  qaId?: string;
   dueDate: string;
   issue: string;
   targetStatusName: string;
@@ -393,6 +396,7 @@ export interface TicketDetailModalProps {
   onClose: () => void;
   ticket: any; // Using any for now to maintain compatibility with existing usage
   users: User[];
+  qaList: User[];
   priorities: any[];
   onTicketUpdate: (body: any) => void;
 }

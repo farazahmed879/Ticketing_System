@@ -84,16 +84,24 @@ const Notifications: React.FC = () => {
 
   const getIcon = (type: string) => {
     switch (type) {
-      case "message":
-        return <CustomIcon name="MessageSquare" size={18} color="#4caf50" />;
       case "assignment":
         return <CustomIcon name="UserPlus" size={18} color="#2196f3" />;
-      case "ticket":
-        return <CustomIcon name="Ticket" size={18} color="#ff9800" />;
-      case "support":
-        return <CustomIcon name="Headset" size={18} color="#9c27b0" />;
+      case "ticket_created":
+        return <CustomIcon name="TicketPlus" size={18} color="#4caf50" />;
+      case "ticket_updated":
+        return <CustomIcon name="RefreshCw" size={18} color="#ff9800" />;
+      case "comment":
+        return <CustomIcon name="MessageCircle" size={18} color="#009688" />;
       case "request":
         return <CustomIcon name="FileQuestion" size={18} color="#00bcd4" />;
+      case "interview":
+        return <CustomIcon name="CalendarCheck" size={18} color="#9c27b0" />;
+      case "message":
+        return <CustomIcon name="MessageSquare" size={18} color="#4caf50" />;
+      case "support":
+        return <CustomIcon name="Headset" size={18} color="#7c3aed" />;
+      case "ticket":
+        return <CustomIcon name="Ticket" size={18} color="#f59e0b" />;
       default:
         return <CustomIcon name="Bell" size={18} color="var(--text-muted)" />;
     }

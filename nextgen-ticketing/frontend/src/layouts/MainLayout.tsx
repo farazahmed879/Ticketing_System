@@ -101,6 +101,71 @@ const MainLayout: React.FC = () => {
     setUnreadCount(0);
   };
 
+  const getNotificationIconInfo = (type: string) => {
+    switch (type) {
+      case "assignment":
+        return {
+          iconName: "UserPlus",
+          color: "#2196f3",
+          bg: "rgba(33, 150, 243, 0.1)",
+        };
+      case "ticket_created":
+        return {
+          iconName: "TicketPlus",
+          color: "#4caf50",
+          bg: "rgba(76, 175, 80, 0.1)",
+        };
+      case "ticket_updated":
+        return {
+          iconName: "RefreshCw",
+          color: "#ff9800",
+          bg: "rgba(255, 152, 0, 0.1)",
+        };
+      case "comment":
+        return {
+          iconName: "MessageCircle",
+          color: "#009688",
+          bg: "rgba(0, 150, 136, 0.1)",
+        };
+      case "request":
+        return {
+          iconName: "FileQuestion",
+          color: "#00bcd4",
+          bg: "rgba(0, 188, 212, 0.1)",
+        };
+      case "interview":
+        return {
+          iconName: "CalendarCheck",
+          color: "#9c27b0",
+          bg: "rgba(156, 39, 176, 0.1)",
+        };
+      case "message":
+        return {
+          iconName: "MessageSquare",
+          color: "#4caf50",
+          bg: "rgba(76, 175, 80, 0.1)",
+        };
+      case "support":
+        return {
+          iconName: "Headset",
+          color: "#7c3aed",
+          bg: "rgba(124, 58, 237, 0.1)",
+        };
+      case "ticket":
+        return {
+          iconName: "Ticket",
+          color: "#f59e0b",
+          bg: "rgba(245, 158, 11, 0.1)",
+        };
+      default:
+        return {
+          iconName: "Bell",
+          color: "var(--text-muted)",
+          bg: "rgba(255, 255, 255, 0.05)",
+        };
+    }
+  };
+
   return (
     <div
       className={`${styles.layout} ${isCollapsed ? styles.layoutCollapsed : ""}`}
@@ -254,119 +319,103 @@ const MainLayout: React.FC = () => {
                         <p>{t("topbar.noNotifications")}</p>
                       </div>
                     ) : (
-                      notifications.slice(0, 10).map((n) => (
-                        <div
-                          key={n.id}
-                          style={{
-                            padding: "16px 20px",
-                            borderBottom: "1px solid var(--border-glass)",
-                            background: n.unread
-                              ? "rgba(255,255,255,0.02)"
-                              : "transparent",
-                            cursor: "pointer",
-                            transition: "background 0.2s ease",
-                            position: "relative",
-                          }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.background =
-                              "rgba(255,255,255,0.05)")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.background = n.unread
-                              ? "rgba(255,255,255,0.02)"
-                              : "transparent")
-                          }
-                          onClick={() => {
-                            handleMarkAsRead(n.id);
-                            if (n.data?.ticketId)
-                              navigate(`/tickets/${n.data.ticketId}`);
-                            setIsNotificationOpen(false);
-                          }}
-                        >
-                          <div style={{ display: "flex", gap: 12 }}>
-                            <div
-                              style={{
-                                width: 36,
-                                height: 36,
-                                borderRadius: 10,
-                                background:
-                                  n.type === "assignment"
-                                    ? "rgba(33, 150, 243, 0.1)"
-                                    : n.type === "interview"
-                                      ? "rgba(156, 39, 176, 0.1)"
-                                      : "rgba(76, 175, 80, 0.1)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                flexShrink: 0,
-                              }}
-                            >
-                              {n.type === "assignment" ? (
+                      notifications.slice(0, 10).map((n) => {
+                        const iconInfo = getNotificationIconInfo(n.type);
+                        return (
+                          <div
+                            key={n.id}
+                            style={{
+                              padding: "16px 20px",
+                              borderBottom: "1px solid var(--border-glass)",
+                              background: n.unread
+                                ? "rgba(255,255,255,0.02)"
+                                : "transparent",
+                              cursor: "pointer",
+                              transition: "background 0.2s ease",
+                              position: "relative",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.background =
+                                "rgba(255,255,255,0.05)")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.background = n.unread
+                                ? "rgba(255,255,255,0.02)"
+                                : "transparent")
+                            }
+                            onClick={() => {
+                              handleMarkAsRead(n.id);
+                              if (n.data?.ticketId)
+                                navigate(`/tickets/${n.data.ticketId}`);
+                              setIsNotificationOpen(false);
+                            }}
+                          >
+                            <div style={{ display: "flex", gap: 12 }}>
+                              <div
+                                style={{
+                                  width: 36,
+                                  height: 36,
+                                  borderRadius: 10,
+                                  background: iconInfo.bg,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0,
+                                }}
+                              >
                                 <CustomIcon
-                                  name="ShieldCheck"
+                                  name={iconInfo.iconName}
                                   size={18}
-                                  color="#2196f3"
+                                  color={iconInfo.color}
                                 />
-                              ) : n.type === "interview" ? (
-                                <CustomIcon
-                                  name="CalendarCheck"
-                                  size={18}
-                                  color="#9c27b0"
-                                />
-                              ) : (
-                                <CustomIcon
-                                  name="MessageSquare"
-                                  size={18}
-                                  color="#4caf50"
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div
+                                  style={{
+                                    fontWeight: 600,
+                                    fontSize: "0.85rem",
+                                    color: "var(--text-primary)",
+                                    marginBottom: 2,
+                                  }}
+                                >
+                                  {n.title}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    color: "var(--text-secondary)",
+                                    lineHeight: 1.4,
+                                    marginBottom: 4,
+                                  }}
+                                >
+                                  {n.message}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "0.65rem",
+                                    color: "var(--text-muted)",
+                                  }}
+                                >
+                                  {formatDistanceToNow(new Date(n.createdAt), {
+                                    addSuffix: true,
+                                  })}
+                                </div>
+                              </div>
+                              {n.unread && (
+                                <div
+                                  style={{
+                                    width: 6,
+                                    height: 6,
+                                    borderRadius: "50%",
+                                    background: "var(--accent-primary)",
+                                    marginTop: 6,
+                                  }}
                                 />
                               )}
                             </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div
-                                style={{
-                                  fontWeight: 600,
-                                  fontSize: "0.85rem",
-                                  color: "var(--text-primary)",
-                                  marginBottom: 2,
-                                }}
-                              >
-                                {n.title}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "0.75rem",
-                                  color: "var(--text-secondary)",
-                                  lineHeight: 1.4,
-                                  marginBottom: 4,
-                                }}
-                              >
-                                {n.message}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "0.65rem",
-                                  color: "var(--text-muted)",
-                                }}
-                              >
-                                {formatDistanceToNow(new Date(n.createdAt), {
-                                  addSuffix: true,
-                                })}
-                              </div>
-                            </div>
-                            {n.unread && (
-                              <div
-                                style={{
-                                  width: 6,
-                                  height: 6,
-                                  borderRadius: "50%",
-                                  background: "var(--accent-primary)",
-                                  marginTop: 6,
-                                }}
-                              />
-                            )}
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
 

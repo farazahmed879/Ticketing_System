@@ -52,7 +52,31 @@ const NewHiresSection: React.FC<NewHiresSectionProps> = ({ newHires, onViewAll }
               </div>
               
               <div className={styles.newHireInfo}>
-                <h4 className={styles.hireName}>{hire.fullname}</h4>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <h4 className={styles.hireName} style={{ margin: 0 }}>{hire.fullname}</h4>
+                  {hire.role?.name && (
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        padding: "2px 8px",
+                        borderRadius: 10,
+                        fontSize: "0.65rem",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        color: "var(--accent-primary)",
+                        background: "rgba(var(--accent-primary-rgb, 99, 102, 241), 0.12)",
+                        border: "1px solid rgba(var(--accent-primary-rgb, 99, 102, 241), 0.25)",
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      <CustomIcon name="Shield" size={10} />
+                      {hire.role.name}
+                    </span>
+                  )}
+                </div>
                 <p className={styles.hireTitle}>{hire.title || 'Team Member'}</p>
                 <div className={styles.hireMeta}>
                   <CustomIcon name="Clock" size={10} />

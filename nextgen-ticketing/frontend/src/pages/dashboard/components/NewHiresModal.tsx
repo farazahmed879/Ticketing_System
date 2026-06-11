@@ -91,11 +91,32 @@ const NewHiresModal: React.FC<NewHiresModalProps> = ({ isOpen, onClose, newHires
                 color: "var(--accent-primary)",
                 fontWeight: 600,
                 fontSize: "0.95rem",
-                marginBottom: 8,
+                marginBottom: 4,
               }}
             >
               {hire.title || "Team Member"}
             </p>
+            {hire.role?.name && (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  padding: "3px 10px",
+                  borderRadius: 12,
+                  fontSize: "0.7rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  color: "var(--accent-primary)",
+                  background: "rgba(var(--accent-primary-rgb, 99, 102, 241), 0.12)",
+                  border: "1px solid rgba(var(--accent-primary-rgb, 99, 102, 241), 0.25)",
+                  marginBottom: 8,
+                }}
+              >
+                {hire.role.name}
+              </span>
+            )}
             <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
               Joined{" "}
               {formatDistanceToNow(new Date(hire.createdAt), {

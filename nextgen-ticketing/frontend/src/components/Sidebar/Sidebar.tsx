@@ -72,10 +72,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
     // Admins always have access
     if (user.role.name === RoleName.ADMIN) return true;
 
-    // Grant Customer access to projects list
-    if (user.role.name === RoleName.CUSTOMER && permPath === "groups.view")
-      return true;
-
     const [module, action] = permPath.split(".");
     return user.role.permissions?.[module]?.[action] === true;
   };

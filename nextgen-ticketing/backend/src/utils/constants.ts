@@ -211,6 +211,8 @@ export const NotificationMessages = {
     `Your ticket #${uid} has been resolved`,
   TICKET_UPDATED: (uid: number) => `Ticket #${uid} has been updated`,
   NEW_COMMENT: (uid: number) => `A new comment was added to Ticket #${uid}`,
+  TICKET_QA_ASSIGNED: (subject: string) =>
+    `You are assigned as QA ${subject} ticket`,
   TITLES: {
     NEW_TICKET: "New Ticket",
     CUSTOMER_TICKET: "New Client Ticket",
@@ -218,5 +220,6 @@ export const NotificationMessages = {
     UPDATE: "Ticket Updated",
     RESOLVED: "Ticket Resolved",
     COMMENT: "New Comment",
+    QA_ASSIGNED: "QA Assigned",
   },
 } as const;

@@ -8,6 +8,7 @@ import { socket } from "../services/socket";
 import CustomIcon from "../components/CustomIcon";
 import styles from "./MainLayout.module.css";
 import Sidebar from "../components/Sidebar";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 const MainLayout: React.FC = () => {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ const MainLayout: React.FC = () => {
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [notifications, setNotifications] = React.useState<any[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
+  const [isMarkAllReadOpen, setIsMarkAllReadOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const notificationRef = React.useRef<HTMLDivElement>(null);
 
@@ -99,6 +101,7 @@ const MainLayout: React.FC = () => {
     socket.emit("notifications:markAllRead");
     setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
     setUnreadCount(0);
+    setIsMarkAllReadOpen(false);
   };
 
   const getNotificationIconInfo = (type: string) => {
@@ -294,7 +297,7 @@ const MainLayout: React.FC = () => {
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleMarkAllRead();
+                          setIsMarkAllReadOpen(true);
                         }}
                       >
                         {t("topbar.markAllRead")}
@@ -458,6 +461,16 @@ const MainLayout: React.FC = () => {
           <Outlet />
         </div>
       </main>
+
+      <ConfirmationModal
+        isOpen={isMarkAllReadOpen}
+        onClose={() => setIsMarkAllReadOpen(false)}
+        onConfirm={handleMarkAllRead}
+        title="Mark All as Read"
+        message="Are you sure you want to mark all notifications as read?"
+        confirmText="Mark All Read"
+        type="info"
+      />
     </div>
   );
 };

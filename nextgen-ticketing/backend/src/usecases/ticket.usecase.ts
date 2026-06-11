@@ -600,11 +600,14 @@ export const ticketUsecase = {
           ownerId: existingTicket.ownerId,
           assigneeId: existingTicket.assigneeId,
           statusId: existingTicket.statusId,
+          qaId: existingTicket.qaId,
+          subject: existingTicket.subject,
         },
         data: {
           statusId: data.statusId,
           assigneeId: data.assigneeId,
           newAssigneeName: data.newAssigneeName,
+          qaId: data.qaId,
         },
         historyEntries,
         actorId,
@@ -805,10 +808,21 @@ export const ticketUsecase = {
       notifyIds.add(assigneeId);
     }
 
+    // Also notify the assigned QA (current or newly assigned)
+    const qaId = ctx.data.qaId ?? ctx.existingTicket.qaId;
+    if (qaId) {
+      notifyIds.add(qaId);
+    }
+
     // A new (non-null) assignee, different from before, counts as an assignment.
     const isAssignmentChange =
       !!ctx.data.assigneeId &&
       ctx.data.assigneeId !== ctx.existingTicket.assigneeId;
+
+    // A new (non-null) QA assignee, different from before, counts as a QA assignment.
+    const isQaAssignmentChange =
+      !!ctx.data.qaId &&
+      ctx.data.qaId !== ctx.existingTicket.qaId;
 
     // Resolve the assignee's name for the owner's notification. Prefer the name
     // the client sent; otherwise look it up so the message is accurate no
@@ -873,6 +887,9 @@ export const ticketUsecase = {
         // The newly-assigned user gets the "assigned to you" message.
         const isAssignment =
           isAssignmentChange && targetUserId === ctx.data.assigneeId;
+        // The newly-assigned QA gets the "assigned as QA" message.
+        const isQaAssignment =
+          isQaAssignmentChange && targetUserId === ctx.data.qaId;
         // The owner (when it's not them being assigned) gets a tailored
         // "your ticket has been assigned to X" message.
         const isOwnerAssignmentNotice =
@@ -893,6 +910,10 @@ export const ticketUsecase = {
         if (isAssignment) {
           title = NotificationMessages.TITLES.ASSIGNMENT;
           message = NotificationMessages.TICKET_ASSIGNED(ctx.ticketUid);
+          type = "assignment";
+        } else if (isQaAssignment) {
+          title = NotificationMessages.TITLES.QA_ASSIGNED;
+          message = NotificationMessages.TICKET_QA_ASSIGNED(ctx.existingTicket.subject);
           type = "assignment";
         } else if (isOwnerAssignmentNotice) {
           title = NotificationMessages.TITLES.ASSIGNMENT;

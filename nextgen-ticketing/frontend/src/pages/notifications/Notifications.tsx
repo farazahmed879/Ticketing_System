@@ -8,6 +8,7 @@ import styles from "./Notifications.module.css";
 import { useNavigate } from "react-router-dom";
 import { NotificationSkeleton } from "../../components/CustomSkeleton";
 import CustomPagination from "../../components/CustomPagination";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 import type { NotificationItem } from "../../types";
 
@@ -17,6 +18,9 @@ const Notifications: React.FC = () => {
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(15);
+  const [isMarkAllReadOpen, setIsMarkAllReadOpen] = useState(false);
+  const [isClearAllOpen, setIsClearAllOpen] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
   const navigate = useNavigate();
 
   const fetchNotifications = async () => {
@@ -62,23 +66,29 @@ const Notifications: React.FC = () => {
   };
 
   const handleMarkAllRead = async () => {
+    setConfirmLoading(true);
     try {
       await api.put(API_ROUTES.NOTIFICATIONS.READ_ALL);
       setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
     } catch (err) {
       console.error("Failed to mark all as read", err);
+    } finally {
+      setConfirmLoading(false);
+      setIsMarkAllReadOpen(false);
     }
   };
 
   const handleClearAll = async () => {
-    if (!window.confirm("Are you sure you want to clear all notifications?"))
-      return;
+    setConfirmLoading(true);
     try {
       await api.delete(API_ROUTES.NOTIFICATIONS.CLEAR);
       setNotifications([]);
       setTotalCount(0);
     } catch (err) {
       console.error("Failed to clear notifications", err);
+    } finally {
+      setConfirmLoading(false);
+      setIsClearAllOpen(false);
     }
   };
 
@@ -129,14 +139,14 @@ const Notifications: React.FC = () => {
         <div className={styles.actions}>
           <button
             className={`${styles.actionBtn} glass-card glass-card-hover`}
-            onClick={handleMarkAllRead}
+            onClick={() => setIsMarkAllReadOpen(true)}
             disabled={!notifications.some((n) => n.unread)}
           >
             <CustomIcon name="CheckCircle2" size={16} /> Mark all read
           </button>
           <button
             className={`${styles.actionBtn} glass-card glass-card-hover`}
-            onClick={handleClearAll}
+            onClick={() => setIsClearAllOpen(true)}
             disabled={notifications.length === 0}
             style={{ color: "var(--accent-danger)" }}
           >
@@ -213,6 +223,28 @@ const Notifications: React.FC = () => {
           />
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={isMarkAllReadOpen}
+        onClose={() => setIsMarkAllReadOpen(false)}
+        onConfirm={handleMarkAllRead}
+        title="Mark All as Read"
+        message="Are you sure you want to mark all notifications as read?"
+        confirmText="Mark All Read"
+        type="info"
+        loading={confirmLoading}
+      />
+
+      <ConfirmationModal
+        isOpen={isClearAllOpen}
+        onClose={() => setIsClearAllOpen(false)}
+        onConfirm={handleClearAll}
+        title="Clear All Notifications"
+        message="Are you sure you want to permanently clear all notifications? This action cannot be undone."
+        confirmText="Clear All"
+        type="danger"
+        loading={confirmLoading}
+      />
     </div>
   );
 };

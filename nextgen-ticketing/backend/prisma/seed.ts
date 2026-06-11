@@ -83,6 +83,40 @@ async function main() {
     announcements: { view: true, create: true, update: true, delete: true },
   };
 
+  const hrPermissions = {
+    tickets: { view: true, create: true, update: true, delete: false, assign: false, priority: false },
+    comments: { view: true, create: true },
+    users: { view: true, create: true, update: true, delete: true },
+    teams: { view: true, create: true, update: true, delete: true },
+    groups: { view: true, create: true, update: true, delete: true },
+    roles: { view: false, create: false, update: false, delete: false },
+    departments: { view: true, create: true, update: true, delete: true },
+    messages: { view: true, create: true },
+    dashboard: { view: true },
+    timesheets: { view: true, approve: true, report: true },
+    candidates: { view: true, create: true, update: true, delete: true },
+    interviews: { view: true, create: true, update: true, delete: true },
+    requests: { view: true, create: true, update: true, delete: true },
+    announcements: { view: true, create: true, update: true, delete: true },
+  };
+
+  const qaPermissions = {
+    tickets: { view: true, create: true, update: true, delete: false, assign: false, priority: false },
+    comments: { view: true, create: true },
+    users: { view: false, create: false, update: false, delete: false },
+    teams: { view: true, create: false, update: false, delete: false },
+    groups: { view: true, create: false, update: false, delete: false },
+    roles: { view: false, create: false, update: false, delete: false },
+    departments: { view: false, create: false, update: false, delete: false },
+    messages: { view: true, create: true },
+    dashboard: { view: true },
+    timesheets: { view: true, approve: false, report: true },
+    candidates: { view: false, create: false, update: false, delete: false },
+    interviews: { view: false, create: false, update: false, delete: false },
+    requests: { view: false, create: false, update: false, delete: false },
+    announcements: { view: true, create: true, update: true, delete: true },
+  };
+
   const adminRole = await prisma.role.upsert({
     where: { name: RoleName.ADMIN },
     update: { permissions: adminPermissions },
@@ -124,6 +158,28 @@ async function main() {
       description: "End-user who submits tickets",
       roleType: "isCustomer",
       permissions: customerPermissions,
+    },
+  });
+
+  const hrRole = await prisma.role.upsert({
+    where: { name: RoleName.HR },
+    update: { permissions: hrPermissions },
+    create: {
+      name: RoleName.HR,
+      description: "Human Resources",
+      roleType: "isHR",
+      permissions: hrPermissions,
+    },
+  });
+
+  const qaRole = await prisma.role.upsert({
+    where: { name: RoleName.QA },
+    update: { permissions: qaPermissions },
+    create: {
+      name: RoleName.QA,
+      description: "Quality Assurance tester",
+      roleType: "isQA",
+      permissions: qaPermissions,
     },
   });
 
@@ -207,6 +263,44 @@ async function main() {
           [statusMap[StatusName.RESOLVED]]: false,
           [statusMap[StatusName.CLOSED]]: true,
           [statusMap[StatusName.APPROVED]]: false,
+        },
+      },
+    },
+  });
+
+  await prisma.role.update({
+    where: { name: RoleName.HR },
+    data: {
+      permissions: {
+        ...hrPermissions,
+        boardStatuses: {
+          [statusMap[StatusName.NEW]]: true,
+          [statusMap[StatusName.OPEN]]: true,
+          [statusMap[StatusName.TRASH]]: false,
+          [statusMap[StatusName.FAILED]]: true,
+          [statusMap[StatusName.IN_PROCESS]]: true,
+          [statusMap[StatusName.RESOLVED]]: true,
+          [statusMap[StatusName.CLOSED]]: false,
+          [statusMap[StatusName.APPROVED]]: true,
+        },
+      },
+    },
+  });
+
+  await prisma.role.update({
+    where: { name: RoleName.QA },
+    data: {
+      permissions: {
+        ...qaPermissions,
+        boardStatuses: {
+          [statusMap[StatusName.NEW]]: false,
+          [statusMap[StatusName.OPEN]]: false,
+          [statusMap[StatusName.TRASH]]: false,
+          [statusMap[StatusName.FAILED]]: true,
+          [statusMap[StatusName.IN_PROCESS]]: true,
+          [statusMap[StatusName.RESOLVED]]: true,
+          [statusMap[StatusName.CLOSED]]: false,
+          [statusMap[StatusName.APPROVED]]: true,
         },
       },
     },

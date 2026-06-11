@@ -282,16 +282,19 @@ const TicketBoard: React.FC = () => {
 
   const handleUpdateStatus = async (body: any) => {
     try {
+      // Only gate on the board-status permission when the status is actually
+      // changing. Otherwise an edit that merely keeps the current status (e.g.
+      // changing only the due date) would be wrongly blocked.
+      const isStatusChanging =
+        !!body.targetStatusName &&
+        !!body.currentStatusName &&
+        body.targetStatusName !== body.currentStatusName;
+
       const isStatusAllowed =
         user?.role?.name === RoleName.ADMIN ||
         user?.role?.permissions?.boardStatuses?.[body?.statusId] === true;
 
-      // if (!canUpdate) {
-      //   showNotification("error", UIMessages.BOARD.PERMISSION_DENIED);
-      //   return;
-      // }
-
-      if (!isStatusAllowed) {
+      if (isStatusChanging && !isStatusAllowed) {
         showNotification(
           "error",
           UIMessages.BOARD.ACCESS_DENIED(

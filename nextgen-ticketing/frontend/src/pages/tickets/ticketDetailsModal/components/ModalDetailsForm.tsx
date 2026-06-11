@@ -332,6 +332,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
                 <span>Due Date</span>
               </div>
             }
+            min={new Date().toISOString().split("T")[0]}
             disabled={!canUpdate || isDisbaledMode || isClient}
           />
 

@@ -369,6 +369,7 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
                   }
                   value={sidebarDraft.dueDate}
                   onChange={(val) => onSidebarDraftChange("dueDate", val)}
+                  min={new Date().toISOString().split("T")[0]}
                 />
               </div>
             )}

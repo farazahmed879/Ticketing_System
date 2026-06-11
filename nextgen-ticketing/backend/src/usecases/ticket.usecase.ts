@@ -455,7 +455,7 @@ export const ticketUsecase = {
       : null;
 
     if (data.dueDate !== undefined && data.dueDate !== dueDate) {
-      const canEditDueDate = isAdmin || isManager;
+      const canEditDueDate = isAdmin || isManager || isEmployee || (isOwner && existingTicket.status?.name === StatusName.NEW);
       if (!canEditDueDate) {
         throw new Error(
           "You do not have permission to change ticket due date.",

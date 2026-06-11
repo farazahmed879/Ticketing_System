@@ -421,6 +421,16 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     return isAdmin || isManager || (isClient && isOwner && ticketIsNew);
   })();
 
+  
+  const disabledDueDateEdit =
+    user?.role?.name === RoleName.QA;
+
+  // Employees can only set the due date while the ticket is in the "Assigned"
+  // status (i.e. assigned to an employee) — disabled in every other status.
+  const disableDueDateForEmployees =
+    user?.role?.name === RoleName.EMPLOYEE &&
+    displayTicket?.status?.name !== StatusName.OPEN;
+
   const getStatusOptions = (columns: any[]) => {
     return columns.map((s: any) => ({
       value: s.id,
@@ -1060,7 +1070,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           <span>Due Date</span>
                         </div>
                       }
-                      disabled={!canUpdate || isDisbaledMode || isClient}
+                      min={new Date().toISOString().split("T")[0]}
+                      disabled={!canUpdate || isDisbaledMode || isClient || disabledDueDateEdit || disableDueDateForEmployees}
                     />
 
                     {/* Assignment */}

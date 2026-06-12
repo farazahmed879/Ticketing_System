@@ -495,7 +495,8 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
             </div>
           </div>
 
-          {/* QA Assignment */}
+          {/* QA Assignment — hidden from clients */}
+          {!isClient && (
           <div
             style={{
               display: "flex",
@@ -634,6 +635,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
               )}
             </div>
           </div>
+          )}
         </div>
       </div>
     </>

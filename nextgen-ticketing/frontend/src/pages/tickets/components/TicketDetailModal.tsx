@@ -852,7 +852,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         {displayTicket.priority.name}
                       </CustomBadge>
                     )}
-                    {user?.role?.name !== RoleName.CUSTOMER ? (
+                    {user?.role?.name !== RoleName.CUSTOMER &&
+                    !(
+                      user?.role?.name === RoleName.EMPLOYEE &&
+                      displayTicket?.status?.name === StatusName.APPROVED
+                    ) ? (
                       <CustomSelect
                         name="statusId"
                         control={control}
@@ -1239,7 +1243,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       </div>
                     </div>
 
-                    {/* QA Assignment */}
+                    {/* QA Assignment — hidden from clients */}
+                    {!isClient && (
                     <div
                       style={{
                         display: "flex",
@@ -1381,6 +1386,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         )}
                       </div>
                     </div>
+                    )}
                   </div>
                 </div>
 

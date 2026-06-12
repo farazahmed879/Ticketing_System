@@ -246,6 +246,8 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
           )}
         </div>
 
+        {/* QA Assignee — hidden from clients */}
+        {user?.role?.name !== RoleName.CUSTOMER && (
         <div className={styles.sidebarItem}>
           <span className={styles.sidebarLabel}>QA Assignee</span>
           {canAssignQA ? (
@@ -312,6 +314,7 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
             </div>
           )}
         </div>
+        )}
 
         <div className={styles.sidebarItem}>
           <span className={styles.sidebarLabel}>Details</span>

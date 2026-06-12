@@ -47,7 +47,7 @@
   margin-bottom: 16px;
   display: flex;
   justify-content: center;
-  filter: drop-shadow(0 0 15px rgba(124, 58, 237, 0.3));
+  /* filter: drop-shadow(0 0 15px rgba(124, 58, 237, 0.3)); */
 }
 
 .logo {

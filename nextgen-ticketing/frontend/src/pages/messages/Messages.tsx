@@ -50,10 +50,15 @@ const Messages: React.FC = () => {
   const [allProjects, setAllProjects] = useState<any[]>([]);
   const [suggestionQuery, setSuggestionQuery] = useState("");
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const activeConvRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    activeConvRef.current = activeConv;
+  }, [activeConv]);
 
   const fetchConversations = async () => {
     try {
@@ -79,9 +84,12 @@ const Messages: React.FC = () => {
       setUnreadCounts(counts);
       setUnreadMessageNotifications(unreadMessageNotifs);
 
-      // Handle userId from query params
+      // Handle userId or roomId from query params
       const userIdFromParam = searchParams.get("userId");
-      if (userIdFromParam) {
+      const roomIdFromParam = searchParams.get("roomId");
+      if (roomIdFromParam) {
+        setActiveConv(roomIdFromParam);
+      } else if (userIdFromParam) {
         startChatWithUser(userIdFromParam);
       }
     } catch (err) {
@@ -96,7 +104,7 @@ const Messages: React.FC = () => {
 
     // Socket listeners
     socket.on("chat:receive", (data: { roomId: string; message: Message }) => {
-      if (activeConv === data.roomId) {
+      if (activeConvRef.current === data.roomId) {
         setMessages((prev) => [...prev, data.message]);
       }
 
@@ -133,7 +141,7 @@ const Messages: React.FC = () => {
       if (notification.type === "message") {
         const roomId = notification.data?.roomId;
         if (roomId) {
-          if (activeConv === roomId) {
+          if (activeConvRef.current === roomId) {
             // Mark as read immediately on backend
             socket.emit("notifications:markRead", notification.id);
           } else {
@@ -152,7 +160,7 @@ const Messages: React.FC = () => {
       socket.off("chat:receive");
       socket.off("notifications:new");
     };
-  }, [activeConv, user?.id]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (activeConv) {
@@ -198,6 +206,33 @@ const Messages: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (activeConv) {
+      if (searchParams.get("roomId") !== activeConv) {
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.set("roomId", activeConv);
+            next.delete("userId");
+            return next;
+          },
+          { replace: true }
+        );
+      }
+    } else {
+      if (searchParams.has("roomId")) {
+        setSearchParams(
+          (prev) => {
+            const next = new URLSearchParams(prev);
+            next.delete("roomId");
+            return next;
+          },
+          { replace: true }
+        );
+      }
+    }
+  }, [activeConv, searchParams, setSearchParams]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

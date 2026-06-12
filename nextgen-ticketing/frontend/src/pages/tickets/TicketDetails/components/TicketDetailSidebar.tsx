@@ -1,7 +1,6 @@
 import React from "react";
 import CustomIcon from "../../../../components/CustomIcon";
 import CustomSelect from "../../../../components/CustomSelect";
-import CustomButton from "../../../../components/CustomButton";
 import CustomDatePicker from "../../../../components/CustomDatePicker";
 import styles from "../TicketDetail.module.css";
 import tableStyles from "../../../dashboard/Dashboard.module.css";
@@ -42,7 +41,7 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
   canAssign,
   sidebarDraft,
   onSidebarDraftChange,
-  handleStartChat,
+  // handleStartChat is passed but not read here
 }) => {
   const canAssignQA =
     user?.role?.name === RoleName.ADMIN ||

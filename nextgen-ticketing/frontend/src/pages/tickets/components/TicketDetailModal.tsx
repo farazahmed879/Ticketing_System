@@ -308,10 +308,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     }
   };
 
-  const handleStartChat = (userId: string) => {
-    onClose();
-    navigate(`/messages?userId=${userId}`);
-  };
 
   const handleDeleteTicket = async () => {
     setIsLoading(true, UIMessages.LOADING.DELETING);

@@ -358,8 +358,13 @@ const MainLayout: React.FC = () => {
                             }
                             onClick={() => {
                               handleMarkAsRead(n.id);
-                              if (n.data?.ticketId)
+                              if (n.data?.ticketId) {
                                 navigate(`/tickets/${n.data.ticketId}`);
+                              } else if (n.type === "message" && n.data?.roomId) {
+                                navigate(`/messages?roomId=${n.data.roomId}`);
+                              } else if (n.type === "message") {
+                                navigate("/messages");
+                              }
                               setIsNotificationOpen(false);
                             }}
                           >

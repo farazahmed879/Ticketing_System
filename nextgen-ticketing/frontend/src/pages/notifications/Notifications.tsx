@@ -121,7 +121,9 @@ const Notifications: React.FC = () => {
     handleMarkAsRead(n.id);
     if (n.data?.ticketId) {
       navigate(`/tickets/${n.data.ticketId}`);
-    } else if (n.data?.roomId) {
+    } else if (n.type === "message" && n.data?.roomId) {
+      navigate(`/messages?roomId=${n.data.roomId}`);
+    } else if (n.type === "message" || n.data?.roomId) {
       navigate("/messages");
     } else if (n.data?.requestId) {
       navigate("/requests");

@@ -49,7 +49,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
   canAssignQA,
   isClient,
   user,
-  handleStartChat,
+  // handleStartChat is passed but not read here
   onClose,
   navigate,
   fullTicketData,

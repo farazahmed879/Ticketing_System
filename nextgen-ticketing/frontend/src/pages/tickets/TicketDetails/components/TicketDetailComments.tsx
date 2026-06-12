@@ -16,7 +16,7 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
   user,
   newComment,
   setNewComment,
-  isNote,
+  isNote: _,
   setIsNote,
   commentAttachments,
   commentAttachmentError,

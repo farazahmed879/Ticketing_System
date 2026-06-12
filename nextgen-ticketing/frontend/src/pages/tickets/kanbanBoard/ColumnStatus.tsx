@@ -138,21 +138,23 @@ const ColumnStatus = ({
                   style={{ background: ticket.priority.color }}
                 ></div>
                 <span className={styles.miniUid}>#{ticket.uid}</span>
-                <CustomIcon
-                  name={ticket.qa ? "ShieldCheck" : "ShieldOff"}
-                  size={12}
-                  style={{ marginLeft: "auto" }}
-                  color={
-                    ticket.qa
-                      ? "var(--accent-success, #10b981)"
-                      : "var(--text-muted)"
-                  }
-                  title={
-                    ticket.qa
-                      ? `QA assigned: ${ticket.qa.fullname}`
-                      : "QA not assigned"
-                  }
-                />
+                {user?.role?.name !== RoleName.CUSTOMER && (
+                  <CustomIcon
+                    name={ticket.qa ? "ShieldCheck" : "ShieldOff"}
+                    size={12}
+                    style={{ marginLeft: "auto" }}
+                    color={
+                      ticket.qa
+                        ? "var(--accent-success, #10b981)"
+                        : "var(--text-muted)"
+                    }
+                    title={
+                      ticket.qa
+                        ? `QA assigned: ${ticket.qa.fullname}`
+                        : "QA not assigned"
+                    }
+                  />
+                )}
               </div>
             ) : (
               <TicketCard

@@ -285,9 +285,19 @@ const TicketBoard: React.FC = () => {
 
       if (body.currentStatusName == StatusName.CLOSED) return;
 
+      // Admins and managers may cancel a ticket even without an explicit
+      // board-status permission (managers have no Cancelled column, so the
+      // Cancel action in the modal is their only path). The backend still
+      // enforces the real transition rules.
+      const isCancelByStaff =
+        body.targetStatusName === StatusName.TRASH &&
+        (user?.role?.name === RoleName.ADMIN ||
+          user?.role?.name === RoleName.AGENT);
+
       const isStatusAllowed =
         user?.role?.name === RoleName.ADMIN ||
-        user?.role?.permissions?.boardStatuses?.[body?.statusId] === true;
+        user?.role?.permissions?.boardStatuses?.[body?.statusId] === true ||
+        isCancelByStaff;
 
       if (isStatusChanging && !isStatusAllowed) {
         showNotification(

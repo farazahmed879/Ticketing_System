@@ -73,6 +73,10 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const [newComment, setNewComment] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [pendingReview, setPendingReview] = useState<
+    "satisfied" | "unsatisfied" | null
+  >(null);
 
   // Close guard: warn before discarding unsaved ticket-field changes (form
   // fields or pending attachment edits). Comments are separate state, so they
@@ -662,8 +666,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             <div className={styles.grid}>
               {/* Left Column: Details */}
               <div className={styles.leftColumn}>
-                {isClient &&
-                  isTicketOwner &&
+                {((isClient && isTicketOwner) ||
+                  user?.role?.name === RoleName.AGENT) &&
                   displayTicket?.status?.name === StatusName.NEW && (
                     <div
                       className="glass-card"
@@ -692,7 +696,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       </div>
                       <CustomButton
                         variant="outline"
-                        onClick={() => handleClientDecision("cancel")}
+                        onClick={() => setShowCancelConfirm(true)}
                         icon={<CustomIcon name="Trash2" size={16} />}
                         style={{
                           borderColor: "var(--accent-danger)",
@@ -766,7 +770,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         <div style={{ display: "flex", gap: 12 }}>
                           <CustomButton
                             variant="outline"
-                            onClick={() => handleClientDecision("unsatisfied")}
+                            onClick={() => setPendingReview("unsatisfied")}
                             icon={<CustomIcon name="XCircle" size={16} />}
                             style={{
                               borderColor: "var(--accent-danger)",
@@ -777,7 +781,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           </CustomButton>
                           <CustomButton
                             variant="primary"
-                            onClick={() => handleClientDecision("satisfied")}
+                            onClick={() => setPendingReview("satisfied")}
                             icon={<CustomIcon name="CheckCircle2" size={16} />}
                             style={{ background: "var(--accent-success)" }}
                           >
@@ -1725,6 +1729,47 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         confirmText="Discard Changes"
         cancelText="Keep Editing"
         type="warning"
+      />
+
+      <ConfirmationModal
+        isOpen={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        onConfirm={() => {
+          setShowCancelConfirm(false);
+          handleClientDecision("cancel");
+        }}
+        title="Cancel Ticket"
+        message="Are you sure you want to cancel this ticket? This action cannot be undone."
+        confirmText="Yes, Cancel Ticket"
+        cancelText="No, Keep It"
+        type="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={pendingReview !== null}
+        onClose={() => setPendingReview(null)}
+        onConfirm={() => {
+          const decision = pendingReview;
+          setPendingReview(null);
+          if (decision) handleClientDecision(decision);
+        }}
+        title={
+          pendingReview === "satisfied"
+            ? "Mark as Satisfied"
+            : "Mark as Unsatisfied"
+        }
+        message={
+          pendingReview === "satisfied"
+            ? "Are you sure you are satisfied with the resolution? This will close the ticket."
+            : "Are you sure you are unsatisfied? This will return the ticket to the team."
+        }
+        confirmText={
+          pendingReview === "satisfied"
+            ? "Yes, I'm Satisfied"
+            : "Yes, I'm Unsatisfied"
+        }
+        cancelText="Cancel"
+        type={pendingReview === "satisfied" ? "success" : "warning"}
       />
 
       {lightbox &&

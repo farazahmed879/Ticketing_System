@@ -4,7 +4,7 @@ import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
-import { UIMessages, ProjectStatus } from "../../utils/constants";
+import { ProjectStatus, RoleName } from "../../utils/constants";
 import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomBadge from "../../components/CustomBadge";
@@ -12,6 +12,8 @@ import CustomInput from "../../components/CustomInput";
 import type { Project } from "../../types";
 import type { TableColumn } from "../../components/types";
 import ProjectModal from "./components/ProjectModal";
+import { useAuth } from "../../context/AuthContext";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 const statusBadgeVariant = (status: string) => {
   switch (status) {
@@ -39,19 +41,45 @@ const ProjectList: React.FC = () => {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   const [clients, setClients] = useState<any[]>([]);
+  const [managers, setManagers] = useState<any[]>([]);
   const { showNotification, setIsLoading } = useNotification();
+  const { user } = useAuth();
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+
+  const canCreate =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.permissions?.groups?.create === true;
+  const canUpdate =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.permissions?.groups?.update === true;
+  const canDelete =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.permissions?.groups?.delete === true;
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [projectsRes, clientsRes] = await Promise.all([
-        api.get(API_ROUTES.PROJECTS.BASE),
+      const [projectsRes, clientsRes, staffRes] = await Promise.all([
+        api.get(API_ROUTES.PROJECTS.BASE, {
+          params: { role: user?.role?.name, userId: user?.id },
+        }),
         api.get(API_ROUTES.USERS.BASE, {
           params: { type: "clients", limit: -1 },
+        }),
+        api.get(API_ROUTES.USERS.BASE, {
+          params: { type: "agents", limit: -1 },
         }),
       ]);
       setProjects(projectsRes.data.projects);
       setClients(clientsRes.data.accounts);
+      setManagers(
+        staffRes.data.accounts.filter(
+          (u: any) => u.role?.name === RoleName.AGENT,
+        ),
+      );
     } catch (err) {
       console.error("Failed to fetch projects data", err);
       showNotification("error", "Failed to load projects data");
@@ -81,12 +109,16 @@ const ProjectList: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this project?"))
-      return;
-    setIsLoading(true, UIMessages.LOADING.DELETING);
+  const handleDeleteClick = (id: string) => {
+    setProjectToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!projectToDelete) return;
+    setConfirmLoading(true);
     try {
-      await api.delete(API_ROUTES.PROJECTS.BY_ID(id));
+      await api.delete(API_ROUTES.PROJECTS.BY_ID(projectToDelete));
       showNotification("success", "Project deleted successfully");
       fetchData();
     } catch (err: any) {
@@ -95,7 +127,9 @@ const ProjectList: React.FC = () => {
         err.response?.data?.error || "Failed to delete project",
       );
     } finally {
-      setIsLoading(false, "");
+      setConfirmLoading(false);
+      setIsDeleteModalOpen(false);
+      setProjectToDelete(null);
     }
   };
 
@@ -125,104 +159,138 @@ const ProjectList: React.FC = () => {
     }
   };
 
-  const columns: TableColumn<Project>[] = [
-    {
-      header: "Project",
-      key: "name",
-      render: (p) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            className="glass-card"
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "rgba(16, 185, 129, 0.1)",
-            }}
-          >
-            <CustomIcon
-              name="FolderKanban"
-              size={18}
-              color="var(--accent-success)"
-            />
-          </div>
-          <div>
-            <div style={{ fontWeight: 600 }}>{p.name}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-              {p.description || "Company project"}
+  const columns: TableColumn<Project>[] = useMemo(() => {
+    const cols: TableColumn<Project>[] = [
+      {
+        header: "Project",
+        key: "name",
+        render: (p) => (
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              className="glass-card"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(16, 185, 129, 0.1)",
+              }}
+            >
+              <CustomIcon
+                name="FolderKanban"
+                size={18}
+                color="var(--accent-success)"
+              />
             </div>
-          </div>
-        </div>
-      ),
-    },
-
-    {
-      header: "Clients",
-      key: "clients",
-      render: (p) => (
-        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-          {p.clients?.length ? (
-            p.clients.map((c) => (
-              <span
-                key={c.id}
+            <div>
+              <div style={{ fontWeight: 600 }}>{p.name}</div>
+              <div
                 style={{
-                  fontSize: "0.75rem",
-                  background: "rgba(255,255,255,0.05)",
-                  padding: "2px 8px",
-                  borderRadius: 4,
+                  fontSize: "0.8rem",
+                  color: "var(--text-muted)",
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "center",
                 }}
               >
-                {c.fullname}
+                <span>{p.description || "Company project"}</span>
+                {p.manager && (
+                  <>
+                    <span style={{ opacity: 0.5 }}>•</span>
+                    <span
+                      style={{ display: "flex", alignItems: "center", gap: 4 }}
+                    >
+                      <CustomIcon
+                        name="User"
+                        size={12}
+                        color="var(--text-muted)"
+                      />
+                      Manager: {p.manager.fullname}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        ),
+      },
+
+      {
+        header: "Clients",
+        key: "clients",
+        render: (p) => (
+          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+            {p.clients?.length ? (
+              p.clients.map((c) => (
+                <span
+                  key={c.id}
+                  style={{
+                    fontSize: "0.75rem",
+                    background: "rgba(255,255,255,0.05)",
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                  }}
+                >
+                  {c.fullname}
+                </span>
+              ))
+            ) : (
+              <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
+                No clients assigned
               </span>
-            ))
-          ) : (
-            <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
-              No clients assigned
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      header: "Status",
-      key: "status",
-      render: (p) => (
-        <CustomBadge variant={statusBadgeVariant(p.status) as any}>
-          {p.status}
-        </CustomBadge>
-      ),
-    },
-    {
-      header: "Actions",
-      key: "actions",
-      render: (p) => (
-        <div style={{ display: "flex", gap: 8 }}>
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              handleEdit(p);
-            }}
-            icon={<CustomIcon name="Edit2" size={16} />}
-          />
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              handleDelete(p.id);
-            }}
-            icon={<CustomIcon name="Trash2" size={16} />}
-            style={{ color: "var(--accent-danger)" }}
-          />
-        </div>
-      ),
-    },
-  ];
+            )}
+          </div>
+        ),
+      },
+      {
+        header: "Status",
+        key: "status",
+        render: (p) => (
+          <CustomBadge variant={statusBadgeVariant(p.status) as any}>
+            {p.status}
+          </CustomBadge>
+        ),
+      },
+    ];
+
+    if (canUpdate || canDelete) {
+      cols.push({
+        header: "Actions",
+        key: "actions",
+        render: (p) => (
+          <div style={{ display: "flex", gap: 8 }}>
+            {canUpdate && (
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  handleEdit(p);
+                }}
+                icon={<CustomIcon name="Edit2" size={16} />}
+              />
+            )}
+            {canDelete && (
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  handleDeleteClick(p.id);
+                }}
+                icon={<CustomIcon name="Trash2" size={16} />}
+                style={{ color: "var(--accent-danger)" }}
+              />
+            )}
+          </div>
+        ),
+      });
+    }
+
+    return cols;
+  }, [canUpdate, canDelete]);
 
   return (
     <>
@@ -241,16 +309,18 @@ const ProjectList: React.FC = () => {
                 Manage client and internal projects
               </p>
             </div>
-            <CustomButton
-              variant="gradient"
-              icon={<CustomIcon name="Plus" size={20} />}
-              onClick={() => {
-                setEditingProject(null);
-                setIsModalOpen(true);
-              }}
-            >
-              Add Project
-            </CustomButton>
+            {canCreate && (
+              <CustomButton
+                variant="gradient"
+                icon={<CustomIcon name="Plus" size={20} />}
+                onClick={() => {
+                  setEditingProject(null);
+                  setIsModalOpen(true);
+                }}
+              >
+                Add Project
+              </CustomButton>
+            )}
           </div>
         }
         filters={
@@ -284,6 +354,21 @@ const ProjectList: React.FC = () => {
         onSubmit={handleSubmit}
         project={editingProject}
         clients={clients}
+        managers={managers}
+      />
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setProjectToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Project"
+        message="Are you sure you want to permanently delete this project? This action cannot be undone."
+        confirmText="Delete"
+        type="danger"
+        loading={confirmLoading}
       />
     </>
   );

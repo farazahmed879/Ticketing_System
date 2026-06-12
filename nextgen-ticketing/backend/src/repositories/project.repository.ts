@@ -3,11 +3,12 @@ import { TICKET_STATUSES, PRIORITIES } from "../utils/constants";
 
 export const projectRepository = {
   async findMany(params: any = {}) {
-    const { departmentId, clientId, status } = params;
+    const { departmentId, clientId, managerId, status } = params;
     const where: any = { deleted: false };
     
     if (departmentId) where.departmentId = departmentId;
     if (clientId) where.clientIds = { has: clientId };
+    if (managerId) where.managerId = managerId;
     if (status) where.status = status;
 
     return prisma.project.findMany({
@@ -15,6 +16,7 @@ export const projectRepository = {
       include: {
         department: { select: { id: true, name: true } },
         clients: { select: { id: true, fullname: true, image: true } },
+        manager: { select: { id: true, fullname: true, image: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -26,6 +28,7 @@ export const projectRepository = {
       include: {
         department: { select: { id: true, name: true } },
         clients: { select: { id: true, fullname: true, image: true } },
+        manager: { select: { id: true, fullname: true, image: true } },
         tickets: {
           where: { deleted: false },
           select: {
@@ -60,6 +63,7 @@ export const projectRepository = {
       include: {
         department: true,
         clients: true,
+        manager: true,
       },
     });
   },
@@ -71,6 +75,7 @@ export const projectRepository = {
       include: {
         department: true,
         clients: true,
+        manager: true,
       },
     });
   },

@@ -23,6 +23,7 @@ interface TicketFormProps {
   onSubmit: (data: TicketFormData) => Promise<void>;
   isLoading?: boolean;
   showAssignee?: boolean;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 const TicketForm: React.FC<TicketFormProps> = ({
@@ -33,13 +34,14 @@ const TicketForm: React.FC<TicketFormProps> = ({
   agents,
   onSubmit,
   showAssignee = false,
+  onDirtyChange,
 }) => {
   const { user } = useAuth();
   const isClient = user?.role?.name === RoleName.CUSTOMER;
   // Clients shouldn't set a due date when creating a ticket — they can't
   // gauge SLA. On edit, leave the field visible.
-  const showDueDate = !(isClient);
-  const { handleSubmit, control, reset, watch, setValue } =
+  const showDueDate = !isClient;
+  const { handleSubmit, control, reset, watch, setValue, formState: { isDirty } } =
     useForm<TicketFormData>({
       defaultValues: {
         subject: "",
@@ -75,6 +77,14 @@ const TicketForm: React.FC<TicketFormProps> = ({
     }, 150);
     return () => clearTimeout(timer);
   }, [issueValue]);
+
+  const hasChanges = isDirty || attachments.length > 0;
+
+  useEffect(() => {
+    if (onDirtyChange) {
+      onDirtyChange(hasChanges);
+    }
+  }, [hasChanges, onDirtyChange]);
 
   useEffect(() => {
     if (initialData) {
@@ -179,6 +189,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
         <CustomSelect
           name="projectId"
           control={control}
+          rules={{ required: "Project is required" }}
           label="Project"
           placeholder="No Project"
           options={[
@@ -409,9 +420,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
           )}
         </div>
         {attachmentError && (
-          <span
-            style={{ fontSize: "0.75rem", color: "var(--accent-danger)" }}
-          >
+          <span style={{ fontSize: "0.75rem", color: "var(--accent-danger)" }}>
             {attachmentError}
           </span>
         )}

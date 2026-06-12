@@ -206,65 +206,122 @@ const ProjectDetail: React.FC = () => {
           </p>
         </div>
 
-        {/* Clients */}
-        <div className="glass-card" style={{ padding: 24 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginBottom: 20,
-            }}
-          >
-            <CustomIcon name="Users" size={20} color="var(--accent-primary)" />
-            <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
-              {peopleLabel} ({project.clients?.length || 0})
-            </h3>
-          </div>
-          {project.clients && project.clients.length > 0 ? (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: 12 }}
-            >
-              {project.clients.map((c) => (
+        {/* Sidebar Info (Manager + Clients) */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {/* Project Manager */}
+          {project.manager && (
+            <div className="glass-card" style={{ padding: 24 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 16,
+                }}
+              >
+                <CustomIcon
+                  name="UserCheck"
+                  size={20}
+                  color="var(--accent-primary)"
+                />
+                <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
+                  Project Manager
+                </h3>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "10px 12px",
+                  borderRadius: 10,
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid var(--border-glass)",
+                }}
+              >
                 <div
-                  key={c.id}
                   style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background:
+                      "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
                     display: "flex",
                     alignItems: "center",
-                    gap: 12,
-                    padding: "10px 12px",
-                    borderRadius: 10,
-                    background: "rgba(255,255,255,0.03)",
-                    border: "1px solid var(--border-glass)",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                    color: "white",
                   }}
                 >
+                  {project.manager.fullname.charAt(0).toUpperCase()}
+                </div>
+                <span style={{ fontSize: "0.95rem", fontWeight: 500 }}>
+                  {project.manager.fullname}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Clients */}
+          <div className="glass-card" style={{ padding: 24 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                marginBottom: 20,
+              }}
+            >
+              <CustomIcon name="Users" size={20} color="var(--accent-primary)" />
+              <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
+                {peopleLabel} ({project.clients?.length || 0})
+              </h3>
+            </div>
+            {project.clients && project.clients.length > 0 ? (
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 12 }}
+              >
+                {project.clients.map((c) => (
                   <div
+                    key={c.id}
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: "50%",
-                      background:
-                        "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: 700,
-                      color: "white",
+                      gap: 12,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid var(--border-glass)",
                     }}
                   >
-                    {c.fullname.charAt(0).toUpperCase()}
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        background:
+                          "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                        color: "white",
+                      }}
+                    >
+                      {c.fullname.charAt(0).toUpperCase()}
+                    </div>
+                    <span style={{ fontSize: "0.95rem", fontWeight: 500 }}>
+                      {c.fullname}
+                    </span>
                   </div>
-                  <span style={{ fontSize: "0.95rem", fontWeight: 500 }}>
-                    {c.fullname}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
-              No clients linked to this project.
-            </p>
-          )}
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                No clients linked to this project.
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

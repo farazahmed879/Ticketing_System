@@ -5,8 +5,10 @@ import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomMultiSelect from "../../../components/CustomMultiSelect";
 import CustomButton from "../../../components/CustomButton";
+import CustomIcon from "../../../components/CustomIcon";
 import type { ProjectFormData, ProjectFormProps } from "../../../types";
 import { PROJECT_STATUS_OPTIONS } from "../../../utils/constants";
+import styles from "./ProjectForm.module.css";
 
 const ProjectForm: React.FC<ProjectFormProps> = ({
   initialData,
@@ -14,6 +16,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   onCancel,
   isLoading = false,
   clients,
+  managers,
 }) => {
   const { handleSubmit, control, reset } = useForm<ProjectFormData>({
     defaultValues: {
@@ -21,6 +24,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
       description: "",
       status: "Active",
       clientIds: [],
+      managerId: "",
     },
   });
 
@@ -31,6 +35,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         description: initialData.description || "",
         status: initialData.status,
         clientIds: initialData.clientIds || [],
+        managerId: initialData.managerId || "",
       });
     } else {
       reset({
@@ -38,6 +43,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         description: "",
         status: "Active",
         clientIds: [],
+        managerId: "",
       });
     }
   }, [initialData, reset]);
@@ -47,35 +53,37 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
     label: c.fullname,
   }));
 
+  const managerOptions = managers.map((m) => ({
+    value: m.id,
+    label: m.fullname,
+  }));
+
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      style={{ display: "flex", flexDirection: "column", gap: 20 }}
-    >
-      <CustomInput
-        name="name"
-        control={control}
-        rules={{ required: "Project name is required" }}
-        label="Project Name"
-        placeholder="e.g. Website Redesign, Mobile App..."
-        required
-      />
+    <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+      {/* Section 1: Project Details */}
+      <div className={styles.sectionHeader}>
+        <CustomIcon name="FileText" size={14} />
+        <span>Project Details</span>
+      </div>
 
-      <CustomSelect
-        name="status"
-        control={control}
-        label="Status"
-        placeholder="Select Status"
-        options={PROJECT_STATUS_OPTIONS}
-      />
+      <div className={styles.row}>
+        <CustomInput
+          name="name"
+          control={control}
+          rules={{ required: "Project name is required" }}
+          label="Project Name"
+          placeholder="e.g. Website Redesign, Mobile App..."
+          required
+        />
 
-      <CustomMultiSelect
-        name="clientIds"
-        control={control}
-        label="Clients"
-        placeholder="Select Clients..."
-        options={clientOptions}
-      />
+        <CustomSelect
+          name="status"
+          control={control}
+          label="Status"
+          placeholder="Select Status"
+          options={PROJECT_STATUS_OPTIONS}
+        />
+      </div>
 
       <CustomTextArea
         name="description"
@@ -85,14 +93,32 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         rows={3}
       />
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 12,
-          marginTop: 10,
-        }}
-      >
+      {/* Section 2: Team & Assignment */}
+      <div className={styles.sectionHeader}>
+        <CustomIcon name="Users" size={14} />
+        <span>Team & Clients</span>
+      </div>
+
+      <div className={styles.twoColumnRow}>
+        <CustomMultiSelect
+          name="clientIds"
+          control={control}
+          label="Clients"
+          placeholder="Select Clients..."
+          options={clientOptions}
+        />
+
+        <CustomSelect
+          name="managerId"
+          control={control}
+          label="Project Manager"
+          placeholder="Select Project Manager..."
+          options={managerOptions}
+        />
+      </div>
+
+      {/* Form Actions */}
+      <div className={styles.actions}>
         <CustomButton variant="ghost" onClick={onCancel} type="button">
           Cancel
         </CustomButton>

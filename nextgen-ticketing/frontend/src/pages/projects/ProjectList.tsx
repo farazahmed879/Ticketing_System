@@ -4,7 +4,7 @@ import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
-import { UIMessages, ProjectStatus, RoleName } from "../../utils/constants";
+import { ProjectStatus, RoleName } from "../../utils/constants";
 import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomBadge from "../../components/CustomBadge";
@@ -63,7 +63,9 @@ const ProjectList: React.FC = () => {
     try {
       setLoading(true);
       const [projectsRes, clientsRes, staffRes] = await Promise.all([
-        api.get(API_ROUTES.PROJECTS.BASE),
+        api.get(API_ROUTES.PROJECTS.BASE, {
+          params: { role: user?.role?.name, userId: user?.id },
+        }),
         api.get(API_ROUTES.USERS.BASE, {
           params: { type: "clients", limit: -1 },
         }),

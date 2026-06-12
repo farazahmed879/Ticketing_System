@@ -8,12 +8,17 @@ export const projectController = {
       const user = (req as any).user;
       const query: any = { ...req.query };
 
-      // Filter projects for Client role
       const role = user?.role || req.query.role;
       const userId = user?.id || req.query.userId;
 
+      // Client: only projects they are assigned to
       if (role === RoleName.CUSTOMER && userId) {
         query.clientId = userId;
+      }
+
+      // Manager: only projects they manage
+      if (role === RoleName.AGENT && userId) {
+        query.managerId = userId;
       }
 
       const projects = await projectRepository.findMany(query);

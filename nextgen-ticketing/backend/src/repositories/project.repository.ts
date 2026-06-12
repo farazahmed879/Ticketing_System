@@ -3,11 +3,12 @@ import { TICKET_STATUSES, PRIORITIES } from "../utils/constants";
 
 export const projectRepository = {
   async findMany(params: any = {}) {
-    const { departmentId, clientId, status } = params;
+    const { departmentId, clientId, managerId, status } = params;
     const where: any = { deleted: false };
     
     if (departmentId) where.departmentId = departmentId;
     if (clientId) where.clientIds = { has: clientId };
+    if (managerId) where.managerId = managerId;
     if (status) where.status = status;
 
     return prisma.project.findMany({

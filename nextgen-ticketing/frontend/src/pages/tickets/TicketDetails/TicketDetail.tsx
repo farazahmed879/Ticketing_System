@@ -349,6 +349,12 @@ const TicketDetail: React.FC = () => {
     if (sidebarDraft.statusId !== ticket!.status.id) {
       payload.statusId = sidebarDraft.statusId;
       payload.statusName = ticket!.status.name;
+      // The backend's role-based transition rules key off these two fields
+      // (same as the board/modal). Without them, employee/manager status
+      // restrictions are silently skipped on the detail page.
+      payload.currentStatusName = ticket!.status.name;
+      payload.targetStatusName =
+        statuses.find((s) => s.id === sidebarDraft.statusId)?.name || "";
     }
     if (sidebarDraft.priorityId !== ticket!.priority.id) {
       payload.priorityId = sidebarDraft.priorityId;

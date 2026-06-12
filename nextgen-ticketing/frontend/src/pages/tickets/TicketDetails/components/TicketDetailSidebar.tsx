@@ -6,6 +6,7 @@ import CustomDatePicker from "../../../../components/CustomDatePicker";
 import styles from "../TicketDetail.module.css";
 import tableStyles from "../../../dashboard/Dashboard.module.css";
 import { RoleName, StatusName } from "../../../../utils/constants";
+import { canEmployeeEditDueDate } from "../../shared/ticketDecisions";
 import type { TicketDetail as ITicketDetail } from "../../../../types";
 
 interface SidebarDraft {
@@ -350,7 +351,10 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
               <CustomIcon name="Layers" size={16} />
               <span>Project: {ticket.project?.name || "None"}</span>
             </div>
-            {user?.role?.name === RoleName.CUSTOMER || user?.role?.name === RoleName.EMPLOYEE ? (
+            {user?.role?.name === RoleName.CUSTOMER ||
+            user?.role?.name === RoleName.QA ||
+            (user?.role?.name === RoleName.EMPLOYEE &&
+              !canEmployeeEditDueDate(ticket.status?.name)) ? (
               <div
                 style={{
                   display: "flex",

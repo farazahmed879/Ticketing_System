@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "../context/AuthContext";
@@ -15,6 +15,7 @@ const MainLayout: React.FC = () => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [notifications, setNotifications] = React.useState<any[]>([]);
@@ -68,16 +69,24 @@ const MainLayout: React.FC = () => {
     );
 
     socket.on("notifications:new", (notification: any) => {
-      showNotification(
-        "info",
-        notification.title + ": " + notification.message,
-      );
+      // When the user is on the messages page, suppress the toast popup
+      // and sound for chat message notifications — the Messages component
+      // handles its own unread badge + sound.
+      const isOnMessagesPage = location.pathname === "/messages";
+      const isChatNotification = notification.type === "message";
 
-      // Play notification sound
-      const audio = new Audio(
-        "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3",
-      );
-      audio.play().catch((e) => console.log("Audio play failed:", e));
+      if (!(isOnMessagesPage && isChatNotification)) {
+        showNotification(
+          "info",
+          notification.title + ": " + notification.message,
+        );
+
+        // Play notification sound
+        const audio = new Audio(
+          "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3",
+        );
+        audio.play().catch((e) => console.log("Audio play failed:", e));
+      }
 
       setNotifications((prev) => [notification, ...prev].slice(0, 20));
       setUnreadCount((prev) => prev + 1);
@@ -87,7 +96,7 @@ const MainLayout: React.FC = () => {
       socket.off("notifications:update");
       socket.off("notifications:new");
     };
-  }, [user, showNotification]);
+  }, [user, showNotification, location.pathname]);
 
   const handleMarkAsRead = async (id: string) => {
     socket.emit("notifications:markRead", id);
@@ -176,6 +185,7 @@ const MainLayout: React.FC = () => {
       <Sidebar
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+        unreadMessageCount={notifications.filter((n) => n.unread && n.type === "message").length}
       />
 
       <main className={styles.mainContent}>

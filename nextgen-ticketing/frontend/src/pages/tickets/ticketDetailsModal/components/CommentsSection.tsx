@@ -1,9 +1,10 @@
-import { useRef } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { useEffect, useRef, useState } from "react";
+import { format, formatDistanceToNow } from "date-fns";
 import CustomIcon from "../../../../components/CustomIcon";
 import CustomInput from "../../../../components/CustomInput";
 import CustomButton from "../../../../components/CustomButton";
 import styles from "../TicketDetailModal.module.css";
+import { RoleName } from "../../../../utils/constants";
 import {
   ACCEPT_ATTRIBUTE,
   MAX_ATTACHMENTS,
@@ -25,33 +26,101 @@ const CommentSection = ({
   isSubmittingComment = false,
 }: any) => {
   const commentFileInputRef = useRef<HTMLInputElement>(null);
+  const listEndRef = useRef<HTMLDivElement>(null);
   const hasAttachmentSupport = Boolean(handleCommentAttachmentSelect);
+
+  // Internal (team-only) comments are hidden from clients — they only ever see
+  // the public "All" tab (the backend also strips notes for them).
+  const canViewInternal = user?.role?.name !== RoleName.CUSTOMER;
+  // Default to the Internal tab for staff; clients only ever have the public tab.
+  const [activeTab, setActiveTab] = useState<"all" | "internal">(
+    canViewInternal ? "internal" : "all",
+  );
+  const isInternal = canViewInternal && activeTab === "internal";
+
+  const allComments = fullTicketData?.comments || [];
+  const visibleComments = allComments.filter((c: any) =>
+    isInternal ? c.isNote : !c.isNote,
+  );
+
+  // Auto-scroll to the latest comment when one is added or the tab changes.
+  useEffect(() => {
+    listEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [visibleComments.length, activeTab]);
+
   const sendDisabled =
     (!newComment.trim() && commentAttachments.length === 0) ||
     commentSendDisabled;
 
   return (
     <div className={styles.commentsContainer}>
-      <label
-        style={{
-          fontSize: "1rem",
-          color: "var(--text-primary)",
-          fontWeight: 600,
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <CustomIcon
-          name="MessageCircle"
-          size={20}
-          color="var(--accent-primary)"
-        />
-        Comments{" "}
-        {fullTicketData?.comments?.length
-          ? `(${fullTicketData.comments.length})`
-          : ""}
-      </label>
+      {!canViewInternal && (
+        <label
+          style={{
+            fontSize: "1rem",
+            color: "var(--text-primary)",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <CustomIcon
+            name="MessageCircle"
+            size={20}
+            color="var(--accent-primary)"
+          />
+          Comments {visibleComments.length ? `(${visibleComments.length})` : ""}
+        </label>
+      )}
+
+      {canViewInternal && (
+        <div
+          style={{
+            display: "flex",
+            gap: 6,
+            padding: 4,
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid var(--border-glass)",
+            borderRadius: 10,
+          }}
+        >
+          {(
+            [
+              { key: "all", label: "Comments", icon: "MessageCircle" },
+              { key: "internal", label: "Internal", icon: "Lock" },
+            ] as const
+          ).map((tab) => {
+            const active = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  padding: "6px 10px",
+                  borderRadius: 8,
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  background: active ? "var(--accent-primary)" : "transparent",
+                  color: active ? "#fff" : "var(--text-secondary)",
+                  transition: "var(--transition-fast)",
+                }}
+              >
+                <CustomIcon name={tab.icon} size={14} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div
         style={{
@@ -65,98 +134,186 @@ const CommentSection = ({
         {fullTicketData ? (
           <>
             <div className={styles.commentsList}>
-              {fullTicketData.comments?.length > 0 ? (
-                fullTicketData.comments.map((comment: any) => (
-                  <div
-                    key={comment.id}
-                    className="glass-card"
-                    style={{
-                      padding: 12,
-                      background:
-                        comment.authorId === user?.id
-                          ? "rgba(33, 150, 243, 0.05)"
-                          : "rgba(255,255,255,0.02)",
-                    }}
-                  >
+              {visibleComments.length > 0 ? (
+                visibleComments.map((comment: any) => {
+                  // Your own comments align right with a distinct background;
+                  // everyone else's align left. Client authors are tagged.
+                  const isOwnComment = comment.authorId === user?.id;
+                  const isClientComment =
+                    comment.author?.role?.isCustomer === true ||
+                    comment.author?.role?.name === RoleName.CUSTOMER;
+                  return (
                     <div
+                      key={comment.id}
                       style={{
                         display: "flex",
-                        justifyContent: "space-between",
-                        marginBottom: 6,
+                        flexDirection: "column",
+                        alignItems: isOwnComment ? "flex-end" : "flex-start",
                       }}
                     >
-                      <span
-                        style={{
-                          fontWeight: 600,
-                          fontSize: "0.8rem",
-                          color: "var(--accent-primary)",
-                        }}
-                      >
-                        {comment.author.fullname}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "0.7rem",
-                          color: "var(--text-muted)",
-                        }}
-                      >
-                        {formatDistanceToNow(new Date(comment.createdAt), {
-                          addSuffix: true,
-                        })}
-                      </span>
-                    </div>
-                    {comment.comment?.trim() && (
-                      <div style={{ fontSize: "0.85rem", lineHeight: 1.5 }}>
-                        {comment.comment}
-                      </div>
-                    )}
-                    {comment.attachments && comment.attachments.length > 0 && (
                       <div
                         style={{
-                          marginTop: 8,
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 6,
+                          maxWidth: "85%",
+                          padding: "10px 12px",
+                          borderRadius: 14,
+                          borderBottomRightRadius: isOwnComment ? 4 : 14,
+                          borderBottomLeftRadius: isOwnComment ? 14 : 4,
+                          background: isOwnComment
+                            ? "rgba(var(--primary-rgb), 0.12)"
+                            : "var(--bg-card)",
+                          border: "1px solid var(--border-glass)",
                         }}
                       >
-                        {comment.attachments.map(
-                          (src: string, idx: number) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() =>
-                                openLightbox?.(comment.attachments, idx)
-                              }
-                              title="View image"
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            marginBottom: 6,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: "50%",
+                              flexShrink: 0,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              background: isOwnComment
+                                ? "rgba(var(--primary-rgb), 0.25)"
+                                : isClientComment
+                                  ? "rgba(6, 182, 212, 0.22)"
+                                  : "rgba(255,255,255,0.08)",
+                              color: isOwnComment
+                                ? "var(--accent-primary)"
+                                : isClientComment
+                                  ? "var(--accent-secondary)"
+                                  : "var(--text-secondary)",
+                            }}
+                          >
+                            {comment.author.fullname?.charAt(0)?.toUpperCase()}
+                          </div>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div
                               style={{
-                                display: "block",
-                                width: 56,
-                                height: 56,
-                                borderRadius: 6,
-                                overflow: "hidden",
-                                border: "1px solid var(--border-glass)",
-                                padding: 0,
-                                cursor: "zoom-in",
-                                background: "transparent",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
                               }}
                             >
-                              <img
-                                src={src}
-                                alt={`attachment-${idx}`}
+                              <span
                                 style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                  display: "block",
+                                  fontWeight: 600,
+                                  fontSize: "0.8rem",
+                                  color: "var(--text-primary)",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
                                 }}
-                              />
-                            </button>
-                          ),
+                              >
+                                {comment.author.fullname}
+                              </span>
+                              {isClientComment && (
+                                <span
+                                  style={{
+                                    flexShrink: 0,
+                                    fontSize: "0.58rem",
+                                    fontWeight: 700,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.4px",
+                                    color: "var(--accent-secondary)",
+                                    background: "rgba(6, 182, 212, 0.15)",
+                                    border: "1px solid rgba(6, 182, 212, 0.35)",
+                                    borderRadius: 5,
+                                    padding: "1px 5px",
+                                  }}
+                                >
+                                  Client
+                                </span>
+                              )}
+                            </div>
+                            <span
+                              title={format(
+                                new Date(comment.createdAt),
+                                "MMM d, yyyy 'at' h:mm a",
+                              )}
+                              style={{
+                                fontSize: "0.66rem",
+                                color: "var(--text-muted)",
+                              }}
+                            >
+                              {formatDistanceToNow(new Date(comment.createdAt), {
+                                addSuffix: true,
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                        {comment.comment?.trim() && (
+                          <div
+                            style={{
+                              fontSize: "0.85rem",
+                              lineHeight: 1.5,
+                              whiteSpace: "pre-wrap",
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {comment.comment}
+                          </div>
                         )}
+                        {comment.attachments &&
+                          comment.attachments.length > 0 && (
+                            <div
+                              style={{
+                                marginTop: 8,
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 6,
+                              }}
+                            >
+                              {comment.attachments.map(
+                                (src: string, idx: number) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() =>
+                                      openLightbox?.(comment.attachments, idx)
+                                    }
+                                    title="View image"
+                                    style={{
+                                      display: "block",
+                                      width: 56,
+                                      height: 56,
+                                      borderRadius: 6,
+                                      overflow: "hidden",
+                                      border: "1px solid var(--border-glass)",
+                                      padding: 0,
+                                      cursor: "zoom-in",
+                                      background: "transparent",
+                                    }}
+                                  >
+                                    <img
+                                      src={src}
+                                      alt={`attachment-${idx}`}
+                                      style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                        display: "block",
+                                      }}
+                                    />
+                                  </button>
+                                ),
+                              )}
+                            </div>
+                          )}
                       </div>
-                    )}
-                  </div>
-                ))
+                    </div>
+                  );
+                })
               ) : (
                 <div
                   style={{
@@ -168,14 +325,17 @@ const CommentSection = ({
                     borderRadius: 12,
                   }}
                 >
-                  No comments yet.
+                  {isInternal
+                    ? "No internal notes yet."
+                    : "No comments yet."}
                 </div>
               )}
+              <div ref={listEndRef} />
             </div>
 
             {canCreateComments && (
               <form
-                onSubmit={handleAddComment}
+                onSubmit={(e) => handleAddComment(e, isInternal)}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -257,7 +417,11 @@ const CommentSection = ({
                 )}
                 <div style={{ display: "flex", gap: 10 }}>
                   <CustomInput
-                    placeholder="Add a comment..."
+                    placeholder={
+                      isInternal
+                        ? "Add an internal note (team only)..."
+                        : "Add a comment..."
+                    }
                     value={newComment}
                     onChange={(e: any) => setNewComment(e.target.value)}
                     containerStyle={{ flex: 1 }}

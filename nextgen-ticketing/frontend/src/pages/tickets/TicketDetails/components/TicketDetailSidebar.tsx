@@ -6,6 +6,7 @@ import CustomDatePicker from "../../../../components/CustomDatePicker";
 import styles from "../TicketDetail.module.css";
 import tableStyles from "../../../dashboard/Dashboard.module.css";
 import { RoleName, StatusName } from "../../../../utils/constants";
+import { canEmployeeEditDueDate } from "../../shared/ticketDecisions";
 import type { TicketDetail as ITicketDetail } from "../../../../types";
 
 interface SidebarDraft {
@@ -162,20 +163,7 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
               <CustomIcon name="User" size={16} />
             </div>
             <span style={{ fontSize: "0.9rem" }}>{ticket.owner.fullname}</span>
-            {ticket.owner.id !== user?.id && (
-              <CustomButton
-                variant="ghost"
-                size="sm"
-                onClick={() => handleStartChat(ticket.owner.id)}
-                icon={<CustomIcon name="MessageSquare" size={14} />}
-                title="Chat with Owner"
-                style={{
-                  padding: 0,
-                  minHeight: "auto",
-                  color: "var(--accent-primary)",
-                }}
-              />
-            )}
+            
           </div>
         </div>
 
@@ -228,20 +216,7 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
               <span style={{ fontSize: "0.9rem" }}>
                 {ticket?.assignee?.fullname || "Unassigned"}
               </span>
-              {ticket?.assignee && ticket?.assignee?.id !== user?.id && (
-                <CustomButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleStartChat(ticket.assignee!.id)}
-                  icon={<CustomIcon name="MessageSquare" size={14} />}
-                  title="Chat with Assignee"
-                  style={{
-                    padding: 0,
-                    minHeight: "auto",
-                    color: "var(--accent-secondary)",
-                  }}
-                />
-              )}
+              
             </div>
           )}
         </div>
@@ -297,20 +272,7 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
               <span style={{ fontSize: "0.9rem" }}>
                 {ticket?.qa?.fullname || "Unassigned"}
               </span>
-              {ticket?.qa && ticket?.qa?.id !== user?.id && (
-                <CustomButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleStartChat(ticket.qa!.id)}
-                  icon={<CustomIcon name="MessageSquare" size={14} />}
-                  title="Chat with QA"
-                  style={{
-                    padding: 0,
-                    minHeight: "auto",
-                    color: "var(--accent-secondary)",
-                  }}
-                />
-              )}
+              
             </div>
           )}
         </div>
@@ -350,7 +312,10 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
               <CustomIcon name="Layers" size={16} />
               <span>Project: {ticket.project?.name || "None"}</span>
             </div>
-            {user?.role?.name === RoleName.CUSTOMER || user?.role?.name === RoleName.EMPLOYEE ? (
+            {user?.role?.name === RoleName.CUSTOMER ||
+            user?.role?.name === RoleName.QA ||
+            (user?.role?.name === RoleName.EMPLOYEE &&
+              !canEmployeeEditDueDate(ticket.status?.name)) ? (
               <div
                 style={{
                   display: "flex",

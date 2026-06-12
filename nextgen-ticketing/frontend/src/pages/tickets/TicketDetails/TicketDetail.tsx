@@ -18,6 +18,13 @@ import {
 } from "../../../utils/constants";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import { readAttachmentFiles } from "../../../utils/attachments";
+import {
+  type ClientDecision,
+  buildClientDecisionBody,
+  buildStatusTransitionFields,
+  getDecisionDialog,
+  canShowCancelBanner,
+} from "../shared/ticketDecisions";
 
 import TicketDetailSkeleton from "./components/TicketDetailSkeleton";
 import TicketDetailHeader from "./components/TicketDetailHeader";
@@ -122,9 +129,9 @@ const TicketDetail: React.FC = () => {
   const [qaList, setQaList] = useState<any[]>([]);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState<any>(null);
-  const [pendingDecision, setPendingDecision] = useState<
-    "satisfied" | "unsatisfied" | "cancel" | null
-  >(null);
+  const [pendingDecision, setPendingDecision] = useState<ClientDecision | null>(
+    null,
+  );
   const [confirmConfig, setConfirmConfig] = useState<{
     title: string;
     message: string;
@@ -352,9 +359,14 @@ const TicketDetail: React.FC = () => {
       // The backend's role-based transition rules key off these two fields
       // (same as the board/modal). Without them, employee/manager status
       // restrictions are silently skipped on the detail page.
-      payload.currentStatusName = ticket!.status.name;
-      payload.targetStatusName =
-        statuses.find((s) => s.id === sidebarDraft.statusId)?.name || "";
+      Object.assign(
+        payload,
+        buildStatusTransitionFields(
+          ticket!.status.name,
+          sidebarDraft.statusId,
+          statuses,
+        ),
+      );
     }
     if (sidebarDraft.priorityId !== ticket!.priority.id) {
       payload.priorityId = sidebarDraft.priorityId;
@@ -489,28 +501,10 @@ const TicketDetail: React.FC = () => {
     }
   };
 
-  const handleClientDecision = async (
-    decision: "satisfied" | "unsatisfied" | "cancel",
-  ) => {
-    let targetStatusName;
-    if (decision === "satisfied") targetStatusName = StatusName.CLOSED;
-    else if (decision === "unsatisfied") targetStatusName = StatusName.FAILED;
-    else targetStatusName = StatusName.TRASH;
-
-    const targetStatus = statuses.find((s) => s.name === targetStatusName);
-    if (!targetStatus || !ticket) return;
-
-    // The backend's client status rules key off targetStatusName +
-    // currentStatusName (same body the modal sends). Sending only `statusName`
-    // left both empty, so the "allowed targets" check rejected the change.
-    await executeUpdate({
-      statusId: targetStatus.id,
-      targetStatusName: targetStatus.name,
-      currentStatusName: ticket.status.name,
-      priorityId: ticket.priority?.id,
-      assigneeId: ticket.assignee?.id || null,
-      issue: ticket.issue,
-    });
+  const handleClientDecision = async (decision: ClientDecision) => {
+    const body = buildClientDecisionBody(decision, ticket, statuses);
+    if (!body) return;
+    await executeUpdate(body);
   };
 
   useEffect(() => {
@@ -546,9 +540,11 @@ const TicketDetail: React.FC = () => {
         setSubjectDraft={setSubjectDraft}
       />
 
-      {user?.role?.name === RoleName.CUSTOMER &&
-        ticket.owner?.id === user?.id &&
-        ticket.status.name === StatusName.NEW && (
+      {canShowCancelBanner(
+        user?.role?.name,
+        ticket.owner?.id === user?.id,
+        ticket.status?.name,
+      ) && (
           <div
             className="glass-card"
             style={{
@@ -795,35 +791,7 @@ const TicketDetail: React.FC = () => {
             setPendingDecision(null);
             if (decision) handleClientDecision(decision);
           }}
-          title={
-            pendingDecision === "cancel"
-              ? "Cancel Ticket"
-              : pendingDecision === "satisfied"
-                ? "Mark as Satisfied"
-                : "Mark as Unsatisfied"
-          }
-          message={
-            pendingDecision === "cancel"
-              ? "Are you sure you want to cancel this ticket? This action cannot be undone."
-              : pendingDecision === "satisfied"
-                ? "Are you sure you are satisfied with the resolution? This will close the ticket."
-                : "Are you sure you are unsatisfied? This will return the ticket to the team."
-          }
-          confirmText={
-            pendingDecision === "cancel"
-              ? "Yes, Cancel Ticket"
-              : pendingDecision === "satisfied"
-                ? "Yes, I'm Satisfied"
-                : "Yes, I'm Unsatisfied"
-          }
-          cancelText={pendingDecision === "cancel" ? "No, Keep It" : "Cancel"}
-          type={
-            pendingDecision === "satisfied"
-              ? "success"
-              : pendingDecision === "cancel"
-                ? "danger"
-                : "warning"
-          }
+          {...getDecisionDialog(pendingDecision)}
         />
       </div>
 

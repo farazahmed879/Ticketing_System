@@ -35,6 +35,13 @@ import {
   readAttachmentFiles,
 } from "../../../utils/attachments";
 import CommentSection from "../ticketDetailsModal/components/CommentsSection";
+import {
+  type ClientDecision,
+  buildClientDecisionBody,
+  getDecisionDialog,
+  canShowCancelBanner,
+  canEmployeeEditDueDate,
+} from "../shared/ticketDecisions";
 
 const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   isOpen,
@@ -73,10 +80,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const [newComment, setNewComment] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [pendingReview, setPendingReview] = useState<
-    "satisfied" | "unsatisfied" | null
-  >(null);
+  // Pending client decision (Cancel / Satisfied / Unsatisfied) awaiting
+  // confirmation. Shared dialog copy comes from getDecisionDialog().
+  const [pendingDecision, setPendingDecision] = useState<ClientDecision | null>(
+    null,
+  );
 
   // Close guard: warn before discarding unsaved ticket-field changes (form
   // fields or pending attachment edits). Comments are separate state, so they
@@ -199,30 +207,13 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     onTicketUpdate(body);
   };
 
-  const handleClientDecision = async (
-    decision: "satisfied" | "unsatisfied" | "cancel",
-  ) => {
-    let targetStatusName;
-    if (decision === "satisfied") targetStatusName = StatusName.CLOSED;
-    else if (decision === "unsatisfied") targetStatusName = StatusName.FAILED;
-    else targetStatusName = StatusName.TRASH;
-
-    const targetStatus = statuses.find((s: any) => s.name === targetStatusName);
-    if (!targetStatus) return;
-
-    const body = {
-      ticketId: ticket.id,
-      statusId: targetStatus.id,
-      targetStatusName: targetStatus.name,
-      currentStatusName: displayTicket?.status?.name || "",
-      priorityId: displayTicket?.priority?.id,
-      assigneeId: displayTicket?.assignee?.id || null,
-      issue: displayTicket?.issue,
-    };
+  const handleClientDecision = async (decision: ClientDecision) => {
+    const body = buildClientDecisionBody(decision, displayTicket, statuses);
+    if (!body) return;
     onTicketUpdate(body);
   };
 
-  const handleAddComment = async (e: React.FormEvent) => {
+  const handleAddComment = async (e: React.FormEvent, isNote = false) => {
     e.preventDefault();
     if (!newComment.trim() && commentAttachments.length === 0) return;
     if (commentSendDisabled) return;
@@ -231,7 +222,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     try {
       await api.post(API_ROUTES.TICKETS.COMMENTS(ticket.id), {
         comment: newComment,
-        isNote: false,
+        isNote,
         attachments: commentAttachments,
       });
       setNewComment("");
@@ -433,7 +424,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   // status (i.e. assigned to an employee) — disabled in every other status.
   const disableDueDateForEmployees =
     user?.role?.name === RoleName.EMPLOYEE &&
-    displayTicket?.status?.name !== StatusName.OPEN;
+    !canEmployeeEditDueDate(displayTicket?.status?.name);
 
   const getStatusOptions = (columns: any[]) => {
     return columns.map((s: any) => ({
@@ -666,9 +657,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             <div className={styles.grid}>
               {/* Left Column: Details */}
               <div className={styles.leftColumn}>
-                {((isClient && isTicketOwner) ||
-                  user?.role?.name === RoleName.AGENT) &&
-                  displayTicket?.status?.name === StatusName.NEW && (
+                {canShowCancelBanner(
+                  user?.role?.name,
+                  isTicketOwner,
+                  displayTicket?.status?.name,
+                ) && (
                     <div
                       className="glass-card"
                       style={{
@@ -696,7 +689,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       </div>
                       <CustomButton
                         variant="outline"
-                        onClick={() => setShowCancelConfirm(true)}
+                        onClick={() => setPendingDecision("cancel")}
                         icon={<CustomIcon name="Trash2" size={16} />}
                         style={{
                           borderColor: "var(--accent-danger)",
@@ -770,7 +763,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         <div style={{ display: "flex", gap: 12 }}>
                           <CustomButton
                             variant="outline"
-                            onClick={() => setPendingReview("unsatisfied")}
+                            onClick={() => setPendingDecision("unsatisfied")}
                             icon={<CustomIcon name="XCircle" size={16} />}
                             style={{
                               borderColor: "var(--accent-danger)",
@@ -781,7 +774,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           </CustomButton>
                           <CustomButton
                             variant="primary"
-                            onClick={() => setPendingReview("satisfied")}
+                            onClick={() => setPendingDecision("satisfied")}
                             icon={<CustomIcon name="CheckCircle2" size={16} />}
                             style={{ background: "var(--accent-success)" }}
                           >
@@ -1021,31 +1014,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             }}
                           >
                             {displayTicket.owner.fullname}
-                            {displayTicket.owner.id !== user?.id &&
-                              (displayTicket.status.name.toLowerCase() ===
-                                StatusName.OPEN.toLowerCase() ||
-                                displayTicket.status.name.toLowerCase() ===
-                                  StatusName.TRASH.toLowerCase()) && (
-                                <CustomButton
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleStartChat(displayTicket.owner.id)
-                                  }
-                                  icon={
-                                    <CustomIcon
-                                      name="MessageSquare"
-                                      size={14}
-                                    />
-                                  }
-                                  title="Chat with Reporter"
-                                  style={{
-                                    padding: 0,
-                                    minHeight: "auto",
-                                    color: "var(--accent-primary)",
-                                  }}
-                                />
-                              )}
+                            
                           </div>
                           <div
                             style={{
@@ -1205,29 +1174,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                     }}
                                   >
                                     {displayTicket.assignee.fullname}
-                                    {displayTicket.assignee.id !== user?.id && (
-                                      <CustomButton
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleStartChat(
-                                            displayTicket.assignee.id,
-                                          )
-                                        }
-                                        icon={
-                                          <CustomIcon
-                                            name="MessageSquare"
-                                            size={14}
-                                          />
-                                        }
-                                        title="Chat with Assignee"
-                                        style={{
-                                          padding: 0,
-                                          minHeight: "auto",
-                                          color: "var(--accent-secondary)",
-                                        }}
-                                      />
-                                    )}
+                                    
                                   </div>
                                 </div>
                               </>
@@ -1351,27 +1298,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                     }}
                                   >
                                     {displayTicket.qa.fullname}
-                                    {displayTicket.qa.id !== user?.id && (
-                                      <CustomButton
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleStartChat(displayTicket.qa.id)
-                                        }
-                                        icon={
-                                          <CustomIcon
-                                            name="MessageSquare"
-                                            size={14}
-                                          />
-                                        }
-                                        title="Chat with QA"
-                                        style={{
-                                          padding: 0,
-                                          minHeight: "auto",
-                                          color: "var(--accent-secondary)",
-                                        }}
-                                      />
-                                    )}
+                                    
                                   </div>
                                 </div>
                               </>
@@ -1732,44 +1659,14 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       />
 
       <ConfirmationModal
-        isOpen={showCancelConfirm}
-        onClose={() => setShowCancelConfirm(false)}
+        isOpen={pendingDecision !== null}
+        onClose={() => setPendingDecision(null)}
         onConfirm={() => {
-          setShowCancelConfirm(false);
-          handleClientDecision("cancel");
-        }}
-        title="Cancel Ticket"
-        message="Are you sure you want to cancel this ticket? This action cannot be undone."
-        confirmText="Yes, Cancel Ticket"
-        cancelText="No, Keep It"
-        type="danger"
-      />
-
-      <ConfirmationModal
-        isOpen={pendingReview !== null}
-        onClose={() => setPendingReview(null)}
-        onConfirm={() => {
-          const decision = pendingReview;
-          setPendingReview(null);
+          const decision = pendingDecision;
+          setPendingDecision(null);
           if (decision) handleClientDecision(decision);
         }}
-        title={
-          pendingReview === "satisfied"
-            ? "Mark as Satisfied"
-            : "Mark as Unsatisfied"
-        }
-        message={
-          pendingReview === "satisfied"
-            ? "Are you sure you are satisfied with the resolution? This will close the ticket."
-            : "Are you sure you are unsatisfied? This will return the ticket to the team."
-        }
-        confirmText={
-          pendingReview === "satisfied"
-            ? "Yes, I'm Satisfied"
-            : "Yes, I'm Unsatisfied"
-        }
-        cancelText="Cancel"
-        type={pendingReview === "satisfied" ? "success" : "warning"}
+        {...getDecisionDialog(pendingDecision)}
       />
 
       {lightbox &&

@@ -72,6 +72,7 @@ model User {
   projects   Project[] @relation(fields: [projectIds], references: [id])
 
   managedTeams Team[]    @relation("TeamManager")
+  managedProjects Project[] @relation("ProjectManager")
   lastOnline   DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -223,6 +224,9 @@ model Project {
 
   clientIds String[] @db.ObjectId
   clients   User[]   @relation(fields: [clientIds], references: [id])
+
+  managerId String? @db.ObjectId
+  manager   User?   @relation("ProjectManager", fields: [managerId], references: [id])
 
   tickets Ticket[]
 

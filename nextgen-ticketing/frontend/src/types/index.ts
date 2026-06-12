@@ -77,6 +77,8 @@ export interface Project {
   department?: { id: string; name: string };
   clientIds: string[];
   clients?: { id: string; fullname: string; image?: string }[];
+  managerId?: string;
+  manager?: { id: string; fullname: string; image?: string };
   tickets?: {
     id: string;
     uid: number;
@@ -433,6 +435,7 @@ export interface ProjectFormData {
   description: string;
   status: string;
   clientIds: string[];
+  managerId?: string;
 }
 
 export interface ProjectFormProps {
@@ -441,6 +444,7 @@ export interface ProjectFormProps {
   onCancel: () => void;
   isLoading?: boolean;
   clients: any[];
+  managers: any[];
 }
 
 export interface ProjectModalProps {
@@ -449,6 +453,7 @@ export interface ProjectModalProps {
   onSubmit: (data: any) => Promise<void>;
   project?: Project | null;
   clients: any[];
+  managers: any[];
 }
 
 export interface SidebarProps {

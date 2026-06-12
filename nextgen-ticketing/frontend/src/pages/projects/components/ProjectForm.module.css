@@ -1,0 +1,51 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap: 16px;
+}
+
+.twoColumnRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 500px) {
+  .row, .twoColumnRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--accent-primary);
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: 8px;
+  margin-top: 8px;
+  margin-bottom: -4px;
+}
+
+.sectionHeader :global(.lucide) {
+  opacity: 0.8;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-glass);
+}

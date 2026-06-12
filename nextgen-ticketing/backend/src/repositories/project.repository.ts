@@ -15,6 +15,7 @@ export const projectRepository = {
       include: {
         department: { select: { id: true, name: true } },
         clients: { select: { id: true, fullname: true, image: true } },
+        manager: { select: { id: true, fullname: true, image: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -26,6 +27,7 @@ export const projectRepository = {
       include: {
         department: { select: { id: true, name: true } },
         clients: { select: { id: true, fullname: true, image: true } },
+        manager: { select: { id: true, fullname: true, image: true } },
         tickets: {
           where: { deleted: false },
           select: {
@@ -60,6 +62,7 @@ export const projectRepository = {
       include: {
         department: true,
         clients: true,
+        manager: true,
       },
     });
   },
@@ -71,6 +74,7 @@ export const projectRepository = {
       include: {
         department: true,
         clients: true,
+        manager: true,
       },
     });
   },

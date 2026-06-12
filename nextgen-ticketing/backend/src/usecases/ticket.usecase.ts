@@ -356,6 +356,15 @@ export const ticketUsecase = {
 
       if (isEmployee) {
         if (
+          current === StatusName.OPEN.toLowerCase() &&
+          target === StatusName.RESOLVED.toLowerCase()
+        ) {
+          throw new Error(
+            "Employees cannot move Assigned tickets directly to Done.",
+          );
+        }
+
+        if (
           current === StatusName.APPROVED.toLowerCase() &&
           target === StatusName.IN_PROCESS.toLowerCase()
         ) {

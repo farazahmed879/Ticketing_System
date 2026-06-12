@@ -122,6 +122,9 @@ const TicketDetail: React.FC = () => {
   const [qaList, setQaList] = useState<any[]>([]);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState<any>(null);
+  const [pendingDecision, setPendingDecision] = useState<
+    "satisfied" | "unsatisfied" | "cancel" | null
+  >(null);
   const [confirmConfig, setConfirmConfig] = useState<{
     title: string;
     message: string;
@@ -346,6 +349,12 @@ const TicketDetail: React.FC = () => {
     if (sidebarDraft.statusId !== ticket!.status.id) {
       payload.statusId = sidebarDraft.statusId;
       payload.statusName = ticket!.status.name;
+      // The backend's role-based transition rules key off these two fields
+      // (same as the board/modal). Without them, employee/manager status
+      // restrictions are silently skipped on the detail page.
+      payload.currentStatusName = ticket!.status.name;
+      payload.targetStatusName =
+        statuses.find((s) => s.id === sidebarDraft.statusId)?.name || "";
     }
     if (sidebarDraft.priorityId !== ticket!.priority.id) {
       payload.priorityId = sidebarDraft.priorityId;
@@ -568,7 +577,7 @@ const TicketDetail: React.FC = () => {
             </div>
             <CustomButton
               variant="outline"
-              onClick={() => handleClientDecision("cancel")}
+              onClick={() => setPendingDecision("cancel")}
               icon={<CustomIcon name="Trash2" size={16} />}
               style={{
                 borderColor: "var(--accent-danger)",
@@ -639,7 +648,7 @@ const TicketDetail: React.FC = () => {
               <div style={{ display: "flex", gap: 12 }}>
                 <CustomButton
                   variant="outline"
-                  onClick={() => handleClientDecision("unsatisfied")}
+                  onClick={() => setPendingDecision("unsatisfied")}
                   icon={<CustomIcon name="XCircle" size={16} />}
                   style={{
                     borderColor: "var(--accent-danger)",
@@ -651,7 +660,7 @@ const TicketDetail: React.FC = () => {
                 </CustomButton>
                 <CustomButton
                   variant="primary"
-                  onClick={() => handleClientDecision("satisfied")}
+                  onClick={() => setPendingDecision("satisfied")}
                   icon={<CustomIcon name="CheckCircle2" size={16} />}
                   style={{ background: "var(--accent-success)" }}
                   loading={isSaving}
@@ -776,6 +785,45 @@ const TicketDetail: React.FC = () => {
           message={confirmConfig.message}
           type={confirmConfig.type}
           confirmText="Confirm"
+        />
+
+        <ConfirmationModal
+          isOpen={pendingDecision !== null}
+          onClose={() => setPendingDecision(null)}
+          onConfirm={() => {
+            const decision = pendingDecision;
+            setPendingDecision(null);
+            if (decision) handleClientDecision(decision);
+          }}
+          title={
+            pendingDecision === "cancel"
+              ? "Cancel Ticket"
+              : pendingDecision === "satisfied"
+                ? "Mark as Satisfied"
+                : "Mark as Unsatisfied"
+          }
+          message={
+            pendingDecision === "cancel"
+              ? "Are you sure you want to cancel this ticket? This action cannot be undone."
+              : pendingDecision === "satisfied"
+                ? "Are you sure you are satisfied with the resolution? This will close the ticket."
+                : "Are you sure you are unsatisfied? This will return the ticket to the team."
+          }
+          confirmText={
+            pendingDecision === "cancel"
+              ? "Yes, Cancel Ticket"
+              : pendingDecision === "satisfied"
+                ? "Yes, I'm Satisfied"
+                : "Yes, I'm Unsatisfied"
+          }
+          cancelText={pendingDecision === "cancel" ? "No, Keep It" : "Cancel"}
+          type={
+            pendingDecision === "satisfied"
+              ? "success"
+              : pendingDecision === "cancel"
+                ? "danger"
+                : "warning"
+          }
         />
       </div>
 

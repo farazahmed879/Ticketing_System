@@ -8,12 +8,8 @@ import type { Project, CustomerDashboardProps } from "../../types";
 import CustomBadge from "../../components/CustomBadge";
 import CustomSkeleton from "../../components/CustomSkeleton/CustomSkeleton";
 import styles from "./Dashboard.module.css";
-import MomentsSection from "./components/MomentsSection";
 
-const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
-  stats,
-  moments = [],
-}) => {
+const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);

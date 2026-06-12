@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import CustomIcon from "../../../components/CustomIcon";
 import { useAuth } from "../../../context/AuthContext";
-import { RoleName } from "../../../utils/constants";
 import styles from "../Dashboard.module.css";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";

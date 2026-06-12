@@ -139,21 +139,24 @@ const ColumnStatus = ({
                 ></div>
                 <span className={styles.miniUid}>#{ticket.uid}</span>
                 {user?.role?.name !== RoleName.CUSTOMER && (
-                  <CustomIcon
-                    name={ticket.qa ? "ShieldCheck" : "ShieldOff"}
-                    size={12}
-                    style={{ marginLeft: "auto" }}
-                    color={
-                      ticket.qa
-                        ? "var(--accent-success, #10b981)"
-                        : "var(--text-muted)"
-                    }
+                  <span
+                    style={{ marginLeft: "auto", display: "inline-flex" }}
                     title={
                       ticket.qa
                         ? `QA assigned: ${ticket.qa.fullname}`
                         : "QA not assigned"
                     }
-                  />
+                  >
+                    <CustomIcon
+                      name={ticket.qa ? "ShieldCheck" : "ShieldOff"}
+                      size={12}
+                      color={
+                        ticket.qa
+                          ? "var(--accent-success, #10b981)"
+                          : "var(--text-muted)"
+                      }
+                    />
+                  </span>
                 )}
               </div>
             ) : (

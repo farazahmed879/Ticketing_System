@@ -33,10 +33,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, annRes] = await Promise.all([
-          api.get(API_ROUTES.DASHBOARD.STATS),
-          api.get(API_ROUTES.ANNOUNCEMENTS.DASHBOARD, { params: { limit: -1 } }),
-        ]);
+        const statsRes = await api.get(API_ROUTES.DASHBOARD.STATS);
         setStats(statsRes.data.stats);
         // Clients aren't "new hires" — exclude them from the dashboard.
         setNewHires(
@@ -44,8 +41,8 @@ const Dashboard: React.FC = () => {
             (hire: any) => hire?.role?.name !== RoleName.CUSTOMER,
           ),
         );
-        setAnnouncements(annRes.data.announcements);
-        setSeenMomentIds(annRes.data.seenMomentIds || []);
+        setAnnouncements(statsRes.data.announcements || []);
+        setSeenMomentIds(statsRes.data.seenMomentIds || []);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {

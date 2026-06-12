@@ -1,4 +1,7 @@
 import { commonRepository } from "../repositories/common.repository";
+import { announcementRepository } from "../repositories/announcement.repository";
+import prisma from "../prisma";
+import { RoleName } from "../utils/constants";
 
 export const commonUsecase = {
   async getStatuses() {
@@ -55,6 +58,25 @@ export const commonUsecase = {
   async getDashboardStats(user?: any) {
     const result = await commonRepository.getDashboardStats(user);
 
+    let announcementsWhere: any = {};
+    if (user?.role?.toLowerCase() === RoleName.CUSTOMER.toLowerCase()) {
+      announcementsWhere.authorId = user.id;
+    }
+
+    const [announcements, seenNotifications] = await Promise.all([
+      announcementRepository.findMany(announcementsWhere, 0, -1),
+      prisma.notification.findMany({
+        where: {
+          userId: user?.id,
+          type: "seen_moment",
+        },
+      }),
+    ]);
+
+    const seenMomentIds = seenNotifications
+      .map((n) => (n.data as any)?.momentId)
+      .filter(Boolean);
+
     return {
       stats: {
         totalTickets: result.totalTickets,
@@ -67,6 +89,8 @@ export const commonUsecase = {
       },
       recentTickets: result.recentTickets,
       newHires: result.recentUsers,
+      announcements,
+      seenMomentIds,
     };
   },
 };

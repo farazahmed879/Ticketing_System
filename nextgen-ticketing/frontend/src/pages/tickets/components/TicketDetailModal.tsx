@@ -213,7 +213,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     onTicketUpdate(body);
   };
 
-  const handleAddComment = async (e: React.FormEvent) => {
+  const handleAddComment = async (e: React.FormEvent, isNote = false) => {
     e.preventDefault();
     if (!newComment.trim() && commentAttachments.length === 0) return;
     if (commentSendDisabled) return;
@@ -222,7 +222,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     try {
       await api.post(API_ROUTES.TICKETS.COMMENTS(ticket.id), {
         comment: newComment,
-        isNote: false,
+        isNote,
         attachments: commentAttachments,
       });
       setNewComment("");
@@ -1014,31 +1014,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             }}
                           >
                             {displayTicket.owner.fullname}
-                            {displayTicket.owner.id !== user?.id &&
-                              (displayTicket.status.name.toLowerCase() ===
-                                StatusName.OPEN.toLowerCase() ||
-                                displayTicket.status.name.toLowerCase() ===
-                                  StatusName.TRASH.toLowerCase()) && (
-                                <CustomButton
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleStartChat(displayTicket.owner.id)
-                                  }
-                                  icon={
-                                    <CustomIcon
-                                      name="MessageSquare"
-                                      size={14}
-                                    />
-                                  }
-                                  title="Chat with Reporter"
-                                  style={{
-                                    padding: 0,
-                                    minHeight: "auto",
-                                    color: "var(--accent-primary)",
-                                  }}
-                                />
-                              )}
+                            
                           </div>
                           <div
                             style={{
@@ -1198,29 +1174,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                     }}
                                   >
                                     {displayTicket.assignee.fullname}
-                                    {displayTicket.assignee.id !== user?.id && (
-                                      <CustomButton
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleStartChat(
-                                            displayTicket.assignee.id,
-                                          )
-                                        }
-                                        icon={
-                                          <CustomIcon
-                                            name="MessageSquare"
-                                            size={14}
-                                          />
-                                        }
-                                        title="Chat with Assignee"
-                                        style={{
-                                          padding: 0,
-                                          minHeight: "auto",
-                                          color: "var(--accent-secondary)",
-                                        }}
-                                      />
-                                    )}
+                                    
                                   </div>
                                 </div>
                               </>
@@ -1344,27 +1298,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                     }}
                                   >
                                     {displayTicket.qa.fullname}
-                                    {displayTicket.qa.id !== user?.id && (
-                                      <CustomButton
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleStartChat(displayTicket.qa.id)
-                                        }
-                                        icon={
-                                          <CustomIcon
-                                            name="MessageSquare"
-                                            size={14}
-                                          />
-                                        }
-                                        title="Chat with QA"
-                                        style={{
-                                          padding: 0,
-                                          minHeight: "auto",
-                                          color: "var(--accent-secondary)",
-                                        }}
-                                      />
-                                    )}
+                                    
                                   </div>
                                 </div>
                               </>

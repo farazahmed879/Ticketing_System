@@ -109,7 +109,14 @@ export const ticketRepository = {
         project: { select: { id: true, name: true } },
         comments: {
           include: {
-            author: { select: { id: true, fullname: true, image: true } },
+            author: {
+              select: {
+                id: true,
+                fullname: true,
+                image: true,
+                role: { select: { name: true, isCustomer: true } },
+              },
+            },
           },
           orderBy: { createdAt: "asc" },
         },

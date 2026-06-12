@@ -286,24 +286,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
                   }}
                 >
                   {displayTicket.owner.fullname}
-                  {displayTicket.owner.id !== user?.id &&
-                    (displayTicket.status.name.toLowerCase() ===
-                      StatusName.OPEN.toLowerCase() ||
-                      displayTicket.status.name.toLowerCase() ===
-                        StatusName.TRASH.toLowerCase()) && (
-                      <CustomButton
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleStartChat(displayTicket.owner.id)}
-                        icon={<CustomIcon name="MessageSquare" size={14} />}
-                        title="Chat with Reporter"
-                        style={{
-                          padding: 0,
-                          minHeight: "auto",
-                          color: "var(--accent-primary)",
-                        }}
-                      />
-                    )}
+                  
                 </div>
                 <div
                   style={{
@@ -458,24 +441,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
                           }}
                         >
                           {displayTicket.assignee.fullname}
-                          {displayTicket.assignee.id !== user?.id && (
-                            <CustomButton
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                handleStartChat(displayTicket.assignee.id)
-                              }
-                              icon={
-                                <CustomIcon name="MessageSquare" size={14} />
-                              }
-                              title="Chat with Assignee"
-                              style={{
-                                padding: 0,
-                                minHeight: "auto",
-                                color: "var(--accent-secondary)",
-                              }}
-                            />
-                          )}
+                          
                         </div>
                       </div>
                     </>
@@ -599,24 +565,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
                           }}
                         >
                           {displayTicket.qa.fullname}
-                          {displayTicket.qa.id !== user?.id && (
-                            <CustomButton
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                handleStartChat(displayTicket.qa.id)
-                              }
-                              icon={
-                                <CustomIcon name="MessageSquare" size={14} />
-                              }
-                              title="Chat with QA"
-                              style={{
-                                padding: 0,
-                                minHeight: "auto",
-                                color: "var(--accent-secondary)",
-                              }}
-                            />
-                          )}
+                          
                         </div>
                       </div>
                     </>

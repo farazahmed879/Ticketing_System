@@ -46,7 +46,11 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 8px;
+  /* Distinct, slightly recessed panel so the chat bubbles stand out. */
+  background: var(--bg-main);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  padding: 14px;
 }
 
 @media (max-width: 900px) {

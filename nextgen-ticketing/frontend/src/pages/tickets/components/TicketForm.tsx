@@ -38,7 +38,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
   const isClient = user?.role?.name === RoleName.CUSTOMER;
   // Clients shouldn't set a due date when creating a ticket — they can't
   // gauge SLA. On edit, leave the field visible.
-  const showDueDate = !(isClient);
+  const showDueDate = !isClient;
   const { handleSubmit, control, reset, watch, setValue } =
     useForm<TicketFormData>({
       defaultValues: {
@@ -179,6 +179,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
         <CustomSelect
           name="projectId"
           control={control}
+          rules={{ required: "Project is required" }}
           label="Project"
           placeholder="No Project"
           options={[
@@ -409,9 +410,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
           )}
         </div>
         {attachmentError && (
-          <span
-            style={{ fontSize: "0.75rem", color: "var(--accent-danger)" }}
-          >
+          <span style={{ fontSize: "0.75rem", color: "var(--accent-danger)" }}>
             {attachmentError}
           </span>
         )}

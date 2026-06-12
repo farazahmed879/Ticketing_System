@@ -42,6 +42,13 @@ const Messages: React.FC = () => {
     images: string[];
     index: number;
   } | null>(null);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const [unreadMessageNotifications, setUnreadMessageNotifications] = useState<any[]>([]);
+  const [showTicketSuggestions, setShowTicketSuggestions] = useState(false);
+  const [showProjectSuggestions, setShowProjectSuggestions] = useState(false);
+  const [allTickets, setAllTickets] = useState<any[]>([]);
+  const [allProjects, setAllProjects] = useState<any[]>([]);
+  const [suggestionQuery, setSuggestionQuery] = useState("");
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -52,6 +59,25 @@ const Messages: React.FC = () => {
     try {
       const res = await api.get(API_ROUTES.MESSAGES.CONVERSATIONS);
       setConversations(res.data.conversations);
+
+      // Fetch unread notifications to initialize unread counts
+      const notifRes = await api.get(API_ROUTES.NOTIFICATIONS.BASE, {
+        params: { limit: 100 },
+      });
+      const notifItems = notifRes.data.items || [];
+      const unreadMessageNotifs = notifItems.filter(
+        (n: any) => n.unread && n.type === "message"
+      );
+
+      const counts: Record<string, number> = {};
+      unreadMessageNotifs.forEach((n: any) => {
+        const rId = n.data?.roomId;
+        if (rId) {
+          counts[rId] = (counts[rId] || 0) + 1;
+        }
+      });
+      setUnreadCounts(counts);
+      setUnreadMessageNotifications(unreadMessageNotifs);
 
       // Handle userId from query params
       const userIdFromParam = searchParams.get("userId");
@@ -73,6 +99,15 @@ const Messages: React.FC = () => {
       if (activeConv === data.roomId) {
         setMessages((prev) => [...prev, data.message]);
       }
+
+      // Play local notification sound if sender is NOT current user
+      if (data.message.senderId !== user?.id) {
+        const audio = new Audio(
+          "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3",
+        );
+        audio.play().catch((e) => console.log("Audio play failed:", e));
+      }
+
       // Update recent message in list and move to top
       setConversations((prev) => {
         const index = prev.findIndex((c) => c.id === data.roomId);
@@ -94,10 +129,30 @@ const Messages: React.FC = () => {
       });
     });
 
+    socket.on("notifications:new", (notification: any) => {
+      if (notification.type === "message") {
+        const roomId = notification.data?.roomId;
+        if (roomId) {
+          if (activeConv === roomId) {
+            // Mark as read immediately on backend
+            socket.emit("notifications:markRead", notification.id);
+          } else {
+            // Increment local unread counts and track notification
+            setUnreadMessageNotifications((prev) => [...prev, notification]);
+            setUnreadCounts((prev) => ({
+              ...prev,
+              [roomId]: (prev[roomId] || 0) + 1,
+            }));
+          }
+        }
+      }
+    });
+
     return () => {
       socket.off("chat:receive");
+      socket.off("notifications:new");
     };
-  }, [activeConv]);
+  }, [activeConv, user?.id]);
 
   useEffect(() => {
     if (activeConv) {
@@ -114,6 +169,31 @@ const Messages: React.FC = () => {
       fetchMessages();
     }
   }, [activeConv]);
+
+  useEffect(() => {
+    if (activeConv) {
+      // Clear unread counts locally
+      setUnreadCounts((prev) => {
+        if (prev[activeConv] > 0) {
+          return { ...prev, [activeConv]: 0 };
+        }
+        return prev;
+      });
+
+      // Mark matching notifications as read on backend
+      const matchingNotifs = unreadMessageNotifications.filter(
+        (n) => n.data?.roomId === activeConv
+      );
+      if (matchingNotifs.length > 0) {
+        matchingNotifs.forEach((n) => {
+          socket.emit("notifications:markRead", n.id);
+        });
+        setUnreadMessageNotifications((prev) =>
+          prev.filter((n) => n.data?.roomId !== activeConv)
+        );
+      }
+    }
+  }, [activeConv, unreadMessageNotifications]);
 
   useEffect(() => {
     scrollToBottom();
@@ -245,13 +325,88 @@ const Messages: React.FC = () => {
     }
   }, [isUserModalOpen, isGroupModalOpen]);
 
+  const fetchTicketsForMentions = async () => {
+    try {
+      const res = await api.get(API_ROUTES.TICKETS.BASE, {
+        params: { limit: 100 },
+      });
+      setAllTickets(res.data.tickets || []);
+    } catch (err) {
+      console.error("Failed to fetch tickets for mentions", err);
+    }
+  };
+
+  const fetchProjectsForMentions = async () => {
+    try {
+      const res = await api.get(API_ROUTES.PROJECTS.BASE, {
+        params: { role: user?.role?.name, userId: user?.id },
+      });
+      setAllProjects(res.data.projects || []);
+    } catch (err) {
+      console.error("Failed to fetch projects for mentions", err);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setNewMessage(val);
+
+    const inputElement = e.target;
+    const selectionEnd = inputElement.selectionEnd || 0;
+    const textBeforeCursor = val.substring(0, selectionEnd);
+
+    const ticketMatch = textBeforeCursor.match(/#(\w*)$/);
+    const projectMatch = textBeforeCursor.match(/\$(\w*)$/);
+
+    if (ticketMatch) {
+      setShowTicketSuggestions(true);
+      setShowProjectSuggestions(false);
+      setSuggestionQuery(ticketMatch[1]);
+      if (allTickets.length === 0) {
+        fetchTicketsForMentions();
+      }
+    } else if (projectMatch) {
+      setShowProjectSuggestions(true);
+      setShowTicketSuggestions(false);
+      setSuggestionQuery(projectMatch[1]);
+      if (allProjects.length === 0) {
+        fetchProjectsForMentions();
+      }
+    } else {
+      setShowTicketSuggestions(false);
+      setShowProjectSuggestions(false);
+      setSuggestionQuery("");
+    }
+  };
+
+  const handleSelectTicket = (ticket: any) => {
+    setNewMessage((prev) => {
+      const lastHashIndex = prev.lastIndexOf('#');
+      if (lastHashIndex === -1) return prev;
+      return prev.substring(0, lastHashIndex) + `[Ticket: #${ticket.uid} - ${ticket.subject}] ` + prev.substring(lastHashIndex + suggestionQuery.length + 1);
+    });
+    setShowTicketSuggestions(false);
+  };
+
+  const handleSelectProject = (project: any) => {
+    setNewMessage((prev) => {
+      const lastDollarIndex = prev.lastIndexOf('$');
+      if (lastDollarIndex === -1) return prev;
+      return prev.substring(0, lastDollarIndex) + `[Project: ${project.name}] ` + prev.substring(lastDollarIndex + suggestionQuery.length + 1);
+    });
+    setShowProjectSuggestions(false);
+  };
+
   const isStaff =
     user?.role?.isAdmin ||
     user?.role?.isAgent ||
     user?.role?.name?.toLowerCase() === "admin" ||
+    user?.role?.name?.toLowerCase() === "manager" ||
     user?.role?.name?.toLowerCase() === "agent";
   const isCustomer =
-    user?.role?.isCustomer || user?.role?.name?.toLowerCase() === "customer";
+    user?.role?.isCustomer ||
+    user?.role?.name?.toLowerCase() === "customer" ||
+    user?.role?.name?.toLowerCase() === "client";
 
   const filteredConversations = conversations.filter((c) => {
     const name = c.isGroup ? c.name || "Group" : c.partner?.fullname || "";
@@ -394,14 +549,29 @@ const Messages: React.FC = () => {
                   </div>
                   <div
                     style={{
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 8,
                     }}
                   >
-                    {conv.recentMessage}
+                    <div
+                      style={{
+                        fontSize: "0.85rem",
+                        color: "var(--text-muted)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        flex: 1,
+                      }}
+                    >
+                      {conv.recentMessage}
+                    </div>
+                    {unreadCounts[conv.id] > 0 && (
+                      <span className={styles.unreadBadge}>
+                        {unreadCounts[conv.id]}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -596,6 +766,68 @@ const Messages: React.FC = () => {
               {attachmentError && (
                 <div className={styles.attachmentError}>{attachmentError}</div>
               )}
+              {(showTicketSuggestions || showProjectSuggestions) && (
+                <div className={styles.suggestionContainer}>
+                  {showTicketSuggestions && (
+                    <div className={styles.suggestionHeader}>
+                      <CustomIcon name="Tag" size={14} /> Mention Ticket
+                    </div>
+                  )}
+                  {showProjectSuggestions && (
+                    <div className={styles.suggestionHeader}>
+                      <CustomIcon name="Briefcase" size={14} /> Mention Project
+                    </div>
+                  )}
+                  <div className={styles.suggestionList}>
+                    {showTicketSuggestions &&
+                      allTickets
+                        .filter(
+                          (t) =>
+                            t.subject.toLowerCase().includes(suggestionQuery.toLowerCase()) ||
+                            String(t.uid).includes(suggestionQuery)
+                        )
+                        .slice(0, 5)
+                        .map((t) => (
+                          <div
+                            key={t.id}
+                            className={styles.suggestionItem}
+                            onClick={() => handleSelectTicket(t)}
+                          >
+                            <span className={styles.ticketUid}>#{t.uid}</span>
+                            <span className={styles.ticketSubject}>{t.subject}</span>
+                          </div>
+                        ))}
+                    {showProjectSuggestions &&
+                      allProjects
+                        .filter((p) =>
+                          p.name.toLowerCase().includes(suggestionQuery.toLowerCase())
+                        )
+                        .slice(0, 5)
+                        .map((p) => (
+                          <div
+                            key={p.id}
+                            className={styles.suggestionItem}
+                            onClick={() => handleSelectProject(p)}
+                          >
+                            <CustomIcon name="Briefcase" size={14} style={{ marginRight: 6 }} />
+                            <span>{p.name}</span>
+                          </div>
+                        ))}
+                    {((showTicketSuggestions &&
+                      allTickets.filter(
+                        (t) =>
+                          t.subject.toLowerCase().includes(suggestionQuery.toLowerCase()) ||
+                          String(t.uid).includes(suggestionQuery)
+                      ).length === 0) ||
+                      (showProjectSuggestions &&
+                        allProjects.filter((p) =>
+                          p.name.toLowerCase().includes(suggestionQuery.toLowerCase())
+                        ).length === 0)) && (
+                      <div className={styles.noSuggestions}>No matches found</div>
+                    )}
+                  </div>
+                </div>
+              )}
               <form
                 onSubmit={handleSendMessage}
                 className="glass-card"
@@ -627,11 +859,37 @@ const Messages: React.FC = () => {
                 >
                   <CustomIcon name="Paperclip" size={18} />
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowTicketSuggestions((prev) => !prev);
+                    setShowProjectSuggestions(false);
+                    setSuggestionQuery("");
+                    fetchTicketsForMentions();
+                  }}
+                  title="Mention Ticket"
+                  className={styles.mentionButton}
+                >
+                  <CustomIcon name="Tag" size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProjectSuggestions((prev) => !prev);
+                    setShowTicketSuggestions(false);
+                    setSuggestionQuery("");
+                    fetchProjectsForMentions();
+                  }}
+                  title="Mention Project"
+                  className={styles.mentionButton}
+                >
+                  <CustomIcon name="Briefcase" size={18} />
+                </button>
                 <input
                   type="text"
-                  placeholder="Type a message..."
+                  placeholder="Type a message... (Use # to mention ticket, $ to mention project)"
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={handleInputChange}
                   style={{
                     flex: 1,
                     background: "transparent",

@@ -9,7 +9,7 @@ import styles from "./Sidebar.module.css";
 import type { SidebarProps } from "../../types";
 import { RoleName } from "../../utils/constants";
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse, unreadMessageCount }) => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -227,6 +227,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
             >
               {item.icon}
               {!isCollapsed && <span>{item.label}</span>}
+              {item.path === "/messages" && unreadMessageCount !== undefined && unreadMessageCount > 0 && (
+                <span className={`${styles.sidebarBadge} ${isCollapsed ? styles.collapsedBadge : ""}`}>
+                  {unreadMessageCount}
+                </span>
+              )}
               {item.children && !isCollapsed && (
                 <CustomIcon
                   name="ChevronRight"

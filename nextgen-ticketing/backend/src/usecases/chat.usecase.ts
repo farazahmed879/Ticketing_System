@@ -136,9 +136,9 @@ export const chatUsecase = {
     if (!me) throw new Error("User not found");
 
     const isAdmin =
-      me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN;
+      me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN.toLowerCase();
     const isAgent =
-      me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT;
+      me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT.toLowerCase();
     if (!isAdmin && !isAgent) {
       throw new Error("Only Admins and Agents can create group chats");
     }
@@ -162,9 +162,9 @@ export const chatUsecase = {
     if (!me) throw new Error("User not found");
 
     const isAdmin =
-      me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN;
+      me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN.toLowerCase();
     const isAgent =
-      me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT;
+      me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT.toLowerCase();
     if (!isAdmin && !isAgent) {
       throw new Error("Only Admins and Agents can manage group members");
     }

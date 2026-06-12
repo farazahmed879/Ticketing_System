@@ -459,6 +459,7 @@ export interface ProjectModalProps {
 export interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  unreadMessageCount?: number;
 }
 
 export interface CustomerDashboardProps {

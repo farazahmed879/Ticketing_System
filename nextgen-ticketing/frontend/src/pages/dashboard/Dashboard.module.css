@@ -690,3 +690,222 @@
     grid-template-columns: 1fr;
   }
 }
+
+.joyOverlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(32, 20, 56, 0.88) 0%, rgba(10, 11, 16, 0.94) 100%);
+  backdrop-filter: blur(20px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: overlayFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.joyParticle {
+  position: absolute;
+  bottom: -100px;
+  pointer-events: none;
+  z-index: 99998;
+  opacity: 0;
+  user-select: none;
+  animation: floatUp 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-115vh) rotate(360deg) scale(1.3);
+    opacity: 0;
+  }
+}
+
+.highlightedMomentCard {
+  width: min(600px, 90vw);
+  background: rgba(30, 31, 42, 0.75);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 24px;
+  padding: 32px;
+  position: relative;
+  z-index: 100000;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 50px rgba(245, 158, 11, 0.15);
+  animation: cardZoomIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes cardZoomIn {
+  from {
+    transform: scale(0.85) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.closeOverlayBtn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.closeOverlayBtn:hover {
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--accent-primary);
+  border-color: rgba(124, 58, 237, 0.2);
+  transform: rotate(90deg);
+}
+
+.highlightHeader {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.cardSparkle {
+  font-size: 1.5rem;
+  animation: pulseSparkle 1.5s infinite ease-in-out;
+}
+
+@keyframes pulseSparkle {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.2); opacity: 1; filter: drop-shadow(0 0 6px var(--accent-primary)); }
+}
+
+.highlightBody {
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.highlightTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  line-height: 1.3;
+  background: linear-gradient(135deg, #FFE066 0%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.highlightText {
+  font-size: 1.05rem;
+  color: #f1f5f9;
+  line-height: 1.6;
+}
+
+.highlightFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-glass);
+}
+
+.highlightAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--border-glass);
+}
+
+.expandSectionBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.expandSectionBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--accent-primary);
+  transform: scale(1.08);
+}
+
+.fullscreenSectionOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 11, 16, 0.85);
+  backdrop-filter: blur(16px);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: overlayFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  padding: 24px;
+}
+
+.fullscreenSectionContent {
+  width: min(800px, 95vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 32px;
+  border-radius: 20px;
+  background: rgba(20, 21, 28, 0.82);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(124, 58, 237, 0.1);
+  position: relative;
+  animation: cardZoomIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Custom Scrollbar for expanded content */
+.fullscreenSectionContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.fullscreenSectionContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fullscreenSectionContent::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.fullscreenSectionContent::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.newHiresGridExpanded {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+

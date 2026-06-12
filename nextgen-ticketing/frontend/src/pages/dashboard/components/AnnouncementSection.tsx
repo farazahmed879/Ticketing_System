@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import CustomIcon from "../../../components/CustomIcon";
 import { AnnouncementType } from "../../../utils/constants";
@@ -7,12 +7,21 @@ import styles from "../Dashboard.module.css";
 import type { AnnouncementSectionProps } from "../../../types";
 
 const AnnouncementSection: React.FC<AnnouncementSectionProps> = ({ announcements, t }) => {
-  return (
-    <div className={styles.announcementContainer}>
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const renderContent = () => (
+    <>
       <div className={styles.sectionHeader}>
-        <h2 style={{ fontSize: "1.25rem" }}>
+        <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)" }}>
           {t("dashboard.announcements")}
         </h2>
+        <button
+          className={styles.expandSectionBtn}
+          onClick={() => setIsExpanded(!isExpanded)}
+          title={isExpanded ? "Collapse" : "Expand"}
+        >
+          <CustomIcon name={isExpanded ? "Minimize2" : "Maximize2"} size={16} />
+        </button>
       </div>
       {announcements.length > 0 ? (
         announcements.map((ann) => (
@@ -65,6 +74,22 @@ const AnnouncementSection: React.FC<AnnouncementSectionProps> = ({ announcements
           </div>
         </div>
       )}
+    </>
+  );
+
+  if (isExpanded) {
+    return (
+      <div className={styles.fullscreenSectionOverlay} onClick={() => setIsExpanded(false)}>
+        <div className={styles.fullscreenSectionContent} onClick={(e) => e.stopPropagation()}>
+          {renderContent()}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.announcementContainer}>
+      {renderContent()}
     </div>
   );
 };

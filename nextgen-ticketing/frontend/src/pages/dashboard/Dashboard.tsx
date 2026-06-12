@@ -18,7 +18,6 @@ import ReviewsSection from "./components/ReviewsSection";
 import NewHiresSection from "./components/NewHiresSection";
 import MomentsSection from "./components/MomentsSection";
 import LeaderboardSection from "./components/LeaderboardSection";
-import NewHiresModal from "./components/NewHiresModal";
 import CustomerDashboard from "./CustomerDashboard";
 
 const Dashboard: React.FC = () => {
@@ -29,14 +28,14 @@ const Dashboard: React.FC = () => {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [newHires, setNewHires] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isNewHiresModalOpen, setIsNewHiresModalOpen] = useState(false);
+  const [seenMomentIds, setSeenMomentIds] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [statsRes, annRes] = await Promise.all([
           api.get(API_ROUTES.DASHBOARD.STATS),
-          api.get(API_ROUTES.ANNOUNCEMENTS.BASE, { params: { limit: -1 } }),
+          api.get(API_ROUTES.ANNOUNCEMENTS.DASHBOARD, { params: { limit: -1 } }),
         ]);
         setStats(statsRes.data.stats);
         // Clients aren't "new hires" — exclude them from the dashboard.
@@ -46,6 +45,7 @@ const Dashboard: React.FC = () => {
           ),
         );
         setAnnouncements(annRes.data.announcements);
+        setSeenMomentIds(annRes.data.seenMomentIds || []);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
@@ -101,7 +101,7 @@ const Dashboard: React.FC = () => {
   ];
 
   if (user?.role?.name === RoleName.CUSTOMER) {
-    return <CustomerDashboard stats={stats} />;
+    return <CustomerDashboard stats={stats} moments={moments} />;
   }
 
   return (
@@ -118,9 +118,8 @@ const Dashboard: React.FC = () => {
       <div className={styles.heroSection}>
         <NewHiresSection
           newHires={newHires}
-          onViewAll={() => setIsNewHiresModalOpen(true)}
         />
-        <MomentsSection moments={moments} />
+        <MomentsSection moments={moments} seenMomentIds={seenMomentIds} />
       </div>
 
       <div className={styles.mainGrid}>
@@ -131,11 +130,6 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <NewHiresModal
-        isOpen={isNewHiresModalOpen}
-        onClose={() => setIsNewHiresModalOpen(false)}
-        newHires={newHires}
-      />
     </div>
   );
 };

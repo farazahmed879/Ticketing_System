@@ -8,8 +8,12 @@ import type { Project, CustomerDashboardProps } from "../../types";
 import CustomBadge from "../../components/CustomBadge";
 import CustomSkeleton from "../../components/CustomSkeleton/CustomSkeleton";
 import styles from "./Dashboard.module.css";
+import MomentsSection from "./components/MomentsSection";
 
-const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
+const CustomerDashboard: React.FC<CustomerDashboardProps> = ({
+  stats,
+  moments = [],
+}) => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -133,7 +137,9 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
                     alignItems: "flex-start",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 12 }}
+                  >
                     <CustomSkeleton width={48} height={48} borderRadius={12} />
                     <div>
                       <CustomSkeleton
@@ -150,7 +156,9 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
                     borderRadius="12px"
                   />
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                >
                   <CustomSkeleton width="100%" height="0.9rem" />
                   <CustomSkeleton width="70%" height="0.9rem" />
                 </div>
@@ -171,7 +179,13 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
             ))}
           </div>
         ) : projects.length > 0 ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 20 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
+              gap: 20,
+            }}
+          >
             {projects.map((project) => (
               <div
                 key={project.id}
@@ -193,57 +207,105 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
                   cursor: "pointer",
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ 
-                      width: 48, 
-                      height: 48, 
-                      borderRadius: 12, 
-                      background: "rgba(var(--primary-rgb), 0.1)", 
-                      display: "flex", 
-                      alignItems: "center", 
-                      justifyContent: "center",
-                      color: "var(--accent-primary)"
-                    }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 12 }}
+                  >
+                    <div
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 12,
+                        background: "rgba(var(--primary-rgb), 0.1)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--accent-primary)",
+                      }}
+                    >
                       <CustomIcon name="FolderKanban" size={24} />
                     </div>
                     <div>
-                      <h3 style={{ fontSize: "1.1rem", fontWeight: 700, margin: 0 }}>{project.name}</h3>
-                      <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{project.department?.name || "Global Project"}</span>
+                      <h3
+                        style={{
+                          fontSize: "1.1rem",
+                          fontWeight: 700,
+                          margin: 0,
+                        }}
+                      >
+                        {project.name}
+                      </h3>
+                      <span
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "var(--text-muted)",
+                        }}
+                      >
+                        {project.department?.name || "Global Project"}
+                      </span>
                     </div>
                   </div>
-                  <CustomBadge variant={getStatusVariant(project.status) as any}>
+                  <CustomBadge
+                    variant={getStatusVariant(project.status) as any}
+                  >
                     {project.status}
                   </CustomBadge>
                 </div>
 
-                <p style={{ 
-                  fontSize: "0.9rem", 
-                  color: "var(--text-secondary)", 
-                  margin: 0, 
-                  lineHeight: 1.5,
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden"
-                }}>
-                  {project.description || "No description provided for this project."}
+                <p
+                  style={{
+                    fontSize: "0.9rem",
+                    color: "var(--text-secondary)",
+                    margin: 0,
+                    lineHeight: 1.5,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
+                  {project.description ||
+                    "No description provided for this project."}
                 </p>
 
-                <div style={{ 
-                  marginTop: "auto",
-                  paddingTop: 16, 
-                  borderTop: "1px solid var(--border-glass)",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  fontSize: "0.85rem"
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--text-muted)" }}>
+                <div
+                  style={{
+                    marginTop: "auto",
+                    paddingTop: 16,
+                    borderTop: "1px solid var(--border-glass)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      color: "var(--text-muted)",
+                    }}
+                  >
                     <CustomIcon name="Calendar" size={14} />
                     Started {new Date(project.createdAt).toLocaleDateString()}
                   </div>
-                  <div style={{ fontWeight: 600, color: "var(--accent-primary)", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      color: "var(--accent-primary)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
                     Details <CustomIcon name="ArrowRight" size={14} />
                   </div>
                 </div>
@@ -255,13 +317,21 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
             <div className={styles.emptyIcon}>
               <CustomIcon name="Briefcase" size={32} />
             </div>
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 600, margin: "8px 0" }}>No Projects Yet</h3>
+            <h3
+              style={{ fontSize: "1.1rem", fontWeight: 600, margin: "8px 0" }}
+            >
+              No Projects Yet
+            </h3>
             <p style={{ color: "var(--text-muted)", maxWidth: 300 }}>
               You don't have any active projects assigned to your account.
             </p>
           </div>
         )}
       </div>
+
+      {/* <div style={{ marginTop: 40 }}>
+        <MomentsSection moments={moments} />
+      </div> */}
     </div>
   );
 };

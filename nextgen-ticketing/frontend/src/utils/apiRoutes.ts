@@ -113,6 +113,8 @@ export const API_ROUTES = {
   // Announcements
   ANNOUNCEMENTS: {
     BASE: "/announcements",
+    DASHBOARD: "/announcements/dashboard",
+    MARK_SEEN: (id: string) => `/announcements/moments/${id}/seen`,
     BY_ID: (id: string) => `/announcements/${id}`,
   },
 };

@@ -1,5 +1,5 @@
 import { useEffect, useState, useImperativeHandle, forwardRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
 import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
@@ -45,6 +45,7 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
           : isEmployee
             ? AnnouncementType.MOMENT
             : AnnouncementType.EVENT,
+        shouldPopout: false,
       },
     });
 
@@ -62,6 +63,7 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
             : isEmployee
               ? AnnouncementType.MOMENT
               : initialData.type,
+          shouldPopout: !!initialData.shouldPopout,
         });
       } else {
         reset({
@@ -74,6 +76,7 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
             : isEmployee
               ? AnnouncementType.MOMENT
               : AnnouncementType.EVENT,
+          shouldPopout: false,
         });
       }
     };
@@ -143,6 +146,38 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
             disabled={isRestricted}
           />
         </div>
+        <Controller
+          name="shouldPopout"
+          control={control}
+          render={({ field }) => (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
+              <input
+                id="shouldPopout"
+                type="checkbox"
+                checked={field.value}
+                onChange={(e) => field.onChange(e.target.checked)}
+                style={{
+                  width: 18,
+                  height: 18,
+                  accentColor: "var(--accent-primary)",
+                  cursor: "pointer"
+                }}
+              />
+              <label
+                htmlFor="shouldPopout"
+                style={{
+                  fontSize: "0.95rem",
+                  color: "var(--text-primary)",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  userSelect: "none"
+                }}
+              >
+                Popout/Celebrate automatically on Dashboard
+              </label>
+            </div>
+          )}
+        />
       </form>
     );
   },

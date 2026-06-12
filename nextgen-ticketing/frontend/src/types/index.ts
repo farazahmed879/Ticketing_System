@@ -464,6 +464,7 @@ export interface SidebarProps {
 
 export interface CustomerDashboardProps {
   stats: any;
+  moments?: any[];
 }
 
 export interface StatsCardsProps {

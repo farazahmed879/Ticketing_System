@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Dashboard.module.css";
 
@@ -7,8 +7,10 @@ interface ReviewsSectionProps {
 }
 
 const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
-  return (
-    <div className={`${styles.reviewsSection} glass-card`}>
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const renderContent = () => (
+    <>
       <div className={styles.welcomeHeader}>
         <div
           className={styles.welcomeTitle}
@@ -17,6 +19,13 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
           <CustomIcon name="Quote" size={24} />
           <h2>Client Happy Reviews</h2>
         </div>
+        <button
+          className={styles.expandSectionBtn}
+          onClick={() => setIsExpanded(!isExpanded)}
+          title={isExpanded ? "Collapse" : "Expand"}
+        >
+          <CustomIcon name={isExpanded ? "Minimize2" : "Maximize2"} size={16} />
+        </button>
       </div>
       <div className={styles.reviewsList}>
         {reviews.length > 0 ? (
@@ -80,6 +89,22 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
           </div>
         )}
       </div>
+    </>
+  );
+
+  if (isExpanded) {
+    return (
+      <div className={styles.fullscreenSectionOverlay} onClick={() => setIsExpanded(false)}>
+        <div className={styles.fullscreenSectionContent} onClick={(e) => e.stopPropagation()}>
+          {renderContent()}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${styles.reviewsSection} glass-card`}>
+      {renderContent()}
     </div>
   );
 };

@@ -17,7 +17,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
           style={{ color: "var(--accent-warning)" }}
         >
           <CustomIcon name="Quote" size={24} />
-          <h2>Client Happy Reviews</h2>
+          <h2>Client Reviews</h2>
         </div>
         <button
           className={styles.expandSectionBtn}
@@ -30,16 +30,17 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
       <div className={styles.reviewsList}>
         {reviews.length > 0 ? (
           reviews.map((review) => (
-            <div key={review.id} className={`${styles.premiumReviewCard} glass-card`}>
+            <div
+              key={review.id}
+              className={`${styles.premiumReviewCard} glass-card`}
+            >
               <div className={styles.quoteIconWrapper}>
-                <CustomIcon name="Quote" size={24} />
+                <CustomIcon name="Quote" size={16} />
               </div>
-              
+
               <div className={styles.reviewContent}>
                 <h4 className={styles.reviewTitle}>{review.title}</h4>
-                <p className={styles.reviewText}>
-                  {review.description}
-                </p>
+                <p className={styles.reviewText}>{review.description}</p>
               </div>
 
               <div className={styles.reviewDivider} />
@@ -58,26 +59,36 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
                     </div>
                   )}
                   <div className={styles.verifiedBadge}>
-                    <CustomIcon name="CheckCircle2" size={10} fill="var(--accent-success)" />
+                    <CustomIcon
+                      name="CheckCircle2"
+                      size={8}
+                      fill="var(--accent-success)"
+                    />
                   </div>
                 </div>
-                
+
                 <div className={styles.reviewerMeta}>
                   <div className={styles.reviewerTop}>
-                    <h5 className={styles.reviewerName}>{review.author?.fullname}</h5>
+                    <h5 className={styles.reviewerName}>
+                      {review.author?.fullname}
+                    </h5>
                     <div className={styles.reviewStars}>
-                      {Array.from({ length: review.rating || 5 }).map((_, i) => (
-                        <CustomIcon
-                          key={i}
-                          name="Star"
-                          size={10}
-                          className={styles.premiumStar}
-                          fill="currentColor"
-                        />
-                      ))}
+                      {Array.from({ length: review.rating || 5 }).map(
+                        (_, i) => (
+                          <CustomIcon
+                            key={i}
+                            name="Star"
+                            size={8}
+                            className={styles.premiumStar}
+                            fill="currentColor"
+                          />
+                        ),
+                      )}
                     </div>
                   </div>
-                  <span className={styles.reviewerRole}>{review.author?.title || "Valued Client"}</span>
+                  <span className={styles.reviewerRole}>
+                    {review.author?.title || "Valued Client"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -94,8 +105,14 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
 
   if (isExpanded) {
     return (
-      <div className={styles.fullscreenSectionOverlay} onClick={() => setIsExpanded(false)}>
-        <div className={styles.fullscreenSectionContent} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.fullscreenSectionOverlay}
+        onClick={() => setIsExpanded(false)}
+      >
+        <div
+          className={styles.fullscreenSectionContent}
+          onClick={(e) => e.stopPropagation()}
+        >
           {renderContent()}
         </div>
       </div>

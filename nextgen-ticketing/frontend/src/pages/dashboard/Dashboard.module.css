@@ -441,15 +441,15 @@
 .reviewsList {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 /* Premium Review Card Styles */
 .premiumReviewCard {
-  padding: 24px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   position: relative;
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -457,22 +457,24 @@
 }
 
 .premiumReviewCard:hover {
-  transform: translateY(-8px);
+  transform: translateY(-4px);
   background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
   border-color: var(--accent-warning);
 }
 
 .quoteIconWrapper {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: rgba(251, 191, 36, 0.1);
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(251, 191, 36, 0.08);
   color: var(--accent-warning);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 4px;
 }
 
 .reviewContent {
@@ -480,18 +482,19 @@
 }
 
 .reviewTitle {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   letter-spacing: -0.01em;
+  padding-right: 32px;
 }
 
 .reviewText {
-  font-size: 0.95rem;
-  line-height: 1.6;
+  font-size: 0.85rem;
+  line-height: 1.5;
   color: var(--text-secondary);
-  font-style: normal; /* Premium usually doesn't need italic if typography is good */
+  font-style: normal;
 }
 
 .reviewDivider {
@@ -503,7 +506,7 @@
 .reviewerSection {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .reviewerAvatarWrapper {
@@ -511,38 +514,38 @@
 }
 
 .reviewerAvatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   object-fit: cover;
-  border: 2px solid var(--border-glass);
+  border: 1.5px solid var(--border-glass);
 }
 
 .reviewerAvatarPlaceholder {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   background: var(--accent-warning);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 700;
-  font-size: 1.2rem;
+  font-size: 0.9rem;
 }
 
 .verifiedBadge {
   position: absolute;
-  bottom: -4px;
-  right: -4px;
+  bottom: -2px;
+  right: -2px;
   background: white;
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 
 .reviewerMeta {
@@ -553,11 +556,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .reviewerName {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -569,7 +572,7 @@
 }
 
 .reviewerRole {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 500;
 }

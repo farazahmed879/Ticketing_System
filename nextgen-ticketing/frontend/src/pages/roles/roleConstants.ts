@@ -130,6 +130,40 @@ export const EMPLOYEE_PERMISSIONS = {
   },
 };
 
+export const LEAD_PERMISSIONS = {
+  tickets: {
+    view: true,
+    create: false,
+    update: true,
+    delete: false,
+    assign: true,
+    priority: true,
+  },
+  comments: { view: true, create: true },
+  users: { view: false, create: false, update: false, delete: false },
+  teams: { view: true, create: false, update: false, delete: false },
+  groups: { view: true, create: false, update: false, delete: false },
+  roles: { view: false, create: false, update: false, delete: false },
+  departments: { view: false, create: false, update: false, delete: false },
+  messages: { view: true, create: false },
+  dashboard: { view: true },
+  timesheets: { view: true, approve: false, report: true },
+  candidates: { view: true, create: false, update: false, delete: false },
+  interviews: { view: true, create: false, update: false, delete: false },
+  requests: { view: true, create: false, update: false, delete: false },
+  announcements: { view: true, create: true, update: true, delete: true },
+  boardStatuses: {
+    [getStatusId(StatusName.NEW)]: false,
+    [getStatusId(StatusName.OPEN)]: false,
+    [getStatusId(StatusName.TRASH)]: false,
+    [getStatusId(StatusName.FAILED)]: false,
+    [getStatusId(StatusName.IN_PROCESS)]: true,
+    [getStatusId(StatusName.RESOLVED)]: true,
+    [getStatusId(StatusName.CLOSED)]: false,
+    [getStatusId(StatusName.APPROVED)]: false,
+  },
+};
+
 export const QA_PERMISSIONS = {
   tickets: {
     view: true,
@@ -310,7 +344,14 @@ export const ROLE_TYPES = [
   },
   {
     id: "isCustomer",
-    label: "Customer",
+    label: "Client",
+    icon: "User",
+    color: "#4caf50",
+    activeBg: "rgba(76, 175, 80, 0.05)",
+  },
+  {
+    id: "isLead",
+    label: "Lead",
     icon: "User",
     color: "#4caf50",
     activeBg: "rgba(76, 175, 80, 0.05)",

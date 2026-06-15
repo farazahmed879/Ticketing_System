@@ -101,6 +101,8 @@ export interface Role {
   isCustomer: boolean;
   isEmployee: boolean;
   isHR: boolean;
+  isLead?: boolean;
+  isQA?: boolean;
   permissions?: any;
   _count?: { users: number };
 }
@@ -337,6 +339,8 @@ export interface RoleFormData {
   isCustomer: boolean;
   isEmployee: boolean;
   isHR: boolean;
+  isLead?: boolean;
+  isQA?: boolean;
   permissions: any;
 }
 

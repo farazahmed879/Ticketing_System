@@ -17,6 +17,7 @@ import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomPagination from "../../components/CustomPagination";
 import CustomDropdownMenu from "../../components/CustomDropdownMenu";
+import Highlight from "../../components/Highlight";
 import CreateTicketModal from "./components/CreateTicketModal";
 import StandardListLayout from "../../components/StandardListLayout";
 import ConfirmationModal from "../../components/ConfirmationModal";
@@ -33,6 +34,32 @@ const TicketList: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // Advanced ("More") filters — each supports multiple selections.
+  // Applied values drive the fetch; draft values are edited in the panel and
+  // committed via the "Apply Filters" button.
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [priorityNames, setPriorityNames] = useState<string[]>([]);
+  const [projectIds, setProjectIds] = useState<string[]>([]);
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const [ownerIds, setOwnerIds] = useState<string[]>([]);
+
+  const [draftPriorities, setDraftPriorities] = useState<string[]>([]);
+  const [draftProjects, setDraftProjects] = useState<string[]>([]);
+  const [draftAssignees, setDraftAssignees] = useState<string[]>([]);
+  const [draftClients, setDraftClients] = useState<string[]>([]);
+
+  const activeMoreFilters = [
+    priorityNames,
+    projectIds,
+    assigneeIds,
+    ownerIds,
+  ].filter((arr) => arr.length > 0).length;
+  const draftSelectedCount =
+    draftPriorities.length +
+    draftProjects.length +
+    draftAssignees.length +
+    draftClients.length;
+
   // Create Ticket Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -41,6 +68,7 @@ const TicketList: React.FC = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [types, setTypes] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
 
   // Delete Ticket State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -50,10 +78,12 @@ const TicketList: React.FC = () => {
   const { showNotification, setIsLoading } = useNotification();
   const { user } = useAuth();
 
+  const isCustomer = user?.role?.name === RoleName.CUSTOMER;
+
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const [pRes, gRes, tRes, aRes] = await Promise.all([
+        const [pRes, gRes, tRes, aRes, cRes] = await Promise.all([
           api.get(API_ROUTES.COMMON.PRIORITIES),
           api.get(API_ROUTES.PROJECTS.BASE, {
             params: {
@@ -63,11 +93,13 @@ const TicketList: React.FC = () => {
           }),
           api.get(API_ROUTES.COMMON.TYPES),
           api.get(API_ROUTES.USERS.BASE, { params: { type: "employees" } }),
+          api.get(API_ROUTES.USERS.BASE, { params: { type: "clients" } }),
         ]);
         setPriorities(pRes.data.priorities);
         setProjects(gRes.data.projects);
         setTypes(tRes.data.types);
         setAgents(aRes.data.accounts);
+        setClients(cRes.data.accounts);
       } catch (err) {
         console.error("Failed to fetch metadata", err);
       }
@@ -80,7 +112,16 @@ const TicketList: React.FC = () => {
   const fetchTickets = async () => {
     try {
       const res = await api.get(API_ROUTES.TICKETS.BASE, {
-        params: { search, status, page, limit: itemsPerPage },
+        params: {
+          search,
+          status,
+          priority: priorityNames.length ? priorityNames.join(",") : undefined,
+          project: projectIds.length ? projectIds.join(",") : undefined,
+          assignee: assigneeIds.length ? assigneeIds.join(",") : undefined,
+          owner: ownerIds.length ? ownerIds.join(",") : undefined,
+          page,
+          limit: itemsPerPage,
+        },
       });
       setTickets(res.data.tickets);
       setTotalCount(res.data.totalCount);
@@ -94,7 +135,51 @@ const TicketList: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     fetchTickets();
-  }, [search, status, page, itemsPerPage]);
+  }, [
+    search,
+    status,
+    priorityNames,
+    projectIds,
+    assigneeIds,
+    ownerIds,
+    page,
+    itemsPerPage,
+  ]);
+
+  const toggleMoreFilters = () => {
+    if (showMoreFilters) {
+      setShowMoreFilters(false);
+    } else {
+      // Seed the draft from the currently-applied filters when opening.
+      setDraftPriorities(priorityNames);
+      setDraftProjects(projectIds);
+      setDraftAssignees(assigneeIds);
+      setDraftClients(ownerIds);
+      setShowMoreFilters(true);
+    }
+  };
+
+  const applyMoreFilters = () => {
+    setPriorityNames(draftPriorities);
+    setProjectIds(draftProjects);
+    setAssigneeIds(draftAssignees);
+    setOwnerIds(draftClients);
+    setPage(0);
+    setShowMoreFilters(false);
+  };
+
+  const clearMoreFilters = () => {
+    setDraftPriorities([]);
+    setDraftProjects([]);
+    setDraftAssignees([]);
+    setDraftClients([]);
+    setPriorityNames([]);
+    setProjectIds([]);
+    setAssigneeIds([]);
+    setOwnerIds([]);
+    setPage(0);
+    setShowMoreFilters(false);
+  };
 
   const handleCreateTicket = async (data: TicketFormData) => {
     setIsLoading(true, UIMessages.LOADING.CREATING_TICKET);
@@ -161,45 +246,165 @@ const TicketList: React.FC = () => {
           </div>
         }
         filters={
-          <div className={styles.filters}>
-            <ListAndKanbanSwitcher navigate={navigate} selectedValue="list" />
-            <div
-              className={styles.search}
-              style={{ border: "none", background: "transparent", padding: 0 }}
-            >
-              <CustomInput
-                placeholder="Search by subject or ID..."
-                value={search}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSearch(e.target.value)
-                }
-                icon={<CustomIcon name="Search" size={18} />}
-                containerStyle={{ minWidth: "300px" }}
-              />
-            </div>
-            <CustomSelect
-              value={status}
-              onChange={(val) => setStatus(val)}
-              placeholder="All Statuses"
-              options={TICKET_STATUSES.map((op) => ({
-                label: op.name,
-                value: op.name,
-              }))}
-              style={{ minWidth: "180px" }}
-            />
-            <CustomButton
-              variant="secondary"
-              icon={
-                <CustomIcon
-                  name="Filter"
-                  size={18}
-                  color="var(--accent-primary)"
+          <div className={styles.filterBar}>
+            <div className={styles.filters}>
+              <ListAndKanbanSwitcher navigate={navigate} selectedValue="list" />
+              <div
+                className={styles.search}
+                style={{ border: "none", background: "transparent", padding: 0 }}
+              >
+                <CustomInput
+                  placeholder="Search by subject or ID..."
+                  value={search}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setSearch(e.target.value)
+                  }
+                  icon={<CustomIcon name="Search" size={18} />}
+                  containerStyle={{ width: "100%" , paddingLeft: "0px" }}
                 />
-              }
-              style={{ padding: "0 16px" }}
-            >
-              More Filters
-            </CustomButton>
+              </div>
+              <CustomSelect
+                value={status}
+                onChange={(val) => {
+                  setStatus(val);
+                  setPage(0);
+                }}
+                placeholder="All Statuses"
+                options={TICKET_STATUSES.map((op) => ({
+                  label: op.name,
+                  value: op.name,
+                }))}
+                style={{ minWidth: "180px" }}
+              />
+              <div className={styles.filterAnchor}>
+                <CustomButton
+                  variant={
+                    showMoreFilters || activeMoreFilters > 0
+                      ? "primary"
+                      : "secondary"
+                  }
+                  onClick={toggleMoreFilters}
+                  icon={<CustomIcon name="SlidersHorizontal" size={18} />}
+                >
+                  Filters
+                  {activeMoreFilters > 0 && (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        background: "rgba(255,255,255,0.25)",
+                        color: "#fff",
+                        borderRadius: 999,
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        minWidth: 18,
+                        textAlign: "center",
+                        padding: "1px 6px",
+                      }}
+                    >
+                      {activeMoreFilters}
+                    </span>
+                  )}
+                  <CustomIcon
+                    name={showMoreFilters ? "ChevronUp" : "ChevronDown"}
+                    size={16}
+                    style={{ marginLeft: 6 }}
+                  />
+                </CustomButton>
+
+                {showMoreFilters && (
+                  <div className={styles.advancedPanel}>
+                    <div className={styles.filterField}>
+                      <span className={styles.filterLabel}>
+                        <CustomIcon name="Flag" size={12} /> Priority
+                      </span>
+                      <CustomSelect
+                        isMulti
+                        value={draftPriorities}
+                        onChange={(vals) => setDraftPriorities(vals)}
+                        placeholder="All Priorities"
+                        options={priorities.map((p) => ({
+                          label: p.name,
+                          value: p.name,
+                        }))}
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+
+                    <div className={styles.filterField}>
+                      <span className={styles.filterLabel}>
+                        <CustomIcon name="FolderKanban" size={12} /> Project
+                      </span>
+                      <CustomSelect
+                        isMulti
+                        value={draftProjects}
+                        onChange={(vals) => setDraftProjects(vals)}
+                        placeholder="All Projects"
+                        options={projects.map((p) => ({
+                          label: p.name,
+                          value: p.id,
+                        }))}
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+
+                    <div className={styles.filterField}>
+                      <span className={styles.filterLabel}>
+                        <CustomIcon name="UserPlus" size={12} /> Assignee
+                      </span>
+                      <CustomSelect
+                        isMulti
+                        value={draftAssignees}
+                        onChange={(vals) => setDraftAssignees(vals)}
+                        placeholder="All Assignees"
+                        options={agents.map((a) => ({
+                          label: a.fullname,
+                          value: a.id,
+                        }))}
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+
+                    {!isCustomer && (
+                      <div className={styles.filterField}>
+                        <span className={styles.filterLabel}>
+                          <CustomIcon name="UserCheck" size={12} /> Client
+                        </span>
+                        <CustomSelect
+                          isMulti
+                          value={draftClients}
+                          onChange={(vals) => setDraftClients(vals)}
+                          placeholder="All Clients"
+                          options={clients.map((c) => ({
+                            label: c.fullname,
+                            value: c.id,
+                          }))}
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                    )}
+
+                    <div className={styles.filterActions}>
+                      {(draftSelectedCount > 0 || activeMoreFilters > 0) && (
+                        <CustomButton
+                          variant="ghost"
+                          onClick={clearMoreFilters}
+                          icon={<CustomIcon name="X" size={16} />}
+                        >
+                          Clear all
+                        </CustomButton>
+                      )}
+                      <CustomButton
+                        variant="gradient"
+                        onClick={applyMoreFilters}
+                        icon={<CustomIcon name="Check" size={16} />}
+                      >
+                        Apply Filters
+                      </CustomButton>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         }
         pagination={
@@ -224,7 +429,7 @@ const TicketList: React.FC = () => {
               key: "uid",
               render: (t) => (
                 <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>
-                  #{t.uid}
+                  #<Highlight text={String(t.uid)} query={search} />
                 </span>
               ),
             },
@@ -233,7 +438,10 @@ const TicketList: React.FC = () => {
               key: "subject",
               render: (t) => (
                 <div style={{ fontWeight: 600 }}>
-                  {truncateString(t.subject, 50)}
+                  <Highlight
+                    text={truncateString(t.subject, 50)}
+                    query={search}
+                  />
                 </div>
               ),
             },

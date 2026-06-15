@@ -5,28 +5,89 @@
   margin-bottom: 32px;
 }
 
+/* Wrapper for the toolbar row + collapsible advanced panel */
+.filterBar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
 .filters {
   display: flex;
-  gap: 16px;
-  /* margin-bottom: 24px; */
+  gap: 12px;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+/* Anchor for the floating advanced-filters dropdown */
+.filterAnchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Floating advanced filters card — absolutely positioned so it overlays the
+   list instead of pushing it down. */
+.advancedPanel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 280px;
+  padding: 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+  backdrop-filter: var(--blur-md);
+  animation: filterSlideDown 0.2s ease;
+}
+
+@keyframes filterSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.filterLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.filterActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--border-glass);
+  padding-top: 12px;
 }
 
 .search {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 160px;
   position: relative;
-}
-
-.search input {
-  width: 100%;
-  padding-left: 40px;
-}
-
-.searchIcon {
-  position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
 }
 
 .createBtn {

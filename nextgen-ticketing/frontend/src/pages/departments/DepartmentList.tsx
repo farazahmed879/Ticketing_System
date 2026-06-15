@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 const DepartmentList: React.FC = () => {
   const navigate = useNavigate();
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDept, setEditingDept] = useState<Department | null>(null);
@@ -30,6 +30,7 @@ const DepartmentList: React.FC = () => {
 
   const fetchDepts = async () => {
     try {
+      if(loading) return; // Prevent multiple simultaneous fetches
       setLoading(true);
       const res = await api.get(API_ROUTES.DEPARTMENTS.BASE);
       setDepartments(res.data.departments);

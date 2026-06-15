@@ -9,6 +9,7 @@ import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomBadge from "../../components/CustomBadge";
 import CustomInput from "../../components/CustomInput";
+import Highlight from "../../components/Highlight";
 import type { Project } from "../../types";
 import type { TableColumn } from "../../components/types";
 import ProjectModal from "./components/ProjectModal";
@@ -42,7 +43,7 @@ const ProjectList: React.FC = () => {
 
   const [clients, setClients] = useState<any[]>([]);
   const [managers, setManagers] = useState<any[]>([]);
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const { showNotification, setIsLoading } = useNotification();
   const { user } = useAuth();
 
@@ -60,31 +61,17 @@ const ProjectList: React.FC = () => {
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.groups?.delete === true;
 
-  const fetchData = async () => {
+  const fetchData = async (searchTerm = "") => {
     try {
       setLoading(true);
-      const [projectsRes, clientsRes, staffRes, employeesRes] = await Promise.all([
-        api.get(API_ROUTES.PROJECTS.BASE, {
-          params: { role: user?.role?.name, userId: user?.id },
-        }),
-        api.get(API_ROUTES.USERS.BASE, {
-          params: { type: "clients", limit: -1 },
-        }),
-        api.get(API_ROUTES.USERS.BASE, {
-          params: { type: "agents", limit: -1 },
-        }),
-        api.get(API_ROUTES.USERS.BASE, {
-          params: { type: "employees", limit: -1 },
-        }),
-      ]);
+      const projectsRes = await api.get(API_ROUTES.PROJECTS.BASE, {
+        params: {
+          role: user?.role?.name,
+          userId: user?.id,
+          search: searchTerm || undefined,
+        },
+      });
       setProjects(projectsRes.data.projects);
-      setClients(clientsRes.data.accounts);
-      setManagers(
-        staffRes.data.accounts.filter(
-          (u: any) => u.role?.name === RoleName.AGENT,
-        ),
-      );
-      setEmployees(employeesRes.data.accounts);
     } catch (err) {
       console.error("Failed to fetch projects data", err);
       showNotification("error", "Failed to load projects data");
@@ -93,23 +80,47 @@ const ProjectList: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const filteredProjects = useMemo(() => {
-    return projects.filter(
-      (p) =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.description?.toLowerCase().includes(search.toLowerCase()) ||
-        p.status.toLowerCase().includes(search.toLowerCase()) ||
-        p.clients?.some((c) =>
-          c.fullname.toLowerCase().includes(search.toLowerCase()),
+  const projectModal = async () => {
+    try {
+      setLoading(true);
+      const [clientsRes, teamsRes] = await Promise.all([
+        api.get(API_ROUTES.USERS.GET_BY_ROLES, {
+          params: { roles: [RoleName.CUSTOMER, RoleName.AGENT], limit: -1 },
+        }),
+        api.get(API_ROUTES.TEAMS.BASE, {
+          params: { limit: -1 },
+        }),
+      ]);
+      setClients(
+        clientsRes.data.accounts.filter(
+          (u: any) => u.role?.name === RoleName.CUSTOMER,
         ),
-    );
-  }, [projects, search]);
+      );
+      setManagers(
+        clientsRes.data.accounts.filter(
+          (u: any) => u.role?.name === RoleName.AGENT,
+        ),
+      );
+      setTeams(teamsRes.data.teams || []);
+    } catch (err) {
+      console.error("Failed to fetch projects data", err);
+      showNotification("error", "Failed to load projects data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debounced server-side search — refetch when the search term settles.
+  useEffect(() => {
+    const handle = setTimeout(() => fetchData(search), 300);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   const handleEdit = (project: Project) => {
+    // Load the client/manager/team option lists (same as the Add flow) so the
+    // edit form can show and pre-select the current assignments.
+    projectModal();
     setEditingProject(project);
     setIsModalOpen(true);
   };
@@ -125,7 +136,7 @@ const ProjectList: React.FC = () => {
     try {
       await api.delete(API_ROUTES.PROJECTS.BY_ID(projectToDelete));
       showNotification("success", "Project deleted successfully");
-      fetchData();
+      fetchData(search);
     } catch (err: any) {
       showNotification(
         "error",
@@ -153,7 +164,7 @@ const ProjectList: React.FC = () => {
       }
       setIsModalOpen(false);
       setEditingProject(null);
-      fetchData();
+      fetchData(search);
     } catch (err: any) {
       showNotification(
         "error",
@@ -162,6 +173,12 @@ const ProjectList: React.FC = () => {
     } finally {
       setIsLoading(false, "");
     }
+  };
+
+  const handleCreateButtonClick = () => {
+    projectModal();
+    setEditingProject(null);
+    setIsModalOpen(true);
   };
 
   const columns: TableColumn<Project>[] = useMemo(() => {
@@ -190,7 +207,9 @@ const ProjectList: React.FC = () => {
               />
             </div>
             <div>
-              <div style={{ fontWeight: 600 }}>{p.name}</div>
+              <div style={{ fontWeight: 600 }}>
+                <Highlight text={p.name} query={search} />
+              </div>
               <div
                 style={{
                   fontSize: "0.8rem",
@@ -200,7 +219,13 @@ const ProjectList: React.FC = () => {
                   alignItems: "center",
                 }}
               >
-                <span>{p.description || "Company project"}</span>
+                <span>
+                  {p.description ? (
+                    <Highlight text={p.description} query={search} />
+                  ) : (
+                    "Company project"
+                  )}
+                </span>
                 {p.manager && (
                   <>
                     <span style={{ opacity: 0.5 }}>•</span>
@@ -216,18 +241,18 @@ const ProjectList: React.FC = () => {
                     </span>
                   </>
                 )}
-                {p.teamLead && (
+                {p.teams && p.teams.length > 0 && (
                   <>
                     <span style={{ opacity: 0.5 }}>•</span>
                     <span
                       style={{ display: "flex", alignItems: "center", gap: 4 }}
                     >
                       <CustomIcon
-                        name="UserCheck"
+                        name="Users"
                         size={12}
                         color="var(--text-muted)"
                       />
-                      Lead: {p.teamLead.fullname}
+                      {p.teams.map((t) => t.name).join(", ")}
                     </span>
                   </>
                 )}
@@ -310,7 +335,9 @@ const ProjectList: React.FC = () => {
     }
 
     return cols;
-  }, [canUpdate, canDelete]);
+    // `search` is included so the Highlight in the render fns uses the
+    // current term (the column closures would otherwise capture a stale value).
+  }, [canUpdate, canDelete, search]);
 
   return (
     <>
@@ -333,10 +360,7 @@ const ProjectList: React.FC = () => {
               <CustomButton
                 variant="gradient"
                 icon={<CustomIcon name="Plus" size={20} />}
-                onClick={() => {
-                  setEditingProject(null);
-                  setIsModalOpen(true);
-                }}
+                onClick={handleCreateButtonClick}
               >
                 Add Project
               </CustomButton>
@@ -360,7 +384,7 @@ const ProjectList: React.FC = () => {
         <CustomTable
           style={{ flex: 1, overflowY: "auto" }}
           columns={columns}
-          data={filteredProjects}
+          data={projects}
           loading={loading}
           loadingMessage="Loading projects..."
           emptyMessage="No projects found"
@@ -375,7 +399,7 @@ const ProjectList: React.FC = () => {
         project={editingProject}
         clients={clients}
         managers={managers}
-        employees={employees}
+        teams={teams}
       />
 
       <ConfirmationModal

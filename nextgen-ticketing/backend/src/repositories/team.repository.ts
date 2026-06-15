@@ -1,17 +1,32 @@
 import prisma from "../prisma";
 
 export const teamRepository = {
-  async findMany(skip: number = 0, take: number = 50) {
+  async findMany(skip: number = 0, take?: number, search?: string) {
+    const where: any = { deleted: false };
+    if (search && search.trim()) {
+      const term = search.trim();
+      where.OR = [
+        { name: { contains: term, mode: "insensitive" } },
+        { description: { contains: term, mode: "insensitive" } },
+        { department: { name: { contains: term, mode: "insensitive" } } },
+      ];
+    }
+
+    // Lean projection — only what the team list UI needs.
     return prisma.team.findMany({
-      where: { deleted: false },
+      where,
       skip,
       take,
-      include: {
-        members: {
-          select: { id: true, fullname: true, email: true, image: true, role: true },
-        },
-        manager: { select: { id: true, fullname: true, email: true, image: true } },
+      select: {
+        id: true,
+        name: true,
+        description: true,
         department: { select: { id: true, name: true } },
+        teamLead: { select: { id: true, fullname: true, image: true } },
+        members: {
+          where: { deleted: false },
+          select: { id: true, fullname: true, image: true },
+        },
         projects: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -25,7 +40,7 @@ export const teamRepository = {
         members: {
           select: { id: true, fullname: true, email: true, image: true, role: true },
         },
-        manager: { select: { id: true, fullname: true, email: true, image: true } },
+        teamLead: { select: { id: true, fullname: true, email: true, image: true } },
         department: true,
         projects: { select: { id: true, name: true } },
       },
@@ -43,7 +58,7 @@ export const teamRepository = {
         members: {
           select: { id: true, fullname: true, email: true, image: true },
         },
-        manager: { select: { id: true, fullname: true, email: true, image: true } },
+        teamLead: { select: { id: true, fullname: true, email: true, image: true } },
         department: true,
         projects: { select: { id: true, name: true } },
       },
@@ -58,7 +73,7 @@ export const teamRepository = {
         members: {
           select: { id: true, fullname: true, email: true, image: true },
         },
-        manager: { select: { id: true, fullname: true, email: true, image: true } },
+        teamLead: { select: { id: true, fullname: true, email: true, image: true } },
         department: true,
         projects: { select: { id: true, name: true } },
       },

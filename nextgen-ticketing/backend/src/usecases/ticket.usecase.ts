@@ -1017,18 +1017,18 @@ export const ticketUsecase = {
         }
       }
 
-      // 2. Notify team managers of the assignee's teams (if assigned)
+      // 2. Notify the team lead of the assignee's teams (if assigned)
       if (ticket.assigneeId) {
         const assigneeTeams = await prisma.team.findMany({
           where: {
             memberIds: { has: ticket.assigneeId },
             deleted: false,
           },
-          select: { managerId: true },
+          select: { teamLeadId: true },
         });
         for (const team of assigneeTeams) {
-          if (team.managerId && team.managerId !== ctx.authorId) {
-            notifyIds.add(team.managerId);
+          if (team.teamLeadId && team.teamLeadId !== ctx.authorId) {
+            notifyIds.add(team.teamLeadId);
           }
         }
       }

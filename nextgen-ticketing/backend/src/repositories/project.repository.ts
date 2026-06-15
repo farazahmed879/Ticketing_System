@@ -3,14 +3,23 @@ import { TICKET_STATUSES, PRIORITIES } from "../utils/constants";
 
 export const projectRepository = {
   async findMany(params: any = {}) {
-    const { departmentId, clientId, managerId, teamLeadId, status } = params;
+    const { departmentId, clientId, managerId, status, search } = params;
     const where: any = { deleted: false };
-    
+
     if (departmentId) where.departmentId = departmentId;
     if (clientId) where.clientIds = { has: clientId };
     if (managerId) where.managerId = managerId;
-    if (teamLeadId) where.teamLeadId = teamLeadId;
     if (status) where.status = status;
+
+    if (search && String(search).trim()) {
+      const term = String(search).trim();
+      where.OR = [
+        { name: { contains: term, mode: "insensitive" } },
+        { description: { contains: term, mode: "insensitive" } },
+        { status: { contains: term, mode: "insensitive" } },
+        { clients: { some: { fullname: { contains: term, mode: "insensitive" } } } },
+      ];
+    }
 
     return prisma.project.findMany({
       where,
@@ -18,7 +27,7 @@ export const projectRepository = {
         department: { select: { id: true, name: true } },
         clients: { select: { id: true, fullname: true, image: true } },
         manager: { select: { id: true, fullname: true, image: true } },
-        teamLead: { select: { id: true, fullname: true, image: true } },
+        teams: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -31,7 +40,7 @@ export const projectRepository = {
         department: { select: { id: true, name: true } },
         clients: { select: { id: true, fullname: true, image: true } },
         manager: { select: { id: true, fullname: true, image: true } },
-        teamLead: { select: { id: true, fullname: true, image: true } },
+        teams: { select: { id: true, name: true } },
         tickets: {
           where: { deleted: false },
           select: {
@@ -61,26 +70,41 @@ export const projectRepository = {
   },
 
   async create(data: any) {
+    // Convert teamIds → a relation connect so both sides of the m2m
+    // (Project.teamIds and Team.projectIds) stay in sync.
+    const { teamIds, ...rest } = data;
     return prisma.project.create({
-      data,
+      data: {
+        ...rest,
+        ...(Array.isArray(teamIds)
+          ? { teams: { connect: teamIds.map((id: string) => ({ id })) } }
+          : {}),
+      },
       include: {
         department: true,
         clients: true,
         manager: true,
-        teamLead: true,
+        teams: { select: { id: true, name: true } },
       },
     });
   },
 
   async update(id: string, data: any) {
+    // `set` replaces the team list while keeping both sides of the m2m in sync.
+    const { teamIds, ...rest } = data;
     return prisma.project.update({
       where: { id },
-      data,
+      data: {
+        ...rest,
+        ...(Array.isArray(teamIds)
+          ? { teams: { set: teamIds.map((tid: string) => ({ id: tid })) } }
+          : {}),
+      },
       include: {
         department: true,
         clients: true,
         manager: true,
-        teamLead: true,
+        teams: { select: { id: true, name: true } },
       },
     });
   },

@@ -18,7 +18,7 @@ interface MyTeamData {
   id: string;
   name: string;
   description?: string;
-  manager?: { id: string; fullname: string; email: string; image?: string };
+  teamLead?: { id: string; fullname: string; email: string; image?: string };
   members: TeamMember[];
 }
 
@@ -195,9 +195,9 @@ const MyTeam: React.FC = () => {
           </div>
           <div>
             <div className={styles.statValue}>
-              {teams.filter((t) => t.manager?.id === user?.id).length}
+              {teams.filter((t) => t.teamLead?.id === user?.id).length}
             </div>
-            <div className={styles.statLabel}>Managing</div>
+            <div className={styles.statLabel}>Leading</div>
           </div>
         </div>
       </div>
@@ -228,41 +228,41 @@ const MyTeam: React.FC = () => {
             </div>
           </div>
 
-          {/* Manager Card */}
-          {team.manager && (
+          {/* Team Lead Card */}
+          {team.teamLead && (
             <div
               className={styles.managerCard}
-              onClick={() => navigate(`/profile/${team.manager!.id}`)}
+              onClick={() => navigate(`/profile/${team.teamLead!.id}`)}
               style={{ cursor: "pointer" }}
             >
               <div
                 className={styles.avatar}
                 style={{
-                  background: team.manager.image
+                  background: team.teamLead.image
                     ? "transparent"
-                    : getAvatarColor(team.manager.fullname),
-                  color: team.manager.image ? undefined : "white",
+                    : getAvatarColor(team.teamLead.fullname),
+                  color: team.teamLead.image ? undefined : "white",
                 }}
               >
-                {team.manager.image ? (
+                {team.teamLead.image ? (
                   <img
-                    src={team.manager.image}
-                    alt={team.manager.fullname}
+                    src={team.teamLead.image}
+                    alt={team.teamLead.fullname}
                   />
                 ) : (
-                  getInitials(team.manager.fullname)
+                  getInitials(team.teamLead.fullname)
                 )}
               </div>
               <div className={styles.memberInfo}>
-                <div className={styles.managerLabel}>Team Manager</div>
+                <div className={styles.managerLabel}>Team Lead</div>
                 <div className={styles.memberName}>
-                  {team.manager.fullname}
-                  {team.manager.id === user?.id && (
+                  {team.teamLead.fullname}
+                  {team.teamLead.id === user?.id && (
                     <span className={styles.youBadge}>You</span>
                   )}
                 </div>
                 <div className={styles.memberEmail}>
-                  {team.manager.email}
+                  {team.teamLead.email}
                 </div>
               </div>
               <CustomIcon
@@ -276,7 +276,7 @@ const MyTeam: React.FC = () => {
           {/* Members Grid */}
           <div className={styles.membersGrid}>
             {team.members
-              ?.filter((m) => m.id !== team.manager?.id)
+              ?.filter((m) => m.id !== team.teamLead?.id)
               .map((member, index) => (
                 <div
                   key={member.id}

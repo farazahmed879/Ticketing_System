@@ -57,8 +57,8 @@ export interface Team {
   department?: { id: string; name: string };
   projectIds: string[];
   projects?: { id: string; name: string }[];
-  managerId?: string;
-  manager?: { id: string; fullname: string; image?: string };
+  teamLeadId?: string;
+  teamLead?: { id: string; fullname: string; image?: string };
   memberIds: string[];
   members?: User[];
   _count?: {
@@ -79,8 +79,8 @@ export interface Project {
   clients?: { id: string; fullname: string; image?: string }[];
   managerId?: string;
   manager?: { id: string; fullname: string; image?: string };
-  teamLeadId?: string;
-  teamLead?: { id: string; fullname: string; image?: string };
+  teamIds?: string[];
+  teams?: { id: string; name: string }[];
   tickets?: {
     id: string;
     uid: number;
@@ -438,7 +438,7 @@ export interface ProjectFormData {
   status: string;
   clientIds: string[];
   managerId?: string;
-  teamLeadId?: string;
+  teamIds: string[];
 }
 
 export interface ProjectFormProps {
@@ -448,7 +448,7 @@ export interface ProjectFormProps {
   isLoading?: boolean;
   clients: any[];
   managers: any[];
-  employees: any[];
+  teams: any[];
 }
 
 export interface ProjectModalProps {
@@ -458,7 +458,7 @@ export interface ProjectModalProps {
   project?: Project | null;
   clients: any[];
   managers: any[];
-  employees: any[];
+  teams: any[];
 }
 
 export interface SidebarProps {

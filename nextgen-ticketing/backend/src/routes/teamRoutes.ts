@@ -48,6 +48,26 @@ router.get('/', authMiddleware, teamController.getTeams);
  */
 router.get('/my-team', authMiddleware, teamController.getMyTeam);
 
+/**
+ * @swagger
+ * /api/teams/{id}:
+ *   get:
+ *     summary: Get a single team by id
+ *     tags: [Teams]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Team detail
+ */
+router.get('/:id', authMiddleware, teamController.getTeam);
+
 
 /**
  * @swagger

@@ -18,6 +18,7 @@ import Messages from "./pages/messages/Messages.tsx";
 import DepartmentList from "./pages/departments/DepartmentList.tsx";
 import DepartmentDetail from "./pages/departments/DepartmentDetail.tsx";
 import TeamList from "./pages/teams/TeamList.tsx";
+import TeamDetail from "./pages/teams/TeamDetail.tsx";
 import ProjectList from "./pages/projects/ProjectList.tsx";
 import ProjectDetail from "./pages/projects/ProjectDetail.tsx";
 import UserList from "./pages/users/UserList.tsx";
@@ -72,6 +73,7 @@ const App: React.FC = () => {
               <Route path="tickets/:id" element={<TicketDetail />} />
               <Route path="messages" element={<Messages />} />
               <Route path="teams" element={<TeamList />} />
+              <Route path="teams/:id" element={<TeamDetail />} />
               <Route path="departments" element={<DepartmentList />} />
               <Route path="departments/:id" element={<DepartmentDetail />} />
               <Route path="projects" element={<ProjectList />} />

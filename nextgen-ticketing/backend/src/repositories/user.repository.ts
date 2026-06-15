@@ -76,36 +76,35 @@ export const userRepository = {
   },
 
   async findUserWithTeams(id: string) {
+    // Lean projection — only what the "My Team" UI needs (team identity,
+    // manager, and member basics). Avoids shipping full role/permissions
+    // objects, projects, departments, and unused scalars.
+    const teamSelect = {
+      id: true,
+      name: true,
+      description: true,
+      teamLead: {
+        select: { id: true, fullname: true, email: true, image: true },
+      },
+      projects: { select: { id: true, name: true } },
+      members: {
+        where: { deleted: false },
+        select: {
+          id: true,
+          fullname: true,
+          email: true,
+          image: true,
+          role: { select: { name: true } },
+        },
+      },
+    } as const;
+
     return prisma.user.findUnique({
       where: { id },
-      include: {
-        teams: {
-          include: {
-            manager: {
-              select: { id: true, fullname: true, email: true }
-            },
-            members: {
-              where: { deleted: false },
-              include: { role: true }
-            },
-            projects: { select: { id: true, name: true } },
-            department: { select: { id: true, name: true } }
-          }
-        },
-        managedTeams: {
-          include: {
-            manager: {
-              select: { id: true, fullname: true, email: true }
-            },
-            members: {
-              where: { deleted: false },
-              include: { role: true }
-            },
-            projects: { select: { id: true, name: true } },
-            department: { select: { id: true, name: true } }
-          }
-        }
-      }
+      select: {
+        teams: { select: teamSelect },
+        ledTeams: { select: teamSelect },
+      },
     });
   },
 };

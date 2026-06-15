@@ -18,10 +18,21 @@ export const teamController = {
     try {
       const limit = req.query.limit as string;
       const page = req.query.page as string;
-      const teams = await teamUsecase.getTeams(limit, page);
+      const search = req.query.search as string | undefined;
+      const teams = await teamUsecase.getTeams(limit, page, search);
       res.json({ success: true, teams, count: teams.length });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  async getTeam(req: AuthRequest, res: Response) {
+    try {
+      const team = await teamUsecase.getTeamById(req.params.id as string);
+      res.json({ success: true, team });
+    } catch (error: any) {
+      const status = error.message === "Team not found" ? 404 : 500;
+      res.status(status).json({ success: false, error: error.message });
     }
   },
 

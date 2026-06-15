@@ -19,7 +19,7 @@ export const departmentRepository = {
         teams: {
           where: { deleted: false },
           include: {
-            manager: { select: { id: true, fullname: true } },
+            teamLead: { select: { id: true, fullname: true } },
             members: { select: { id: true } },
           },
         },

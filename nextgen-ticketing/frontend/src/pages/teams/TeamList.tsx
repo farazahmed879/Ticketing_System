@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
@@ -11,49 +12,61 @@ import type { Team, User, Department, Project } from "../../types";
 import type { TableColumn } from "../../components/types";
 import TeamModal from "./components/TeamModal";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
+import Highlight from "../../components/Highlight";
 import { useAuth } from "../../context/AuthContext";
 
 import StandardListLayout from "../../components/StandardListLayout";
 
 const TeamList: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
-
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<User[]>([]);
 
   const { showNotification, setIsLoading } = useNotification();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const canManageTeams =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.name === RoleName.HR ||
     user?.role?.permissions?.teams?.create === true;
 
-  const fetchData = async () => {
+  const isManagerOrAdmin =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.name === RoleName.HR ||
+    user?.role?.name === RoleName.AGENT;
+
+  const fetchData = async (searchTerm = "") => {
     try {
       setLoading(true);
-      const isManagerOrAdmin =
-        user?.role?.name === RoleName.ADMIN ||
-        user?.role?.name === RoleName.HR ||
-        user?.role?.name === RoleName.AGENT;
       const endpoint = isManagerOrAdmin
         ? API_ROUTES.TEAMS.BASE
         : API_ROUTES.TEAMS.MY_TEAM;
 
-      const [teamsRes, deptsRes, projectsRes, usersRes] = await Promise.all([
-        api.get(endpoint),
-        api.get(API_ROUTES.DEPARTMENTS.BASE),
-        api.get(API_ROUTES.PROJECTS.BASE),
-        api.get(API_ROUTES.USERS.BASE + "?limit=1000"), // Get all users for member selection
-      ]);
+      // Server-side search (only the teams list endpoint supports it).
+      const config = isManagerOrAdmin
+        ? { params: { search: searchTerm || undefined } }
+        : undefined;
+
+      const teamsRes = await api.get(endpoint, config);
       setTeams(teamsRes.data.teams || teamsRes.data.accounts || []); // Match backend response key
-      setDepartments(deptsRes.data.departments);
-      setProjects(projectsRes.data.projects);
+    } catch (err) {
+      console.error("Failed to fetch teams data", err);
+      showNotification("error", "Failed to load teams data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchModalApis = async () => {
+    try {
+      setLoading(true);
+
+      const usersRes = await api.get(API_ROUTES.USERS.BASE + "?limit=1000"); // Get all users for member selection
+
       setUsers(usersRes.data.accounts);
     } catch (err) {
       console.error("Failed to fetch teams data", err);
@@ -63,18 +76,12 @@ const TeamList: React.FC = () => {
     }
   };
 
+  // Debounced server-side search — refetch when the search term settles.
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const filteredTeams = useMemo(() => {
-    return teams.filter(
-      (t) =>
-        t.name.toLowerCase().includes(search.toLowerCase()) ||
-        t.description?.toLowerCase().includes(search.toLowerCase()) ||
-        t.department?.name?.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [teams, search]);
+    const handle = setTimeout(() => fetchData(search), 300);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   const handleEdit = (team: Team) => {
     setEditingTeam(team);
@@ -87,7 +94,7 @@ const TeamList: React.FC = () => {
     try {
       await api.delete(API_ROUTES.TEAMS.BY_ID(id));
       showNotification("success", "Team deleted successfully");
-      fetchData();
+      fetchData(search);
     } catch (err: any) {
       showNotification(
         "error",
@@ -110,7 +117,7 @@ const TeamList: React.FC = () => {
       }
       setIsModalOpen(false);
       setEditingTeam(null);
-      fetchData();
+      fetchData(search);
     } catch (err: any) {
       showNotification(
         "error",
@@ -146,35 +153,26 @@ const TeamList: React.FC = () => {
             />
           </div>
           <div>
-            <div style={{ fontWeight: 600 }}>{t.name}</div>
+            <div style={{ fontWeight: 600 }}>
+              <Highlight text={t.name} query={search} />
+            </div>
             <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-              {t.description || "Internal team"}
+              {t.description ? (
+                <Highlight text={t.description} query={search} />
+              ) : (
+                "Internal team"
+              )}
             </div>
           </div>
         </div>
       ),
     },
     {
-      header: "Department",
-      key: "department",
-      render: (t) => (
-        <span
-          style={{
-            fontSize: "0.9rem",
-            color: "var(--accent-primary)",
-            fontWeight: 500,
-          }}
-        >
-          {t.department?.name || "N/A"}
-        </span>
-      ),
-    },
-    {
-      header: "Manager",
-      key: "manager",
+      header: "Team Lead",
+      key: "teamLead",
       render: (t) => (
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {t.manager ? (
+          {t.teamLead ? (
             <>
               <div
                 style={{
@@ -189,10 +187,10 @@ const TeamList: React.FC = () => {
                   fontWeight: 600,
                 }}
               >
-                {t.manager.image ? (
+                {t.teamLead.image ? (
                   <img
-                    src={t.manager.image}
-                    alt={t.manager.fullname}
+                    src={t.teamLead.image}
+                    alt={t.teamLead.fullname}
                     style={{
                       width: "100%",
                       height: "100%",
@@ -200,14 +198,23 @@ const TeamList: React.FC = () => {
                     }}
                   />
                 ) : (
-                  t.manager.fullname.charAt(0)
+                  <CustomAvatarStack
+                    items={[
+                      {
+                        id: t.teamLead.id,
+                        name: t.teamLead.fullname?.charAt(0),
+                      },
+                    ]}
+                    limit={3}
+                    size={26}
+                  />
                 )}
               </div>
-              <span style={{ fontSize: "0.85rem" }}>{t.manager.fullname}</span>
+              <span style={{ fontSize: "0.85rem" }}>{t.teamLead.fullname}</span>
             </>
           ) : (
             <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              No Manager
+              No Team Lead
             </span>
           )}
         </div>
@@ -249,13 +256,19 @@ const TeamList: React.FC = () => {
                 <CustomButton
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleEdit(t)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(t);
+                  }}
                   icon={<CustomIcon name="Edit2" size={16} />}
                 />
                 <CustomButton
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleDelete(t.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(t.id);
+                  }}
                   icon={<CustomIcon name="Trash2" size={16} />}
                   style={{ color: "var(--accent-danger)" }}
                 />
@@ -265,6 +278,12 @@ const TeamList: React.FC = () => {
         ]
       : []),
   ];
+
+  const handleCreateTeamClick = () => {
+    setEditingTeam(null);
+    fetchModalApis();
+    setIsModalOpen(true);
+  };
 
   return (
     <>
@@ -287,10 +306,7 @@ const TeamList: React.FC = () => {
               <CustomButton
                 variant="gradient"
                 icon={<CustomIcon name="Plus" size={20} />}
-                onClick={() => {
-                  setEditingTeam(null);
-                  setIsModalOpen(true);
-                }}
+                onClick={handleCreateTeamClick}
               >
                 Add Team
               </CustomButton>
@@ -314,10 +330,11 @@ const TeamList: React.FC = () => {
         <CustomTable
           style={{ flex: 1, overflowY: "auto" }}
           columns={columns}
-          data={filteredTeams}
+          data={teams}
           loading={loading}
           loadingMessage="Loading teams..."
           emptyMessage="No teams found"
+          onRowClick={(t) => navigate(`/teams/${t.id}`)}
         />
       </StandardListLayout>
 
@@ -326,8 +343,6 @@ const TeamList: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}
         team={editingTeam}
-        departments={departments}
-        projects={projects}
         users={users}
       />
     </>

@@ -262,60 +262,6 @@ const ProjectDetail: React.FC = () => {
             </div>
           )}
 
-          {/* Team Lead */}
-          {project.teamLead && (
-            <div className="glass-card" style={{ padding: 24 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  marginBottom: 16,
-                }}
-              >
-                <CustomIcon
-                  name="User"
-                  size={20}
-                  color="var(--accent-success)"
-                />
-                <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
-                  Team Lead
-                </h3>
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid var(--border-glass)",
-                }}
-              >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "50%",
-                    background:
-                      "linear-gradient(135deg, var(--accent-success), #10b981)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 700,
-                    color: "white",
-                  }}
-                >
-                  {project.teamLead.fullname.charAt(0).toUpperCase()}
-                </div>
-                <span style={{ fontSize: "0.95rem", fontWeight: 500 }}>
-                  {project.teamLead.fullname}
-                </span>
-              </div>
-            </div>
-          )}
-
           {/* Clients */}
           <div className="glass-card" style={{ padding: 24 }}>
             <div

@@ -87,7 +87,7 @@ export const TicketSidebarDetails = ({
                 </div>
               }
               value={sidebarDraft.dueDate}
-              onChange={(val: any) => onSidebarDraftChange("dueDate", val)}
+              onChange={(val: string) => onSidebarDraftChange("dueDate", val)}
               min={new Date().toISOString().split("T")[0]}
             />
           </div>

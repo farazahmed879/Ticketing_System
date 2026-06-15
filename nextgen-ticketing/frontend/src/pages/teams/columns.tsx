@@ -1,4 +1,3 @@
-import React from "react";
 import type { TableColumn } from "../../components/types";
 import type { Team } from "../../types";
 import CustomIcon from "../../components/CustomIcon";
@@ -29,11 +28,7 @@ export const getTeamColumns = (
             background: "rgba(59, 130, 246, 0.1)",
           }}
         >
-          <CustomIcon
-            name="Users"
-            size={18}
-            color="var(--accent-secondary)"
-          />
+          <CustomIcon name="Users" size={18} color="var(--accent-secondary)" />
         </div>
         <div>
           <div style={{ fontWeight: 600 }}>

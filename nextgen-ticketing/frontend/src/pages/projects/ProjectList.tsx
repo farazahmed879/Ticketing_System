@@ -4,12 +4,10 @@ import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
-import { ProjectStatus, RoleName } from "../../utils/constants";
+import { RoleName } from "../../utils/constants";
 import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
-import CustomBadge from "../../components/CustomBadge";
 import CustomInput from "../../components/CustomInput";
-import Highlight from "../../components/Highlight";
 import type { Project } from "../../types";
 import type { TableColumn } from "../../components/types";
 import ProjectModal from "./components/ProjectModal";
@@ -17,7 +15,7 @@ import { useAuth } from "../../context/AuthContext";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
 import StandardListLayout from "../../components/StandardListLayout";
-import { getProjectColumns, statusBadgeVariant } from "./columns";
+import { getProjectColumns } from "./columns";
 
 const ProjectList: React.FC = () => {
   const navigate = useNavigate();
@@ -168,7 +166,13 @@ const ProjectList: React.FC = () => {
   };
 
   const columns: TableColumn<Project>[] = useMemo(() => {
-    return getProjectColumns(search, canUpdate, canDelete, handleEdit, handleDeleteClick);
+    return getProjectColumns(
+      search,
+      canUpdate,
+      canDelete,
+      handleEdit,
+      handleDeleteClick,
+    );
     // `search` is included so the Highlight in the render fns uses the
     // current term (the column closures would otherwise capture a stale value).
   }, [canUpdate, canDelete, search]);

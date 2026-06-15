@@ -1,4 +1,3 @@
-import React from "react";
 import type { TableColumn } from "../../components/types";
 import type { User } from "../../types";
 import CustomIcon from "../../components/CustomIcon";

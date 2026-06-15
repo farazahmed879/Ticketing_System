@@ -8,8 +8,8 @@ import CustomDatePicker from "../../../../../components/CustomDatePicker";
 import { RoleName, StatusName } from "../../../../../utils/constants";
 import type { TicketDetail, TicketUpdateFormData } from "../../../../../types";
 import type { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import SelectWithLabel from "./SelectWithLabel";
 import TicketAssignments from "./TicketAssignments";
+import SelectWithLabel from "../../../../../components/SelectWithLabel";
 
 interface ModalDetailsFormProps {
   control: Control<TicketUpdateFormData>;

@@ -8,11 +8,9 @@ import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomInput from "../../components/CustomInput";
 import type { Department } from "../../types";
-import type { TableColumn } from "../../components/types";
 import DepartmentModal from "./components/DepartmentModal";
 import StandardListLayout from "../../components/StandardListLayout";
 import CustomPagination from "../../components/CustomPagination";
-import { truncateString } from "../../utils/helpers";
 import { useNavigate } from "react-router-dom";
 import { getDepartmentColumns } from "./columns";
 import ConfirmationModal from "../../components/ConfirmationModal";
@@ -35,7 +33,7 @@ const DepartmentList: React.FC = () => {
 
   const fetchDepts = async () => {
     try {
-      if(loading) return; // Prevent multiple simultaneous fetches
+      if (loading) return; // Prevent multiple simultaneous fetches
       setLoading(true);
       const res = await api.get(API_ROUTES.DEPARTMENTS.BASE);
       setDepartments(res.data.departments);

@@ -1,4 +1,3 @@
-import React from "react";
 import type { TableColumn } from "../../components/types";
 import type { Role } from "../../types";
 import CustomBadge from "../../components/CustomBadge";

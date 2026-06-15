@@ -9,10 +9,7 @@ import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomInput from "../../components/CustomInput";
 import type { Team, User } from "../../types";
-import type { TableColumn } from "../../components/types";
 import TeamModal from "./components/TeamModal";
-import CustomAvatarStack from "../../components/CustomAvatarStack";
-import Highlight from "../../components/Highlight";
 import { useAuth } from "../../context/AuthContext";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
@@ -23,7 +20,9 @@ const TeamList: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [teamToDelete, setTeamToDelete] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [users, setUsers] = useState<User[]>([]);
 
@@ -137,7 +136,12 @@ const TeamList: React.FC = () => {
     }
   };
 
-  const columns = getTeamColumns(search, canManageTeams, handleEdit, handleDeleteClick);
+  const columns = getTeamColumns(
+    search,
+    canManageTeams,
+    handleEdit,
+    handleDeleteClick,
+  );
 
   const handleCreateTeamClick = () => {
     setEditingTeam(null);

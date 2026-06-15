@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from "react";
 import CustomIcon from "../../components/CustomIcon";
-import { formatDistanceToNow } from "date-fns";
 import api from "../../services/api";
 import styles from "./Requests.module.css";
 
 import type { UserRequest } from "../../types";
 import CustomTable from "../../components/CustomTable";
 import CustomFilterBar from "../../components/CustomFilterBar";
-import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import { API_ROUTES } from "../../utils/apiRoutes";
-import type { TableColumn } from "../../components/types";
 
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
@@ -95,7 +92,12 @@ const Requests: React.FC = () => {
     return (user.role.permissions as any)?.[module]?.[action] === true;
   };
 
-  const columns = getRequestColumns(user, hasPermission, handleUpdateStatus, handleDelete);
+  const columns = getRequestColumns(
+    user,
+    hasPermission,
+    handleUpdateStatus,
+    handleDelete,
+  );
 
   const handleRequestSuccess = (newRequest: any) => {
     setRequests((prev) => [newRequest, ...prev]);

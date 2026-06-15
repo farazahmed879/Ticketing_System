@@ -4,15 +4,17 @@ import api from "../../services/api";
 import CustomInput from "../../components/CustomInput";
 import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
-import styles from "./CandidateList.module.css";
 import { API_ROUTES } from "../../utils/apiRoutes";
-import { CandidateStatus, UIMessages, DEFAULT_PAGE_SIZE } from "../../utils/constants";
-import { useNavigate, Link } from "react-router-dom";
+import {
+  CandidateStatus,
+  UIMessages,
+  DEFAULT_PAGE_SIZE,
+} from "../../utils/constants";
+import { useNavigate } from "react-router-dom";
 import type { Candidate } from "../../types";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
-import type { TableColumn } from "../../components/types";
 
 import CandidateModal from "./components/CandidateModal";
 import CustomPagination from "../../components/CustomPagination";
@@ -47,7 +49,9 @@ const CandidateList: React.FC = () => {
     null,
   );
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
-  const [candidateToConvert, setCandidateToConvert] = useState<string | null>(null);
+  const [candidateToConvert, setCandidateToConvert] = useState<string | null>(
+    null,
+  );
 
   // Tracks the filter values that were last submitted via Enter/Filter button.
   // Used to detect when an applied text filter is cleared so we can auto-refetch.
@@ -186,7 +190,13 @@ const CandidateList: React.FC = () => {
     }
   };
 
-  const columns = getCandidateColumns(handleConvertClick, setCurrentEditingId, setIsModalOpen, handleDelete, isAiMode);
+  const columns = getCandidateColumns(
+    handleConvertClick,
+    setCurrentEditingId,
+    setIsModalOpen,
+    handleDelete,
+    isAiMode,
+  );
 
   return (
     <>

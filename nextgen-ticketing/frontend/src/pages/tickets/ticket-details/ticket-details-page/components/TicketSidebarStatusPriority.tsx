@@ -35,7 +35,7 @@ export const TicketSidebarStatusPriority = ({
           </div>
         ) : (
           <CustomSelect
-            options={statuses.map((s: any) => ({
+            options={statuses.map((s) => ({
               value: s.id,
               label: s.name,
               disabled: !(
@@ -59,7 +59,7 @@ export const TicketSidebarStatusPriority = ({
               ),
             }))}
             value={sidebarDraft.statusId}
-            onChange={(val: any) => onSidebarDraftChange("statusId", val)}
+            onChange={(val: string) => onSidebarDraftChange("statusId", val)}
             placeholder="Change status..."
           />
         )}
@@ -69,7 +69,7 @@ export const TicketSidebarStatusPriority = ({
         <span className={styles.sidebarLabel}>Priority</span>
         {canUpdatePriority ? (
           <CustomSelect
-            options={priorities.map((p: any) => ({
+            options={priorities.map((p) => ({
               value: p.id,
               label: p.name,
               icon: (
@@ -84,7 +84,7 @@ export const TicketSidebarStatusPriority = ({
               ),
             }))}
             value={sidebarDraft.priorityId}
-            onChange={(val: any) => onSidebarDraftChange("priorityId", val)}
+            onChange={(val: string) => onSidebarDraftChange("priorityId", val)}
             placeholder="Priority"
           />
         ) : (

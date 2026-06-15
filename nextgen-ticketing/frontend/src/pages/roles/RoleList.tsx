@@ -5,11 +5,9 @@ import { useNotification } from "../../context/NotificationContext";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import type { Role, RoleFormData } from "../../types";
 import CustomTable from "../../components/CustomTable";
-import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomPagination from "../../components/CustomPagination";
-import type { TableColumn } from "../../components/types";
-import { RoleName, TICKET_STATUSES, UIMessages } from "../../utils/constants";
+import { TICKET_STATUSES, UIMessages } from "../../utils/constants";
 import RoleModal from "./components/RoleModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 

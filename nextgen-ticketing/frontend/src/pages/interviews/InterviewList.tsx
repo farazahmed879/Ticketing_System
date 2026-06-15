@@ -5,19 +5,16 @@ import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
 import styles from "./InterviewList.module.css";
 import { API_ROUTES } from "../../utils/apiRoutes";
-import { InterviewStatus, RoleName, UIMessages, DEFAULT_PAGE_SIZE } from "../../utils/constants";
+import { RoleName, UIMessages, DEFAULT_PAGE_SIZE } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
 
 import type { Interview } from "../../types";
 import CustomTable from "../../components/CustomTable";
-import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomFilterBar from "../../components/CustomFilterBar";
-import type { TableColumn } from "../../components/types";
 import CustomDatePicker from "../../components/CustomDatePicker";
 import ScheduleInterviewModal from "./ScheduleInterviewModal";
 import CustomPagination from "../../components/CustomPagination";
-import CustomAvatarStack from "../../components/CustomAvatarStack";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
 import StandardListLayout from "../../components/StandardListLayout";
@@ -53,7 +50,9 @@ const InterviewList: React.FC = () => {
   );
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [interviewToDelete, setInterviewToDelete] = useState<string | null>(null);
+  const [interviewToDelete, setInterviewToDelete] = useState<string | null>(
+    null,
+  );
 
   const [currentPage, setCurrentPage] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
@@ -134,7 +133,13 @@ const InterviewList: React.FC = () => {
     }
   };
 
-  const columns = getInterviewColumns(canUpdateInterviews, canDeleteInterviews, setEditingInterview, setIsModalOpen, handleDeleteClick);
+  const columns = getInterviewColumns(
+    canUpdateInterviews,
+    canDeleteInterviews,
+    setEditingInterview,
+    setIsModalOpen,
+    handleDeleteClick,
+  );
 
   return (
     <>

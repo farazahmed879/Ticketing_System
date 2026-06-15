@@ -1,4 +1,3 @@
-import React from "react";
 import type { TableColumn } from "../../components/types";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
@@ -52,7 +51,13 @@ export const getAnnouncementColumns = (
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <CustomBadge variant={variant}>{ann.type.toUpperCase()}</CustomBadge>
           {ann.project && (
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 2 }}>
+            <span
+              style={{
+                fontSize: "0.75rem",
+                color: "var(--text-muted)",
+                marginTop: 2,
+              }}
+            >
               Project: {ann.project.name}
             </span>
           )}
@@ -96,11 +101,7 @@ export const getAnnouncementColumns = (
           size="sm"
           onClick={() => handleDelete(ann.id)}
           icon={
-            <CustomIcon
-              name="Trash2"
-              size={16}
-              color="var(--accent-danger)"
-            />
+            <CustomIcon name="Trash2" size={16} color="var(--accent-danger)" />
           }
           title={`Delete ${entityName}`}
         />

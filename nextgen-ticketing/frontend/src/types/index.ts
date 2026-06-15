@@ -34,6 +34,7 @@ export interface User {
   image?: string;
   lastOnline?: string;
   createdAt?: string;
+  teamNames?: string[];
 }
 
 export interface Department {
@@ -494,11 +495,11 @@ export interface SidebarDraft {
 
 export interface TicketDetailSidebarProps {
   ticket: TicketDetail;
-  user: any;
-  statuses: any[];
-  priorities: any[];
-  agents: any[];
-  qaList: any[];
+  user?: User | null;
+  statuses: { id: string; name: string; color: string }[];
+  priorities: { id: string; name: string; color: string }[];
+  agents: User[];
+  qaList: User[];
   canUpdatePriority: boolean;
   canAssign: boolean;
   sidebarDraft: SidebarDraft;

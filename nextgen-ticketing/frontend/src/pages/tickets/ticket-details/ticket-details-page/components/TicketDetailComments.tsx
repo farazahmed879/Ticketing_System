@@ -1,15 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { format, formatDistanceToNow } from "date-fns";
-import CustomIcon from "../../../../components/CustomIcon";
-import CustomButton from "../../../../components/CustomButton";
-import CustomTextArea from "../../../../components/CustomTextArea";
+import CustomIcon from "../../../../../components/CustomIcon";
+import CustomButton from "../../../../../components/CustomButton";
+import CustomTextArea from "../../../../../components/CustomTextArea";
 import {
   ACCEPT_ATTRIBUTE,
   MAX_ATTACHMENTS,
-} from "../../../../utils/attachments";
+} from "../../../../../utils/attachments";
 import styles from "../TicketDetail.module.css";
-import { RoleName } from "../../../../utils/constants";
-import type { TicketDetailCommentsProps } from "../../../../components/types";
+import { RoleName } from "../../../../../utils/constants";
+import type { TicketDetailCommentsProps } from "../../../../../components/types";
 
 const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
   ticket,

@@ -393,6 +393,7 @@ export interface TicketUpdateFormData {
   issue: string;
   targetStatusName: string;
   currentStatusName: string;
+  tags: string[];
 }
 
 export interface TicketDetailModalProps {
@@ -459,6 +460,7 @@ export interface ProjectModalProps {
   clients: any[];
   managers: any[];
   teams: any[];
+  isLoading?: boolean;
 }
 
 export interface SidebarProps {
@@ -479,4 +481,27 @@ export interface StatsCardsProps {
 export interface AnnouncementSectionProps {
   announcements: any[];
   t: (key: string) => string;
+}
+
+export interface SidebarDraft {
+  statusId: string;
+  priorityId: string;
+  assigneeId: string;
+  qaId: string;
+  dueDate: string;
+  tags: string[];
+}
+
+export interface TicketDetailSidebarProps {
+  ticket: TicketDetail;
+  user: any;
+  statuses: any[];
+  priorities: any[];
+  agents: any[];
+  qaList: any[];
+  canUpdatePriority: boolean;
+  canAssign: boolean;
+  sidebarDraft: SidebarDraft;
+  onSidebarDraftChange: (field: keyof SidebarDraft, value: string) => void;
+  handleStartChat: (id: string) => void;
 }

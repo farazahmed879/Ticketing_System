@@ -1,7 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
-import CustomIcon from "../../../../components/CustomIcon";
-import type { TicketDetail } from "../../../../types";
+import CustomIcon from "../../../../../components/CustomIcon";
+import type { TicketDetail } from "../../../../../types";
 
 interface ModalTimestampsProps {
   displayTicket: TicketDetail | any;

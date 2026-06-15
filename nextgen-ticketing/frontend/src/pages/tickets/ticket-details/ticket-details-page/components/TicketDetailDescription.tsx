@@ -1,6 +1,6 @@
 import React from "react";
 import styles from "../TicketDetail.module.css";
-import type { TicketDetail as ITicketDetail } from "../../../../types";
+import type { TicketDetail as ITicketDetail } from "../../../../../types";
 
 interface TicketDetailDescriptionProps {
   ticket: ITicketDetail;

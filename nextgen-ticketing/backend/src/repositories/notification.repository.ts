@@ -3,7 +3,7 @@ import prisma from "../prisma";
 export const notificationRepository = {
   async findMany(userId: string, skip: number, take: number) {
     return prisma.notification.findMany({
-      where: { userId },
+      where: { userId, type: { not: 'seen_moment' } },
       orderBy: { createdAt: "desc" },
       take,
       skip,
@@ -11,11 +11,11 @@ export const notificationRepository = {
   },
 
   async countUnread(userId: string) {
-    return prisma.notification.count({ where: { userId, unread: true } });
+    return prisma.notification.count({ where: { userId, unread: true, type: { not: 'seen_moment' } } });
   },
 
   async countTotal(userId: string) {
-    return prisma.notification.count({ where: { userId } });
+    return prisma.notification.count({ where: { userId, type: { not: 'seen_moment' } } });
   },
 
   async markRead(id: string) {

@@ -81,7 +81,7 @@ const DepartmentDetail: React.FC = () => {
       key: "lead",
       render: (t) => (
         <span style={{ fontSize: "0.9rem" }}>
-          {t.manager?.fullname || "Unassigned"}
+          {t.teamLead?.fullname || "Unassigned"}
         </span>
       ),
     },

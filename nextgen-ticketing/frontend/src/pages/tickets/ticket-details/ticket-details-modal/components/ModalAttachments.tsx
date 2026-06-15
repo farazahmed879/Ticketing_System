@@ -1,34 +1,54 @@
 import React from "react";
-import CustomIcon from "../../../../components/CustomIcon";
-import CustomButton from "../../../../components/CustomButton";
+import CustomIcon from "../../../../../components/CustomIcon";
+import CustomButton from "../../../../../components/CustomButton";
 import {
   ACCEPT_ATTRIBUTE,
   MAX_ATTACHMENTS,
-} from "../../../../utils/attachments";
-import type { TicketDetailAttachmentsProps } from "../../../../components/types";
+} from "../../../../../utils/attachments";
+import type { TicketDetail } from "../../../../../types";
 
-const TicketDetailAttachments: React.FC<TicketDetailAttachmentsProps> = ({
-  ticket,
+interface ModalAttachmentsProps {
+  displayTicket: TicketDetail | any;
+  canEditContent: boolean;
+  isEditingAttachments: boolean;
+  attachmentsDraft: string[];
+  attachmentsDraftError: string | null;
+  attachmentsEditFileInputRef: React.RefObject<HTMLInputElement | null>;
+  isSavingAttachments: boolean;
+  startEditAttachments: () => void;
+  cancelEditAttachments: () => void;
+  handleSaveAttachments: () => void;
+  handleAttachmentsDraftSelect: (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => void;
+  removeAttachmentDraft: (idx: number) => void;
+  openLightbox: (images: string[], index: number) => void;
+}
+
+const ModalAttachments: React.FC<ModalAttachmentsProps> = ({
+  displayTicket,
   canEditContent,
   isEditingAttachments,
   attachmentsDraft,
   attachmentsDraftError,
   attachmentsEditFileInputRef,
+  isSavingAttachments,
   startEditAttachments,
   cancelEditAttachments,
+  handleSaveAttachments,
   handleAttachmentsDraftSelect,
   removeAttachmentDraft,
   openLightbox,
 }) => {
   if (
     !canEditContent &&
-    (!ticket.attachments || ticket.attachments.length === 0)
+    (!displayTicket.attachments || displayTicket.attachments.length === 0)
   ) {
     return null;
   }
 
   return (
-    <div style={{ marginTop: 16 }}>
+    <div>
       {isEditingAttachments ? (
         <div>
           <div
@@ -65,13 +85,7 @@ const TicketDetailAttachments: React.FC<TicketDetailAttachmentsProps> = ({
             onChange={handleAttachmentsDraftSelect}
             style={{ display: "none" }}
           />
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 10,
-            }}
-          >
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
             {attachmentsDraft.map((src, idx) => (
               <div
                 key={idx}
@@ -96,7 +110,7 @@ const TicketDetailAttachments: React.FC<TicketDetailAttachmentsProps> = ({
                 <button
                   type="button"
                   onClick={() => removeAttachmentDraft(idx)}
-                  title="Remove attachment"
+                  title="Remove"
                   style={{
                     position: "absolute",
                     top: 2,
@@ -155,84 +169,121 @@ const TicketDetailAttachments: React.FC<TicketDetailAttachmentsProps> = ({
               marginTop: 10,
             }}
           >
-            <CustomButton variant="ghost" onClick={cancelEditAttachments}>
+            <CustomButton
+              variant="ghost"
+              onClick={cancelEditAttachments}
+              disabled={isSavingAttachments}
+            >
               Cancel
+            </CustomButton>
+            <CustomButton
+              variant="primary"
+              onClick={handleSaveAttachments}
+              loading={isSavingAttachments}
+            >
+              Save
             </CustomButton>
           </div>
         </div>
       ) : (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 8,
-          }}
-        >
+        <div>
           <div
             style={{
-              flex: 1,
               display: "flex",
-              flexWrap: "wrap",
-              gap: 10,
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 8,
             }}
           >
-            {ticket.attachments && ticket.attachments.length > 0 ? (
-              ticket.attachments.map((src, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => openLightbox(ticket.attachments!, idx)}
-                  title="View image"
+            <CustomIcon
+              name="Paperclip"
+              size={16}
+              color="var(--accent-primary)"
+            />
+            <span
+              style={{
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                color: "var(--text-secondary)",
+              }}
+            >
+              Attachments
+            </span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 8,
+            }}
+          >
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 10,
+              }}
+            >
+              {displayTicket.attachments &&
+              displayTicket.attachments.length > 0 ? (
+                displayTicket.attachments.map((src: string, idx: number) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => openLightbox(displayTicket.attachments, idx)}
+                    title="View image"
+                    style={{
+                      display: "block",
+                      width: 80,
+                      height: 80,
+                      borderRadius: 8,
+                      overflow: "hidden",
+                      border: "1px solid var(--border-glass)",
+                      padding: 0,
+                      cursor: "zoom-in",
+                      background: "transparent",
+                    }}
+                  >
+                    <img
+                      src={src}
+                      alt={`attachment-${idx}`}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                    />
+                  </button>
+                ))
+              ) : (
+                <span
                   style={{
-                    display: "block",
-                    width: 96,
-                    height: 96,
-                    borderRadius: 8,
-                    overflow: "hidden",
-                    border: "1px solid var(--border-glass)",
-                    padding: 0,
-                    cursor: "zoom-in",
-                    background: "transparent",
+                    fontSize: "0.85rem",
+                    color: "var(--text-muted)",
+                    fontStyle: "italic",
                   }}
                 >
-                  <img
-                    src={src}
-                    alt={`attachment-${idx}`}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      display: "block",
-                    }}
-                  />
-                </button>
-              ))
-            ) : (
-              <span
-                style={{
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  fontStyle: "italic",
-                }}
-              >
-                No attachments
-              </span>
+                  No attachments
+                </span>
+              )}
+            </div>
+            {canEditContent && (
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                onClick={startEditAttachments}
+                icon={<CustomIcon name="Edit2" size={14} />}
+                title="Edit attachments"
+                style={{ padding: 4 }}
+              />
             )}
           </div>
-          {canEditContent && (
-            <CustomButton
-              variant="ghost"
-              size="sm"
-              onClick={startEditAttachments}
-              icon={<CustomIcon name="Edit2" size={14} />}
-              title="Edit attachments"
-              style={{ padding: 4 }}
-            />
-          )}
         </div>
       )}
     </div>
   );
 };
 
-export default TicketDetailAttachments;
+export default ModalAttachments;

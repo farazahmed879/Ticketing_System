@@ -1,5 +1,5 @@
 import React from "react";
-import CustomSkeleton from "../../../../components/CustomSkeleton";
+import CustomSkeleton from "../../../../../components/CustomSkeleton";
 
 const ModalSkeleton: React.FC = () => {
   return (

@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { format, formatDistanceToNow } from "date-fns";
-import CustomIcon from "../../../../components/CustomIcon";
-import CustomInput from "../../../../components/CustomInput";
-import CustomButton from "../../../../components/CustomButton";
+import CustomIcon from "../../../../../components/CustomIcon";
+import CustomInput from "../../../../../components/CustomInput";
+import CustomButton from "../../../../../components/CustomButton";
 import styles from "../TicketDetailModal.module.css";
-import { RoleName } from "../../../../utils/constants";
+import { RoleName } from "../../../../../utils/constants";
 import {
   ACCEPT_ATTRIBUTE,
   MAX_ATTACHMENTS,
-} from "../../../../utils/attachments";
+} from "../../../../../utils/attachments";
 
 const CommentSection = ({
   fullTicketData,
@@ -246,9 +246,12 @@ const CommentSection = ({
                                 color: "var(--text-muted)",
                               }}
                             >
-                              {formatDistanceToNow(new Date(comment.createdAt), {
-                                addSuffix: true,
-                              })}
+                              {formatDistanceToNow(
+                                new Date(comment.createdAt),
+                                {
+                                  addSuffix: true,
+                                },
+                              )}
                             </span>
                           </div>
                         </div>
@@ -325,9 +328,7 @@ const CommentSection = ({
                     borderRadius: 12,
                   }}
                 >
-                  {isInternal
-                    ? "No internal notes yet."
-                    : "No comments yet."}
+                  {isInternal ? "No internal notes yet." : "No comments yet."}
                 </div>
               )}
               <div ref={listEndRef} />
@@ -344,9 +345,7 @@ const CommentSection = ({
                 }}
               >
                 {hasAttachmentSupport && commentAttachments.length > 0 && (
-                  <div
-                    style={{ display: "flex", flexWrap: "wrap", gap: 6 }}
-                  >
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                     {commentAttachments.map((src: string, idx: number) => (
                       <div
                         key={idx}
@@ -431,9 +430,7 @@ const CommentSection = ({
                       type="button"
                       variant="ghost"
                       onClick={() => commentFileInputRef.current?.click()}
-                      disabled={
-                        commentAttachments.length >= MAX_ATTACHMENTS
-                      }
+                      disabled={commentAttachments.length >= MAX_ATTACHMENTS}
                       icon={<CustomIcon name="Paperclip" size={18} />}
                       title={
                         commentAttachments.length >= MAX_ATTACHMENTS

@@ -250,3 +250,10 @@ export const PROJECT_STATUS_OPTIONS = [
   { value: "Completed", label: "Completed" },
   { value: "Cancelled", label: "Cancelled" },
 ];
+
+export const LABELS = [
+  { value: "Frontend", label: "Frontend" },
+  { value: "Backend", label: "Backend" },
+  { value: "Devops", label: "Devops" },
+  { value: "UIUX", label: "UIUX" },
+];

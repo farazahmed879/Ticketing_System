@@ -2,25 +2,25 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import Modal from "../../../components/Modal";
-import CustomIcon from "../../../components/CustomIcon";
-import CustomButton from "../../../components/CustomButton";
-import api from "../../../services/api";
-import { API_ROUTES } from "../../../utils/apiRoutes";
+import Modal from "../../../../components/Modal";
+import CustomIcon from "../../../../components/CustomIcon";
+import CustomButton from "../../../../components/CustomButton";
+import api from "../../../../services/api";
+import { API_ROUTES } from "../../../../utils/apiRoutes";
 import {
   RoleName,
   TICKET_STATUSES,
   StatusName,
   UIMessages,
-} from "../../../utils/constants";
-import { useAuth } from "../../../context/AuthContext";
-import { useNotification } from "../../../context/NotificationContext";
-import ConfirmationModal from "../../../components/ConfirmationModal";
-import { socket } from "../../../services/socket";
+} from "../../../../utils/constants";
+import { useAuth } from "../../../../context/AuthContext";
+import { useNotification } from "../../../../context/NotificationContext";
+import ConfirmationModal from "../../../../components/ConfirmationModal";
+import { socket } from "../../../../services/socket";
 import type {
   TicketUpdateFormData,
   TicketDetailModalProps,
-} from "../../../types";
+} from "../../../../types";
 import CommentSection from "./components/CommentsSection";
 import ModalSkeleton from "./components/ModalSkeleton";
 import ClientDecisionBanner from "./components/ClientDecisionBanner";
@@ -28,7 +28,7 @@ import ModalDetailsForm from "./components/ModalDetailsForm";
 import ModalAttachments from "./components/ModalAttachments";
 import ModalTimestamps from "./components/ModalTimestamps";
 import styles from "./TicketDetailModal.module.css";
-import { readAttachmentFiles } from "../../../utils/attachments";
+import { readAttachmentFiles } from "../../../../utils/attachments";
 import CustomDropdownMenu from "./components/CustomDropDownTicketModal";
 
 const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
@@ -62,6 +62,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           ? new Date(ticket.dueDate).toISOString().split("T")[0]
           : "",
         issue: ticket?.issue || "",
+        tags: ticket?.tags || [],
       },
     });
 
@@ -113,6 +114,49 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   const statuses = TICKET_STATUSES;
 
+  const [localUsers, setLocalUsers] = useState(users);
+  const [localQaList, setLocalQaList] = useState(qaList);
+
+  useEffect(() => {
+    // If ticket has a project, fetch the assignable users just for that project
+    const fetchProjectMembers = async () => {
+      const projectId = ticket?.project?.id || fullTicketData?.project?.id;
+      if (!projectId) {
+        setLocalUsers(users);
+        setLocalQaList(qaList);
+        return;
+      }
+
+      try {
+        const res = await api.get(API_ROUTES.PROJECTS.MEMBERS(projectId));
+        const members = res.data.members || [];
+        setLocalUsers(
+          members.filter(
+            (m: any) =>
+              m.role.name === RoleName.EMPLOYEE ||
+              m.role.name === RoleName.AGENT ||
+              m.role.name === RoleName.ADMIN
+          )
+        );
+        setLocalQaList(members.filter((m: any) => m.role.name === RoleName.QA));
+      } catch (err) {
+        console.error("Failed to fetch project members for modal", err);
+        setLocalUsers(users);
+        setLocalQaList(qaList);
+      }
+    };
+
+    if (isOpen) {
+      fetchProjectMembers();
+    }
+  }, [
+    isOpen,
+    ticket?.project?.id,
+    fullTicketData?.project?.id,
+    users,
+    qaList,
+  ]);
+
   const fetchFullTicketData = useCallback(async () => {
     try {
       const res = await api.get(API_ROUTES.TICKETS.BY_ID(ticket.id));
@@ -127,6 +171,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           ? new Date(t.dueDate).toISOString().split("T")[0]
           : "",
         issue: t.issue || "",
+        tags: t.tags || [],
       });
     } catch (err: any) {
       console.error("Failed to fetch full ticket data", err);
@@ -146,9 +191,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     }
 
     const newAssigneeName =
-      users.find((agent) => agent.id === data.assigneeId)?.fullname || "";
+      localUsers.find((agent: any) => agent.id === data.assigneeId)?.fullname || "";
 
-    const newQaName = qaList.find((qa) => qa.id === data.qaId)?.fullname || "";
+    const newQaName = localQaList.find((qa: any) => qa.id === data.qaId)?.fullname || "";
 
     const body: any = {
       ticketId: ticket.id,
@@ -162,6 +207,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       issue: data.issue,
       newAssigneeName: newAssigneeName,
       newQaName: newQaName,
+      tags: data.tags || [],
     };
 
     if (
@@ -555,8 +601,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   watch={watch}
                   formState={formState}
                   displayTicket={displayTicket}
-                  users={users}
-                  qaList={qaList}
+                  users={localUsers}
+                  qaList={localQaList}
                   priorities={priorities}
                   statuses={statuses}
                   isDisbaledMode={isDisbaledMode}
@@ -570,7 +616,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   handleStartChat={handleStartChat}
                   onClose={onClose}
                   navigate={navigate}
-                  fullTicketData={fullTicketData}
                 />
 
                 <ModalTimestamps displayTicket={displayTicket} />

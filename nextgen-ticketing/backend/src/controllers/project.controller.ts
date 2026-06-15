@@ -70,4 +70,30 @@ export const projectController = {
       res.status(500).json({ success: false, error: err.message });
     }
   },
+
+  async getMembers(req: Request, res: Response) {
+    try {
+      const project = await projectRepository.findByIdWithMembers(req.params.id as string);
+      if (!project) return res.status(404).json({ success: false, error: "Project not found" });
+
+      const membersMap = new Map<string, any>();
+      project.teams.forEach((team: any) => {
+        team.members.forEach((member: any) => {
+          if (!membersMap.has(member.id)) {
+            membersMap.set(member.id, { ...member, teamNames: [team.name] });
+          } else {
+            const existing = membersMap.get(member.id);
+            if (!existing.teamNames.includes(team.name)) {
+              existing.teamNames.push(team.name);
+            }
+          }
+        });
+      });
+      
+      const members = Array.from(membersMap.values());
+      res.json({ success: true, members });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  },
 };

@@ -1,30 +1,30 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
-import CustomIcon from "../../../components/CustomIcon";
-import CustomButton from "../../../components/CustomButton";
-import api from "../../../services/api";
-import { API_ROUTES } from "../../../utils/apiRoutes";
-import { socket } from "../../../services/socket";
+import CustomIcon from "../../../../components/CustomIcon";
+import CustomButton from "../../../../components/CustomButton";
+import api from "../../../../services/api";
+import { API_ROUTES } from "../../../../utils/apiRoutes";
+import { socket } from "../../../../services/socket";
 import styles from "./TicketDetail.module.css";
-import { useAuth } from "../../../context/AuthContext";
-import { useNotification } from "../../../context/NotificationContext";
+import { useAuth } from "../../../../context/AuthContext";
+import { useNotification } from "../../../../context/NotificationContext";
 import {
   PRIORITIES,
   RoleName,
   StatusName,
   TICKET_STATUSES,
   UIMessages,
-} from "../../../utils/constants";
-import ConfirmationModal from "../../../components/ConfirmationModal";
-import { readAttachmentFiles } from "../../../utils/attachments";
+} from "../../../../utils/constants";
+import ConfirmationModal from "../../../../components/ConfirmationModal";
+import { readAttachmentFiles } from "../../../../utils/attachments";
 import {
   type ClientDecision,
   buildClientDecisionBody,
   buildStatusTransitionFields,
   getDecisionDialog,
   canShowCancelBanner,
-} from "../shared/ticketDecisions";
+} from "../../shared/ticketDecisions";
 
 import TicketDetailSkeleton from "./components/TicketDetailSkeleton";
 import TicketDetailHeader from "./components/TicketDetailHeader";
@@ -34,7 +34,7 @@ import TicketDetailSidebar from "./components/TicketDetailSidebar";
 import TicketDetailComments from "./components/TicketDetailComments";
 import TicketDetailHistory from "./components/TicketDetailHistory";
 
-import type { TicketDetail as ITicketDetail } from "../../../types";
+import type { TicketDetail as ITicketDetail } from "../../../../types";
 
 interface SidebarDraft {
   statusId: string;
@@ -42,6 +42,7 @@ interface SidebarDraft {
   assigneeId: string;
   qaId: string;
   dueDate: string;
+  tags: string[];
 }
 
 const TicketDetail: React.FC = () => {
@@ -71,6 +72,7 @@ const TicketDetail: React.FC = () => {
     assigneeId: "",
     qaId: "",
     dueDate: "",
+    tags: [],
   });
 
   // --- Saving state ---
@@ -185,6 +187,7 @@ const TicketDetail: React.FC = () => {
       assigneeId: t.assignee?.id || "",
       qaId: t.qa?.id || "",
       dueDate: t.dueDate ? new Date(t.dueDate).toISOString().split("T")[0] : "",
+      tags: t.tags || [],
     });
   };
 
@@ -201,25 +204,41 @@ const TicketDetail: React.FC = () => {
     }
   };
 
-  const fetchAgents = async () => {
-    try {
-      const res = await api.get(API_ROUTES.USERS.BASE, {
-        params: { type: "employees", limit: -1 },
-      });
-      setAgents(res.data.accounts);
-    } catch (err) {
-      console.error("Failed to fetch agents", err);
+  const fetchProjectMembers = async () => {
+    if (!ticket?.project?.id) {
+      // Fallback if ticket has no project
+      try {
+        const [agentsRes, qaRes] = await Promise.all([
+          api.get(API_ROUTES.USERS.BASE, {
+            params: { type: "employees", limit: -1 },
+          }),
+          api.get(API_ROUTES.USERS.BASE, {
+            params: { type: "qa", limit: -1 },
+          }),
+        ]);
+        setAgents(agentsRes.data.accounts);
+        setQaList(qaRes.data.accounts);
+      } catch (err) {
+        console.error("Failed to fetch fallback agents/qa", err);
+      }
+      return;
     }
-  };
 
-  const fetchQaList = async () => {
     try {
-      const res = await api.get(API_ROUTES.USERS.BASE, {
-        params: { type: "qa", limit: -1 },
-      });
-      setQaList(res.data.accounts);
+      const res = await api.get(API_ROUTES.PROJECTS.MEMBERS(ticket.project.id));
+      const members = res.data.members || [];
+      // Agents can be employees, agents (managers), or admins
+      setAgents(
+        members.filter(
+          (m: any) =>
+            m.role.name === RoleName.EMPLOYEE ||
+            m.role.name === RoleName.AGENT ||
+            m.role.name === RoleName.ADMIN
+        )
+      );
+      setQaList(members.filter((m: any) => m.role.name === RoleName.QA));
     } catch (err) {
-      console.error("Failed to fetch QA list", err);
+      console.error("Failed to fetch project members", err);
     }
   };
 
@@ -244,7 +263,8 @@ const TicketDetail: React.FC = () => {
       sidebarDraft.priorityId !== ticket.priority.id ||
       sidebarDraft.assigneeId !== (ticket.assignee?.id || "") ||
       sidebarDraft.qaId !== (ticket.qa?.id || "") ||
-      sidebarDraft.dueDate !== origDueDate
+      sidebarDraft.dueDate !== origDueDate ||
+      JSON.stringify(sidebarDraft.tags) !== JSON.stringify(ticket.tags || [])
     );
   })();
 
@@ -255,7 +275,9 @@ const TicketDetail: React.FC = () => {
     setSidebarDraft((prev) => ({
       ...prev,
       [field]: value,
-      ...(field === "assigneeId" && value ? { statusId: "69e5da8b0e2d511b4eab95eb" } : {}),
+      ...(field === "assigneeId" && value
+        ? { statusId: "69e5da8b0e2d511b4eab95eb" }
+        : {}),
     }));
   };
 
@@ -376,13 +398,19 @@ const TicketDetail: React.FC = () => {
     }
     if (sidebarDraft.qaId !== (ticket!.qa?.id || "")) {
       payload.qaId = sidebarDraft.qaId;
-      payload.newQaName = qaList.find((q) => q.id === sidebarDraft.qaId)?.fullname || "";
+      payload.newQaName =
+        qaList.find((q) => q.id === sidebarDraft.qaId)?.fullname || "";
     }
     const origDueDate = ticket!.dueDate
       ? new Date(ticket!.dueDate).toISOString().split("T")[0]
       : "";
     if (sidebarDraft.dueDate !== origDueDate) {
       payload.dueDate = sidebarDraft.dueDate || null;
+    }
+    if (
+      JSON.stringify(sidebarDraft.tags) !== JSON.stringify(ticket!.tags || [])
+    ) {
+      payload.tags = sidebarDraft.tags;
     }
 
     return payload;
@@ -509,11 +537,10 @@ const TicketDetail: React.FC = () => {
 
   useEffect(() => {
     fetchTicket();
-    if (canAssign) {
-      fetchAgents();
-      fetchQaList();
+    if (canAssign && ticket?.id) {
+      fetchProjectMembers();
     }
-  }, [id, canAssign]);
+  }, [id, canAssign, ticket?.project?.id]);
 
   useEffect(() => {
     const handleTicketUpdate = (data: { ticketId: string }) => {
@@ -545,54 +572,57 @@ const TicketDetail: React.FC = () => {
         ticket.owner?.id === user?.id,
         ticket.status?.name,
       ) && (
-          <div
-            className="glass-card"
-            style={{
-              padding: 20,
-              marginBottom: 24,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderLeft: "4px solid var(--accent-danger)",
-            }}
-          >
-            <div>
-              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
-                Cancel Ticket
-              </h3>
-              <p
-                style={{
-                  margin: 0,
-                  color: "var(--text-secondary)",
-                  fontSize: "0.9rem",
-                }}
-              >
-                Your ticket is currently unassigned. You can cancel it if it's
-                no longer needed.
-              </p>
-            </div>
-            <CustomButton
-              variant="outline"
-              onClick={() => setPendingDecision("cancel")}
-              icon={<CustomIcon name="Trash2" size={16} />}
-              style={{
-                borderColor: "var(--accent-danger)",
-                color: "var(--accent-danger)",
-              }}
-              loading={isSaving}
-            >
+        <div
+          className="glass-card"
+          style={{
+            padding: 20,
+            marginBottom: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderLeft: "4px solid var(--accent-danger)",
+          }}
+        >
+          <div>
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
               Cancel Ticket
-            </CustomButton>
+            </h3>
+            <p
+              style={{
+                margin: 0,
+                color: "var(--text-secondary)",
+                fontSize: "0.9rem",
+              }}
+            >
+              Your ticket is currently unassigned. You can cancel it if it's no
+              longer needed.
+            </p>
           </div>
-        )}
+          <CustomButton
+            variant="outline"
+            onClick={() => setPendingDecision("cancel")}
+            icon={<CustomIcon name="Trash2" size={16} />}
+            style={{
+              borderColor: "var(--accent-danger)",
+              color: "var(--accent-danger)",
+            }}
+            loading={isSaving}
+          >
+            Cancel Ticket
+          </CustomButton>
+        </div>
+      )}
 
       {user?.role?.name === RoleName.CUSTOMER &&
         ticket.owner?.id === user?.id &&
-        ticket.status.name === StatusName.APPROVED && (() => {
+        ticket.status.name === StatusName.APPROVED &&
+        (() => {
           const daysLeft = (() => {
             const updatedAt = ticket.updatedAt;
             if (!updatedAt) return 20;
-            const diffTime = Math.abs(new Date().getTime() - new Date(updatedAt).getTime());
+            const diffTime = Math.abs(
+              new Date().getTime() - new Date(updatedAt).getTime(),
+            );
             const diffDays = diffTime / (1000 * 60 * 60 * 24);
             return Math.max(0, Math.ceil(20 - diffDays));
           })();
@@ -637,7 +667,8 @@ const TicketDetail: React.FC = () => {
                 >
                   <CustomIcon name="Clock" size={14} />
                   <span>
-                    The ticket will automatically closed in 20 days if no response. ({daysLeft} days remaining)
+                    The ticket will automatically closed in 20 days if no
+                    response. ({daysLeft} days remaining)
                   </span>
                 </div>
               </div>
@@ -691,22 +722,6 @@ const TicketDetail: React.FC = () => {
               removeAttachmentDraft={removeAttachmentDraft}
               openLightbox={openLightbox}
             />
-
-            <div style={{ marginTop: 24, display: "flex", gap: 12 }}>
-              {ticket.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="glass-card"
-                  style={{
-                    padding: "4px 12px",
-                    fontSize: "0.8rem",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
           </div>
 
           <div className={styles.tabs}>

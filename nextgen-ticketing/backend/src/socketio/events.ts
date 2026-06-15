@@ -135,8 +135,8 @@ export function setupSocketEvents(io: Server) {
     socket.on(SocketEvent.NOTIFICATIONS_GET, async () => {
       try {
         const [items, count] = await Promise.all([
-          prisma.notification.findMany({ where: { userId: user.id }, orderBy: { createdAt: 'desc' }, take: 20 }),
-          prisma.notification.count({ where: { userId: user.id, unread: true } }),
+          prisma.notification.findMany({ where: { userId: user.id, type: { not: 'seen_moment' } }, orderBy: { createdAt: 'desc' }, take: 20 }),
+          prisma.notification.count({ where: { userId: user.id, unread: true, type: { not: 'seen_moment' } } }),
         ]);
         socket.emit(SocketEvent.NOTIFICATIONS_UPDATE, { items, count });
       } catch {
@@ -147,7 +147,7 @@ export function setupSocketEvents(io: Server) {
     socket.on('notifications:markRead', async (notificationId: string) => {
       try {
         await prisma.notification.update({ where: { id: notificationId }, data: { unread: false } });
-        const count = await prisma.notification.count({ where: { userId: user.id, unread: true } });
+        const count = await prisma.notification.count({ where: { userId: user.id, unread: true, type: { not: 'seen_moment' } } });
         socket.emit(SocketEvent.NOTIFICATIONS_UPDATE, { count });
       } catch {}
     });

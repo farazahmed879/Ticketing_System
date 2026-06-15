@@ -492,7 +492,7 @@ export const ticketUsecase = {
 
     // Tags
     if (data.tags !== undefined) {
-      const canEditTags = isAdmin || (isEmployee && (isOwner || isAssignee));
+      const canEditTags = isAdmin || isManager || (isEmployee && (isOwner || isAssignee));
       if (!canEditTags) {
         throw new Error("You do not have permission to change ticket tags.");
       }

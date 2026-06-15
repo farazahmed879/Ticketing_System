@@ -115,4 +115,24 @@ export const projectRepository = {
       data: { deleted: true },
     });
   },
+
+  async findByIdWithMembers(id: string) {
+    return prisma.project.findFirst({
+      where: { id, deleted: false },
+      include: {
+        teams: {
+          include: {
+            members: {
+              select: {
+                id: true,
+                fullname: true,
+                image: true,
+                role: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+  },
 };

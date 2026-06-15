@@ -14,6 +14,8 @@ import StandardListLayout from "../../components/StandardListLayout";
 import CustomPagination from "../../components/CustomPagination";
 import { truncateString } from "../../utils/helpers";
 import { useNavigate } from "react-router-dom";
+import { getDepartmentColumns } from "./columns";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 const DepartmentList: React.FC = () => {
   const navigate = useNavigate();
@@ -23,6 +25,9 @@ const DepartmentList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const { showNotification, setIsLoading } = useNotification();
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deptToDelete, setDeptToDelete] = useState<string | null>(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(0);
@@ -64,12 +69,16 @@ const DepartmentList: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this department?"))
-      return;
+  const handleDeleteClick = (id: string) => {
+    setDeptToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deptToDelete) return;
     setIsLoading(true, UIMessages.LOADING.DELETING);
     try {
-      await api.delete(API_ROUTES.DEPARTMENTS.BY_ID(id));
+      await api.delete(API_ROUTES.DEPARTMENTS.BY_ID(deptToDelete));
       showNotification("success", "Department deleted successfully");
       fetchDepts();
     } catch (err: any) {
@@ -79,6 +88,8 @@ const DepartmentList: React.FC = () => {
       );
     } finally {
       setIsLoading(false, "");
+      setIsDeleteModalOpen(false);
+      setDeptToDelete(null);
     }
   };
 
@@ -108,110 +119,7 @@ const DepartmentList: React.FC = () => {
     }
   };
 
-  const columns: TableColumn<Department>[] = [
-    {
-      header: "Department",
-      key: "name",
-      render: (d) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            className="glass-card"
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "rgba(124, 58, 237, 0.1)",
-            }}
-          >
-            <CustomIcon
-              name="Building2"
-              size={18}
-              color="var(--accent-primary)"
-            />
-          </div>
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/departments/${d.id}`);
-            }}
-            style={{ cursor: "pointer" }}
-          >
-            <div
-              style={{
-                fontWeight: 600,
-                color: "var(--accent-primary)",
-              }}
-            >
-              {d.name}
-            </div>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-              {d.description ? truncateString(d.description, 60) : "No description"}
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: "Teams",
-      key: "teams",
-      render: (d) => (
-        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-          {d.teams?.length ? (
-            d.teams.map((t) => (
-              <span
-                key={t.id}
-                style={{
-                  fontSize: "0.75rem",
-                  background: "rgba(255,255,255,0.05)",
-                  padding: "2px 8px",
-                  borderRadius: 4,
-                }}
-              >
-                {t.name}
-              </span>
-            ))
-          ) : (
-            <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
-              No teams
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      header: "Projects",
-      key: "projects",
-      render: (d) => (
-        <span style={{ fontSize: "0.9rem" }}>
-          {d.projects?.length || 0} Projects
-        </span>
-      ),
-    },
-    {
-      header: "Actions",
-      key: "actions",
-      render: (d) => (
-        <div style={{ display: "flex", gap: 8 }}>
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEdit(d)}
-            icon={<CustomIcon name="Edit2" size={16} />}
-          />
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDelete(d.id)}
-            icon={<CustomIcon name="Trash2" size={16} />}
-            style={{ color: "var(--accent-danger)" }}
-          />
-        </div>
-      ),
-    },
-  ];
+  const columns = getDepartmentColumns(navigate, handleEdit, handleDeleteClick);
 
   return (
     <>
@@ -286,6 +194,16 @@ const DepartmentList: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}
         department={editingDept}
+      />
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Department"
+        message="Are you sure you want to delete this department?"
+        confirmText="Delete"
+        type="danger"
       />
     </>
   );

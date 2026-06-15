@@ -1,11 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import CustomIcon from "../../../../components/CustomIcon";
-import CustomButton from "../../../../components/CustomButton";
-import CustomDropdownMenu from "../../../../components/CustomDropdownMenu";
-import { useNotification } from "../../../../context/NotificationContext";
+import CustomIcon from "../../../../../components/CustomIcon";
+import CustomButton from "../../../../../components/CustomButton";
+import CustomDropdownMenu from "../../../../../components/CustomDropdownMenu";
+import { useNotification } from "../../../../../context/NotificationContext";
 import styles from "../TicketDetail.module.css";
-import type { TicketDetail as ITicketDetail } from "../../../../types";
+import type { TicketDetail as ITicketDetail } from "../../../../../types";
 
 interface TicketDetailHeaderProps {
   ticket: ITicketDetail;

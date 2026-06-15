@@ -63,12 +63,27 @@ const MainLayout: React.FC = () => {
     socket.on(
       "notifications:update",
       (data: { count?: number; items?: any[] }) => {
-        if (data.count !== undefined) setUnreadCount(data.count);
-        if (data.items) setNotifications(data.items);
+        if (data.items) {
+          const filteredItems = data.items.filter((n: any) => n.type !== "moment");
+          setNotifications(filteredItems);
+          
+          // Re-calculate count if possible, or fall back to backend count
+          if (data.count !== undefined) {
+            // Since we're hiding "moment", the backend count might be off by the number of unread moments
+            // If the user has a lot of notifications, we might not have all of them in data.items
+            // But we'll do our best.
+            const unreadMomentsCount = data.items.filter((n: any) => n.type === "moment" && n.unread).length;
+            setUnreadCount(Math.max(0, data.count - unreadMomentsCount));
+          }
+        } else if (data.count !== undefined) {
+          setUnreadCount(data.count);
+        }
       },
     );
 
     socket.on("notifications:new", (notification: any) => {
+      if (notification.type === "moment") return;
+
       // When the user is on the messages page, suppress the toast popup
       // and sound for chat message notifications — the Messages component
       // handles its own unread badge + sound.

@@ -76,6 +76,7 @@ export const API_ROUTES = {
   PROJECTS: {
     BASE: "/projects",
     BY_ID: (id: string) => `/projects/${id}`,
+    MEMBERS: (id: string) => `/projects/${id}/members`,
   },
 
   // Notifications

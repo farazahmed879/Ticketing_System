@@ -18,21 +18,10 @@ import CustomDatePicker from "../../components/CustomDatePicker";
 import ScheduleInterviewModal from "./ScheduleInterviewModal";
 import CustomPagination from "../../components/CustomPagination";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 import StandardListLayout from "../../components/StandardListLayout";
-
-const statusBadgeVariant = (status: string) => {
-  switch (status) {
-    case InterviewStatus.SCHEDULED:
-      return "info" as const;
-    case InterviewStatus.COMPLETED:
-      return "success" as const;
-    case InterviewStatus.CANCELLED:
-      return "danger" as const;
-    default:
-      return "neutral" as const;
-  }
-};
+import { getInterviewColumns } from "./columns";
 
 const InterviewList: React.FC = () => {
   const navigate = useNavigate();
@@ -56,13 +45,15 @@ const InterviewList: React.FC = () => {
     user?.role?.name === RoleName.HR ||
     user?.role?.permissions?.interviews?.create;
 
-  // Pagination & Filter state
   const [activeFilter, setActiveFilter] = useState("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [editingInterview, setEditingInterview] = useState<Interview | null>(
     null,
   );
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [interviewToDelete, setInterviewToDelete] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
@@ -119,12 +110,16 @@ const InterviewList: React.FC = () => {
     fetchInterviews();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this interview?"))
-      return;
+  const handleDeleteClick = (id: string) => {
+    setInterviewToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!interviewToDelete) return;
     setIsLoading(true, UIMessages.LOADING.DELETING);
     try {
-      await api.delete(API_ROUTES.INTERVIEWS.BY_ID(id));
+      await api.delete(API_ROUTES.INTERVIEWS.BY_ID(interviewToDelete));
       showNotification("success", "Interview deleted successfully");
       fetchInterviews();
     } catch (err: any) {
@@ -134,130 +129,12 @@ const InterviewList: React.FC = () => {
       );
     } finally {
       setIsLoading(false, "");
+      setIsDeleteModalOpen(false);
+      setInterviewToDelete(null);
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const formatTime = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const columns: TableColumn<Interview>[] = [
-    {
-      header: "Candidate",
-      key: "candidate",
-      render: (i) => (
-        <div className={styles.candidateInfo}>
-          <div className={styles.candidateAvatar}>
-            {i.candidate.name.charAt(0)}
-          </div>
-          <div>
-            <div style={{ fontWeight: 600 }}>{i.candidate.name}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-              {i.candidate.position}
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: "Interview",
-      key: "title",
-      render: (i) => <span style={{ fontWeight: 500 }}>{i.title}</span>,
-    },
-    {
-      header: "Date & Time",
-      key: "scheduledAt",
-      render: (i) => (
-        <div className={styles.timeInfo}>
-          <span className={styles.timeMain}>{formatDate(i.scheduledAt)}</span>
-          <span className={styles.timeSub}>
-            {formatTime(i.scheduledAt)} · {i.duration} min
-          </span>
-        </div>
-      ),
-    },
-    {
-      header: "Panel",
-      key: "panel",
-      render: (i) => (
-        <CustomAvatarStack
-          items={i.panelMembers.map((pm) => ({
-            id: pm.id,
-            name: pm.user.fullname,
-            image: pm.user.image,
-          }))}
-          limit={4}
-          size={28}
-        />
-      ),
-    },
-    {
-      header: "Feedback",
-      key: "feedbacks",
-      render: (i) => (
-        <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-          {i._count?.feedbacks || 0} / {i.panelMembers.length}
-        </span>
-      ),
-    },
-    {
-      header: "Status",
-      key: "status",
-      render: (i) => (
-        <CustomBadge variant={statusBadgeVariant(i.status)}>
-          {i.status}
-        </CustomBadge>
-      ),
-    },
-    {
-      header: "Actions",
-      key: "actions",
-      render: (i) => (
-        <div style={{ display: "flex", gap: 0 }}>
-          {canUpdateInterviews && (
-            <CustomButton
-              variant="ghost"
-              size="sm"
-              icon={<CustomIcon name="Edit2" size={17} />}
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditingInterview(i);
-                setIsModalOpen(true);
-              }}
-              title="Edit Interview"
-            />
-          )}
-
-          {canDeleteInterviews && (
-            <CustomButton
-              variant="ghost"
-              size="sm"
-              icon={<CustomIcon name="Trash2" size={17} />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(i.id);
-              }}
-              style={{ color: "var(--accent-danger)" }}
-              title="Delete Interview"
-            />
-          )}
-        </div>
-      ),
-    },
-  ];
+  const columns = getInterviewColumns(canUpdateInterviews, canDeleteInterviews, setEditingInterview, setIsModalOpen, handleDeleteClick);
 
   return (
     <>
@@ -373,6 +250,16 @@ const InterviewList: React.FC = () => {
         }}
         onSuccess={handleScheduleSuccess}
         interview={editingInterview}
+      />
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Interview"
+        message="Are you sure you want to delete this interview?"
+        confirmText="Delete"
+        type="danger"
       />
     </>
   );

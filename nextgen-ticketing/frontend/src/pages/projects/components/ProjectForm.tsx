@@ -4,7 +4,6 @@ import CustomInput from "../../../components/CustomInput";
 import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomMultiSelect from "../../../components/CustomMultiSelect";
-import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
 import type { ProjectFormData, ProjectFormProps } from "../../../types";
 import { PROJECT_STATUS_OPTIONS } from "../../../utils/constants";
@@ -13,8 +12,6 @@ import styles from "./ProjectForm.module.css";
 const ProjectForm: React.FC<ProjectFormProps> = ({
   initialData,
   onSubmit,
-  onCancel,
-  isLoading = false,
   clients,
   managers,
   teams,
@@ -68,7 +65,11 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   }));
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+    <form
+      id="project-form"
+      onSubmit={handleSubmit(onSubmit)}
+      className={styles.form}
+    >
       {/* Section 1: Project Details */}
       <div className={styles.sectionHeader}>
         <CustomIcon name="FileText" size={14} />
@@ -134,16 +135,6 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
           placeholder="Select Teams..."
           options={teamOptions}
         />
-      </div>
-
-      {/* Form Actions */}
-      <div className={styles.actions}>
-        <CustomButton variant="ghost" onClick={onCancel} type="button">
-          Cancel
-        </CustomButton>
-        <CustomButton variant="gradient" type="submit" loading={isLoading}>
-          {initialData ? "Update Project" : "Create Project"}
-        </CustomButton>
       </div>
     </form>
   );

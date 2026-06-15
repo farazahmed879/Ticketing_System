@@ -19,7 +19,7 @@ import { socket } from "../../../services/socket";
 import CustomSelect from "../../../components/CustomSelect";
 import type { Column, Ticket, TicketFormData } from "../../../types";
 import CustomButton from "../../../components/CustomButton";
-import TicketDetailModal from "../ticketDetailsModal";
+import TicketDetailModal from "../ticket-details/ticket-details-modal";
 import CreateTicketModal from "../components/CreateTicketModal";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import { BoardSkeleton } from "../../../components/CustomSkeleton/CustomSkeleton";

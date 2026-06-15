@@ -1,15 +1,17 @@
 import React from "react";
-import CustomButton from "../../../../components/CustomButton";
-import CustomIcon from "../../../../components/CustomIcon";
-import { StatusName } from "../../../../utils/constants";
-import type { TicketDetail } from "../../../../types";
+import CustomButton from "../../../../../components/CustomButton";
+import CustomIcon from "../../../../../components/CustomIcon";
+import { StatusName } from "../../../../../utils/constants";
+import type { TicketDetail } from "../../../../../types";
 
 interface ClientDecisionBannerProps {
   isClient: boolean;
   isTicketOwner: boolean;
   displayTicket: TicketDetail | any;
   isSaving: boolean;
-  handleClientDecision: (decision: "satisfied" | "unsatisfied" | "cancel") => void;
+  handleClientDecision: (
+    decision: "satisfied" | "unsatisfied" | "cancel",
+  ) => void;
 }
 
 const ClientDecisionBanner: React.FC<ClientDecisionBannerProps> = ({
@@ -70,7 +72,9 @@ const ClientDecisionBanner: React.FC<ClientDecisionBannerProps> = ({
     const daysLeft = (() => {
       const updatedAt = displayTicket.updatedAt;
       if (!updatedAt) return 20;
-      const diffTime = Math.abs(new Date().getTime() - new Date(updatedAt).getTime());
+      const diffTime = Math.abs(
+        new Date().getTime() - new Date(updatedAt).getTime(),
+      );
       const diffDays = diffTime / (1000 * 60 * 60 * 24);
       return Math.max(0, Math.ceil(20 - diffDays));
     })();
@@ -97,8 +101,8 @@ const ClientDecisionBanner: React.FC<ClientDecisionBannerProps> = ({
               fontSize: "0.9rem",
             }}
           >
-            Your ticket has been marked as Resolved. Please let us know if you are
-            satisfied with the resolution.
+            Your ticket has been marked as Resolved. Please let us know if you
+            are satisfied with the resolution.
           </p>
           <div
             style={{
@@ -114,7 +118,8 @@ const ClientDecisionBanner: React.FC<ClientDecisionBannerProps> = ({
           >
             <CustomIcon name="Clock" size={14} />
             <span>
-              The ticket will automatically closed in 20 days if no response. ({daysLeft} days remaining)
+              The ticket will automatically closed in 20 days if no response. (
+              {daysLeft} days remaining)
             </span>
           </div>
         </div>

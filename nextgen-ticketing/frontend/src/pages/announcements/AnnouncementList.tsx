@@ -3,35 +3,18 @@ import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
 import { API_ROUTES } from "../../utils/apiRoutes";
-import { AnnouncementType, RoleName } from "../../utils/constants";
+import { RoleName } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
-import type { TableColumn } from "../../components/types";
 import CustomTable from "../../components/CustomTable";
-import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomInput from "../../components/CustomInput";
-import { format } from "date-fns";
 import AnnouncementModal from "./components/AnnouncementModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import CustomPagination from "../../components/CustomPagination";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../../utils/constants";
 
-interface Announcement {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  type: string;
-  author: {
-    fullname: string;
-  };
-  project?: {
-    id: string;
-    name: string;
-  };
-}
-
 import StandardListLayout from "../../components/StandardListLayout";
+import { getAnnouncementColumns, type Announcement } from "./columns";
 
 const AnnouncementList: React.FC = () => {
   const { user } = useAuth();
@@ -130,89 +113,7 @@ const AnnouncementList: React.FC = () => {
     }
   };
 
-  const columns: TableColumn<Announcement>[] = [
-    {
-      header: "Title",
-      key: "title",
-      render: (ann) => <div style={{ fontWeight: 600 }}>{ann.title}</div>,
-    },
-    {
-      header: "Type",
-      key: "type",
-      render: (ann) => {
-        let variant:
-          | "info"
-          | "warning"
-          | "success"
-          | "danger"
-          | "neutral"
-          | "primary" = "neutral";
-        if (ann.type === AnnouncementType.EVENT) variant = "info";
-        else if (ann.type === AnnouncementType.IMPORTANT) variant = "danger";
-        else if (ann.type === AnnouncementType.REVIEW) variant = "success";
-        else if (ann.type === AnnouncementType.INFO) variant = "warning";
-        else if (ann.type === AnnouncementType.MOMENT) variant = "primary";
-
-        return (
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <CustomBadge variant={variant}>{ann.type.toUpperCase()}</CustomBadge>
-            {ann.project && (
-              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 2 }}>
-                Project: {ann.project.name}
-              </span>
-            )}
-          </div>
-        );
-      },
-    },
-    {
-      header: "Scheduled Date",
-      key: "date",
-      render: (ann) => format(new Date(ann.date), "MMM dd, yyyy"),
-    },
-    {
-      header: "Author",
-      key: "author",
-      render: (ann) => (
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
-            {ann.author.fullname}
-          </span>
-          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-            {(ann.author as any).title || (ann.author as any).role?.name}
-          </span>
-        </div>
-      ),
-    },
-    {
-      header: "Actions",
-      key: "actions",
-      render: (ann) => (
-        <div style={{ display: "flex", gap: 8 }}>
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEdit(ann)}
-            icon={<CustomIcon name="Edit2" size={16} />}
-            title={`Edit ${entityName}`}
-          />
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDelete(ann.id)}
-            icon={
-              <CustomIcon
-                name="Trash2"
-                size={16}
-                color="var(--accent-danger)"
-              />
-            }
-            title={`Delete ${entityName}`}
-          />
-        </div>
-      ),
-    },
-  ];
+  const columns = getAnnouncementColumns(entityName, handleEdit, handleDelete);
 
   return (
     <>
@@ -226,7 +127,9 @@ const AnnouncementList: React.FC = () => {
             }}
           >
             <div>
-              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>{entityNamePlural}</h1>
+              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+                {entityNamePlural}
+              </h1>
               <p style={{ color: "var(--text-muted)" }}>
                 Manage company-wide announcements and events
               </p>

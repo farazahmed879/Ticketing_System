@@ -34,7 +34,7 @@ import {
   MAX_ATTACHMENTS,
   readAttachmentFiles,
 } from "../../../utils/attachments";
-import CommentSection from "../ticketDetailsModal/components/CommentsSection";
+import CommentSection from "../ticket-details/ticket-details-modal/components/CommentsSection";
 import {
   type ClientDecision,
   buildClientDecisionBody,
@@ -308,7 +308,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     }
   };
 
-
   const handleDeleteTicket = async () => {
     setIsLoading(true, UIMessages.LOADING.DELETING);
     try {
@@ -412,9 +411,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     return isAdmin || isManager || (isClient && isOwner && ticketIsNew);
   })();
 
-  
-  const disabledDueDateEdit =
-    user?.role?.name === RoleName.QA;
+  const disabledDueDateEdit = user?.role?.name === RoleName.QA;
 
   // Employees can only set the due date while the ticket is in the "Assigned"
   // status (i.e. assigned to an employee) — disabled in every other status.
@@ -658,44 +655,44 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   isTicketOwner,
                   displayTicket?.status?.name,
                 ) && (
-                    <div
-                      className="glass-card"
-                      style={{
-                        padding: 20,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        borderLeft: "4px solid var(--accent-danger)",
-                      }}
-                    >
-                      <div>
-                        <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
-                          Cancel Ticket
-                        </h3>
-                        <p
-                          style={{
-                            margin: 0,
-                            color: "var(--text-secondary)",
-                            fontSize: "0.9rem",
-                          }}
-                        >
-                          Your ticket is currently unassigned. You can cancel it
-                          if it's no longer needed.
-                        </p>
-                      </div>
-                      <CustomButton
-                        variant="outline"
-                        onClick={() => setPendingDecision("cancel")}
-                        icon={<CustomIcon name="Trash2" size={16} />}
+                  <div
+                    className="glass-card"
+                    style={{
+                      padding: 20,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      borderLeft: "4px solid var(--accent-danger)",
+                    }}
+                  >
+                    <div>
+                      <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
+                        Cancel Ticket
+                      </h3>
+                      <p
                         style={{
-                          borderColor: "var(--accent-danger)",
-                          color: "var(--accent-danger)",
+                          margin: 0,
+                          color: "var(--text-secondary)",
+                          fontSize: "0.9rem",
                         }}
                       >
-                        Cancel Ticket
-                      </CustomButton>
+                        Your ticket is currently unassigned. You can cancel it
+                        if it's no longer needed.
+                      </p>
                     </div>
-                  )}
+                    <CustomButton
+                      variant="outline"
+                      onClick={() => setPendingDecision("cancel")}
+                      icon={<CustomIcon name="Trash2" size={16} />}
+                      style={{
+                        borderColor: "var(--accent-danger)",
+                        color: "var(--accent-danger)",
+                      }}
+                    >
+                      Cancel Ticket
+                    </CustomButton>
+                  </div>
+                )}
                 {isClient &&
                   isTicketOwner &&
                   displayTicket?.status?.name === StatusName.APPROVED &&
@@ -1010,7 +1007,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             }}
                           >
                             {displayTicket.owner.fullname}
-                            
                           </div>
                           <div
                             style={{
@@ -1044,7 +1040,13 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         </div>
                       }
                       min={new Date().toISOString().split("T")[0]}
-                      disabled={!canUpdate || isDisbaledMode || isClient || disabledDueDateEdit || disableDueDateForEmployees}
+                      disabled={
+                        !canUpdate ||
+                        isDisbaledMode ||
+                        isClient ||
+                        disabledDueDateEdit ||
+                        disableDueDateForEmployees
+                      }
                     />
 
                     {/* Assignment */}
@@ -1170,7 +1172,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                     }}
                                   >
                                     {displayTicket.assignee.fullname}
-                                    
                                   </div>
                                 </div>
                               </>
@@ -1192,127 +1193,128 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
                     {/* QA Assignment — hidden from clients */}
                     {!isClient && (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 10,
-                      }}
-                    >
-                      <label
-                        style={{
-                          fontSize: "0.9rem",
-                          color: "var(--text-secondary)",
-                          fontWeight: 600,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                        }}
-                      >
-                        <CustomIcon
-                          name="UserPlus"
-                          size={18}
-                          color="var(--accent-secondary)"
-                        />{" "}
-                        QA Assignee
-                      </label>
                       <div
                         style={{
                           display: "flex",
                           flexDirection: "column",
-                          gap: 12,
+                          gap: 10,
                         }}
                       >
-                        {canAssignQA && (
-                          <CustomSelect
-                            name="qaId"
-                            control={control}
-                            options={[
-                              {
-                                value: "",
-                                label: "Unassigned",
-                                icon: <CustomIcon name="UserPlus" size={14} />,
-                              },
-                              ...qaList.map((qaUser) => ({
-                                value: qaUser.id,
-                                label: qaUser.fullname,
-                                image: qaUser.image,
-                              })),
-                            ]}
-                            onChange={(val) => {
-                              setValue("qaId", val, {
-                                shouldDirty: true,
-                              });
-                            }}
-                            disabled={!canAssignQA}
-                            placeholder="Assign QA..."
-                          />
-                        )}
+                        <label
+                          style={{
+                            fontSize: "0.9rem",
+                            color: "var(--text-secondary)",
+                            fontWeight: 600,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
+                          <CustomIcon
+                            name="UserPlus"
+                            size={18}
+                            color="var(--accent-secondary)"
+                          />{" "}
+                          QA Assignee
+                        </label>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 12,
+                          }}
+                        >
+                          {canAssignQA && (
+                            <CustomSelect
+                              name="qaId"
+                              control={control}
+                              options={[
+                                {
+                                  value: "",
+                                  label: "Unassigned",
+                                  icon: (
+                                    <CustomIcon name="UserPlus" size={14} />
+                                  ),
+                                },
+                                ...qaList.map((qaUser) => ({
+                                  value: qaUser.id,
+                                  label: qaUser.fullname,
+                                  image: qaUser.image,
+                                })),
+                              ]}
+                              onChange={(val) => {
+                                setValue("qaId", val, {
+                                  shouldDirty: true,
+                                });
+                              }}
+                              disabled={!canAssignQA}
+                              placeholder="Assign QA..."
+                            />
+                          )}
 
-                        {!canAssignQA && (
-                          <div
-                            className="glass-card"
-                            style={{
-                              padding: 12,
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 12,
-                              minHeight: 64,
-                              background: "rgba(255,255,255,0.03)",
-                              border: "1px solid var(--border-glass)",
-                              borderRadius: 12,
-                            }}
-                          >
-                            {displayTicket.qa ? (
-                              <>
-                                <div
-                                  style={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: "50%",
-                                    background: "rgba(6, 182, 212, 0.1)",
-                                    color: "var(--accent-secondary)",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontWeight: 700,
-                                    fontSize: "1rem",
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  {displayTicket.qa.fullname.charAt(0)}
-                                </div>
-                                <div style={{ minWidth: 0 }}>
+                          {!canAssignQA && (
+                            <div
+                              className="glass-card"
+                              style={{
+                                padding: 12,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 12,
+                                minHeight: 64,
+                                background: "rgba(255,255,255,0.03)",
+                                border: "1px solid var(--border-glass)",
+                                borderRadius: 12,
+                              }}
+                            >
+                              {displayTicket.qa ? (
+                                <>
                                   <div
                                     style={{
-                                      fontWeight: 600,
-                                      fontSize: "0.85rem",
-                                      color: "var(--text-primary)",
+                                      width: 36,
+                                      height: 36,
+                                      borderRadius: "50%",
+                                      background: "rgba(6, 182, 212, 0.1)",
+                                      color: "var(--accent-secondary)",
                                       display: "flex",
                                       alignItems: "center",
-                                      gap: 8,
+                                      justifyContent: "center",
+                                      fontWeight: 700,
+                                      fontSize: "1rem",
+                                      flexShrink: 0,
                                     }}
                                   >
-                                    {displayTicket.qa.fullname}
-                                    
+                                    {displayTicket.qa.fullname.charAt(0)}
                                   </div>
+                                  <div style={{ minWidth: 0 }}>
+                                    <div
+                                      style={{
+                                        fontWeight: 600,
+                                        fontSize: "0.85rem",
+                                        color: "var(--text-primary)",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: 8,
+                                      }}
+                                    >
+                                      {displayTicket.qa.fullname}
+                                    </div>
+                                  </div>
+                                </>
+                              ) : (
+                                <div
+                                  style={{
+                                    color: "var(--text-muted)",
+                                    fontSize: "0.85rem",
+                                    fontStyle: "italic",
+                                  }}
+                                >
+                                  Unassigned
                                 </div>
-                              </>
-                            ) : (
-                              <div
-                                style={{
-                                  color: "var(--text-muted)",
-                                  fontSize: "0.85rem",
-                                  fontStyle: "italic",
-                                }}
-                              >
-                                Unassigned
-                              </div>
-                            )}
-                          </div>
-                        )}
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
                     )}
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 import React from "react";
 import { formatDistanceToNow } from "date-fns";
 import styles from "../TicketDetail.module.css";
-import type { TicketDetail as ITicketDetail } from "../../../../types";
+import type { TicketDetail as ITicketDetail } from "../../../../../types";
 
 interface TicketDetailHistoryProps {
   ticket: ITicketDetail;

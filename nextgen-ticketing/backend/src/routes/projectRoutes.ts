@@ -6,6 +6,7 @@ const router = Router();
 
 router.get("/", authMiddleware, projectController.getAll);
 router.get("/:id", authMiddleware, projectController.getById);
+router.get("/:id/members", authMiddleware, projectController.getMembers);
 router.post("/", authMiddleware, projectController.create);
 router.put("/:id", authMiddleware, projectController.update);
 router.delete("/:id", authMiddleware, projectController.delete);

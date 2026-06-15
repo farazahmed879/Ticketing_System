@@ -9,6 +9,7 @@ import CustomBadge from "../../components/CustomBadge";
 import type { Candidate } from "../../types";
 import { format } from "date-fns";
 import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 const CandidateDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +18,7 @@ const CandidateDetail: React.FC = () => {
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [loading, setLoading] = useState(true);
   const [isConverting, setIsConverting] = useState(false);
+  const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"profile" | "hiring">("profile");
 
   useEffect(() => {
@@ -36,17 +38,13 @@ const CandidateDetail: React.FC = () => {
     fetchCandidate();
   }, [id, navigate, showNotification]);
 
-  const handleConvert = async () => {
+  const handleConvert = () => {
     if (!candidate) return;
+    setIsConvertModalOpen(true);
+  };
 
-    if (
-      !window.confirm(
-        `Are you sure you want to convert ${candidate.name} into a system user?`,
-      )
-    ) {
-      return;
-    }
-
+  const confirmConvert = async () => {
+    if (!candidate) return;
     setIsConverting(true);
     try {
       const res = await api.post(API_ROUTES.CANDIDATES.CONVERT(id!));
@@ -65,6 +63,7 @@ const CandidateDetail: React.FC = () => {
       );
     } finally {
       setIsConverting(false);
+      setIsConvertModalOpen(false);
     }
   };
 
@@ -985,6 +984,17 @@ const CandidateDetail: React.FC = () => {
           )}
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={isConvertModalOpen}
+        onClose={() => setIsConvertModalOpen(false)}
+        onConfirm={confirmConvert}
+        title="Convert Candidate to User"
+        message={`Are you sure you want to convert ${candidate?.name} into a system user?`}
+        confirmText="Convert"
+        type="info"
+        loading={isConverting}
+      />
     </div>
   );
 };

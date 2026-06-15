@@ -18,7 +18,8 @@
     "requests": "الطلبات",
     "messages": "الرسائل",
     "users": "المستخدمون",
-    "roles": "الأدوار"
+    "roles": "الأدوار",
+    "myTeam": "فريقي"
   },
   "topbar": {
     "overview": "نظرة عامة",

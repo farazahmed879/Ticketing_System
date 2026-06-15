@@ -17,6 +17,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   isLoading = false,
   clients,
   managers,
+  employees,
 }) => {
   const { handleSubmit, control, reset } = useForm<ProjectFormData>({
     defaultValues: {
@@ -25,6 +26,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
       status: "Active",
       clientIds: [],
       managerId: "",
+      teamLeadId: "",
     },
   });
 
@@ -36,6 +38,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         status: initialData.status,
         clientIds: initialData.clientIds || [],
         managerId: initialData.managerId || "",
+        teamLeadId: initialData.teamLeadId || "",
       });
     } else {
       reset({
@@ -44,6 +47,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         status: "Active",
         clientIds: [],
         managerId: "",
+        teamLeadId: "",
       });
     }
   }, [initialData, reset]);
@@ -56,6 +60,11 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   const managerOptions = managers.map((m) => ({
     value: m.id,
     label: m.fullname,
+  }));
+
+  const employeeOptions = employees.map((e) => ({
+    value: e.id,
+    label: e.fullname,
   }));
 
   return (
@@ -114,6 +123,16 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
           label="Project Manager"
           placeholder="Select Project Manager..."
           options={managerOptions}
+        />
+      </div>
+
+      <div className={styles.twoColumnRow}>
+        <CustomSelect
+          name="teamLeadId"
+          control={control}
+          label="Team Lead"
+          placeholder="Select Team Lead..."
+          options={employeeOptions}
         />
       </div>
 

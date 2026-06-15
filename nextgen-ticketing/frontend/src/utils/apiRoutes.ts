@@ -69,6 +69,7 @@ export const API_ROUTES = {
   TEAMS: {
     BASE: "/teams",
     BY_ID: (id: string) => `/teams/${id}`,
+    MY_TEAM: "/teams/my-team",
   },
 
   // Projects

@@ -3,6 +3,17 @@ import { AuthRequest } from "../types";
 import { teamUsecase } from "../usecases/team.usecase";
 
 export const teamController = {
+  async getMyTeam(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ success: false, error: "Unauthorized" });
+      const data = await teamUsecase.getMyTeam(userId);
+      res.json({ success: true, ...data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
   async getTeams(req: AuthRequest, res: Response) {
     try {
       const limit = req.query.limit as string;

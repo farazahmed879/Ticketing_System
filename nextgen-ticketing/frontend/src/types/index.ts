@@ -79,6 +79,8 @@ export interface Project {
   clients?: { id: string; fullname: string; image?: string }[];
   managerId?: string;
   manager?: { id: string; fullname: string; image?: string };
+  teamLeadId?: string;
+  teamLead?: { id: string; fullname: string; image?: string };
   tickets?: {
     id: string;
     uid: number;
@@ -101,8 +103,6 @@ export interface Role {
   isCustomer: boolean;
   isEmployee: boolean;
   isHR: boolean;
-  isLead?: boolean;
-  isQA?: boolean;
   permissions?: any;
   _count?: { users: number };
 }
@@ -339,8 +339,6 @@ export interface RoleFormData {
   isCustomer: boolean;
   isEmployee: boolean;
   isHR: boolean;
-  isLead?: boolean;
-  isQA?: boolean;
   permissions: any;
 }
 
@@ -440,6 +438,7 @@ export interface ProjectFormData {
   status: string;
   clientIds: string[];
   managerId?: string;
+  teamLeadId?: string;
 }
 
 export interface ProjectFormProps {
@@ -449,6 +448,7 @@ export interface ProjectFormProps {
   isLoading?: boolean;
   clients: any[];
   managers: any[];
+  employees: any[];
 }
 
 export interface ProjectModalProps {
@@ -458,6 +458,7 @@ export interface ProjectModalProps {
   project?: Project | null;
   clients: any[];
   managers: any[];
+  employees: any[];
 }
 
 export interface SidebarProps {

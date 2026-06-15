@@ -19,7 +19,6 @@ import {
   CUSTOMER_PERMISSIONS,
   HR_PERMISSIONS,
   QA_PERMISSIONS,
-  LEAD_PERMISSIONS,
 } from "../roleConstants";
 import type { RoleFormProps } from "../types";
 
@@ -33,8 +32,6 @@ const RoleForm = forwardRef<any, RoleFormProps>(
       isCustomer: false,
       isEmployee: false,
       isHR: false,
-      isLead: false,
-      isQA: false,
       permissions: DEFAULT_PERMISSIONS,
     });
 
@@ -52,8 +49,6 @@ const RoleForm = forwardRef<any, RoleFormProps>(
           isCustomer: initialData.isCustomer || false,
           isEmployee: initialData.isEmployee || false,
           isHR: initialData.isHR || false,
-          isLead: initialData.isLead || false,
-          isQA: initialData.isQA || false,
           permissions: initialData.permissions || DEFAULT_PERMISSIONS,
         });
       } else {
@@ -65,8 +60,6 @@ const RoleForm = forwardRef<any, RoleFormProps>(
           isCustomer: false,
           isEmployee: false,
           isHR: false,
-          isLead: false,
-          isQA: false,
           permissions: DEFAULT_PERMISSIONS,
         });
       }
@@ -119,7 +112,6 @@ const RoleForm = forwardRef<any, RoleFormProps>(
         isEmployee: false,
         isHR: false,
         isQA: false,
-        isLead: false,
         permissions: DEFAULT_PERMISSIONS,
       };
 
@@ -145,9 +137,6 @@ const RoleForm = forwardRef<any, RoleFormProps>(
           break;
         case "isQA":
           updatedData.permissions = QA_PERMISSIONS;
-          break;
-        case "isLead":
-          updatedData.permissions = LEAD_PERMISSIONS;
           break;
         default:
           updatedData.permissions = DEFAULT_PERMISSIONS;

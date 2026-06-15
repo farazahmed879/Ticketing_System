@@ -73,6 +73,7 @@ model User {
 
   managedTeams Team[]    @relation("TeamManager")
   managedProjects Project[] @relation("ProjectManager")
+  ledProjects Project[] @relation("ProjectTeamLead")
   lastOnline   DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -195,6 +196,9 @@ model Team {
   managerId String? @db.ObjectId
   manager   User?   @relation("TeamManager", fields: [managerId], references: [id])
 
+  projectIds String[]  @db.ObjectId
+  projects   Project[] @relation(fields: [projectIds], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deleted   Boolean  @default(false)
@@ -227,6 +231,12 @@ model Project {
 
   managerId String? @db.ObjectId
   manager   User?   @relation("ProjectManager", fields: [managerId], references: [id])
+
+  teamLeadId String? @db.ObjectId
+  teamLead   User?   @relation("ProjectTeamLead", fields: [teamLeadId], references: [id])
+
+  teamIds String[] @db.ObjectId
+  teams   Team[]   @relation(fields: [teamIds], references: [id])
 
   tickets Ticket[]
 

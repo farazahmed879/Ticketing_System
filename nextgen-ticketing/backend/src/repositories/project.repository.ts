@@ -3,12 +3,13 @@ import { TICKET_STATUSES, PRIORITIES } from "../utils/constants";
 
 export const projectRepository = {
   async findMany(params: any = {}) {
-    const { departmentId, clientId, managerId, status } = params;
+    const { departmentId, clientId, managerId, teamLeadId, status } = params;
     const where: any = { deleted: false };
     
     if (departmentId) where.departmentId = departmentId;
     if (clientId) where.clientIds = { has: clientId };
     if (managerId) where.managerId = managerId;
+    if (teamLeadId) where.teamLeadId = teamLeadId;
     if (status) where.status = status;
 
     return prisma.project.findMany({
@@ -17,6 +18,7 @@ export const projectRepository = {
         department: { select: { id: true, name: true } },
         clients: { select: { id: true, fullname: true, image: true } },
         manager: { select: { id: true, fullname: true, image: true } },
+        teamLead: { select: { id: true, fullname: true, image: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -29,6 +31,7 @@ export const projectRepository = {
         department: { select: { id: true, name: true } },
         clients: { select: { id: true, fullname: true, image: true } },
         manager: { select: { id: true, fullname: true, image: true } },
+        teamLead: { select: { id: true, fullname: true, image: true } },
         tickets: {
           where: { deleted: false },
           select: {
@@ -64,6 +67,7 @@ export const projectRepository = {
         department: true,
         clients: true,
         manager: true,
+        teamLead: true,
       },
     });
   },
@@ -76,6 +80,7 @@ export const projectRepository = {
         department: true,
         clients: true,
         manager: true,
+        teamLead: true,
       },
     });
   },

@@ -117,23 +117,6 @@ async function main() {
     announcements: { view: true, create: true, update: true, delete: true },
   };
 
-  const leadPermissions = {
-    tickets: { view: true, create: false, update: true, delete: false, assign: true, priority: true },
-    comments: { view: true, create: true },
-    users: { view: false, create: false, update: false, delete: false },
-    teams: { view: true, create: false, update: false, delete: false },
-    groups: { view: true, create: false, update: false, delete: false },
-    roles: { view: false, create: false, update: false, delete: false },
-    departments: { view: false, create: false, update: false, delete: false },
-    messages: { view: true, create: false },
-    dashboard: { view: true },
-    timesheets: { view: true, approve: false, report: true },
-    candidates: { view: true, create: false, update: false, delete: false },
-    interviews: { view: true, create: false, update: false, delete: false },
-    requests: { view: true, create: false, update: false, delete: false },
-    announcements: { view: true, create: true, update: true, delete: true },
-  };
-
   const adminRole = await prisma.role.upsert({
     where: { name: RoleName.ADMIN },
     update: { permissions: adminPermissions },
@@ -197,17 +180,6 @@ async function main() {
       description: "Quality Assurance tester",
       roleType: "isQA",
       permissions: qaPermissions,
-    },
-  });
-
-  const leadRole = await prisma.role.upsert({
-    where: { name: RoleName.LEAD },
-    update: { permissions: leadPermissions },
-    create: {
-      name: RoleName.LEAD,
-      description: "Team Lead with department/team oversight",
-      roleType: "isLead",
-      permissions: leadPermissions,
     },
   });
 
@@ -329,25 +301,6 @@ async function main() {
           [statusMap[StatusName.RESOLVED]]: true,
           [statusMap[StatusName.CLOSED]]: false,
           [statusMap[StatusName.APPROVED]]: true,
-        },
-      },
-    },
-  });
-
-  await prisma.role.update({
-    where: { name: RoleName.LEAD },
-    data: {
-      permissions: {
-        ...leadPermissions,
-        boardStatuses: {
-          [statusMap[StatusName.NEW]]: false,
-          [statusMap[StatusName.OPEN]]: false,
-          [statusMap[StatusName.TRASH]]: false,
-          [statusMap[StatusName.FAILED]]: false,
-          [statusMap[StatusName.IN_PROCESS]]: true,
-          [statusMap[StatusName.RESOLVED]]: true,
-          [statusMap[StatusName.CLOSED]]: false,
-          [statusMap[StatusName.APPROVED]]: false,
         },
       },
     },

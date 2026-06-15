@@ -10,6 +10,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
   project,
   clients,
   managers,
+  employees,
 }) => {
   return (
     <Modal
@@ -23,6 +24,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
         onCancel={onClose}
         clients={clients}
         managers={managers}
+        employees={employees}
       />
     </Modal>
   );

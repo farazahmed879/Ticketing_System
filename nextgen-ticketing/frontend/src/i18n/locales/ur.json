@@ -18,7 +18,8 @@
     "requests": "درخواستیں",
     "messages": "پیغامات",
     "users": "صارفین",
-    "roles": "کردار"
+    "roles": "کردار",
+    "myTeam": "میری ٹیم"
   },
   "topbar": {
     "overview": "جائزہ",

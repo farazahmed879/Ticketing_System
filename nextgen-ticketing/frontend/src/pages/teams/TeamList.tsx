@@ -3,7 +3,7 @@ import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
-import { UIMessages } from "../../utils/constants";
+import { UIMessages, RoleName } from "../../utils/constants";
 import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomInput from "../../components/CustomInput";
@@ -11,6 +11,7 @@ import type { Team, User, Department, Project } from "../../types";
 import type { TableColumn } from "../../components/types";
 import TeamModal from "./components/TeamModal";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
+import { useAuth } from "../../context/AuthContext";
 
 import StandardListLayout from "../../components/StandardListLayout";
 
@@ -26,12 +27,26 @@ const TeamList: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
 
   const { showNotification, setIsLoading } = useNotification();
+  const { user } = useAuth();
+
+  const canManageTeams =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.name === RoleName.HR ||
+    user?.role?.permissions?.teams?.create === true;
 
   const fetchData = async () => {
     try {
       setLoading(true);
+      const isManagerOrAdmin =
+        user?.role?.name === RoleName.ADMIN ||
+        user?.role?.name === RoleName.HR ||
+        user?.role?.name === RoleName.AGENT;
+      const endpoint = isManagerOrAdmin
+        ? API_ROUTES.TEAMS.BASE
+        : API_ROUTES.TEAMS.MY_TEAM;
+
       const [teamsRes, deptsRes, projectsRes, usersRes] = await Promise.all([
-        api.get(API_ROUTES.TEAMS.BASE),
+        api.get(endpoint),
         api.get(API_ROUTES.DEPARTMENTS.BASE),
         api.get(API_ROUTES.PROJECTS.BASE),
         api.get(API_ROUTES.USERS.BASE + "?limit=1000"), // Get all users for member selection
@@ -224,27 +239,31 @@ const TeamList: React.FC = () => {
         </span>
       ),
     },
-    {
-      header: "Actions",
-      key: "actions",
-      render: (t) => (
-        <div style={{ display: "flex", gap: 8 }}>
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEdit(t)}
-            icon={<CustomIcon name="Edit2" size={16} />}
-          />
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDelete(t.id)}
-            icon={<CustomIcon name="Trash2" size={16} />}
-            style={{ color: "var(--accent-danger)" }}
-          />
-        </div>
-      ),
-    },
+    ...(canManageTeams
+      ? [
+          {
+            header: "Actions",
+            key: "actions" as keyof Team,
+            render: (t: Team) => (
+              <div style={{ display: "flex", gap: 8 }}>
+                <CustomButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEdit(t)}
+                  icon={<CustomIcon name="Edit2" size={16} />}
+                />
+                <CustomButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDelete(t.id)}
+                  icon={<CustomIcon name="Trash2" size={16} />}
+                  style={{ color: "var(--accent-danger)" }}
+                />
+              </div>
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -264,16 +283,18 @@ const TeamList: React.FC = () => {
                 Manage cross-functional teams and projects
               </p>
             </div>
-            <CustomButton
-              variant="gradient"
-              icon={<CustomIcon name="Plus" size={20} />}
-              onClick={() => {
-                setEditingTeam(null);
-                setIsModalOpen(true);
-              }}
-            >
-              Add Team
-            </CustomButton>
+            {canManageTeams && (
+              <CustomButton
+                variant="gradient"
+                icon={<CustomIcon name="Plus" size={20} />}
+                onClick={() => {
+                  setEditingTeam(null);
+                  setIsModalOpen(true);
+                }}
+              >
+                Add Team
+              </CustomButton>
+            )}
           </div>
         }
         filters={

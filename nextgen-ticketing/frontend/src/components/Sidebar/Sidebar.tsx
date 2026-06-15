@@ -113,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse, unread
       icon: <CustomIcon name="ShieldCheck" size={20} />,
       label: t("sidebar.teams"),
       path: "/teams",
-      permission: "teams.view",
+      permission: "dashboard.view",
     },
     {
       icon: <CustomIcon name="Users2" size={20} />,

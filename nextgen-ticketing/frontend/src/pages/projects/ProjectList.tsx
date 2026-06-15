@@ -42,6 +42,7 @@ const ProjectList: React.FC = () => {
 
   const [clients, setClients] = useState<any[]>([]);
   const [managers, setManagers] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
   const { showNotification, setIsLoading } = useNotification();
   const { user } = useAuth();
 
@@ -62,7 +63,7 @@ const ProjectList: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [projectsRes, clientsRes, staffRes] = await Promise.all([
+      const [projectsRes, clientsRes, staffRes, employeesRes] = await Promise.all([
         api.get(API_ROUTES.PROJECTS.BASE, {
           params: { role: user?.role?.name, userId: user?.id },
         }),
@@ -72,6 +73,9 @@ const ProjectList: React.FC = () => {
         api.get(API_ROUTES.USERS.BASE, {
           params: { type: "agents", limit: -1 },
         }),
+        api.get(API_ROUTES.USERS.BASE, {
+          params: { type: "employees", limit: -1 },
+        }),
       ]);
       setProjects(projectsRes.data.projects);
       setClients(clientsRes.data.accounts);
@@ -80,6 +84,7 @@ const ProjectList: React.FC = () => {
           (u: any) => u.role?.name === RoleName.AGENT,
         ),
       );
+      setEmployees(employeesRes.data.accounts);
     } catch (err) {
       console.error("Failed to fetch projects data", err);
       showNotification("error", "Failed to load projects data");
@@ -208,6 +213,21 @@ const ProjectList: React.FC = () => {
                         color="var(--text-muted)"
                       />
                       Manager: {p.manager.fullname}
+                    </span>
+                  </>
+                )}
+                {p.teamLead && (
+                  <>
+                    <span style={{ opacity: 0.5 }}>•</span>
+                    <span
+                      style={{ display: "flex", alignItems: "center", gap: 4 }}
+                    >
+                      <CustomIcon
+                        name="UserCheck"
+                        size={12}
+                        color="var(--text-muted)"
+                      />
+                      Lead: {p.teamLead.fullname}
                     </span>
                   </>
                 )}
@@ -355,6 +375,7 @@ const ProjectList: React.FC = () => {
         project={editingProject}
         clients={clients}
         managers={managers}
+        employees={employees}
       />
 
       <ConfirmationModal

@@ -12,6 +12,7 @@ export const teamRepository = {
         },
         manager: { select: { id: true, fullname: true, email: true, image: true } },
         department: { select: { id: true, name: true } },
+        projects: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -26,6 +27,7 @@ export const teamRepository = {
         },
         manager: { select: { id: true, fullname: true, email: true, image: true } },
         department: true,
+        projects: { select: { id: true, name: true } },
       },
     });
   },
@@ -43,6 +45,7 @@ export const teamRepository = {
         },
         manager: { select: { id: true, fullname: true, email: true, image: true } },
         department: true,
+        projects: { select: { id: true, name: true } },
       },
     });
   },
@@ -57,6 +60,7 @@ export const teamRepository = {
         },
         manager: { select: { id: true, fullname: true, email: true, image: true } },
         department: true,
+        projects: { select: { id: true, name: true } },
       },
     });
   },

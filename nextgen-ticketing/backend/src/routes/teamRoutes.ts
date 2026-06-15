@@ -36,6 +36,21 @@ router.get('/', authMiddleware, teamController.getTeams);
 
 /**
  * @swagger
+ * /api/teams/my-team:
+ *   get:
+ *     summary: Get the authenticated user's team(s)
+ *     tags: [Teams]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of teams the user belongs to
+ */
+router.get('/my-team', authMiddleware, teamController.getMyTeam);
+
+
+/**
+ * @swagger
  * /api/teams:
  *   post:
  *     summary: Create a new team

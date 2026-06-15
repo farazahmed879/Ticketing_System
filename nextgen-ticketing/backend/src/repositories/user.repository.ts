@@ -87,7 +87,9 @@ export const userRepository = {
             members: {
               where: { deleted: false },
               include: { role: true }
-            }
+            },
+            projects: { select: { id: true, name: true } },
+            department: { select: { id: true, name: true } }
           }
         },
         managedTeams: {
@@ -98,7 +100,9 @@ export const userRepository = {
             members: {
               where: { deleted: false },
               include: { role: true }
-            }
+            },
+            projects: { select: { id: true, name: true } },
+            department: { select: { id: true, name: true } }
           }
         }
       }

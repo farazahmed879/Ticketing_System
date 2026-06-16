@@ -35,6 +35,7 @@ const TicketBoard: React.FC = () => {
   const [agents, setAgents] = useState<any[]>([]);
   const [qaList, setQaList] = useState<any[]>([]);
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
+  const [selectedStatusNames, setSelectedStatusNames] = useState<string[]>([]);
   // const [priorities, setPriorities] = useState<any[]>([]);
   const [selectedPriorityNames, setSelectedPriorityNames] = useState<string[]>(
     [],
@@ -45,6 +46,14 @@ const TicketBoard: React.FC = () => {
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [myTicketsOnly, setMyTicketsOnly] = useState(false);
+
+  // Advanced filters dropdown (draft → Apply)
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [draftAgents, setDraftAgents] = useState<string[]>([]);
+  const [draftStatuses, setDraftStatuses] = useState<string[]>([]);
+  const [draftPriorities, setDraftPriorities] = useState<string[]>([]);
+  const [draftProjects, setDraftProjects] = useState<string[]>([]);
+  const [draftCustomers, setDraftCustomers] = useState<string[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -79,16 +88,75 @@ const TicketBoard: React.FC = () => {
   const hasActiveFilters =
     myTicketsOnly ||
     selectedAgentIds.length > 0 ||
+    selectedStatusNames.length > 0 ||
     selectedPriorityNames.length > 0 ||
     selectedProjectIds.length > 0 ||
     selectedCustomerIds.length > 0;
 
-  const handleResetFilters = () => {
-    setMyTicketsOnly(false);
+  const activeMoreFilters = [
+    selectedAgentIds,
+    selectedStatusNames,
+    selectedPriorityNames,
+    selectedProjectIds,
+    selectedCustomerIds,
+  ].filter((arr) => arr.length > 0).length;
+
+  const draftSelectedCount =
+    draftAgents.length +
+    draftStatuses.length +
+    draftPriorities.length +
+    draftProjects.length +
+    draftCustomers.length;
+
+  const toggleMoreFilters = () => {
+    if (showMoreFilters) {
+      setShowMoreFilters(false);
+    } else {
+      setDraftAgents(selectedAgentIds);
+      setDraftStatuses(selectedStatusNames);
+      setDraftPriorities(selectedPriorityNames);
+      setDraftProjects(selectedProjectIds);
+      setDraftCustomers(selectedCustomerIds);
+      setShowMoreFilters(true);
+    }
+  };
+
+  const applyMoreFilters = () => {
+    setSelectedAgentIds(draftAgents);
+    setSelectedStatusNames(draftStatuses);
+    setSelectedPriorityNames(draftPriorities);
+    setSelectedProjectIds(draftProjects);
+    setSelectedCustomerIds(draftCustomers);
+    setShowMoreFilters(false);
+  };
+
+  const clearMoreFilters = () => {
     setSelectedAgentIds([]);
+    setSelectedStatusNames([]);
     setSelectedPriorityNames([]);
     setSelectedProjectIds([]);
     setSelectedCustomerIds([]);
+    setDraftAgents([]);
+    setDraftStatuses([]);
+    setDraftPriorities([]);
+    setDraftProjects([]);
+    setDraftCustomers([]);
+    setShowMoreFilters(false);
+  };
+
+  const handleResetFilters = () => {
+    setMyTicketsOnly(false);
+    setSelectedAgentIds([]);
+    setSelectedStatusNames([]);
+    setSelectedPriorityNames([]);
+    setSelectedProjectIds([]);
+    setSelectedCustomerIds([]);
+    setDraftAgents([]);
+    setDraftStatuses([]);
+    setDraftPriorities([]);
+    setDraftProjects([]);
+    setDraftCustomers([]);
+    setShowMoreFilters(false);
   };
 
   const getStatuses = () => {
@@ -161,6 +229,10 @@ const TicketBoard: React.FC = () => {
         params: {
           limit: -1,
           myTickets: myTicketsOnly ? "true" : undefined,
+          status:
+            selectedStatusNames.length > 0
+              ? selectedStatusNames.join(",")
+              : undefined,
           assignee:
             selectedAgentIds.length > 0
               ? selectedAgentIds.join(",")
@@ -208,6 +280,7 @@ const TicketBoard: React.FC = () => {
   }, [
     myTicketsOnly,
     selectedAgentIds,
+    selectedStatusNames,
     selectedPriorityNames,
     selectedProjectIds,
     selectedCustomerIds,
@@ -454,94 +527,185 @@ const TicketBoard: React.FC = () => {
                 style={{ minHeight: 48, borderRadius: 12 }}
               />
 
-              <div className={styles.filterGroup}>
+              <CustomButton
+                variant={myTicketsOnly ? "gradient" : "outline"}
+                size="sm"
+                onClick={() => setMyTicketsOnly((prev) => !prev)}
+                icon={<CustomIcon name="User" size={18} />}
+                style={{ minHeight: 48, borderRadius: 12 }}
+              >
+                My Tickets
+              </CustomButton>
+
+              <div className={styles1.filterAnchor}>
                 <CustomButton
-                  variant={myTicketsOnly ? "gradient" : "outline"}
-                  size="sm"
-                  onClick={() => setMyTicketsOnly((prev) => !prev)}
-                  icon={<CustomIcon name="User" size={18} />}
+                  variant={
+                    showMoreFilters || activeMoreFilters > 0
+                      ? "primary"
+                      : "secondary"
+                  }
+                  onClick={toggleMoreFilters}
+                  icon={<CustomIcon name="SlidersHorizontal" size={18} />}
                   style={{ minHeight: 48, borderRadius: 12 }}
                 >
-                  My Tickets
+                  Filters
+                  {activeMoreFilters > 0 && (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        background: "rgba(255,255,255,0.25)",
+                        color: "#fff",
+                        borderRadius: 999,
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        minWidth: 18,
+                        textAlign: "center",
+                        padding: "1px 6px",
+                      }}
+                    >
+                      {activeMoreFilters}
+                    </span>
+                  )}
+                  <CustomIcon
+                    name={showMoreFilters ? "ChevronUp" : "ChevronDown"}
+                    size={16}
+                    style={{ marginLeft: 6 }}
+                  />
                 </CustomButton>
 
-                {user?.role?.name !== RoleName.CUSTOMER &&
-                  user?.role?.name !== RoleName.EMPLOYEE && (
-                    <CustomSelect
-                      isMulti
-                      placeholder="Developers"
-                      options={agents.map((a) => ({
-                        value: a.id,
-                        label: a.fullname,
-                        image: a.image,
-                      }))}
-                      value={selectedAgentIds}
-                      onChange={setSelectedAgentIds}
-                      icon={<CustomIcon name="User" size={18} />}
-                      style={{ width: 200 }}
-                    />
-                  )}
+                {showMoreFilters && (
+                  <div className={styles1.advancedPanel}>
+                    <div className={styles1.filterField}>
+                      <span className={styles1.filterLabel}>
+                        <CustomIcon name="CircleDot" size={12} /> Status
+                      </span>
+                      <CustomSelect
+                        isMulti
+                        value={draftStatuses}
+                        onChange={(vals) => setDraftStatuses(vals)}
+                        placeholder="All Statuses"
+                        options={TICKET_STATUSES.map((op) => ({
+                          label: op.name,
+                          value: op.name,
+                        }))}
+                        style={{ width: "100%" }}
+                      />
+                    </div>
 
-                <CustomSelect
-                  isMulti
-                  placeholder="Priorities"
-                  options={priorities.map((p) => ({
-                    value: p.name,
-                    label: p.name,
-                    icon: (
-                      <div
-                        className={styles.priorityDot}
-                        style={{ background: p.color }}
-                      ></div>
-                    ),
-                  }))}
-                  value={selectedPriorityNames}
-                  onChange={setSelectedPriorityNames}
-                  icon={<CustomIcon name="Layers" size={18} />}
-                  style={{ width: 200 }}
-                />
+                    {user?.role?.name !== RoleName.CUSTOMER &&
+                      user?.role?.name !== RoleName.EMPLOYEE && (
+                        <div className={styles1.filterField}>
+                          <span className={styles1.filterLabel}>
+                            <CustomIcon name="User" size={12} /> Developers
+                          </span>
+                          <CustomSelect
+                            isMulti
+                            value={draftAgents}
+                            onChange={(vals) => setDraftAgents(vals)}
+                            placeholder="All Developers"
+                            options={agents.map((a) => ({
+                              value: a.id,
+                              label: a.fullname,
+                              image: a.image,
+                            }))}
+                            style={{ width: "100%" }}
+                          />
+                        </div>
+                      )}
 
-                <CustomSelect
-                  isMulti
-                  placeholder="Projects"
-                  options={projects.map((p) => ({
-                    value: p.id,
-                    label: p.name,
-                  }))}
-                  value={selectedProjectIds}
-                  onChange={setSelectedProjectIds}
-                  icon={<CustomIcon name="Users" size={18} />}
-                  style={{ width: 200 }}
-                />
+                    <div className={styles1.filterField}>
+                      <span className={styles1.filterLabel}>
+                        <CustomIcon name="Flag" size={12} /> Priority
+                      </span>
+                      <CustomSelect
+                        isMulti
+                        value={draftPriorities}
+                        onChange={(vals) => setDraftPriorities(vals)}
+                        placeholder="All Priorities"
+                        options={priorities.map((p) => ({
+                          value: p.name,
+                          label: p.name,
+                          icon: (
+                            <div
+                              className={styles.priorityDot}
+                              style={{ background: p.color }}
+                            ></div>
+                          ),
+                        }))}
+                        style={{ width: "100%" }}
+                      />
+                    </div>
 
-                {user?.role?.name !== RoleName.CUSTOMER && (
-                  <CustomSelect
-                    isMulti
-                    placeholder="Clients"
-                    options={customers.map((c) => ({
-                      value: c.id,
-                      label: c.fullname,
-                      image: c.image,
-                    }))}
-                    value={selectedCustomerIds}
-                    onChange={setSelectedCustomerIds}
-                    icon={<CustomIcon name="UserCheck" size={18} />}
-                    style={{ width: 200 }}
-                  />
-                )}
+                    <div className={styles1.filterField}>
+                      <span className={styles1.filterLabel}>
+                        <CustomIcon name="FolderKanban" size={12} /> Project
+                      </span>
+                      <CustomSelect
+                        isMulti
+                        value={draftProjects}
+                        onChange={(vals) => setDraftProjects(vals)}
+                        placeholder="All Projects"
+                        options={projects.map((p) => ({
+                          value: p.id,
+                          label: p.name,
+                        }))}
+                        style={{ width: "100%" }}
+                      />
+                    </div>
 
-                {hasActiveFilters && (
-                  <CustomButton
-                    variant="outline"
-                    size="sm"
-                    onClick={handleResetFilters}
-                    icon={<CustomIcon name="RotateCcw" size={16} />}
-                    style={{ minHeight: 48, borderRadius: 12 }}
-                  >
-                    Reset
-                  </CustomButton>
+                    {user?.role?.name !== RoleName.CUSTOMER && (
+                      <div className={styles1.filterField}>
+                        <span className={styles1.filterLabel}>
+                          <CustomIcon name="UserCheck" size={12} /> Client
+                        </span>
+                        <CustomSelect
+                          isMulti
+                          value={draftCustomers}
+                          onChange={(vals) => setDraftCustomers(vals)}
+                          placeholder="All Clients"
+                          options={customers.map((c) => ({
+                            value: c.id,
+                            label: c.fullname,
+                            image: c.image,
+                          }))}
+                          style={{ width: "100%" }}
+                        />
+                      </div>
+                    )}
+
+                    <div className={styles1.filterActions}>
+                      {(draftSelectedCount > 0 || activeMoreFilters > 0) && (
+                        <CustomButton
+                          variant="ghost"
+                          onClick={clearMoreFilters}
+                          icon={<CustomIcon name="X" size={16} />}
+                        >
+                          Clear all
+                        </CustomButton>
+                      )}
+                      <CustomButton
+                        variant="gradient"
+                        onClick={applyMoreFilters}
+                        icon={<CustomIcon name="Check" size={16} />}
+                      >
+                        Apply Filters
+                      </CustomButton>
+                    </div>
+                  </div>
                 )}
               </div>
+
+              {hasActiveFilters && (
+                <CustomButton
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetFilters}
+                  icon={<CustomIcon name="RotateCcw" size={16} />}
+                  style={{ minHeight: 48, borderRadius: 12 }}
+                >
+                  Reset
+                </CustomButton>
+              )}
             </div>
           }
         >

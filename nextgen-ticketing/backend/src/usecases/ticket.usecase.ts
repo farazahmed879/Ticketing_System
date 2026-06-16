@@ -104,8 +104,16 @@ export const ticketUsecase = {
     }
 
     if (status) {
-      const statusObj = TICKET_STATUSES.find((s) => s.name === status);
-      if (statusObj) where.statusId = statusObj.id;
+      // Supports a single status or a comma-separated list of statuses.
+      const statusList = (status as string).split(",").map((s) => s.trim());
+      const statusIds = TICKET_STATUSES.filter((s) =>
+        statusList.includes(s.name),
+      ).map((s) => s.id);
+      if (statusIds.length === 1) {
+        where.statusId = statusIds[0];
+      } else if (statusIds.length > 1) {
+        where.statusId = { in: statusIds };
+      }
     }
 
     if (priority) {

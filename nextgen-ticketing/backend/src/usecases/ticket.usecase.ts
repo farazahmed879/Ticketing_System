@@ -764,10 +764,18 @@ export const ticketUsecase = {
 
     // Notify staff when a customer creates a ticket
     if (ctx.userRole === RoleName.CUSTOMER) {
-      const staff = await ticketRepository.findStaff();
-      const staffToNotify = staff.filter((s: any) => s.id !== ctx.assigneeId);
+      const ticket = await ticketRepository.findTicketById(ctx.ticketId);
+      const admins = await ticketRepository.findAdmins();
+      
+      const notifySet = new Set<string>();
+      admins.forEach((a: any) => notifySet.add(a.id));
+      if (ticket?.project?.managerId) {
+        notifySet.add(ticket.project.managerId);
+      }
+      notifySet.delete(ctx.assigneeId);
+      
       const staffNotifications = await Promise.all(
-        staffToNotify.map(async (s: any) => {
+        Array.from(notifySet).map(async (sId: string) => {
           const notification = await ticketRepository.createNotification({
             title: NotificationMessages.TITLES.CUSTOMER_TICKET,
             message: NotificationMessages.CUSTOMER_TICKET_CREATED(
@@ -775,10 +783,10 @@ export const ticketUsecase = {
               ctx.ownerFullname,
             ),
             type: "ticket_created",
-            userId: s.id,
+            userId: sId,
             data: { ticketId: ctx.ticketId, uid: ctx.ticketUid },
           });
-          return { userId: s.id, notification };
+          return { userId: sId, notification };
         }),
       );
       notifications.push(...staffNotifications);
@@ -820,13 +828,34 @@ export const ticketUsecase = {
       ? changeSummary.split(StatusName.RESOLVED).join("Done")
       : changeSummary;
 
-    // Collect all user IDs to notify (admins, managers, employees + assignee)
+    // Perform all necessary DB lookups in parallel to save DB hits
+    const [admins, fullTicket, owner] = await Promise.all([
+      ticketRepository.findAdmins(),
+      ticketRepository.findTicketById(ctx.ticketId),
+      ctx.existingTicket.ownerId 
+        ? prisma.user.findUnique({
+            where: { id: ctx.existingTicket.ownerId },
+            select: { role: { select: { name: true, roleType: true } } },
+          })
+        : Promise.resolve(null)
+    ]);
+
+    // Check owner roles
+    const ownerIsStaff =
+      owner?.role?.name === RoleName.ADMIN || owner?.role?.name === RoleName.AGENT;
+    const ownerIsClient = owner?.role?.roleType === "isCustomer";
+
+    // Collect all user IDs to notify
     const notifyIds = new Set<string>();
 
-    // Get all staff (Admin, Manager, Employee)
-    const staff = await ticketRepository.findStaff();
-    for (const s of staff) {
-      notifyIds.add(s.id);
+    // Add admins to notifyIds
+    for (const a of admins) {
+      notifyIds.add(a.id);
+    }
+
+    // Add project manager if applicable
+    if (fullTicket?.project?.managerId) {
+      notifyIds.add(fullTicket.project.managerId);
     }
 
     // Also notify the assigned employee (current or newly assigned)
@@ -856,11 +885,7 @@ export const ticketUsecase = {
     // matter which UI (or role) triggered the assignment.
     let assigneeName: string = ctx.data.newAssigneeName || "";
     if (isAssignmentChange && !assigneeName) {
-      const assignee = await prisma.user.findUnique({
-        where: { id: ctx.data.assigneeId },
-        select: { fullname: true },
-      });
-      assigneeName = assignee?.fullname || "";
+      assigneeName = fullTicket?.assignee?.fullname || "";
     }
 
     // Status transitions that matter to the owner.
@@ -870,30 +895,6 @@ export const ticketUsecase = {
       isStatusChange && ctx.statusName === StatusName.APPROVED;
     const isStatusInProcess =
       isStatusChange && ctx.statusName === StatusName.IN_PROCESS;
-
-    // Notify the ticket owner when:
-    //  - the status changes to Approved or In Process, or
-    //  - the ticket is (re)assigned to a user, or
-    //  - the owner is staff (already covered via findStaff() above).
-    const ownerIsStaff = staff.some(
-      (s: any) => s.id === ctx.existingTicket.ownerId,
-    );
-
-    // Whether the owner is a client. Needed both to send the client-specific
-    // "resolved" message on Approve, and to keep showing "Resolved" (not
-    // "Done") to a client owner. Look it up only when it can matter.
-    let ownerIsClient = false;
-    if (
-      (isStatusApproved || summaryMentionsResolved) &&
-      ctx.existingTicket.ownerId &&
-      !ownerIsStaff
-    ) {
-      const owner = (await prisma.user.findUnique({
-        where: { id: ctx.existingTicket.ownerId },
-        select: { role: { select: { roleType: true } } },
-      })) as any;
-      ownerIsClient = owner?.role?.roleType === "isCustomer";
-    }
 
     if (
       ctx.existingTicket.ownerId &&
@@ -974,10 +975,10 @@ export const ticketUsecase = {
     if (
       ctx.data.statusId &&
       ctx.isStaff &&
-      ctx.statusName === StatusName.IN_PROCESS
+      ctx.statusName === StatusName.IN_PROCESS &&
+      fullTicket
     ) {
-      const ticket = await ticketRepository.findTicketById(ctx.ticketId);
-      if (ticket) await this.handleTimesheetTask(ticket, ctx.actorId);
+      await this.handleTimesheetTask(fullTicket, ctx.actorId);
     }
 
     return notifications;
@@ -1004,17 +1005,17 @@ export const ticketUsecase = {
     });
 
     if (author?.role?.name === RoleName.CUSTOMER) {
-      // 1. Notify all users with role 'Manager' (RoleName.AGENT)
-      const managers = await prisma.user.findMany({
-        where: {
-          role: { name: RoleName.AGENT },
-          deleted: false,
-        },
-      });
-      for (const m of managers) {
-        if (m.id !== ctx.authorId) {
-          notifyIds.add(m.id);
+      // 1. Notify Admins
+      const admins = await ticketRepository.findAdmins();
+      for (const a of admins) {
+        if (a.id !== ctx.authorId) {
+          notifyIds.add(a.id);
         }
+      }
+
+      // 2. Notify Project Manager
+      if (ticket.project?.managerId && ticket.project.managerId !== ctx.authorId) {
+        notifyIds.add(ticket.project.managerId);
       }
 
       // 2. Notify the team lead of the assignee's teams (if assigned)

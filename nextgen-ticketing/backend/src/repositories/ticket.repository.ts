@@ -28,7 +28,7 @@ export const ticketRepository = {
           select: { id: true, fullname: true, email: true, image: true },
         },
         group: { select: { id: true, name: true } },
-        project: { select: { id: true, name: true } },
+        project: { select: { id: true, name: true, managerId: true } },
       },
       orderBy: { createdAt: "desc" },
       skip,
@@ -106,7 +106,7 @@ export const ticketRepository = {
           select: { id: true, fullname: true, email: true, image: true },
         },
         group: { select: { id: true, name: true } },
-        project: { select: { id: true, name: true } },
+        project: { select: { id: true, name: true, managerId: true } },
         comments: {
           include: {
             author: {
@@ -189,6 +189,15 @@ export const ticketRepository = {
           { role: { name: RoleName.ADMIN } },
           { role: { name: RoleName.AGENT } },
         ],
+        deleted: false,
+      },
+    });
+  },
+
+  async findAdmins() {
+    return prisma.user.findMany({
+      where: {
+        role: { name: RoleName.ADMIN },
         deleted: false,
       },
     });

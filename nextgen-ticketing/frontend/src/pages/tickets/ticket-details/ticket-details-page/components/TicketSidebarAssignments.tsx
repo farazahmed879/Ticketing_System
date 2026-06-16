@@ -60,9 +60,8 @@ export const TicketSidebarAssignments = ({
           },
           ...agents.map((agent) => ({
             value: agent.id,
-            label: agent.teamNames?.length
-              ? `${agent.fullname} (${agent.teamNames.join(", ")})`
-              : agent.fullname,
+            label: agent.fullname,
+            sublabel: agent.teamNames?.length ? agent.teamNames.join(", ") : undefined,
             image: agent.image,
           })),
         ]}
@@ -94,9 +93,8 @@ export const TicketSidebarAssignments = ({
             },
             ...qaList.map((qaUser) => ({
               value: qaUser.id,
-              label: qaUser.teamNames?.length
-                ? `${qaUser.fullname} (${qaUser.teamNames.join(", ")})`
-                : qaUser.fullname,
+              label: qaUser.fullname,
+              sublabel: qaUser.teamNames?.length ? qaUser.teamNames.join(", ") : undefined,
               image: qaUser.image,
             })),
           ]}

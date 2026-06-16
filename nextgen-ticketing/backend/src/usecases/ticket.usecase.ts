@@ -191,9 +191,6 @@ export const ticketUsecase = {
       projectIds,
     );
 
-    // console.log("projectIds", projectIds);
-
-    // console.log("leadTeams", leadTeams);
     // Key leads by `${projectId}::${memberId}` so a ticket only picks up the
     // lead of a team tied to its own project.
     const leadsByProjectMember = new Map<string, Set<string>>();
@@ -209,14 +206,8 @@ export const ticketUsecase = {
       }
     }
 
-
-    console.log("leadsByProjectMember", leadsByProjectMember);
-
     const ticketsWithLeads = tickets.map((t: any) => {
-      const key =
-        t.project?.id
-          ? `${t.project.id}`
-          : null;
+      const key = t.project?.id ? `${t.project.id}` : null;
       return {
         ...t,
         teamLeadIds: key ? Array.from(leadsByProjectMember.get(key) || []) : [],
@@ -309,8 +300,6 @@ export const ticketUsecase = {
   },
 
   async updateTicket(id: string, data: any, user: any) {
-    // console.log("Data", data);
-    // console.log("user", user);
     const existingTicket = (await ticketRepository.findTicketById(id)) as any;
     if (!existingTicket) throw new Error("Ticket not found");
 

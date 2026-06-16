@@ -130,10 +130,13 @@ export const canEmployeeEditDueDate = (
   statusName: string | undefined,
 ): boolean => statusName === StatusName.OPEN;
 
+/** Notification kinds (mirrors NotificationContext's NotificationType). */
+type NotificationType = "success" | "error" | "info" | "warning";
+
 /** Side-effect callbacks the status handler needs from the calling surface. */
 export interface StatusChangeDeps {
-  showNotification: (type: string, message: string) => void;
-  setIsLoading: (loading: boolean, message?: string) => void;
+  showNotification: (type: NotificationType, message: string) => void;
+  setIsLoading: (loading: boolean, message: string) => void;
   /** Surface-specific success side effect (close modal, refetch board, ...). */
   onSuccess?: () => void;
 }

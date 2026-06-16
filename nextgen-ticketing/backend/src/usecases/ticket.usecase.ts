@@ -54,6 +54,10 @@ export const ticketUsecase = {
 
     const where: any = { deleted: false };
 
+    // Members of the team(s) this user leads. Empty for non-leads. Used for
+    // visibility scoping so team leads can see their team members' tickets.
+    const myLedMemberIds = await ticketRepository.findLedTeamMemberIds(user.id);
+
     // Visibility scoping by role. Kept inside AND so a `search` filter (which
     // also uses OR) can never widen what a restricted user is allowed to see.
     if (user.role === RoleName.CUSTOMER) {
@@ -75,10 +79,14 @@ export const ticketUsecase = {
         },
       ];
     } else if (user.role !== RoleName.ADMIN && user.role !== RoleName.AGENT) {
-      where.AND = [
-        ...(where.AND || []),
-        { OR: [{ ownerId: user.id }, { assigneeId: user.id }] },
-      ];
+      // Regular users see tickets they own or are assigned. Team leads also see
+      // every ticket assigned to a member of any team they lead
+      // (ticket -> assignee -> team -> teamLead === user).
+      const visibility: any[] = [{ ownerId: user.id }, { assigneeId: user.id }];
+      if (myLedMemberIds.length) {
+        visibility.push({ assigneeId: { in: myLedMemberIds } });
+      }
+      where.AND = [...(where.AND || []), { OR: visibility }];
     }
 
     if (filters.myTickets === "true") {
@@ -163,7 +171,59 @@ export const ticketUsecase = {
       ticketRepository.count(where),
     ]);
 
-    return { tickets, totalCount };
+    // Resolve each ticket's team lead(s) via its assignee, scoped to the
+    // ticket's project: ticket -> (project + assignee) -> team that belongs to
+    // that project AND contains the assignee -> teamLeadId. teamLeadIds is an
+    // array because the assignee may be in more than one of the project's teams
+    // (usually 0 or 1 entries).
+    const assigneeIds = Array.from(
+      new Set(
+        tickets.map((t: any) => t.assignee?.id).filter(Boolean) as string[],
+      ),
+    );
+    const projectIds = Array.from(
+      new Set(
+        tickets.map((t: any) => t.project?.id).filter(Boolean) as string[],
+      ),
+    );
+    const leadTeams = await ticketRepository.findTeamsByMembersAndProjects(
+      assigneeIds,
+      projectIds,
+    );
+
+    // console.log("projectIds", projectIds);
+
+    // console.log("leadTeams", leadTeams);
+    // Key leads by `${projectId}::${memberId}` so a ticket only picks up the
+    // lead of a team tied to its own project.
+    const leadsByProjectMember = new Map<string, Set<string>>();
+    for (const team of leadTeams) {
+      if (!team.teamLeadId) continue;
+      for (const pid of team.projectIds) {
+        for (const m of team.memberIds) {
+          const key = `${pid}`;
+          if (!leadsByProjectMember.has(key))
+            leadsByProjectMember.set(key, new Set());
+          leadsByProjectMember.get(key)!.add(team.teamLeadId);
+        }
+      }
+    }
+
+
+    console.log("leadsByProjectMember", leadsByProjectMember);
+
+    const ticketsWithLeads = tickets.map((t: any) => {
+      const key =
+        t.project?.id
+          ? `${t.project.id}`
+          : null;
+      return {
+        ...t,
+        teamLeadIds: key ? Array.from(leadsByProjectMember.get(key) || []) : [],
+      };
+    });
+
+    return { tickets: ticketsWithLeads, totalCount };
   },
 
   async getTicketById(id: string, user?: any) {
@@ -174,7 +234,23 @@ export const ticketUsecase = {
       ticket.comments = ticket.comments.filter((c: any) => !c.isNote);
     }
 
-    return ticket;
+    // Resolve the ticket's team lead(s) via its project — same as the list API.
+    const projectId = ticket.project?.id;
+    const assigneeId = ticket.assignee?.id;
+    let teamLeadIds: string[] = [];
+    if (projectId) {
+      const leadTeams = await ticketRepository.findTeamsByMembersAndProjects(
+        assigneeId ? [assigneeId] : [],
+        [projectId],
+      );
+      const leads = new Set<string>();
+      for (const team of leadTeams) {
+        if (team.teamLeadId) leads.add(team.teamLeadId);
+      }
+      teamLeadIds = Array.from(leads);
+    }
+
+    return { ...ticket, teamLeadIds };
   },
 
   async createTicket(data: any, user: any) {
@@ -240,7 +316,7 @@ export const ticketUsecase = {
 
     const actorId = user.id;
     const isAdmin = user.role === RoleName.ADMIN;
-    const isManager = user?.role === RoleName.AGENT;
+    const isManager = user?.role === RoleName.AGENT || data?.isLead;
     const isEmployee = user.role === RoleName.EMPLOYEE;
     const isClient = user.role === RoleName.CUSTOMER;
     const isQA = user.role === RoleName.QA;
@@ -490,7 +566,11 @@ export const ticketUsecase = {
       : null;
 
     if (data.dueDate !== undefined && data.dueDate !== dueDate) {
-      const canEditDueDate = isAdmin || isManager || isEmployee || (isOwner && existingTicket.status?.name === StatusName.NEW);
+      const canEditDueDate =
+        isAdmin ||
+        isManager ||
+        isEmployee ||
+        (isOwner && existingTicket.status?.name === StatusName.NEW);
       if (!canEditDueDate) {
         throw new Error(
           "You do not have permission to change ticket due date.",
@@ -500,7 +580,8 @@ export const ticketUsecase = {
 
     // Tags
     if (data.tags !== undefined) {
-      const canEditTags = isAdmin || isManager || (isEmployee && (isOwner || isAssignee));
+      const canEditTags =
+        isAdmin || isManager || (isEmployee && (isOwner || isAssignee));
       if (!canEditTags) {
         throw new Error("You do not have permission to change ticket tags.");
       }
@@ -774,14 +855,14 @@ export const ticketUsecase = {
     if (ctx.userRole === RoleName.CUSTOMER) {
       const ticket = await ticketRepository.findTicketById(ctx.ticketId);
       const admins = await ticketRepository.findAdmins();
-      
+
       const notifySet = new Set<string>();
       admins.forEach((a: any) => notifySet.add(a.id));
       if (ticket?.project?.managerId) {
         notifySet.add(ticket.project.managerId);
       }
       notifySet.delete(ctx.assigneeId);
-      
+
       const staffNotifications = await Promise.all(
         Array.from(notifySet).map(async (sId: string) => {
           const notification = await ticketRepository.createNotification({
@@ -840,17 +921,18 @@ export const ticketUsecase = {
     const [admins, fullTicket, owner] = await Promise.all([
       ticketRepository.findAdmins(),
       ticketRepository.findTicketById(ctx.ticketId),
-      ctx.existingTicket.ownerId 
+      ctx.existingTicket.ownerId
         ? prisma.user.findUnique({
             where: { id: ctx.existingTicket.ownerId },
             select: { role: { select: { name: true, roleType: true } } },
           })
-        : Promise.resolve(null)
+        : Promise.resolve(null),
     ]);
 
     // Check owner roles
     const ownerIsStaff =
-      owner?.role?.name === RoleName.ADMIN || owner?.role?.name === RoleName.AGENT;
+      owner?.role?.name === RoleName.ADMIN ||
+      owner?.role?.name === RoleName.AGENT;
     const ownerIsClient = owner?.role?.roleType === "isCustomer";
 
     // Collect all user IDs to notify
@@ -885,8 +967,7 @@ export const ticketUsecase = {
 
     // A new (non-null) QA assignee, different from before, counts as a QA assignment.
     const isQaAssignmentChange =
-      !!ctx.data.qaId &&
-      ctx.data.qaId !== ctx.existingTicket.qaId;
+      !!ctx.data.qaId && ctx.data.qaId !== ctx.existingTicket.qaId;
 
     // Resolve the assignee's name for the owner's notification. Prefer the name
     // the client sent; otherwise look it up so the message is accurate no
@@ -949,7 +1030,9 @@ export const ticketUsecase = {
           type = "assignment";
         } else if (isQaAssignment) {
           title = NotificationMessages.TITLES.QA_ASSIGNED;
-          message = NotificationMessages.TICKET_QA_ASSIGNED(ctx.existingTicket.subject);
+          message = NotificationMessages.TICKET_QA_ASSIGNED(
+            ctx.existingTicket.subject,
+          );
           type = "assignment";
         } else if (isOwnerAssignmentNotice) {
           title = NotificationMessages.TITLES.ASSIGNMENT;
@@ -1022,7 +1105,10 @@ export const ticketUsecase = {
       }
 
       // 2. Notify Project Manager
-      if (ticket.project?.managerId && ticket.project.managerId !== ctx.authorId) {
+      if (
+        ticket.project?.managerId &&
+        ticket.project.managerId !== ctx.authorId
+      ) {
         notifyIds.add(ticket.project.managerId);
       }
 

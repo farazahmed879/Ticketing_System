@@ -121,7 +121,9 @@ export const projectRepository = {
       where: { id, deleted: false },
       include: {
         teams: {
-          include: {
+          select: {
+            name: true,
+            teamLeadId: true,
             members: {
               select: {
                 id: true,

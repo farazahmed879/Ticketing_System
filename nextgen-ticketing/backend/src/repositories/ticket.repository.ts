@@ -225,6 +225,40 @@ export const ticketRepository = {
     return projects.map((p) => p.id);
   },
 
+  // Members of every team this user is the lead of (used so team leads can see
+  // and act on all tickets assigned to their team members). Returns an empty
+  // array when the user leads no team. The lead is normally a member of their
+  // own team, so they are typically included via memberIds.
+  async findLedTeamMemberIds(userId: string) {
+    const teams = await prisma.team.findMany({
+      where: { deleted: false, teamLeadId: userId },
+      select: { memberIds: true },
+    });
+    const ids = new Set<string>();
+    for (const t of teams) {
+      for (const m of t.memberIds) ids.add(m);
+    }
+    return Array.from(ids);
+  },
+
+  // Teams used to resolve a ticket's team lead: any team that belongs to one of
+  // the given projects. Returns each team's projects, members, and lead.
+  // (memberIds is accepted for call-site compatibility but the lead is resolved
+  // by project.)
+  async findTeamsByMembersAndProjects(
+    memberIds: string[],
+    projectIds: string[],
+  ) {
+    if (!projectIds.length) return [];
+    return prisma.team.findMany({
+      where: {
+        deleted: false,
+        projectIds: { hasSome: projectIds },
+      },
+      select: { memberIds: true, projectIds: true, teamLeadId: true },
+    });
+  },
+
   async getTimeline(ticketId: string) {
     return prisma.history.findMany({
       where: { ticketId },

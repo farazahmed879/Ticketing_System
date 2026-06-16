@@ -23,7 +23,13 @@ export const teamUsecase = {
   },
 
   async createTeam(data: any) {
-    const memberIds: string[] = data.memberIds || [];
+    // The team lead is always a member of the team.
+    const memberIds: string[] = Array.from(
+      new Set([
+        ...(data.memberIds || []),
+        ...(data.teamLeadId ? [data.teamLeadId] : []),
+      ]),
+    );
     const teamData = {
       name: data.name,
       description: data.description || null,
@@ -44,10 +50,22 @@ export const teamUsecase = {
     if (data.teamLeadId !== undefined)
       updateData.teamLeadId = data.teamLeadId || null;
     // `set` replaces the member list while keeping both sides of the m2m synced.
-    if (data.memberIds)
+    // The team lead is always kept in the member list.
+    if (data.memberIds) {
+      const memberIds: string[] = Array.from(
+        new Set([
+          ...(data.memberIds as string[]),
+          ...(data.teamLeadId ? [data.teamLeadId] : []),
+        ]),
+      );
       updateData.members = {
-        set: (data.memberIds as string[]).map((mid) => ({ id: mid })),
+        set: memberIds.map((mid) => ({ id: mid })),
       };
+    } else if (data.teamLeadId) {
+      // Lead changed without resending the member list — make sure the new
+      // lead is still a member of the team.
+      updateData.members = { connect: [{ id: data.teamLeadId }] };
+    }
 
     return teamRepository.update(id, updateData);
   },

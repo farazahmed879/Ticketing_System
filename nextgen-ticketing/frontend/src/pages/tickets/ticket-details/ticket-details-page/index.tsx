@@ -24,6 +24,7 @@ import {
   buildStatusTransitionFields,
   getDecisionDialog,
   canShowCancelBanner,
+  handleStatusChange,
 } from "../../shared/ticketDecisions";
 
 import TicketDetailSkeleton from "./components/TicketDetailSkeleton";
@@ -295,7 +296,7 @@ const TicketDetail: React.FC = () => {
       return;
     }
 
-    // Permission check for priority
+    // Permission check for priority (handleStatusChange covers status rules).
     if (sidebarDraft.priorityId !== ticket.priority.id && !canUpdatePriority) {
       showNotification(
         "error",
@@ -304,43 +305,27 @@ const TicketDetail: React.FC = () => {
       return;
     }
 
-    // Permission check for status
+    // Augment the payload with the context the shared status gate needs:
+    // owner (for owner basic-actions), assignee + team leads (for team-lead
+    // rules), and the ticket id (used as the request target). Extra fields are
+    // ignored by the backend, which builds its update from explicit fields.
+    const body = {
+      ...buildUpdatePayload(),
+      ticketId: id,
+      ownerId: ticket.owner?.id,
+      assigneeId: sidebarDraft.assigneeId || ticket.assignee?.id || null,
+      teamLeadIds: ticket.teamLeadIds || [],
+    };
+
+    // Destructive status (Cancel / Fail) → confirm before submitting.
     if (sidebarDraft.statusId !== ticket.status.id) {
-      const isOwner = ticket.owner.id === user?.id;
       const targetStatus = statuses.find((s) => s.id === sidebarDraft.statusId);
       const statusName = targetStatus?.name.toLowerCase();
-      const isBasicAction =
-        statusName === StatusName.OPEN.toLowerCase() ||
-        statusName === StatusName.TRASH.toLowerCase() ||
-        statusName === StatusName.FAILED.toLowerCase();
-
-      const isStatusAllowed =
-        user?.role?.name === RoleName.ADMIN ||
-        user?.role?.permissions?.boardStatuses?.[sidebarDraft.statusId] ===
-          true ||
-        (isOwner && isBasicAction);
-
-      if (!isStatusAllowed) {
-        showNotification(
-          "error",
-          `Access Denied: Your role is not allowed to move tickets to "${targetStatus?.name || "this status"}"`,
-        );
-        // Revert
-        setSidebarDraft((prev) => ({
-          ...prev,
-          statusId: ticket.status.id,
-        }));
-        return;
-      }
-
-      // Destructive status confirmation
       if (
         statusName === StatusName.TRASH.toLowerCase() ||
         statusName === StatusName.FAILED.toLowerCase()
       ) {
-        // Build the payload that'll be sent after confirmation
-        const payload = buildUpdatePayload();
-        setPendingUpdate(payload);
+        setPendingUpdate(body);
         setConfirmConfig({
           title:
             statusName === StatusName.TRASH.toLowerCase()
@@ -354,7 +339,25 @@ const TicketDetail: React.FC = () => {
       }
     }
 
-    await executeUpdate(buildUpdatePayload());
+    await submitStatusUpdate(body);
+  };
+
+  // Submit a status/field update through the shared, reusable status handler so
+  // the board, modal and this page all enforce the same client-side rules.
+  const submitStatusUpdate = async (body: any) => {
+    setIsSaving(true);
+    try {
+      await handleStatusChange(body, user, {
+        showNotification,
+        setIsLoading,
+        onSuccess: () => {
+          setIsEditingAttachments(false);
+          fetchTicket();
+        },
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const buildUpdatePayload = () => {
@@ -789,7 +792,7 @@ const TicketDetail: React.FC = () => {
             }
           }}
           onConfirm={() => {
-            if (pendingUpdate) executeUpdate(pendingUpdate);
+            if (pendingUpdate) submitStatusUpdate(pendingUpdate);
             setIsConfirmModalOpen(false);
           }}
           title={confirmConfig.title}

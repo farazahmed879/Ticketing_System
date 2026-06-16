@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
@@ -157,6 +158,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     qaList,
   ]);
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const fetchFullTicketData = useCallback(async () => {
     try {
       const res = await api.get(API_ROUTES.TICKETS.BY_ID(ticket.id));
@@ -194,7 +196,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       localUsers.find((agent: any) => agent.id === data.assigneeId)?.fullname || "";
 
     const newQaName = localQaList.find((qa: any) => qa.id === data.qaId)?.fullname || "";
-
     const body: any = {
       ticketId: ticket.id,
       statusId: data.statusId,
@@ -208,6 +209,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       newAssigneeName: newAssigneeName,
       newQaName: newQaName,
       tags: data.tags || [],
+      teamLeadIds: ticket.teamLeadIds || fullTicketData?.teamLeadIds || [],
     };
 
     if (

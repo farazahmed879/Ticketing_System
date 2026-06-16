@@ -27,6 +27,7 @@ import ColumnStatus from "./ColumnStatus";
 import { useScrollSnap } from "./useScrollSnap";
 import StandardListLayout from "../../../components/StandardListLayout";
 import ListAndKanbanSwitcher from "../components/ListAndKanbanSwitcher";
+import { handleStatusChange } from "../shared/ticketDecisions";
 
 const TicketBoard: React.FC = () => {
   const navigate = useNavigate();
@@ -217,7 +218,7 @@ const TicketBoard: React.FC = () => {
     } catch (err) {
       console.error("Failed to fetch metadata", err);
     }
-  }, [user?.role?.name, user?.id]);
+  }, [user]);
 
   useEffect(() => {
     fetchMetadata();
@@ -346,59 +347,22 @@ const TicketBoard: React.FC = () => {
       statusId,
       currentStatusName,
       targetStatusName,
+      assigneeId: ticket.assignee?.id || null, // Ensure assigneeId is sent for the "Open" status check
+      teamLeadIds: ticket?.teamLeadIds || [], // Ensure teamLeadIds is sent for the "Open" status check
     });
   };
 
-  const handleUpdateStatus = async (body: any) => {
-    try {
-      const isStatusChanging =
-        !!body.targetStatusName &&
-        !!body.currentStatusName &&
-        body.targetStatusName !== body.currentStatusName;
-
-      if (body.currentStatusName == StatusName.CLOSED) return;
-
-      // Admins and managers may cancel a ticket even without an explicit
-      // board-status permission (managers have no Cancelled column, so the
-      // Cancel action in the modal is their only path). The backend still
-      // enforces the real transition rules.
-      const isCancelByStaff =
-        body.targetStatusName === StatusName.TRASH &&
-        (user?.role?.name === RoleName.ADMIN ||
-          user?.role?.name === RoleName.AGENT);
-
-      const isStatusAllowed =
-        user?.role?.name === RoleName.ADMIN ||
-        user?.role?.permissions?.boardStatuses?.[body?.statusId] === true ||
-        isCancelByStaff;
-
-      if (isStatusChanging && !isStatusAllowed) {
-        showNotification(
-          "error",
-          UIMessages.BOARD.ACCESS_DENIED(
-            body.targetStatusName || "this status",
-          ),
-        );
-        return;
-      }
-
-      setIsLoading(true, UIMessages.LOADING.UPDATING_STATUS);
-      await api.put(API_ROUTES.TICKETS.BY_ID(body.ticketId), body);
-      showNotification("success", "Ticket status updated");
+  const handleUpdateStatus = (body: any) =>
+    handleStatusChange(body, user, {
+      showNotification,
+      setIsLoading,
       // Close the detail modal after a successful save (harmless for the
-      // drag-drop path, where the modal is already closed).
-      setIsDetailModalOpen(false);
-      fetchBoardData();
-    } catch (err: any) {
-      console.error("Failed to update status", err);
-      showNotification(
-        "error",
-        err.response?.data?.error || "Failed to update ticket status",
-      );
-    } finally {
-      setIsLoading(false, "");
-    }
-  };
+      // drag-drop path, where the modal is already closed) and refresh.
+      onSuccess: () => {
+        setIsDetailModalOpen(false);
+        fetchBoardData();
+      },
+    });
 
   const handleDragStart = (e: React.DragEvent, ticketId: string) => {
     e.dataTransfer.setData("ticketId", ticketId);

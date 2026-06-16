@@ -1,4 +1,7 @@
-import { RoleName, StatusName } from "../../../utils/constants";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { RoleName, StatusName, UIMessages } from "../../../utils/constants";
+import api from "../../../services/api";
+import { API_ROUTES } from "../../../utils/apiRoutes";
 
 /**
  * Shared logic for the ticket detail surfaces (modal + full page) so the same
@@ -126,3 +129,109 @@ export const canShowCancelBanner = (
 export const canEmployeeEditDueDate = (
   statusName: string | undefined,
 ): boolean => statusName === StatusName.OPEN;
+
+/** Side-effect callbacks the status handler needs from the calling surface. */
+export interface StatusChangeDeps {
+  showNotification: (type: string, message: string) => void;
+  setIsLoading: (loading: boolean, message?: string) => void;
+  /** Surface-specific success side effect (close modal, refetch board, ...). */
+  onSuccess?: () => void;
+}
+
+/**
+ * Reusable ticket status-update handler — shared by the board, the detail modal
+ * and the detail page. Runs the client-side permission gate, submits the update
+ * and reports the result. Dependencies (notifications / loading / success) are
+ * injected so this stays free of any single surface's hooks.
+ *
+ * The backend still enforces the authoritative transition rules; this gate only
+ * keeps the UX honest and avoids a doomed request.
+ */
+export const handleStatusChange = async (
+  body: any,
+  user: any,
+  { showNotification, setIsLoading, onSuccess }: StatusChangeDeps,
+): Promise<void> => {
+  const isStatusChanging =
+    !!body.targetStatusName &&
+    !!body.currentStatusName &&
+    body.targetStatusName !== body.currentStatusName;
+
+  // Closed tickets are terminal — nothing to do.
+  if (body.currentStatusName === StatusName.CLOSED) return;
+
+  const teamLeadIds: string[] = body.teamLeadIds || [];
+  body.isLead = teamLeadIds.includes(user?.id);
+  // Admins and managers may cancel a ticket even without an explicit
+  // board-status permission (managers have no Cancelled column, so the
+  // Cancel action in the modal is their only path). The backend still
+  // enforces the real transition rules.
+  const isCancelByStaff =
+    body.targetStatusName === StatusName.TRASH &&
+    (user?.role?.name === RoleName.ADMIN ||
+      user?.role?.name === RoleName.AGENT);
+
+  // A ticket owner may take the basic actions on their own ticket (move it to
+  // Open, or Cancel/Fail it) without an explicit board-status permission.
+  // Surfaces that support this pass `ownerId` on the body (the board/modal omit
+  // it, so this is a no-op there).
+  const isOwner = !!body.ownerId && body.ownerId === user?.id;
+  const isOwnerBasicAction =
+    isOwner &&
+    [StatusName.OPEN, StatusName.TRASH, StatusName.FAILED].includes(
+      body.targetStatusName,
+    );
+
+  const isStatusAllowed =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.permissions?.boardStatuses?.[body?.statusId] === true ||
+    isCancelByStaff ||
+    isOwnerBasicAction;
+
+  if (isStatusChanging && !isStatusAllowed && !teamLeadIds.includes(user?.id)) {
+    showNotification(
+      "error",
+      UIMessages.BOARD.ACCESS_DENIED(body.targetStatusName || "this status"),
+    );
+    return;
+  }
+
+  // Extra restrictions for a team lead acting on a team member's ticket
+  // (not their own).
+  if (teamLeadIds.includes(user?.id) && body.assigneeId !== user?.id) {
+    if (
+      [StatusName.OPEN, StatusName.IN_PROCESS, StatusName.RESOLVED].includes(
+        body.targetStatusName,
+      ) &&
+      body.currentStatusName !== body.targetStatusName
+    ) {
+      showNotification(
+        "error",
+        UIMessages.BOARD.ACCESS_DENIED(body.targetStatusName || "this status"),
+      );
+      return;
+    }
+    if (
+      ![StatusName.RESOLVED].includes(body.currentStatusName) &&
+      body.targetStatusName !== body.currentStatusName
+    ) {
+      showNotification("error", UIMessages.BOARD.UPDATE_STATUS_CHANGED);
+      return;
+    }
+  }
+
+  try {
+    setIsLoading(true, UIMessages.LOADING.UPDATING_STATUS);
+    await api.put(API_ROUTES.TICKETS.BY_ID(body.ticketId), body);
+    showNotification("success", UIMessages.BOARD.UPDATE_SUCCESS);
+    onSuccess?.();
+  } catch (err: any) {
+    console.error("Failed to update status", err);
+    showNotification(
+      "error",
+      err.response?.data?.error || "Failed to update ticket status",
+    );
+  } finally {
+    setIsLoading(false, "");
+  }
+};

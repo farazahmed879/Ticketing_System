@@ -128,6 +128,7 @@ export interface Ticket {
   updatedAt: string;
   // Sticky flag: true if the ticket was ever moved to "Returned" (Failed).
   wasFailed?: boolean;
+  teamLeadIds?: string[]; // Add teamLeadIds to track leads of the ticket's project teams
 }
 
 export interface TicketDetail extends Ticket {

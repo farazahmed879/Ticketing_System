@@ -41,6 +41,12 @@ export const teamController = {
       const team = await teamUsecase.createTeam(req.body);
       res.status(201).json({ success: true, team });
     } catch (error: any) {
+      if (error?.code === "P2002") {
+        return res.status(409).json({
+          success: false,
+          error: `A team named "${req.body.name}" already exists. Please choose a different name.`,
+        });
+      }
       res.status(500).json({ success: false, error: error.message });
     }
   },
@@ -53,6 +59,12 @@ export const teamController = {
       );
       res.json({ success: true, team });
     } catch (error: any) {
+      if (error?.code === "P2002") {
+        return res.status(409).json({
+          success: false,
+          error: `A team named "${req.body.name}" already exists. Please choose a different name.`,
+        });
+      }
       res.status(500).json({ success: false, error: error.message });
     }
   },

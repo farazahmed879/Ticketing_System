@@ -46,6 +46,12 @@ export const projectController = {
       const project = await projectRepository.create(req.body);
       res.status(201).json({ success: true, project });
     } catch (err: any) {
+      if (err?.code === "P2002") {
+        return res.status(409).json({
+          success: false,
+          error: `A project named "${req.body.name}" already exists. Please choose a different name.`,
+        });
+      }
       res.status(500).json({ success: false, error: err.message });
     }
   },
@@ -58,6 +64,12 @@ export const projectController = {
       );
       res.json({ success: true, project });
     } catch (err: any) {
+      if (err?.code === "P2002") {
+        return res.status(409).json({
+          success: false,
+          error: `A project named "${req.body.name}" already exists. Please choose a different name.`,
+        });
+      }
       res.status(500).json({ success: false, error: err.message });
     }
   },
@@ -75,16 +87,28 @@ export const projectController = {
     try {
       const project = await projectRepository.findByIdWithMembers(req.params.id as string);
       if (!project) return res.status(404).json({ success: false, error: "Project not found" });
-
       const membersMap = new Map<string, any>();
       project.teams.forEach((team: any) => {
         team.members.forEach((member: any) => {
+          const isTeamLead = team.teamLeadId === member.id;
           if (!membersMap.has(member.id)) {
-            membersMap.set(member.id, { ...member, teamNames: [team.name] });
+            membersMap.set(member.id, {
+              ...member,
+              teamNames: [team.name],
+              isTeamLead,
+              // Teams within this project where the member is the lead.
+              leadTeamNames: isTeamLead ? [team.name] : [],
+            });
           } else {
             const existing = membersMap.get(member.id);
             if (!existing.teamNames.includes(team.name)) {
               existing.teamNames.push(team.name);
+            }
+            if (isTeamLead) {
+              existing.isTeamLead = true;
+              if (!existing.leadTeamNames.includes(team.name)) {
+                existing.leadTeamNames.push(team.name);
+              }
             }
           }
         });

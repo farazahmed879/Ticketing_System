@@ -157,8 +157,9 @@ export const UIMessages = {
     PERMISSION_DENIED: "You do not have permission to update ticket status",
     ACCESS_DENIED: (status: string) =>
       `Access Denied: Your role is not allowed to move tickets to "${status}"`,
-    UPDATE_SUCCESS: "Ticket status updated successfully",
+    UPDATE_SUCCESS: "Ticket has been updated successfully",
     UPDATE_FAILED: "Failed to update ticket status",
+    UPDATE_STATUS_CHANGED: "Only Done Ticket can be  Approved",
   },
   COMMON: {
     ERROR: "An error occurred. Please try again.",

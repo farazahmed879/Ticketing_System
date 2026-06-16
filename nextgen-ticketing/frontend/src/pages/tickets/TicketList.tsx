@@ -29,7 +29,6 @@ const TicketList: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -38,23 +37,27 @@ const TicketList: React.FC = () => {
   // Applied values drive the fetch; draft values are edited in the panel and
   // committed via the "Apply Filters" button.
   const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [statusNames, setStatusNames] = useState<string[]>([]);
   const [priorityNames, setPriorityNames] = useState<string[]>([]);
   const [projectIds, setProjectIds] = useState<string[]>([]);
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
   const [ownerIds, setOwnerIds] = useState<string[]>([]);
 
+  const [draftStatuses, setDraftStatuses] = useState<string[]>([]);
   const [draftPriorities, setDraftPriorities] = useState<string[]>([]);
   const [draftProjects, setDraftProjects] = useState<string[]>([]);
   const [draftAssignees, setDraftAssignees] = useState<string[]>([]);
   const [draftClients, setDraftClients] = useState<string[]>([]);
 
   const activeMoreFilters = [
+    statusNames,
     priorityNames,
     projectIds,
     assigneeIds,
     ownerIds,
   ].filter((arr) => arr.length > 0).length;
   const draftSelectedCount =
+    draftStatuses.length +
     draftPriorities.length +
     draftProjects.length +
     draftAssignees.length +
@@ -114,7 +117,7 @@ const TicketList: React.FC = () => {
       const res = await api.get(API_ROUTES.TICKETS.BASE, {
         params: {
           search,
-          status,
+          status: statusNames.length ? statusNames.join(",") : undefined,
           priority: priorityNames.length ? priorityNames.join(",") : undefined,
           project: projectIds.length ? projectIds.join(",") : undefined,
           assignee: assigneeIds.length ? assigneeIds.join(",") : undefined,
@@ -137,7 +140,7 @@ const TicketList: React.FC = () => {
     fetchTickets();
   }, [
     search,
-    status,
+    statusNames,
     priorityNames,
     projectIds,
     assigneeIds,
@@ -151,6 +154,7 @@ const TicketList: React.FC = () => {
       setShowMoreFilters(false);
     } else {
       // Seed the draft from the currently-applied filters when opening.
+      setDraftStatuses(statusNames);
       setDraftPriorities(priorityNames);
       setDraftProjects(projectIds);
       setDraftAssignees(assigneeIds);
@@ -160,6 +164,7 @@ const TicketList: React.FC = () => {
   };
 
   const applyMoreFilters = () => {
+    setStatusNames(draftStatuses);
     setPriorityNames(draftPriorities);
     setProjectIds(draftProjects);
     setAssigneeIds(draftAssignees);
@@ -169,10 +174,12 @@ const TicketList: React.FC = () => {
   };
 
   const clearMoreFilters = () => {
+    setDraftStatuses([]);
     setDraftPriorities([]);
     setDraftProjects([]);
     setDraftAssignees([]);
     setDraftClients([]);
+    setStatusNames([]);
     setPriorityNames([]);
     setProjectIds([]);
     setAssigneeIds([]);
@@ -263,19 +270,6 @@ const TicketList: React.FC = () => {
                   containerStyle={{ width: "100%" , paddingLeft: "0px" }}
                 />
               </div>
-              <CustomSelect
-                value={status}
-                onChange={(val) => {
-                  setStatus(val);
-                  setPage(0);
-                }}
-                placeholder="All Statuses"
-                options={TICKET_STATUSES.map((op) => ({
-                  label: op.name,
-                  value: op.name,
-                }))}
-                style={{ minWidth: "180px" }}
-              />
               <div className={styles.filterAnchor}>
                 <CustomButton
                   variant={
@@ -313,6 +307,23 @@ const TicketList: React.FC = () => {
 
                 {showMoreFilters && (
                   <div className={styles.advancedPanel}>
+                    <div className={styles.filterField}>
+                      <span className={styles.filterLabel}>
+                        <CustomIcon name="CircleDot" size={12} /> Status
+                      </span>
+                      <CustomSelect
+                        isMulti
+                        value={draftStatuses}
+                        onChange={(vals) => setDraftStatuses(vals)}
+                        placeholder="All Statuses"
+                        options={TICKET_STATUSES.map((op) => ({
+                          label: op.name,
+                          value: op.name,
+                        }))}
+                        style={{ width: "100%" }}
+                      />
+                    </div>
+
                     <div className={styles.filterField}>
                       <span className={styles.filterLabel}>
                         <CustomIcon name="Flag" size={12} /> Priority

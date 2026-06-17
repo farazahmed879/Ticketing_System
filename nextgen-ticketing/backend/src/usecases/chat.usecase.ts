@@ -4,8 +4,9 @@ import { RoleName } from "../utils/constants";
 export const chatUsecase = {
   async getConversations(userId: string) {
     const rooms = await chatRepository.findRoomsByUserId(userId);
+    const visibleRooms = rooms.filter((r: any) => !(r.hiddenByIds || []).includes(userId));
 
-    return rooms.map((room: any) => {
+    return visibleRooms.map((room: any) => {
       const partner = room.isGroup
         ? null
         : room.members.find((m: any) => m.id !== userId);
@@ -91,6 +92,15 @@ export const chatUsecase = {
     return chatRepository.createRoom({ memberIds: [userId, partnerId] });
   },
 
+  async hideConversation(id: string, userId: string) {
+    const room = await chatRepository.findRoomById(id);
+    if (!room) throw new Error("Conversation not found");
+    if (!room.memberIds.includes(userId)) throw new Error("Access denied");
+
+    const hiddenByIds = Array.from(new Set([...((room as any).hiddenByIds || []), userId]));
+    return chatRepository.updateRoom(id, { hiddenByIds });
+  },
+
   async sendMessage(id: string, userId: string, body: string) {
     const message = await chatRepository.createMessage({
       body,
@@ -98,7 +108,7 @@ export const chatUsecase = {
       roomId: id,
     });
 
-    await chatRepository.updateRoom(id, { updatedAt: new Date() });
+    await chatRepository.updateRoom(id, { updatedAt: new Date(), hiddenByIds: [] });
 
     return message;
   },
@@ -139,8 +149,25 @@ export const chatUsecase = {
       me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN.toLowerCase();
     const isAgent =
       me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT.toLowerCase();
-    if (!isAdmin && !isAgent) {
-      throw new Error("Only Admins and Agents can create group chats");
+    const isLead = (me as any).isLead === true;
+
+    if (!isAdmin && !isAgent && !isLead) {
+      throw new Error("Only Admins, Managers, and Team Leads can create group chats");
+    }
+
+    if (isLead && !isAdmin && !isAgent && memberIds?.length) {
+      const addedUsers = await Promise.all(
+        memberIds.map((mid) => chatRepository.findUserWithRole(mid))
+      );
+      const hasClient = addedUsers.some(
+        (u: any) =>
+          u &&
+          (u.role.isCustomer ||
+            u.role.name.toLowerCase() === RoleName.CUSTOMER.toLowerCase())
+      );
+      if (hasClient) {
+        throw new Error("Team Leads cannot add clients to a group chat");
+      }
     }
 
     const allMemberIds = [...new Set([userId, ...memberIds])];
@@ -165,8 +192,25 @@ export const chatUsecase = {
       me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN.toLowerCase();
     const isAgent =
       me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT.toLowerCase();
-    if (!isAdmin && !isAgent) {
-      throw new Error("Only Admins and Agents can manage group members");
+    const isLead = (me as any).isLead === true;
+
+    if (!isAdmin && !isAgent && !isLead) {
+      throw new Error("Only Admins, Managers, and Team Leads can manage group members");
+    }
+
+    if (isLead && !isAdmin && !isAgent && addMemberIds?.length) {
+      const addedUsers = await Promise.all(
+        addMemberIds.map((mid) => chatRepository.findUserWithRole(mid))
+      );
+      const hasClient = addedUsers.some(
+        (u: any) =>
+          u &&
+          (u.role.isCustomer ||
+            u.role.name.toLowerCase() === RoleName.CUSTOMER.toLowerCase())
+      );
+      if (hasClient) {
+        throw new Error("Team Leads cannot add clients to a group chat");
+      }
     }
 
     const room = await chatRepository.findRoomById(id);

@@ -163,6 +163,7 @@ export const userUsecase = {
       employeeType: data.employeeType,
       branch: data.branch,
       image: data.image,
+      isLead: data.isLead || false,
     });
     const { password: _, ...safeUser } = user;
     return safeUser;
@@ -203,6 +204,7 @@ export const userUsecase = {
       updateData.employeeType = data.employeeType;
     if (data.branch !== undefined) updateData.branch = data.branch;
     if (data.image !== undefined) updateData.image = data.image;
+    if (data.isLead !== undefined) updateData.isLead = data.isLead;
     if (data.leaves !== undefined && data.leaves !== null) {
       updateData.leaves = Number(data.leaves);
     }

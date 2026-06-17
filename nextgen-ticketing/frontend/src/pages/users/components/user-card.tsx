@@ -59,9 +59,28 @@ const UserCard = ({
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
             }}
           >
             {data.fullname}
+            {data.isLead && (
+              <span
+                style={{
+                  fontSize: "0.6rem",
+                  padding: "1px 5px",
+                  borderRadius: 4,
+                  background: "rgba(124, 58, 237, 0.1)",
+                  color: "var(--primary-color)",
+                  fontWeight: 700,
+                  border: "1px solid rgba(124, 58, 237, 0.2)",
+                  lineHeight: 1,
+                }}
+              >
+                LEAD
+              </span>
+            )}
           </div>
           <div
             style={{

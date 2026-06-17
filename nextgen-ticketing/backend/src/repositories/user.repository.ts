@@ -29,6 +29,7 @@ export const userRepository = {
         leaves: true,
         lastOnline: true,
         deleted: true,
+        isLead: true,
         createdAt: true,
         role: true,
         groups: { select: { id: true, name: true } },

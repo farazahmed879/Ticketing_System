@@ -71,6 +71,7 @@ router.post('/conversations', authMiddleware, chatController.startConversation);
  *         description: Conversation with messages
  */
 router.get('/conversations/:id', authMiddleware, chatController.getConversation);
+router.delete('/conversations/:id/hide', authMiddleware, chatController.hideConversation);
 
 /**
  * @swagger

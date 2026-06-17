@@ -45,8 +45,8 @@ model User {
   teamIds String[] @db.ObjectId
   teams   Team[]   @relation(fields: [teamIds], references: [id])
 
-  ownedTickets    Ticket[] @relation("TicketOwner")
-  assignedTickets Ticket[] @relation("TicketAssignee")
+  ownedTickets      Ticket[] @relation("TicketOwner")
+  assignedTickets   Ticket[] @relation("TicketAssignee")
   assignedQATickets Ticket[] @relation("TicketQA")
 
   comments Comment[]
@@ -71,12 +71,13 @@ model User {
   projectIds String[]  @db.ObjectId
   projects   Project[] @relation(fields: [projectIds], references: [id])
 
-  ledTeams    Team[]    @relation("TeamLead")
+  ledTeams        Team[]    @relation("TeamLead")
   managedProjects Project[] @relation("ProjectManager")
-  lastOnline   DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  deleted      Boolean   @default(false)
+  lastOnline      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deleted         Boolean   @default(false)
+  isLead          Boolean   @default(false)
 }
 
 model Role {
@@ -109,8 +110,8 @@ model Ticket {
   assigneeId String? @db.ObjectId
   assignee   User?   @relation("TicketAssignee", fields: [assigneeId], references: [id])
 
-  qaId       String? @db.ObjectId
-  qa         User?   @relation("TicketQA", fields: [qaId], references: [id])
+  qaId String? @db.ObjectId
+  qa   User?   @relation("TicketQA", fields: [qaId], references: [id])
 
   groupId String? @db.ObjectId
   group   Group?  @relation(fields: [groupId], references: [id])
@@ -272,11 +273,11 @@ model Notice {
 }
 
 model Announcement {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String
-  date        DateTime
-  type        String   @default("event") // event, important, info
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  description  String
+  date         DateTime
+  type         String   @default("event") // event, important, info
   shouldPopout Boolean  @default(false)
 
   projectId String?  @db.ObjectId
@@ -292,14 +293,15 @@ model Announcement {
 // ==================== CHAT ====================
 
 model ChatRoom {
-  id        String        @id @default(auto()) @map("_id") @db.ObjectId
-  name      String?
-  isGroup   Boolean       @default(false)
-  memberIds String[]      @db.ObjectId
-  members   User[]        @relation(fields: [memberIds], references: [id])
-  messages  ChatMessage[]
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  name        String?
+  isGroup     Boolean       @default(false)
+  memberIds   String[]      @db.ObjectId
+  hiddenByIds String[]      @db.ObjectId
+  members     User[]        @relation(fields: [memberIds], references: [id])
+  messages    ChatMessage[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model ChatMessage {
@@ -310,6 +312,9 @@ model ChatMessage {
   sender      User     @relation(fields: [senderId], references: [id])
   roomId      String   @db.ObjectId
   room        ChatRoom @relation(fields: [roomId], references: [id])
+  replyToId   String?  @db.ObjectId
+  replyTo     ChatMessage? @relation("ReplyTo", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies     ChatMessage[] @relation("ReplyTo")
   createdAt   DateTime @default(now())
 }
 

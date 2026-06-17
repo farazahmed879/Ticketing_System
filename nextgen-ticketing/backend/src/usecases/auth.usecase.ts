@@ -31,6 +31,7 @@ export const authUsecase = {
         fullname: user.fullname,
         image: user.image,
         leaves: user.leaves,
+        isLead: user.isLead,
         role: {
           name: user.role.name,
           permissions: user.role.permissions,
@@ -53,6 +54,7 @@ export const authUsecase = {
       title: user.title,
       image: user.image,
       leaves: user.leaves,
+      isLead: user.isLead,
       role: {
         name: user.role.name,
         permissions: user.role.permissions,
@@ -104,6 +106,7 @@ export const authUsecase = {
         id: user.id,
         email: user.email,
         fullname: user.fullname,
+        isLead: user.isLead,
         role: {
           name: user.role.name,
           permissions: user.role.permissions,

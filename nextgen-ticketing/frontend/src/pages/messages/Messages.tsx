@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { createPortal } from "react-dom";
+import Lightbox from "./components/Lightbox";
 import CustomIcon from "../../components/CustomIcon";
 import { useSearchParams } from "react-router-dom";
 import api from "../../services/api";
@@ -7,18 +7,21 @@ import { socket } from "../../services/socket";
 import { useAuth } from "../../context/AuthContext";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import styles from "./Messages.module.css";
-import { format } from "date-fns";
-import CustomInput from "../../components/CustomInput";
 import NewChatModal from "./components/NewChatModal";
 import NewGroupModal from "./components/NewGroupModal";
-import {
-  ACCEPT_ATTRIBUTE,
-  MAX_ATTACHMENTS,
-  readAttachmentFiles,
-} from "../../utils/attachments";
-
+import AddGroupMembersModal from "./components/AddGroupMembersModal";
+import ViewGroupMembersModal from "./components/ViewGroupMembersModal";
+import { readAttachmentFiles } from "../../utils/attachments";
 import type { Conversation, Message } from "../../types";
 import { ChatSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
+import ConfirmationModal from "../../components/ConfirmationModal";
+import { RoleName } from "../../utils/constants";
+import CustomButton from "../../components/CustomButton";
+
+import ConversationSidebar from "./components/ConversationSidebar";
+import ChatHeader from "./components/ChatHeader";
+import MessageList from "./components/MessageList";
+import MessageInput from "./components/MessageInput";
 
 const Messages: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -29,26 +32,21 @@ const Messages: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [isAddMembersModalOpen, setIsAddMembersModalOpen] = useState(false);
+  const [isViewMembersModalOpen, setIsViewMembersModalOpen] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [userSearch, setUserSearch] = useState("");
   const [groupName, setGroupName] = useState("");
-  const [selectedGroupMembers, setSelectedGroupMembers] = useState<string[]>(
-    [],
-  );
+  const [selectedGroupMembers, setSelectedGroupMembers] = useState<string[]>([]);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
   const [attachments, setAttachments] = useState<string[]>([]);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
-  const [lightbox, setLightbox] = useState<{
-    images: string[];
-    index: number;
-  } | null>(null);
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-  const [unreadMessageNotifications, setUnreadMessageNotifications] = useState<any[]>([]);
-  const [showTicketSuggestions, setShowTicketSuggestions] = useState(false);
-  const [showProjectSuggestions, setShowProjectSuggestions] = useState(false);
-  const [allTickets, setAllTickets] = useState<any[]>([]);
-  const [allProjects, setAllProjects] = useState<any[]>([]);
-  const [suggestionQuery, setSuggestionQuery] = useState("");
+  const [, setUnreadMessageNotifications] = useState<any[]>([]);
+
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -60,18 +58,60 @@ const Messages: React.FC = () => {
     activeConvRef.current = activeConv;
   }, [activeConv]);
 
+  const handleConversationSelect = async (convId: string) => {
+    setActiveConv(convId);
+
+    // 1. Update URL
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("roomId", convId);
+        next.delete("userId");
+        return next;
+      },
+      { replace: true },
+    );
+
+    // 2. Fetch Messages
+    try {
+      const res = await api.get(API_ROUTES.MESSAGES.CONVERSATION_BY_ID(convId));
+      setMessages(res.data.conversation.messages);
+    } catch (err) {
+      console.error("Failed to fetch messages", err);
+    }
+
+    // 3. Clear Unread Counts locally
+    setUnreadCounts((prev) => {
+      if (prev[convId] > 0) {
+        return { ...prev, [convId]: 0 };
+      }
+      return prev;
+    });
+
+    // 4. Mark notifications read on backend
+    setUnreadMessageNotifications((prev) => {
+      const matchingNotifs = prev.filter((n) => n.data?.roomId === convId);
+      if (matchingNotifs.length > 0) {
+        matchingNotifs.forEach((n) => {
+          socket.emit("notifications:markRead", n.id);
+        });
+        return prev.filter((n) => n.data?.roomId !== convId);
+      }
+      return prev;
+    });
+  };
+
   const fetchConversations = async () => {
     try {
       const res = await api.get(API_ROUTES.MESSAGES.CONVERSATIONS);
       setConversations(res.data.conversations);
 
-      // Fetch unread notifications to initialize unread counts
       const notifRes = await api.get(API_ROUTES.NOTIFICATIONS.BASE, {
         params: { limit: 100 },
       });
       const notifItems = notifRes.data.items || [];
       const unreadMessageNotifs = notifItems.filter(
-        (n: any) => n.unread && n.type === "message"
+        (n: any) => n.unread && n.type === "message",
       );
 
       const counts: Record<string, number> = {};
@@ -84,11 +124,10 @@ const Messages: React.FC = () => {
       setUnreadCounts(counts);
       setUnreadMessageNotifications(unreadMessageNotifs);
 
-      // Handle userId or roomId from query params
       const userIdFromParam = searchParams.get("userId");
       const roomIdFromParam = searchParams.get("roomId");
       if (roomIdFromParam) {
-        setActiveConv(roomIdFromParam);
+        handleConversationSelect(roomIdFromParam);
       } else if (userIdFromParam) {
         startChatWithUser(userIdFromParam);
       }
@@ -102,13 +141,11 @@ const Messages: React.FC = () => {
   useEffect(() => {
     fetchConversations();
 
-    // Socket listeners
     socket.on("chat:receive", (data: { roomId: string; message: Message }) => {
       if (activeConvRef.current === data.roomId) {
         setMessages((prev) => [...prev, data.message]);
       }
 
-      // Play local notification sound if sender is NOT current user
       if (data.message.senderId !== user?.id) {
         const audio = new Audio(
           "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3",
@@ -116,11 +153,10 @@ const Messages: React.FC = () => {
         audio.play().catch((e) => console.log("Audio play failed:", e));
       }
 
-      // Update recent message in list and move to top
       setConversations((prev) => {
         const index = prev.findIndex((c) => c.id === data.roomId);
         if (index === -1) {
-          fetchConversations(); // If it's a new conversation not in list
+          fetchConversations();
           return prev;
         }
         const updated = [...prev];
@@ -129,7 +165,6 @@ const Messages: React.FC = () => {
           recentMessage: data.message.body,
           updatedAt: new Date().toISOString(),
         };
-        // Sort by updatedAt
         return updated.sort(
           (a, b) =>
             new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
@@ -142,10 +177,8 @@ const Messages: React.FC = () => {
         const roomId = notification.data?.roomId;
         if (roomId) {
           if (activeConvRef.current === roomId) {
-            // Mark as read immediately on backend
             socket.emit("notifications:markRead", notification.id);
           } else {
-            // Increment local unread counts and track notification
             setUnreadMessageNotifications((prev) => [...prev, notification]);
             setUnreadCounts((prev) => ({
               ...prev,
@@ -156,83 +189,26 @@ const Messages: React.FC = () => {
       }
     });
 
+    socket.on(
+      "chat:message_deleted",
+      (data: { messageId: string; roomId: string }) => {
+        if (data.roomId === activeConvRef.current) {
+          setMessages((prev) => prev.filter((m) => m.id !== data.messageId));
+        }
+      },
+    );
+
     return () => {
       socket.off("chat:receive");
       socket.off("notifications:new");
+      socket.off("chat:message_deleted");
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
-
-  useEffect(() => {
-    if (activeConv) {
-      const fetchMessages = async () => {
-        try {
-          const res = await api.get(
-            API_ROUTES.MESSAGES.CONVERSATION_BY_ID(activeConv),
-          );
-          setMessages(res.data.conversation.messages);
-        } catch (err) {
-          console.error("Failed to fetch messages", err);
-        }
-      };
-      fetchMessages();
-    }
-  }, [activeConv]);
-
-  useEffect(() => {
-    if (activeConv) {
-      // Clear unread counts locally
-      setUnreadCounts((prev) => {
-        if (prev[activeConv] > 0) {
-          return { ...prev, [activeConv]: 0 };
-        }
-        return prev;
-      });
-
-      // Mark matching notifications as read on backend
-      const matchingNotifs = unreadMessageNotifications.filter(
-        (n) => n.data?.roomId === activeConv
-      );
-      if (matchingNotifs.length > 0) {
-        matchingNotifs.forEach((n) => {
-          socket.emit("notifications:markRead", n.id);
-        });
-        setUnreadMessageNotifications((prev) =>
-          prev.filter((n) => n.data?.roomId !== activeConv)
-        );
-      }
-    }
-  }, [activeConv, unreadMessageNotifications]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  useEffect(() => {
-    if (activeConv) {
-      if (searchParams.get("roomId") !== activeConv) {
-        setSearchParams(
-          (prev) => {
-            const next = new URLSearchParams(prev);
-            next.set("roomId", activeConv);
-            next.delete("userId");
-            return next;
-          },
-          { replace: true }
-        );
-      }
-    } else {
-      if (searchParams.has("roomId")) {
-        setSearchParams(
-          (prev) => {
-            const next = new URLSearchParams(prev);
-            next.delete("roomId");
-            return next;
-          },
-          { replace: true }
-        );
-      }
-    }
-  }, [activeConv, searchParams, setSearchParams]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -243,7 +219,6 @@ const Messages: React.FC = () => {
     if (!messagesContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } =
       messagesContainerRef.current;
-    // Show button if we are more than 500px away from bottom
     const isFarFromBottom = scrollHeight - scrollTop - clientHeight > 500;
     setShowScrollBottom(isFarFromBottom);
   };
@@ -256,10 +231,12 @@ const Messages: React.FC = () => {
       roomId: activeConv,
       body: newMessage,
       attachments,
+      replyToId: replyingTo?.id,
     });
     setNewMessage("");
     setAttachments([]);
     setAttachmentError(null);
+    setReplyingTo(null);
   };
 
   const handleAttachmentSelect = async (
@@ -285,6 +262,30 @@ const Messages: React.FC = () => {
     setLightbox({ images, index });
   const closeLightbox = () => setLightbox(null);
 
+  const fetchUsers = async () => {
+    try {
+      const res = await api.get(API_ROUTES.MESSAGES.PARTNERS);
+      setUsers(res.data.partners);
+    } catch (err) {
+      console.error("Failed to fetch users", err);
+    }
+  };
+
+  const handleOpenUserModal = () => {
+    fetchUsers();
+    setIsUserModalOpen(true);
+  };
+
+  const handleOpenGroupModal = () => {
+    fetchUsers();
+    setIsGroupModalOpen(true);
+  };
+
+  const handleOpenAddMembersModal = () => {
+    fetchUsers();
+    setIsAddMembersModalOpen(true);
+  };
+
   const startChatWithUser = async (partnerId: string) => {
     try {
       const res = await api.post(API_ROUTES.MESSAGES.CONVERSATIONS, {
@@ -303,7 +304,7 @@ const Messages: React.FC = () => {
         };
         return [conv, ...prev];
       });
-      setActiveConv(newRoom.id);
+      handleConversationSelect(newRoom.id);
       setIsUserModalOpen(false);
     } catch (err: any) {
       alert(err?.response?.data?.message || "Could not start conversation");
@@ -328,7 +329,7 @@ const Messages: React.FC = () => {
         updatedAt: newRoom.updatedAt,
       };
       setConversations((prev) => [conv, ...prev]);
-      setActiveConv(newRoom.id);
+      handleConversationSelect(newRoom.id);
       setIsGroupModalOpen(false);
       setGroupName("");
       setSelectedGroupMembers([]);
@@ -345,117 +346,87 @@ const Messages: React.FC = () => {
     );
   };
 
-  const fetchUsers = async () => {
+  const addMembersToGroup = async (memberIds: string[]) => {
+    if (!activeConv || memberIds.length === 0) return;
     try {
-      const res = await api.get(API_ROUTES.MESSAGES.PARTNERS);
-      setUsers(res.data.partners);
-    } catch (err) {
-      console.error("Failed to fetch users", err);
+      const res = await api.patch(
+        API_ROUTES.MESSAGES.UPDATE_MEMBERS(activeConv),
+        {
+          addMemberIds: memberIds,
+        },
+      );
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === activeConv
+            ? { ...c, members: res.data.conversation.members }
+            : c,
+        ),
+      );
+      setIsAddMembersModalOpen(false);
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Could not add members to group");
     }
   };
 
-  useEffect(() => {
-    if (isUserModalOpen || isGroupModalOpen) {
-      fetchUsers();
-    }
-  }, [isUserModalOpen, isGroupModalOpen]);
+  const handleDeleteChat = async () => {
+    if (!activeConv) return;
+    if (
+      !window.confirm("Are you sure you want to delete this chat for yourself?")
+    )
+      return;
 
-  const fetchTicketsForMentions = async () => {
     try {
-      const res = await api.get(API_ROUTES.TICKETS.BASE, {
-        params: { limit: 100 },
-      });
-      setAllTickets(res.data.tickets || []);
+      await api.delete(API_ROUTES.MESSAGES.HIDE_CONVERSATION(activeConv));
+      setConversations((prev) => prev.filter((c) => c.id !== activeConv));
+      handleCloseChat();
     } catch (err) {
-      console.error("Failed to fetch tickets for mentions", err);
+      console.error("Failed to delete chat", err);
     }
   };
 
-  const fetchProjectsForMentions = async () => {
-    try {
-      const res = await api.get(API_ROUTES.PROJECTS.BASE, {
-        params: { role: user?.role?.name, userId: user?.id },
-      });
-      setAllProjects(res.data.projects || []);
-    } catch (err) {
-      console.error("Failed to fetch projects for mentions", err);
-    }
+  const handleCloseChat = () => {
+    setActiveConv(null);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("roomId");
+        return next;
+      },
+      { replace: true },
+    );
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setNewMessage(val);
-
-    const inputElement = e.target;
-    const selectionEnd = inputElement.selectionEnd || 0;
-    const textBeforeCursor = val.substring(0, selectionEnd);
-
-    const ticketMatch = textBeforeCursor.match(/#(\w*)$/);
-    const projectMatch = textBeforeCursor.match(/\$(\w*)$/);
-
-    if (ticketMatch) {
-      setShowTicketSuggestions(true);
-      setShowProjectSuggestions(false);
-      setSuggestionQuery(ticketMatch[1]);
-      if (allTickets.length === 0) {
-        fetchTicketsForMentions();
-      }
-    } else if (projectMatch) {
-      setShowProjectSuggestions(true);
-      setShowTicketSuggestions(false);
-      setSuggestionQuery(projectMatch[1]);
-      if (allProjects.length === 0) {
-        fetchProjectsForMentions();
-      }
-    } else {
-      setShowTicketSuggestions(false);
-      setShowProjectSuggestions(false);
-      setSuggestionQuery("");
+  const handleDeleteMessageClick = (
+    messageId: string,
+    createdAt: string | Date,
+  ) => {
+    const ageInMs = Date.now() - new Date(createdAt).getTime();
+    if (ageInMs > 5 * 60 * 1000) {
+      alert("You can only delete messages within 5 minutes of sending them.");
+      return;
     }
+    setMessageToDelete(messageId);
   };
 
-  const handleSelectTicket = (ticket: any) => {
-    setNewMessage((prev) => {
-      const lastHashIndex = prev.lastIndexOf('#');
-      if (lastHashIndex === -1) return prev;
-      return prev.substring(0, lastHashIndex) + `[Ticket: #${ticket.uid} - ${ticket.subject}] ` + prev.substring(lastHashIndex + suggestionQuery.length + 1);
+  const confirmDeleteMessage = () => {
+    if (!messageToDelete) return;
+    socket.emit("chat:delete_message", {
+      messageId: messageToDelete,
+      roomId: activeConv,
     });
-    setShowTicketSuggestions(false);
+    setMessageToDelete(null);
   };
 
-  const handleSelectProject = (project: any) => {
-    setNewMessage((prev) => {
-      const lastDollarIndex = prev.lastIndexOf('$');
-      if (lastDollarIndex === -1) return prev;
-      return prev.substring(0, lastDollarIndex) + `[Project: ${project.name}] ` + prev.substring(lastDollarIndex + suggestionQuery.length + 1);
-    });
-    setShowProjectSuggestions(false);
-  };
-
-  const isStaff =
-    user?.role?.isAdmin ||
-    user?.role?.isAgent ||
-    user?.role?.name?.toLowerCase() === "admin" ||
-    user?.role?.name?.toLowerCase() === "manager" ||
-    user?.role?.name?.toLowerCase() === "agent";
   const isCustomer =
     user?.role?.isCustomer ||
-    user?.role?.name?.toLowerCase() === "customer" ||
-    user?.role?.name?.toLowerCase() === "client";
+    user?.role?.name?.toLowerCase() === RoleName.CUSTOMER;
 
-  const filteredConversations = conversations.filter((c) => {
-    const name = c.isGroup ? c.name || "Group" : c.partner?.fullname || "";
-    return (
-      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.recentMessage.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
-
-  const filteredUsers = users.filter(
-    (u) =>
-      u.fullname.toLowerCase().includes(userSearch.toLowerCase()) ||
-      u.email.toLowerCase().includes(userSearch.toLowerCase()),
-  );
+  const canManageGroup =
+    user?.role?.isAdmin ||
+    user?.role?.name?.toLowerCase() === RoleName.ADMIN ||
+    user?.role?.isAgent ||
+    user?.role?.name?.toLowerCase() === RoleName.AGENT ||
+    user?.isLead;
 
   const selectedConv = conversations.find((c) => c.id === activeConv);
 
@@ -469,490 +440,55 @@ const Messages: React.FC = () => {
 
   return (
     <div className={`${styles.container} animate-fade-in`}>
-      <div className={styles.conversationList}>
-        <div className={styles.listHeader}>
-          <h2 style={{ fontSize: "1.2rem", fontWeight: 700 }}>Jami Chat</h2>
-          <div style={{ display: "flex", gap: 6 }}>
-            {isStaff && (
-              <button
-                className="glass-card"
-                style={{
-                  padding: 6,
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  color: "var(--text-primary)",
-                }}
-                onClick={() => setIsGroupModalOpen(true)}
-                title="New Group Chat"
-              >
-                <CustomIcon name="Users" size={18} />
-              </button>
-            )}
-            <button
-              className="glass-card"
-              style={{
-                padding: 6,
-                borderRadius: 8,
-                cursor: "pointer",
-                color: "var(--text-primary)",
-              }}
-              onClick={() => setIsUserModalOpen(true)}
-              title={isCustomer ? "Contact Support" : "New Chat"}
-            >
-              {isCustomer ? (
-                <CustomIcon name="Headset" size={18} />
-              ) : (
-                <CustomIcon name="Plus" size={18} />
-              )}
-            </button>
-          </div>
-        </div>
-
-        <div style={{ padding: "16px 24px" }}>
-          <CustomInput
-            placeholder="Search chats..."
-            value={searchTerm}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setSearchTerm(e.target.value)
-            }
-            icon={<CustomIcon name="Search" size={16} />}
-          />
-        </div>
-
-        <div className={styles.scrollArea}>
-          {filteredConversations.length > 0 ? (
-            filteredConversations.map((conv) => (
-              <div
-                key={conv.id}
-                className={`${styles.conversationItem} ${activeConv === conv.id ? styles.activeItem : ""}`}
-                onClick={() => setActiveConv(conv.id)}
-              >
-                <div
-                  className="glass-card"
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: conv.isGroup ? 12 : "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    overflow: "hidden",
-                    background: conv.isGroup
-                      ? "rgba(124,58,237,0.15)"
-                      : undefined,
-                  }}
-                >
-                  {conv.isGroup ? (
-                    <CustomIcon
-                      name="Users"
-                      size={20}
-                      color="var(--accent-primary)"
-                    />
-                  ) : conv.partner?.image ? (
-                    <img
-                      src={conv.partner.image}
-                      alt=""
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <CustomIcon name="User" size={20} />
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: 4,
-                    }}
-                  >
-                    <span style={{ fontWeight: 600, fontSize: "0.95rem" }}>
-                      {conv.isGroup ? conv.name : conv.partner?.fullname}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "var(--text-muted)",
-                      }}
-                    >
-                      {format(new Date(conv.updatedAt), "HH:mm")}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "0.85rem",
-                        color: "var(--text-muted)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        flex: 1,
-                      }}
-                    >
-                      {conv.recentMessage}
-                    </div>
-                    {unreadCounts[conv.id] > 0 && (
-                      <span className={styles.unreadBadge}>
-                        {unreadCounts[conv.id]}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div
-              style={{
-                textAlign: "center",
-                padding: 40,
-                color: "var(--text-muted)",
-              }}
-            >
-              {searchTerm ? "No chats found" : "No conversations yet"}
-            </div>
-          )}
-        </div>
-      </div>
+      <ConversationSidebar
+        conversations={conversations}
+        activeConv={activeConv}
+        onSelectConv={handleConversationSelect}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        unreadCounts={unreadCounts}
+        canManageGroup={canManageGroup || false}
+        isCustomer={isCustomer || false}
+        onNewGroupClick={handleOpenGroupModal}
+        onNewChatClick={handleOpenUserModal}
+      />
 
       <div className={styles.chatArea}>
-        {activeConv ? (
+        {activeConv && selectedConv ? (
           <>
-            <header className={styles.chatHeader}>
-              <div
-                className="glass-card"
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: selectedConv?.isGroup ? 10 : "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
-                  background: selectedConv?.isGroup
-                    ? "rgba(124,58,237,0.15)"
-                    : undefined,
-                }}
-              >
-                {selectedConv?.isGroup ? (
-                  <CustomIcon
-                    name="Users"
-                    size={20}
-                    color="var(--accent-primary)"
-                  />
-                ) : selectedConv?.partner?.image ? (
-                  <img
-                    src={selectedConv.partner.image}
-                    alt=""
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                ) : (
-                  <CustomIcon name="User" size={20} />
-                )}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600 }}>
-                  {selectedConv?.isGroup
-                    ? selectedConv.name
-                    : selectedConv?.partner?.fullname}
-                </div>
-                <div
-                  style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}
-                >
-                  {selectedConv?.isGroup
-                    ? `${selectedConv.members?.length || 0} members`
-                    : "Active"}
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  className="glass-card"
-                  style={{ padding: 8, borderRadius: 10 }}
-                >
-                  <CustomIcon
-                    name="MoreVertical"
-                    size={20}
-                    color="var(--text-muted)"
-                  />
-                </button>
-                <button
-                  className="glass-card"
-                  style={{ padding: 8, borderRadius: 10, cursor: "pointer" }}
-                  onClick={() => setActiveConv(null)}
-                  title="Close Chat"
-                >
-                  <CustomIcon name="X" size={20} color="var(--text-muted)" />
-                </button>
-              </div>
-            </header>
+            <ChatHeader
+              selectedConv={selectedConv}
+              onViewMembers={() => setIsViewMembersModalOpen(true)}
+              onDeleteChat={handleDeleteChat}
+              onCloseChat={handleCloseChat}
+            />
 
-            <div className={styles.messagesWrapper}>
-              <div
-                className={styles.messagesList}
-                ref={messagesContainerRef}
-                onScroll={handleScroll}
-              >
-                {messages.map((msg) => {
-                  const isOwn = msg.senderId === user?.id;
-                  const hasAttachments =
-                    msg.attachments && msg.attachments.length > 0;
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`${styles.messageWrapper} ${isOwn ? styles.messageOwn : styles.messageOther}`}
-                    >
-                      {selectedConv?.isGroup && !isOwn && msg.sender && (
-                        <span className={styles.senderName}>
-                          {msg.sender.fullname}
-                        </span>
-                      )}
-                      <div
-                        className={`${styles.messageBubble} ${
-                          hasAttachments && !msg.body
-                            ? styles.messageBubbleMedia
-                            : ""
-                        }`}
-                      >
-                        {hasAttachments &&
-                          (msg.attachments!.length === 1 ? (
-                            <button
-                              type="button"
-                              className={styles.attachmentSingle}
-                              onClick={() => openLightbox(msg.attachments!, 0)}
-                              title="View image"
-                            >
-                              <img
-                                src={msg.attachments![0]}
-                                alt="attachment"
-                              />
-                            </button>
-                          ) : (
-                            <div className={styles.attachmentGrid}>
-                              {msg.attachments!.map((src, i) => (
-                                <button
-                                  key={i}
-                                  type="button"
-                                  className={styles.attachmentThumb}
-                                  onClick={() =>
-                                    openLightbox(msg.attachments!, i)
-                                  }
-                                  title="View image"
-                                >
-                                  <img src={src} alt={`attachment-${i}`} />
-                                </button>
-                              ))}
-                            </div>
-                          ))}
-                        {msg.body && (
-                          <span className={styles.messageText}>{msg.body}</span>
-                        )}
-                      </div>
-                      <span className={styles.messageTime}>
-                        {format(new Date(msg.createdAt), "HH:mm")}
-                      </span>
-                    </div>
-                  );
-                })}
-                <div ref={messagesEndRef} />
-              </div>
+            <MessageList
+              messages={messages}
+              userId={user?.id}
+              selectedConv={selectedConv}
+              onReply={setReplyingTo}
+              onDeleteMessage={handleDeleteMessageClick}
+              openLightbox={openLightbox}
+              scrollToBottom={scrollToBottom}
+              showScrollBottom={showScrollBottom}
+              messagesEndRef={messagesEndRef}
+              messagesContainerRef={messagesContainerRef}
+              handleScroll={handleScroll}
+            />
 
-              {showScrollBottom && (
-                <button
-                  className={styles.scrollBottomBtn}
-                  onClick={scrollToBottom}
-                >
-                  <CustomIcon name="ChevronDown" size={20} />
-                </button>
-              )}
-            </div>
-
-            <div className={styles.chatInput}>
-              {attachments.length > 0 && (
-                <div className={styles.attachmentPreviewBar}>
-                  {attachments.map((src, idx) => (
-                    <div key={idx} className={styles.attachmentPreview}>
-                      <img src={src} alt={`preview-${idx}`} />
-                      <button
-                        type="button"
-                        onClick={() => removeAttachment(idx)}
-                        title="Remove"
-                        className={styles.attachmentRemove}
-                      >
-                        <CustomIcon name="X" size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {attachmentError && (
-                <div className={styles.attachmentError}>{attachmentError}</div>
-              )}
-              {(showTicketSuggestions || showProjectSuggestions) && (
-                <div className={styles.suggestionContainer}>
-                  {showTicketSuggestions && (
-                    <div className={styles.suggestionHeader}>
-                      <CustomIcon name="Tag" size={14} /> Mention Ticket
-                    </div>
-                  )}
-                  {showProjectSuggestions && (
-                    <div className={styles.suggestionHeader}>
-                      <CustomIcon name="Briefcase" size={14} /> Mention Project
-                    </div>
-                  )}
-                  <div className={styles.suggestionList}>
-                    {showTicketSuggestions &&
-                      allTickets
-                        .filter(
-                          (t) =>
-                            t.subject.toLowerCase().includes(suggestionQuery.toLowerCase()) ||
-                            String(t.uid).includes(suggestionQuery)
-                        )
-                        .slice(0, 5)
-                        .map((t) => (
-                          <div
-                            key={t.id}
-                            className={styles.suggestionItem}
-                            onClick={() => handleSelectTicket(t)}
-                          >
-                            <span className={styles.ticketUid}>#{t.uid}</span>
-                            <span className={styles.ticketSubject}>{t.subject}</span>
-                          </div>
-                        ))}
-                    {showProjectSuggestions &&
-                      allProjects
-                        .filter((p) =>
-                          p.name.toLowerCase().includes(suggestionQuery.toLowerCase())
-                        )
-                        .slice(0, 5)
-                        .map((p) => (
-                          <div
-                            key={p.id}
-                            className={styles.suggestionItem}
-                            onClick={() => handleSelectProject(p)}
-                          >
-                            <CustomIcon name="Briefcase" size={14} style={{ marginRight: 6 }} />
-                            <span>{p.name}</span>
-                          </div>
-                        ))}
-                    {((showTicketSuggestions &&
-                      allTickets.filter(
-                        (t) =>
-                          t.subject.toLowerCase().includes(suggestionQuery.toLowerCase()) ||
-                          String(t.uid).includes(suggestionQuery)
-                      ).length === 0) ||
-                      (showProjectSuggestions &&
-                        allProjects.filter((p) =>
-                          p.name.toLowerCase().includes(suggestionQuery.toLowerCase())
-                        ).length === 0)) && (
-                      <div className={styles.noSuggestions}>No matches found</div>
-                    )}
-                  </div>
-                </div>
-              )}
-              <form
-                onSubmit={handleSendMessage}
-                className="glass-card"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "8px 16px",
-                  gap: 12,
-                }}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={ACCEPT_ATTRIBUTE}
-                  multiple
-                  onChange={handleAttachmentSelect}
-                  style={{ display: "none" }}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={attachments.length >= MAX_ATTACHMENTS}
-                  title={
-                    attachments.length >= MAX_ATTACHMENTS
-                      ? `Maximum ${MAX_ATTACHMENTS} images`
-                      : "Attach image"
-                  }
-                  className={styles.attachButton}
-                >
-                  <CustomIcon name="Paperclip" size={18} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowTicketSuggestions((prev) => !prev);
-                    setShowProjectSuggestions(false);
-                    setSuggestionQuery("");
-                    fetchTicketsForMentions();
-                  }}
-                  title="Mention Ticket"
-                  className={styles.mentionButton}
-                >
-                  <CustomIcon name="Tag" size={18} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowProjectSuggestions((prev) => !prev);
-                    setShowTicketSuggestions(false);
-                    setSuggestionQuery("");
-                    fetchProjectsForMentions();
-                  }}
-                  title="Mention Project"
-                  className={styles.mentionButton}
-                >
-                  <CustomIcon name="Briefcase" size={18} />
-                </button>
-                <input
-                  type="text"
-                  placeholder="Type a message... (Use # to mention ticket, $ to mention project)"
-                  value={newMessage}
-                  onChange={handleInputChange}
-                  style={{
-                    flex: 1,
-                    background: "transparent",
-                    border: "none",
-                    color: "var(--text-primary)",
-                    outline: "none",
-                  }}
-                />
-                <button
-                  type="submit"
-                  className="bg-gradient"
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 10,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "white",
-                    cursor: "pointer",
-                    flexShrink: 0,
-                  }}
-                  disabled={!newMessage.trim() && attachments.length === 0}
-                >
-                  <CustomIcon name="Send" size={18} />
-                </button>
-              </form>
-            </div>
+            <MessageInput
+              newMessage={newMessage}
+              setNewMessage={setNewMessage}
+              onSendMessage={handleSendMessage}
+              replyingTo={replyingTo}
+              onCancelReply={() => setReplyingTo(null)}
+              attachments={attachments}
+              onAttachmentsChange={handleAttachmentSelect}
+              attachmentError={attachmentError}
+              removeAttachment={removeAttachment}
+              fileInputRef={fileInputRef}
+            />
           </>
         ) : (
           <div
@@ -963,6 +499,7 @@ const Messages: React.FC = () => {
               alignItems: "center",
               justifyContent: "center",
               color: "var(--text-muted)",
+              background: "var(--bg-secondary)",
             }}
           >
             {isCustomer ? (
@@ -984,47 +521,29 @@ const Messages: React.FC = () => {
                 : "Select a conversation to start chatting"}
             </p>
             <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-              <button
-                className="bg-gradient"
-                style={{
-                  padding: "10px 24px",
-                  borderRadius: 8,
-                  color: "white",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-                onClick={() => setIsUserModalOpen(true)}
+              <CustomButton
+                variant="gradient"
+                style={{ padding: "10px 24px" }}
+                onClick={handleOpenUserModal}
+                icon={
+                  isCustomer ? (
+                    <CustomIcon name="Headset" size={16} />
+                  ) : (
+                    <CustomIcon name="Plus" size={16} />
+                  )
+                }
               >
-                {isCustomer ? (
-                  <>
-                    <CustomIcon name="Headset" size={16} /> Contact Support
-                  </>
-                ) : (
-                  <>
-                    <CustomIcon name="Plus" size={16} /> New Chat
-                  </>
-                )}
-              </button>
-              {isStaff && (
-                <button
-                  className="glass-card"
-                  style={{
-                    padding: "10px 20px",
-                    borderRadius: 8,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    color: "var(--text-primary)",
-                  }}
-                  onClick={() => setIsGroupModalOpen(true)}
+                {isCustomer ? "Contact Support" : "New Chat"}
+              </CustomButton>
+              {canManageGroup && (
+                <CustomButton
+                  variant="ghost"
+                  style={{ padding: "10px 20px", color: "var(--text-primary)" }}
+                  onClick={handleOpenGroupModal}
+                  icon={<CustomIcon name="Users" size={16} />}
                 >
-                  <CustomIcon name="Users" size={16} /> New Group
-                </button>
+                  New Group
+                </CustomButton>
               )}
             </div>
           </div>
@@ -1034,10 +553,14 @@ const Messages: React.FC = () => {
       <NewChatModal
         isOpen={isUserModalOpen}
         onClose={() => setIsUserModalOpen(false)}
-        isCustomer={isCustomer}
+        isCustomer={isCustomer || false}
         userSearch={userSearch}
         onUserSearchChange={setUserSearch}
-        filteredUsers={filteredUsers}
+        filteredUsers={users.filter(
+          (u) =>
+            u.fullname.toLowerCase().includes(userSearch.toLowerCase()) ||
+            u.email.toLowerCase().includes(userSearch.toLowerCase()),
+        )}
         onStartChat={startChatWithUser}
       />
 
@@ -1052,65 +575,53 @@ const Messages: React.FC = () => {
         onGroupNameChange={setGroupName}
         userSearch={userSearch}
         onUserSearchChange={setUserSearch}
-        filteredUsers={filteredUsers}
+        filteredUsers={users.filter(
+          (u) =>
+            u.fullname.toLowerCase().includes(userSearch.toLowerCase()) ||
+            u.email.toLowerCase().includes(userSearch.toLowerCase()),
+        )}
         selectedGroupMembers={selectedGroupMembers}
         onToggleMember={toggleGroupMember}
         onCreateGroup={createGroupChat}
       />
 
-      {lightbox &&
-        createPortal(
-          <div
-            onClick={closeLightbox}
-            role="dialog"
-            aria-modal="true"
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 11000,
-              background: "rgba(0, 0, 0, 0.85)",
-              backdropFilter: "blur(4px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 24,
-            }}
-          >
-            <button
-              onClick={closeLightbox}
-              title="Close"
-              style={{
-                position: "absolute",
-                top: 20,
-                right: 20,
-                width: 44,
-                height: 44,
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.1)",
-                border: "none",
-                color: "white",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <CustomIcon name="X" size={24} />
-            </button>
-            <img
-              src={lightbox.images[lightbox.index]}
-              alt="attachment"
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                maxWidth: "90vw",
-                maxHeight: "90vh",
-                objectFit: "contain",
-                borderRadius: 8,
-              }}
-            />
-          </div>,
-          document.body,
-        )}
+      {isAddMembersModalOpen && (
+        <AddGroupMembersModal
+          isOpen={isAddMembersModalOpen}
+          onClose={() => setIsAddMembersModalOpen(false)}
+          users={users}
+          onAddMembers={addMembersToGroup}
+          existingMemberIds={selectedConv?.members?.map((m: any) => m.id) || []}
+        />
+      )}
+
+      {isViewMembersModalOpen && selectedConv?.isGroup && (
+        <ViewGroupMembersModal
+          isOpen={isViewMembersModalOpen}
+          onClose={() => setIsViewMembersModalOpen(false)}
+          members={selectedConv?.members || []}
+          canManageGroup={canManageGroup || false}
+          onAddMemberClick={handleOpenAddMembersModal}
+        />
+      )}
+
+      {lightbox && (
+        <Lightbox
+          images={lightbox.images}
+          index={lightbox.index}
+          onClose={closeLightbox}
+        />
+      )}
+
+      <ConfirmationModal
+        isOpen={!!messageToDelete}
+        onClose={() => setMessageToDelete(null)}
+        onConfirm={confirmDeleteMessage}
+        title="Delete Message"
+        message="Are you sure you want to delete this message? This action cannot be undone."
+        confirmText="Delete"
+        type="danger"
+      />
     </div>
   );
 };

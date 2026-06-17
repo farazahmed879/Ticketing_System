@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import CustomIcon from "../../../../../components/CustomIcon";

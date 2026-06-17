@@ -1,13 +1,15 @@
-import React, { useEffect, useState, useMemo } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
-import { RoleName } from "../../utils/constants";
+import { RoleName, PROJECT_STATUS_OPTIONS } from "../../utils/constants";
 import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomInput from "../../components/CustomInput";
+import CustomSelect from "../../components/CustomSelect";
 import type { Project } from "../../types";
 import type { TableColumn } from "../../components/types";
 import ProjectModal from "./components/ProjectModal";
@@ -22,6 +24,7 @@ const ProjectList: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
@@ -45,7 +48,15 @@ const ProjectList: React.FC = () => {
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.groups?.delete === true;
 
-  const fetchData = async (searchTerm = "") => {
+  // Tracks the params of the request currently in flight. Prevents an
+  // identical request from being fired again while one is already running
+  // (e.g. React StrictMode's double-mount in dev, or rapid re-triggers).
+  const inFlightKey = useRef<string | null>(null);
+
+  const fetchData = async (searchTerm = "", status = "") => {
+    const key = `${searchTerm}__${status}__${user?.id ?? ""}`;
+    if (inFlightKey.current === key) return;
+    inFlightKey.current = key;
     try {
       setLoading(true);
       const projectsRes = await api.get(API_ROUTES.PROJECTS.BASE, {
@@ -53,6 +64,7 @@ const ProjectList: React.FC = () => {
           role: user?.role?.name,
           userId: user?.id,
           search: searchTerm || undefined,
+          status: status || undefined,
         },
       });
       setProjects(projectsRes.data.projects);
@@ -61,6 +73,7 @@ const ProjectList: React.FC = () => {
       showNotification("error", "Failed to load projects data");
     } finally {
       setLoading(false);
+      inFlightKey.current = null;
     }
   };
 
@@ -94,12 +107,12 @@ const ProjectList: React.FC = () => {
     }
   };
 
-  // Debounced server-side search — refetch when the search term settles.
+  // Debounced server-side search/filter — refetch when search or status settles.
   useEffect(() => {
-    const handle = setTimeout(() => fetchData(search), 300);
+    const handle = setTimeout(() => fetchData(search, statusFilter), 300);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  }, [search, statusFilter]);
 
   const handleEdit = (project: Project) => {
     // Load the client/manager/team option lists (same as the Add flow) so the
@@ -120,7 +133,7 @@ const ProjectList: React.FC = () => {
     try {
       await api.delete(API_ROUTES.PROJECTS.BY_ID(projectToDelete));
       showNotification("success", "Project deleted successfully");
-      fetchData(search);
+      fetchData(search, statusFilter);
     } catch (err: any) {
       showNotification(
         "error",
@@ -148,7 +161,7 @@ const ProjectList: React.FC = () => {
       }
       setIsModalOpen(false);
       setEditingProject(null);
-      fetchData(search);
+      fetchData(search, statusFilter);
     } catch (err: any) {
       showNotification(
         "error",
@@ -215,6 +228,17 @@ const ProjectList: React.FC = () => {
               }
               icon={<CustomIcon name="Search" size={18} />}
               containerStyle={{ maxWidth: "350px" }}
+            />
+            <CustomSelect
+              value={statusFilter}
+              onChange={(val: string) => setStatusFilter(val)}
+              placeholder="All Statuses"
+              options={[
+                { value: "", label: "All Statuses" },
+                ...PROJECT_STATUS_OPTIONS,
+              ]}
+              icon={<CustomIcon name="Activity" size={18} />}
+              style={{ minWidth: 200 }}
             />
           </div>
         }

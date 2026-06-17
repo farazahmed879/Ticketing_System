@@ -47,6 +47,7 @@ export const projectController = {
   },
 
   async create(req: Request, res: Response) {
+    
     try {
       const project = await projectRepository.create(req.body);
       res.status(201).json({ success: true, project });

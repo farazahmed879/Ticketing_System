@@ -112,8 +112,6 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
             <TicketSidebarDetails
               ticket={ticket}
               user={user}
-              sidebarDraft={sidebarDraft}
-              onSidebarDraftChange={onSidebarDraftChange}
               statusEditable={statusEditable}
               priorityEditable={priorityEditable}
               assigneeEditable={assigneeEditable}

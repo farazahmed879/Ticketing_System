@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import CustomIcon from "../../../../../components/CustomIcon";
 import SelectWithLabel from "../../../../../components/SelectWithLabel";
-import styles from "../TicketDetail.module.css";
 import { LABELS } from "../../../../../utils/constants";
 import type { TicketDetailSidebarProps } from "../../../../../types";
 

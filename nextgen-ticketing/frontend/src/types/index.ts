@@ -35,6 +35,7 @@ export interface User {
   lastOnline?: string;
   createdAt?: string;
   teamNames?: string[];
+  isLead?: boolean;
 }
 
 export interface Department {
@@ -160,6 +161,11 @@ export interface Message {
   senderId: string;
   createdAt: string;
   sender?: { id: string; fullname: string; image?: string };
+  replyTo?: {
+    id: string;
+    body: string;
+    sender?: { fullname: string };
+  };
 }
 
 export interface UserRequest {
@@ -433,6 +439,7 @@ export interface UserFormData {
   branch?: string;
   leaves?: number;
   image?: string;
+  isLead?: boolean;
 }
 
 export interface ProjectFormData {

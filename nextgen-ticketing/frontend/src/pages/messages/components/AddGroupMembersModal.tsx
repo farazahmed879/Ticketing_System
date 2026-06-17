@@ -1,74 +1,88 @@
-import React from "react";
+import React, { useState } from "react";
 import Modal from "../../../components/Modal";
 import CustomInput from "../../../components/CustomInput";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import styles from "../Messages.module.css";
 
-interface NewGroupModalProps {
+interface AddGroupMembersModalProps {
   isOpen: boolean;
   onClose: () => void;
-  groupName: string;
-  onGroupNameChange: (val: string) => void;
-  userSearch: string;
-  onUserSearchChange: (val: string) => void;
-  filteredUsers: any[];
-  selectedGroupMembers: string[];
-  onToggleMember: (userId: string) => void;
-  onCreateGroup: () => Promise<void>;
+  users: any[];
+  onAddMembers: (memberIds: string[]) => Promise<void>;
+  existingMemberIds: string[];
 }
 
-const NewGroupModal: React.FC<NewGroupModalProps> = ({
+const AddGroupMembersModal: React.FC<AddGroupMembersModalProps> = ({
   isOpen,
   onClose,
-  groupName,
-  onGroupNameChange,
-  userSearch,
-  onUserSearchChange,
-  filteredUsers,
-  selectedGroupMembers,
-  onToggleMember,
-  onCreateGroup,
+  users,
+  onAddMembers,
+  existingMemberIds,
 }) => {
+  const [userSearch, setUserSearch] = useState("");
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+
+  const handleClose = () => {
+    setUserSearch("");
+    setSelectedMembers([]);
+    onClose();
+  };
+
+  const handleToggleMember = (userId: string) => {
+    setSelectedMembers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleAdd = async () => {
+    if (selectedMembers.length === 0) return;
+    await onAddMembers(selectedMembers);
+    handleClose();
+  };
+
+  // Filter out users already in the group
+  const availableUsers = users.filter((u) => !existingMemberIds.includes(u.id));
+  const filteredUsers = availableUsers.filter(
+    (u) =>
+      u.fullname.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.email.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
-      title="Create Group Chat"
+      onClose={handleClose}
+      title="Add Members to Group"
       maxWidth="520px"
       footer={
         <CustomButton
           variant="gradient"
           fullWidth
-          disabled={!groupName.trim() || selectedGroupMembers.length === 0}
-          onClick={onCreateGroup}
+          disabled={selectedMembers.length === 0}
+          onClick={handleAdd}
           style={{ padding: "12px", borderRadius: 10, fontWeight: 700 }}
         >
-          Create Group ({selectedGroupMembers.length} members)
+          Add {selectedMembers.length} member
+          {selectedMembers.length > 1 ? "s" : ""}
         </CustomButton>
       }
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <CustomInput
-          placeholder="Group name..."
-          value={groupName}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            onGroupNameChange(e.target.value)
-          }
-          icon={<CustomIcon name="Users" size={18} />}
-        />
-        <CustomInput
-          placeholder="Search members..."
+          placeholder="Search new members..."
           value={userSearch}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            onUserSearchChange(e.target.value)
+            setUserSearch(e.target.value)
           }
           icon={<CustomIcon name="Search" size={18} />}
         />
-        {selectedGroupMembers.length > 0 && (
+        {selectedMembers.length > 0 && (
           <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-            {selectedGroupMembers.length} member
-            {selectedGroupMembers.length > 1 ? "s" : ""} selected
+            {selectedMembers.length} member
+            {selectedMembers.length > 1 ? "s" : ""} selected
           </div>
         )}
         <div
@@ -82,18 +96,23 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({
         >
           {filteredUsers.length > 0 ? (
             filteredUsers.map((u) => {
-              const isSelected = selectedGroupMembers.includes(u.id);
+              const isSelected = selectedMembers.includes(u.id);
               return (
                 <div
                   key={u.id}
                   className={styles.userSelectItem}
-                  onClick={() => onToggleMember(u.id)}
+                  onClick={() => handleToggleMember(u.id)}
                   style={{
                     background: isSelected ? "rgba(124,58,237,0.1)" : undefined,
                     border: isSelected
                       ? "1px solid rgba(124,58,237,0.3)"
                       : "1px solid transparent",
                     borderRadius: 12,
+                    cursor: "pointer",
+                    padding: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
                   }}
                 >
                   <div
@@ -149,7 +168,7 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({
                 color: "var(--text-muted)",
               }}
             >
-              No users found
+              No available users found
             </div>
           )}
         </div>
@@ -158,4 +177,4 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({
   );
 };
 
-export default NewGroupModal;
+export default AddGroupMembersModal;

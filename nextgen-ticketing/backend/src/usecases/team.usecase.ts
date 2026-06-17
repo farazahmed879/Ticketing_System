@@ -1,5 +1,6 @@
 import { teamRepository } from "../repositories/team.repository";
 import { userRepository } from "../repositories/user.repository";
+import prisma from "../prisma";
 
 export const teamUsecase = {
   async getTeams(
@@ -39,10 +40,22 @@ export const teamUsecase = {
       // getMyTeam (which reads User.teams) would never see the team.
       members: { connect: memberIds.map((id) => ({ id })) },
     };
-    return teamRepository.create(teamData);
+    const team = await teamRepository.create(teamData);
+
+    if (data.teamLeadId) {
+      await prisma.user.update({
+        where: { id: data.teamLeadId },
+        data: { isLead: true } as any,
+      });
+    }
+
+    return team;
   },
 
   async updateTeam(id: string, data: any) {
+    const existingTeam = await teamRepository.findById(id);
+    if (!existingTeam) throw new Error("Team not found");
+
     const updateData: any = {};
     if (data.name) updateData.name = data.name;
     if (data.description !== undefined)
@@ -67,11 +80,59 @@ export const teamUsecase = {
       updateData.members = { connect: [{ id: data.teamLeadId }] };
     }
 
-    return teamRepository.update(id, updateData);
+    const updatedTeam = await teamRepository.update(id, updateData);
+
+    if (
+      data.teamLeadId !== undefined &&
+      data.teamLeadId !== existingTeam.teamLeadId
+    ) {
+      if (data.teamLeadId) {
+        await prisma.user.update({
+          where: { id: data.teamLeadId },
+          data: { isLead: true } as any,
+        });
+      }
+      if (existingTeam.teamLeadId) {
+        const leadsOtherTeams = await prisma.team.findFirst({
+          where: {
+            teamLeadId: existingTeam.teamLeadId,
+            id: { not: id },
+            deleted: false,
+          },
+        });
+        if (!leadsOtherTeams) {
+          await prisma.user.update({
+            where: { id: existingTeam.teamLeadId },
+            data: { isLead: false } as any,
+          });
+        }
+      }
+    }
+
+    return updatedTeam;
   },
 
   async deleteTeam(id: string) {
-    return teamRepository.delete(id);
+    const existingTeam = await teamRepository.findById(id);
+    const result = await teamRepository.delete(id);
+
+    if (existingTeam?.teamLeadId) {
+      const leadsOtherTeams = await prisma.team.findFirst({
+        where: {
+          teamLeadId: existingTeam.teamLeadId,
+          id: { not: id },
+          deleted: false,
+        },
+      });
+      if (!leadsOtherTeams) {
+        await prisma.user.update({
+          where: { id: existingTeam.teamLeadId },
+          data: { isLead: false } as any,
+        });
+      }
+    }
+
+    return result;
   },
 
   async getMyTeam(userId: string) {

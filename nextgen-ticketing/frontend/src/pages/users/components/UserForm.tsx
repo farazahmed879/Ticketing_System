@@ -56,6 +56,7 @@ const UserForm: React.FC<UserFormProps> = ({
         employeeType: "Onsite",
         branch: "",
         leaves: 20,
+        isLead: false,
       },
     });
 
@@ -154,6 +155,7 @@ const UserForm: React.FC<UserFormProps> = ({
         employeeType: initialData.employeeType || "Onsite",
         branch: initialData.branch || "",
         leaves: initialData.leaves ?? 20,
+        isLead: initialData.isLead || false,
       });
       setAvatar(initialData.image || "");
     } else {
@@ -181,6 +183,7 @@ const UserForm: React.FC<UserFormProps> = ({
         employeeType: "Onsite",
         branch: "",
         leaves: 20,
+        isLead: false,
       });
       setAvatar("");
     }
@@ -737,6 +740,32 @@ const UserForm: React.FC<UserFormProps> = ({
                       min: { value: 0, message: "Cannot be negative" },
                     }}
                   />
+                )}
+                {!isClientRole && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      id="isLead"
+                      {...control.register("isLead")}
+                      style={{
+                        width: 16,
+                        height: 16,
+                        accentColor: "var(--primary-color)",
+                        cursor: "pointer",
+                      }}
+                    />
+                    <label
+                      htmlFor="isLead"
+                      style={{
+                        fontSize: "0.9rem",
+                        color: "var(--text-main)",
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      Is Team Lead
+                    </label>
+                  </div>
                 )}
               </div>
 

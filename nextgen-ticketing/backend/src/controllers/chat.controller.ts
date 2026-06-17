@@ -135,4 +135,22 @@ export const chatController = {
       res.status(status).json({ success: false, error: error.message });
     }
   },
+
+  async hideConversation(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      await chatUsecase.hideConversation(req.params.id as string, userId);
+      res.json({ success: true });
+    } catch (error: any) {
+      const status =
+        error.message === "Conversation not found"
+          ? 404
+          : error.message === "Access denied"
+            ? 403
+            : 500;
+      res.status(status).json({ success: false, error: error.message });
+    }
+  },
 };

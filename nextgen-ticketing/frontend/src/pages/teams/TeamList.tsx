@@ -68,7 +68,13 @@ const TeamList: React.FC = () => {
 
       const usersRes = await api.get(API_ROUTES.USERS.BASE + "?limit=1000"); // Get all users for member selection
 
-      setUsers(usersRes.data.accounts);
+      const allUsers = usersRes.data.accounts || [];
+      const internalUsers = allUsers.filter(
+        (u: any) =>
+          u.role?.name !== RoleName.CUSTOMER &&
+          u.role?.roleType !== "isCustomer"
+      );
+      setUsers(internalUsers);
     } catch (err) {
       console.error("Failed to fetch teams data", err);
       showNotification("error", "Failed to load teams data");
@@ -86,6 +92,7 @@ const TeamList: React.FC = () => {
 
   const handleEdit = (team: Team) => {
     setEditingTeam(team);
+    fetchModalApis();
     setIsModalOpen(true);
   };
 

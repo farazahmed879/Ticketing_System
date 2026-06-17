@@ -66,7 +66,7 @@ export function setupSocketEvents(io: Server) {
     broadcastOnlineUsers(io);
 
     // ========== CHAT EVENTS ==========
-    socket.on(SocketEvent.CHAT_SEND, async (data: { roomId: string; body: string; attachments?: string[] }) => {
+    socket.on(SocketEvent.CHAT_SEND, async (data: { roomId: string; body: string; attachments?: string[]; replyToId?: string }) => {
       try {
         const attachments = sanitizeChatAttachments(data.attachments);
         const body = (data.body || '').trim();
@@ -74,8 +74,11 @@ export function setupSocketEvents(io: Server) {
         if (!body && attachments.length === 0) return;
 
         const message = await prisma.chatMessage.create({
-          data: { body, attachments, senderId: user.id, roomId: data.roomId },
-          include: { sender: { select: { id: true, fullname: true, image: true } } },
+          data: { body, attachments, senderId: user.id, roomId: data.roomId, replyToId: data.replyToId },
+          include: { 
+            sender: { select: { id: true, fullname: true, image: true } },
+            replyTo: { select: { id: true, body: true, sender: { select: { fullname: true } } } }
+          },
         });
         await prisma.chatRoom.update({ where: { id: data.roomId }, data: { updatedAt: new Date() } });
 
@@ -110,6 +113,36 @@ export function setupSocketEvents(io: Server) {
         }
       } catch (err) {
         socket.emit('chat:error', { message: 'Failed to send message' });
+      }
+    });
+
+    socket.on('chat:delete_message', async (data: { messageId: string; roomId: string }) => {
+      try {
+        const message = await prisma.chatMessage.findUnique({ where: { id: data.messageId } });
+        if (!message) return;
+        if (message.senderId !== user.id) return; // Must be their own
+        
+        const ageInMs = Date.now() - message.createdAt.getTime();
+        if (ageInMs > 5 * 60 * 1000) {
+          socket.emit('chat:error', { message: 'Can only delete messages within 5 minutes of sending' });
+          return;
+        }
+
+        await prisma.chatMessage.delete({ where: { id: data.messageId } });
+
+        const room = await prisma.chatRoom.findUnique({ where: { id: data.roomId } });
+        if (room) {
+          for (const memberId of room.memberIds) {
+            const memberOnline = onlineUsers.get(memberId);
+            if (memberOnline) {
+              memberOnline.socketIds.forEach((sid) => {
+                io.to(sid).emit('chat:message_deleted', { messageId: data.messageId, roomId: data.roomId });
+              });
+            }
+          }
+        }
+      } catch (err) {
+        socket.emit('chat:error', { message: 'Failed to delete message' });
       }
     });
 

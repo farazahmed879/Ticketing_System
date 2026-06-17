@@ -41,6 +41,7 @@ export const chatRepository = {
           orderBy: { createdAt: "asc" },
           include: {
             sender: { select: { id: true, fullname: true, image: true } },
+            replyTo: { select: { id: true, body: true, sender: { select: { fullname: true } } } },
           },
         },
       },

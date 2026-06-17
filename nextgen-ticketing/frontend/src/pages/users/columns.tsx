@@ -46,7 +46,24 @@ export const getUserColumns = (
           )}
         </div>
         <div>
-          <div style={{ fontWeight: 600 }}>{u.fullname}</div>
+          <div style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+            {u.fullname}
+            {u.isLead && (
+              <span
+                style={{
+                  fontSize: "0.65rem",
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  background: "rgba(124, 58, 237, 0.1)",
+                  color: "var(--primary-color)",
+                  fontWeight: 700,
+                  border: "1px solid rgba(124, 58, 237, 0.2)",
+                }}
+              >
+                LEAD
+              </span>
+            )}
+          </div>
           <div
             style={{
               fontSize: "0.75rem",

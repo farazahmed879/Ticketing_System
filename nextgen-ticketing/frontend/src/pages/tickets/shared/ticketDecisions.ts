@@ -175,15 +175,18 @@ export const handleStatusChange = async (
       user?.role?.name === RoleName.AGENT);
 
   // A ticket owner may take the basic actions on their own ticket (move it to
-  // Open, or Cancel/Fail it) without an explicit board-status permission.
-  // Surfaces that support this pass `ownerId` on the body (the board/modal omit
-  // it, so this is a no-op there).
+  // Open, or Close/Fail/Cancel it — i.e. the client decisions) without an
+  // explicit board-status permission. Surfaces that support this pass `ownerId`
+  // on the body. The backend still enforces the real transition rules.
   const isOwner = !!body.ownerId && body.ownerId === user?.id;
   const isOwnerBasicAction =
     isOwner &&
-    [StatusName.OPEN, StatusName.TRASH, StatusName.FAILED].includes(
-      body.targetStatusName,
-    );
+    [
+      StatusName.OPEN,
+      StatusName.CLOSED,
+      StatusName.TRASH,
+      StatusName.FAILED,
+    ].includes(body.targetStatusName);
 
   const isStatusAllowed =
     user?.role?.name === RoleName.ADMIN ||

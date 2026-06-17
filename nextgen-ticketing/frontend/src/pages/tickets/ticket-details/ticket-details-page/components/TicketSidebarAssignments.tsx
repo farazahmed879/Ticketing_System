@@ -52,6 +52,18 @@ export const TicketSidebarAssignments = ({
                 : undefined,
               image: agent.image,
             })),
+            // Always include the current assignee so it shows even when they
+            // are not in the fetched project-members list.
+            ...(ticket.assignee?.id &&
+            !agents.some((a) => a.id === ticket.assignee?.id)
+              ? [
+                  {
+                    value: ticket.assignee.id,
+                    label: ticket.assignee.fullname,
+                    image: ticket.assignee.image,
+                  },
+                ]
+              : []),
           ]}
           canAssign={canAssign}
           multiple={false}
@@ -87,6 +99,17 @@ export const TicketSidebarAssignments = ({
                 : undefined,
               image: qaUser.image,
             })),
+            // Always include the current QA so it shows even when they are not
+            // in the fetched project-members list.
+            ...(ticket.qa?.id && !qaList.some((q) => q.id === ticket.qa?.id)
+              ? [
+                  {
+                    value: ticket.qa.id,
+                    label: ticket.qa.fullname,
+                    image: ticket.qa.image,
+                  },
+                ]
+              : []),
           ]}
           canAssign={canAssignQA}
           multiple={false}

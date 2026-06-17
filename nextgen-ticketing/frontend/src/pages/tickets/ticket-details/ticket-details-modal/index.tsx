@@ -244,6 +244,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       currentStatusName: displayTicket?.status?.name || "",
       priorityId: displayTicket?.priority?.id,
       assigneeId: displayTicket?.assignee?.id || null,
+      // Owner context so the shared status gate lets the owner take their
+      // decision (Satisfied → Closed, Unsatisfied → Failed, Cancel → Trash).
+      ownerId: displayTicket?.owner?.id,
       issue: displayTicket?.issue,
     };
     onTicketUpdate(body);

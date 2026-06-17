@@ -75,6 +75,18 @@ const TicketAssignments: React.FC<TicketAssignmentsProps> = ({
             sublabel: agent.teamNames?.length ? agent.teamNames.join(', ') : undefined,
             image: agent.image,
           })),
+          // Always include the current assignee so it shows even when they are
+          // not in the fetched project-members list.
+          ...(displayTicket?.assignee?.id &&
+          !users.some((u) => u.id === displayTicket.assignee.id)
+            ? [
+                {
+                  value: displayTicket.assignee.id,
+                  label: displayTicket.assignee.fullname,
+                  image: displayTicket.assignee.image,
+                },
+              ]
+            : []),
         ]}
         canAssign={canAssign}
         multiple={false}
@@ -113,6 +125,18 @@ const TicketAssignments: React.FC<TicketAssignmentsProps> = ({
               sublabel: qaUser.teamNames?.length ? qaUser.teamNames.join(', ') : undefined,
               image: qaUser.image,
             })),
+            // Always include the current QA so it shows even when they are not
+            // in the fetched project-members list.
+            ...(displayTicket?.qa?.id &&
+            !qaList.some((q) => q.id === displayTicket.qa.id)
+              ? [
+                  {
+                    value: displayTicket.qa.id,
+                    label: displayTicket.qa.fullname,
+                    image: displayTicket.qa.image,
+                  },
+                ]
+              : []),
           ]}
           canAssign={canAssignQA}
           multiple={false}

@@ -167,6 +167,10 @@ const TicketDetail: React.FC = () => {
   const canAssign =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.tickets?.assign;
+  // Admins and managers can (re)assign QA, so they need the members list too.
+  const canAssignQA =
+    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.name === RoleName.AGENT;
   const isEmployeeOrClient =
     user?.role?.name === RoleName.EMPLOYEE ||
     user?.role?.name === RoleName.CUSTOMER;
@@ -561,10 +565,10 @@ const TicketDetail: React.FC = () => {
 
   useEffect(() => {
     fetchTicket();
-    if (canAssign && ticket?.id) {
+    if ((canAssign || canAssignQA) && ticket?.id) {
       fetchProjectMembers();
     }
-  }, [id, canAssign, ticket?.project?.id]);
+  }, [id, canAssign, canAssignQA, ticket?.project?.id]);
 
   useEffect(() => {
     const handleTicketUpdate = (data: { ticketId: string }) => {

@@ -45,7 +45,7 @@ const Messages: React.FC = () => {
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-  const [unreadMessageNotifications, setUnreadMessageNotifications] = useState<any[]>([]);
+  const [, setUnreadMessageNotifications] = useState<any[]>([]);
 
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();

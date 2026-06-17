@@ -322,6 +322,8 @@ export interface TicketDetailCommentsProps {
   isSubmittingComment: boolean;
   commentSendDisabled: boolean;
   openLightbox: (images: string[], index: number) => void;
+  /** Caps the comment feed to ~the sidebar height (measured by the page). */
+  feedHeight?: number;
 }
 
 export interface TicketDetailAttachmentsProps {

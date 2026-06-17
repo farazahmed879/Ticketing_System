@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import CustomIcon from "../../../../../components/CustomIcon";
 import CustomInput from "../../../../../components/CustomInput";
 import CustomButton from "../../../../../components/CustomButton";
 import styles from "../TicketDetailModal.module.css";
+import cs from "../../../shared/commentThread.module.css";
 import { RoleName } from "../../../../../utils/constants";
 import {
   ACCEPT_ATTRIBUTE,
@@ -53,7 +54,21 @@ const CommentSection = ({
     commentSendDisabled;
 
   return (
-    <div className={styles.commentsContainer}>
+    <div
+      className={`${styles.commentsContainer} ${cs.thread}`}
+      style={
+        isInternal
+          ? {
+              // Distinct amber tint so the team can see at a glance they are
+              // in the internal (team-only) thread.
+              background: "rgba(245, 158, 11, 0.18)",
+              border: "1px solid rgba(245, 158, 11, 0.6)",
+              borderRadius: 12,
+              padding: 10,
+            }
+          : undefined
+      }
+    >
       {!canViewInternal && (
         <label
           style={{
@@ -133,7 +148,7 @@ const CommentSection = ({
       >
         {fullTicketData ? (
           <>
-            <div className={styles.commentsList}>
+            <div className={`${styles.commentsList} ${cs.scroll}`}>
               {visibleComments.length > 0 ? (
                 visibleComments.map((comment: any) => {
                   // Your own comments align right with a distinct background;
@@ -152,16 +167,12 @@ const CommentSection = ({
                       }}
                     >
                       <div
+                        className={`${cs.card} ${isOwnComment ? cs.cardOwn : ""}`}
                         style={{
                           maxWidth: "85%",
                           padding: "10px 12px",
-                          borderRadius: 14,
                           borderBottomRightRadius: isOwnComment ? 4 : 14,
                           borderBottomLeftRadius: isOwnComment ? 14 : 4,
-                          background: isOwnComment
-                            ? "rgba(var(--primary-rgb), 0.12)"
-                            : "var(--bg-card)",
-                          border: "1px solid var(--border-glass)",
                         }}
                       >
                         <div
@@ -172,29 +183,7 @@ const CommentSection = ({
                             marginBottom: 6,
                           }}
                         >
-                          <div
-                            style={{
-                              width: 26,
-                              height: 26,
-                              borderRadius: "50%",
-                              flexShrink: 0,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "0.72rem",
-                              fontWeight: 700,
-                              background: isOwnComment
-                                ? "rgba(var(--primary-rgb), 0.25)"
-                                : isClientComment
-                                  ? "rgba(6, 182, 212, 0.22)"
-                                  : "rgba(255,255,255,0.08)",
-                              color: isOwnComment
-                                ? "var(--accent-primary)"
-                                : isClientComment
-                                  ? "var(--accent-secondary)"
-                                  : "var(--text-secondary)",
-                            }}
-                          >
+                          <div className={cs.avatar}>
                             {comment.author.fullname?.charAt(0)?.toUpperCase()}
                           </div>
                           <div style={{ minWidth: 0, flex: 1 }}>
@@ -237,20 +226,14 @@ const CommentSection = ({
                               )}
                             </div>
                             <span
-                              title={format(
-                                new Date(comment.createdAt),
-                                "MMM d, yyyy 'at' h:mm a",
-                              )}
                               style={{
                                 fontSize: "0.66rem",
                                 color: "var(--text-muted)",
                               }}
                             >
-                              {formatDistanceToNow(
+                              {format(
                                 new Date(comment.createdAt),
-                                {
-                                  addSuffix: true,
-                                },
+                                "MMM d, yyyy 'at' h:mm a",
                               )}
                             </span>
                           </div>
@@ -318,17 +301,13 @@ const CommentSection = ({
                   );
                 })
               ) : (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "40px 20px",
-                    color: "var(--text-muted)",
-                    fontSize: "0.9rem",
-                    border: "1px dashed var(--border-glass)",
-                    borderRadius: 12,
-                  }}
-                >
-                  {isInternal ? "No internal notes yet." : "No comments yet."}
+                <div className={cs.empty}>
+                  <div className={cs.emptyIcon}>
+                    <CustomIcon name="MessageSquare" size={24} />
+                  </div>
+                  {isInternal
+                    ? "No internal notes yet. Share context with the team here."
+                    : "No comments yet. Be the first to share your thoughts."}
                 </div>
               )}
               <div ref={listEndRef} />

@@ -5,6 +5,12 @@
   align-items: start;
 }
 
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .ticketInfo {
   padding: 32px;
   margin-bottom: 32px;
@@ -130,14 +136,29 @@
 .commentFeed {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-height: 520px;
-  overflow-y: auto;
+  gap: 12px;
+  /* Height is set inline to ~the sidebar's height (measured by the page) so
+     the feed shows about a sidebar's worth of comments and a little more — no
+     more. Falls back to a viewport cap before the measurement lands. The tabs
+     header and the input stay put while only .commentsScroll scrolls. */
+  max-height: calc(100vh - 200px);
+  overflow: hidden;
   /* Distinct, slightly recessed panel so the chat bubbles stand out. */
   background: var(--bg-main);
   border: 1px solid var(--border-glass);
   border-radius: 14px;
   padding: 16px;
+}
+
+/* Scrollable comment list — sits between the fixed tabs header and the fixed
+   input. Sizes to its content, scrolling only once the feed hits its cap. */
+.commentsScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .comment {
@@ -184,8 +205,9 @@
 }
 
 .commentInput {
-  margin-top: 32px;
-  padding: 24px;
+  /* Pinned at the bottom of the comment feed; the list scrolls above it. */
+  flex-shrink: 0;
+  padding: 16px;
 }
 
 .inputWrapper {

@@ -71,6 +71,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const [newComment, setNewComment] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  // Confirm before a staff member posts on the client-visible (public) thread.
+  const [showPublicCommentConfirm, setShowPublicCommentConfirm] =
+    useState(false);
 
   // Lightbox state
   const [lightbox, setLightbox] = useState<{
@@ -246,16 +249,14 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     onTicketUpdate(body);
   };
 
-  const handleAddComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim() && commentAttachments.length === 0) return;
-    if (commentSendDisabled) return;
-
+  const submitComment = async (isInternal: boolean) => {
     setIsSubmittingComment(true);
     try {
       await api.post(API_ROUTES.TICKETS.COMMENTS(ticket.id), {
         comment: newComment,
-        isNote: false,
+        // Comments sent from the Internal tab are saved as internal notes so
+        // they stay in the internal thread (and are hidden from clients).
+        isNote: isInternal,
         attachments: commentAttachments,
       });
       setNewComment("");
@@ -269,6 +270,23 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     } finally {
       setIsSubmittingComment(false);
     }
+  };
+
+  const handleAddComment = (
+    e: React.FormEvent,
+    isInternal: boolean = false,
+  ) => {
+    e.preventDefault();
+    if (!newComment.trim() && commentAttachments.length === 0) return;
+    if (commentSendDisabled) return;
+
+    // A staff member posting on the public (client-visible) thread is asked to
+    // confirm first, so they don't accidentally expose an internal remark.
+    if (!isClient && !isInternal) {
+      setShowPublicCommentConfirm(true);
+      return;
+    }
+    submitComment(isInternal);
   };
 
   const handleCommentAttachmentSelect = async (
@@ -680,6 +698,20 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         message="You have unsaved changes. If you close now, your changes will be discarded."
         confirmText="Discard Changes"
         cancelText="Keep Editing"
+        type="warning"
+      />
+
+      <ConfirmationModal
+        isOpen={showPublicCommentConfirm}
+        onClose={() => setShowPublicCommentConfirm(false)}
+        onConfirm={() => {
+          setShowPublicCommentConfirm(false);
+          submitComment(false);
+        }}
+        title="Post public comment?"
+        message="This comment will be visible to the client. Are you sure you want to post it here? Use the Internal tab for team-only notes."
+        confirmText="Yes, Post Comment"
+        cancelText="Cancel"
         type="warning"
       />
 

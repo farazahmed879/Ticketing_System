@@ -161,7 +161,7 @@ const TicketBoard: React.FC = () => {
   };
 
   const getStatuses = () => {
-    return user?.role?.name === RoleName.EMPLOYEE
+    return user?.role?.name === RoleName.EMPLOYEE && !user.isLead
       ? TICKET_STATUSES.filter(
           (s: any) => s.name !== StatusName.NEW && s.name !== StatusName.TRASH,
         )

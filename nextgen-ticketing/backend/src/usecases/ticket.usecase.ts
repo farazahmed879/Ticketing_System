@@ -1123,7 +1123,7 @@ export const ticketUsecase = {
       Array.from(notifyIds).map(async (targetUserId) => {
         const notification = await ticketRepository.createNotification({
           title: "New Comment",
-          message: `New comment on Ticket #${ticket.uid} by ${ctx.authorFullname}`,
+          message: `On Ticket #${ticket.uid} by ${ctx.authorFullname}`,
           type: "comment",
           userId: targetUserId,
           data: {

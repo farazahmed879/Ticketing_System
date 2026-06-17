@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import CustomIcon from "../../../../../components/CustomIcon";
 import CustomButton from "../../../../../components/CustomButton";
 import CustomTextArea from "../../../../../components/CustomTextArea";
@@ -8,6 +8,7 @@ import {
   MAX_ATTACHMENTS,
 } from "../../../../../utils/attachments";
 import styles from "../TicketDetail.module.css";
+import cs from "../../../shared/commentThread.module.css";
 import { RoleName } from "../../../../../utils/constants";
 import type { TicketDetailCommentsProps } from "../../../../../components/types";
 
@@ -27,6 +28,7 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
   isSubmittingComment,
   commentSendDisabled,
   openLightbox,
+  feedHeight,
 }) => {
   // Internal (team-only) comments are hidden from clients — they only see the
   // public "All" tab. Switching tabs also sets whether a new comment is a note.
@@ -53,7 +55,21 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
   }, [visibleComments.length, activeTab]);
 
   return (
-    <div className={styles.commentFeed}>
+    <div
+      className={`${styles.commentFeed} ${cs.thread}`}
+      style={{
+        // Cap the feed to ~the sidebar's height ("a little more, not more").
+        ...(feedHeight ? { height: feedHeight } : {}),
+        ...(isInternal
+          ? {
+              // Distinct amber tint so the team can see at a glance they are
+              // in the internal (team-only) thread.
+              background: "rgba(245, 158, 11, 0.18)",
+              borderColor: "rgba(245, 158, 11, 0.6)",
+            }
+          : {}),
+      }}
+    >
       {canViewInternal && (
         <div
           style={{
@@ -61,6 +77,7 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
             gap: 6,
             padding: 4,
             marginBottom: 4,
+            flexShrink: 0,
             background: "rgba(255,255,255,0.04)",
             border: "1px solid var(--border-glass)",
             borderRadius: 10,
@@ -105,18 +122,19 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
           })}
         </div>
       )}
+      <div className={`${styles.commentsScroll} ${cs.scroll}`}>
+      {/* Push a short thread to the bottom (next to the composer) so the feed
+          fills the column without an awkward mid-panel gap. Collapses to 0 when
+          the list overflows, so scrolling stays intact. */}
+      {visibleComments.length > 0 && <div style={{ marginTop: "auto" }} />}
       {visibleComments.length === 0 && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "32px 20px",
-            color: "var(--text-muted)",
-            fontSize: "0.9rem",
-            border: "1px dashed var(--border-glass)",
-            borderRadius: 12,
-          }}
-        >
-          {isInternal ? "No internal notes yet." : "No comments yet."}
+        <div className={cs.empty}>
+          <div className={cs.emptyIcon}>
+            <CustomIcon name="MessageSquare" size={24} />
+          </div>
+          {isInternal
+            ? "No internal notes yet. Share context with the team here."
+            : "No comments yet. Be the first to share your thoughts."}
         </div>
       )}
       {visibleComments.map((comment) => {
@@ -137,16 +155,12 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
             }}
           >
             <div
+              className={`${cs.card} ${isOwnComment ? cs.cardOwn : ""}`}
               style={{
                 maxWidth: "78%",
                 padding: "10px 14px",
-                borderRadius: 16,
                 borderBottomRightRadius: isOwnComment ? 4 : 16,
                 borderBottomLeftRadius: isOwnComment ? 16 : 4,
-                background: isOwnComment
-                  ? "rgba(var(--primary-rgb), 0.12)"
-                  : "var(--bg-card)",
-                border: "1px solid var(--border-glass)",
               }}
             >
               <div
@@ -157,29 +171,7 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
                   marginBottom: 6,
                 }}
               >
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    flexShrink: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    background: isOwnComment
-                      ? "rgba(var(--primary-rgb), 0.25)"
-                      : isClientComment
-                        ? "rgba(6, 182, 212, 0.22)"
-                        : "rgba(255,255,255,0.08)",
-                    color: isOwnComment
-                      ? "var(--accent-primary)"
-                      : isClientComment
-                        ? "var(--accent-secondary)"
-                        : "var(--text-secondary)",
-                  }}
-                >
+                <div className={cs.avatar}>
                   {comment.author.fullname?.charAt(0)?.toUpperCase()}
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
@@ -221,16 +213,11 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
                       </span>
                     )}
                   </div>
-                  <span
-                    className={styles.time}
-                    title={format(
+                  <span className={styles.time}>
+                    {format(
                       new Date(comment.createdAt),
                       "MMM d, yyyy 'at' h:mm a",
                     )}
-                  >
-                    {formatDistanceToNow(new Date(comment.createdAt), {
-                      addSuffix: true,
-                    })}
                   </span>
                 </div>
               </div>
@@ -297,8 +284,9 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
         );
       })}
       <div ref={listEndRef} />
+      </div>
 
-      <div className={`${styles.commentInput} glass-card`}>
+      <div className={`${styles.commentInput} ${cs.inputGlow} glass-card`}>
         <form onSubmit={handleAddComment} className={styles.inputWrapper}>
           <CustomTextArea
             placeholder={
@@ -309,6 +297,18 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
             rows={4}
             value={newComment}
             onChange={(e: any) => setNewComment(e.target.value)}
+            onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+              // Enter sends the comment; Shift+Enter inserts a newline.
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (
+                  !commentSendDisabled &&
+                  (newComment.trim() || commentAttachments.length > 0)
+                ) {
+                  handleAddComment(e as unknown as React.FormEvent);
+                }
+              }
+            }}
             style={{ width: "100%", resize: "none" }}
           />
           {commentAttachments.length > 0 && (

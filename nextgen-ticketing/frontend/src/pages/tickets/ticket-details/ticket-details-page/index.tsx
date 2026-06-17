@@ -87,6 +87,11 @@ const TicketDetail: React.FC = () => {
   >(null);
   const commentFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Measure the sidebar so the comment feed can be capped to roughly its
+  // height ("sidebar length and a little more") instead of running longer.
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const [feedHeight, setFeedHeight] = useState<number | undefined>(undefined);
+
   const [lightbox, setLightbox] = useState<{
     images: string[];
     index: number;
@@ -131,6 +136,9 @@ const TicketDetail: React.FC = () => {
   const [agents, setAgents] = useState<any[]>([]);
   const [qaList, setQaList] = useState<any[]>([]);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  // Confirm before a staff member posts on the client-visible (public) thread.
+  const [showPublicCommentConfirm, setShowPublicCommentConfirm] =
+    useState(false);
   const [pendingUpdate, setPendingUpdate] = useState<any>(null);
   const [pendingDecision, setPendingDecision] = useState<ClientDecision | null>(
     null,
@@ -152,6 +160,7 @@ const TicketDetail: React.FC = () => {
     navigate(`/messages?userId=${userId}`);
   };
 
+  const isClient = user?.role?.name === RoleName.CUSTOMER;
   const canAssign =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.tickets?.assign;
@@ -502,11 +511,7 @@ const TicketDetail: React.FC = () => {
     setCommentAttachmentError(null);
   };
 
-  const handleAddComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim() && commentAttachments.length === 0) return;
-    if (commentSendDisabled) return;
-
+  const submitComment = async () => {
     setIsSubmittingComment(true);
     try {
       await api.post(API_ROUTES.TICKETS.COMMENTS(id!), {
@@ -515,7 +520,6 @@ const TicketDetail: React.FC = () => {
         attachments: commentAttachments,
       });
       setNewComment("");
-      setIsNote(false);
       setCommentAttachments([]);
       setCommentAttachmentError(null);
       setCommentCooldownActive(true);
@@ -530,6 +534,20 @@ const TicketDetail: React.FC = () => {
     } finally {
       setIsSubmittingComment(false);
     }
+  };
+
+  const handleAddComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() && commentAttachments.length === 0) return;
+    if (commentSendDisabled) return;
+
+    // A staff member posting on the public (client-visible) thread is asked to
+    // confirm first, so they don't accidentally expose an internal remark.
+    if (!isClient && !isNote) {
+      setShowPublicCommentConfirm(true);
+      return;
+    }
+    submitComment();
   };
 
   const handleClientDecision = async (decision: ClientDecision) => {
@@ -558,6 +576,18 @@ const TicketDetail: React.FC = () => {
       socket.off("ticket:updated", handleTicketUpdate);
     };
   }, [id]);
+
+  // Track the sidebar's height and size the comment feed to match it
+  // (plus a little). Keeps the feed from extending well past the sidebar.
+  useEffect(() => {
+    const el = sidebarRef.current;
+    if (!el) return;
+    const update = () => setFeedHeight(el.offsetHeight + 48);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ticket, activeTab]);
 
   if (loading || !ticket) return <TicketDetailSkeleton />;
 
@@ -759,25 +789,28 @@ const TicketDetail: React.FC = () => {
               isSubmittingComment={isSubmittingComment}
               commentSendDisabled={commentSendDisabled}
               openLightbox={openLightbox}
+              feedHeight={feedHeight}
             />
           ) : (
             <TicketDetailHistory ticket={ticket} />
           )}
         </div>
 
-        <TicketDetailSidebar
-          ticket={ticket}
-          user={user}
-          statuses={statuses}
-          priorities={priorities}
-          agents={agents}
-          qaList={qaList}
-          canUpdatePriority={canUpdatePriority}
-          canAssign={canAssign}
-          sidebarDraft={sidebarDraft}
-          onSidebarDraftChange={onSidebarDraftChange}
-          handleStartChat={handleStartChat}
-        />
+        <div ref={sidebarRef}>
+          <TicketDetailSidebar
+            ticket={ticket}
+            user={user}
+            statuses={statuses}
+            priorities={priorities}
+            agents={agents}
+            qaList={qaList}
+            canUpdatePriority={canUpdatePriority}
+            canAssign={canAssign}
+            sidebarDraft={sidebarDraft}
+            onSidebarDraftChange={onSidebarDraftChange}
+            handleStartChat={handleStartChat}
+          />
+        </div>
 
         <ConfirmationModal
           isOpen={isConfirmModalOpen}
@@ -810,6 +843,20 @@ const TicketDetail: React.FC = () => {
             if (decision) handleClientDecision(decision);
           }}
           {...getDecisionDialog(pendingDecision)}
+        />
+
+        <ConfirmationModal
+          isOpen={showPublicCommentConfirm}
+          onClose={() => setShowPublicCommentConfirm(false)}
+          onConfirm={() => {
+            setShowPublicCommentConfirm(false);
+            submitComment();
+          }}
+          title="Post public comment?"
+          message="This comment will be visible to the client. Are you sure you want to post it here? Use the Internal tab for team-only notes."
+          confirmText="Yes, Post Comment"
+          cancelText="Cancel"
+          type="warning"
         />
       </div>
 

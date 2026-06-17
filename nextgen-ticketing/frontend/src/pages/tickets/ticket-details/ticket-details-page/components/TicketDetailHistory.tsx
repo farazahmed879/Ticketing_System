@@ -1,17 +1,29 @@
 import React from "react";
 import { formatDistanceToNow } from "date-fns";
 import styles from "../TicketDetail.module.css";
+import cs from "../../../shared/commentThread.module.css";
 import type { TicketDetail as ITicketDetail } from "../../../../../types";
 
 interface TicketDetailHistoryProps {
   ticket: ITicketDetail;
+  /** Matches the comment area's height so History scrolls to the same size. */
+  feedHeight?: number;
 }
 
 const TicketDetailHistory: React.FC<TicketDetailHistoryProps> = ({
   ticket,
+  feedHeight,
 }) => {
   return (
-    <div className={styles.historyList}>
+    <div
+      className={`${styles.historyList} ${cs.scroll}`}
+      style={{
+        height: feedHeight,
+        maxHeight: feedHeight ? undefined : "calc(100vh - 200px)",
+        overflowY: "auto",
+        paddingRight: 8,
+      }}
+    >
       {ticket.history.map((item) => (
         <div key={item.id} className={styles.historyItem}>
           <div style={{ flex: 1 }}>

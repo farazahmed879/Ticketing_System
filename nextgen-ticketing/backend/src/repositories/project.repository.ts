@@ -3,12 +3,16 @@ import { TICKET_STATUSES, PRIORITIES } from "../utils/constants";
 
 export const projectRepository = {
   async findMany(params: any = {}) {
-    const { departmentId, clientId, managerId, status, search } = params;
+    const { departmentId, clientId, managerId, teamMemberId, status, search } =
+      params;
     const where: any = { deleted: false };
 
     if (departmentId) where.departmentId = departmentId;
     if (clientId) where.clientIds = { has: clientId };
     if (managerId) where.managerId = managerId;
+    // Only projects whose team(s) include this user as a member.
+    if (teamMemberId)
+      where.teams = { some: { memberIds: { has: teamMemberId } } };
     if (status) where.status = status;
 
     if (search && String(search).trim()) {

@@ -3,37 +3,37 @@ import styles from "../TicketDetail.module.css";
 import { RoleName, StatusName } from "../../../../../utils/constants";
 import type { TicketDetailSidebarProps } from "../../../../../types";
 
+/**
+ * Renders the Status / Priority editors — but only the ones the current user can
+ * actually edit. Non-editable values are shown by TicketSidebarDetails as plain
+ * one-line rows instead of a box.
+ */
 export const TicketSidebarStatusPriority = ({
   ticket,
   user,
   statuses,
   priorities,
-  canUpdatePriority,
   canAssign,
   sidebarDraft,
   onSidebarDraftChange,
-}: Pick<TicketDetailSidebarProps, "ticket" | "user" | "statuses" | "priorities" | "canUpdatePriority" | "canAssign" | "sidebarDraft" | "onSidebarDraftChange">) => {
+  statusEditable,
+  priorityEditable,
+}: Pick<
+  TicketDetailSidebarProps,
+  | "ticket"
+  | "user"
+  | "statuses"
+  | "priorities"
+  | "canUpdatePriority"
+  | "canAssign"
+  | "sidebarDraft"
+  | "onSidebarDraftChange"
+> & { statusEditable: boolean; priorityEditable: boolean }) => {
   return (
     <>
-      <div className={styles.sidebarItem}>
-        <span className={styles.sidebarLabel}>Status</span>
-
-        {user?.role?.name === RoleName.EMPLOYEE &&
-        ticket.status?.name === StatusName.APPROVED ? (
-          // Employees cannot change the status of an Approved ticket.
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                background: ticket.status.color,
-                flexShrink: 0,
-              }}
-            />
-            <span style={{ fontSize: "0.9rem" }}>{ticket.status.name}</span>
-          </div>
-        ) : (
+      {statusEditable && (
+        <div className={styles.sidebarItem}>
+          <span className={styles.sidebarLabel}>Status</span>
           <CustomSelect
             options={statuses.map((s) => ({
               value: s.id,
@@ -62,12 +62,12 @@ export const TicketSidebarStatusPriority = ({
             onChange={(val: string) => onSidebarDraftChange("statusId", val)}
             placeholder="Change status..."
           />
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className={styles.sidebarItem}>
-        <span className={styles.sidebarLabel}>Priority</span>
-        {canUpdatePriority ? (
+      {priorityEditable && (
+        <div className={styles.sidebarItem}>
+          <span className={styles.sidebarLabel}>Priority</span>
           <CustomSelect
             options={priorities.map((p) => ({
               value: p.id,
@@ -87,21 +87,8 @@ export const TicketSidebarStatusPriority = ({
             onChange={(val: string) => onSidebarDraftChange("priorityId", val)}
             placeholder="Priority"
           />
-        ) : (
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                background: ticket.priority.color,
-                flexShrink: 0,
-              }}
-            />
-            <span style={{ fontSize: "0.9rem" }}>{ticket.priority.name}</span>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 };

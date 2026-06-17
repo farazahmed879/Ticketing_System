@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { format } from "date-fns";
 import CustomIcon from "../../../../../components/CustomIcon";
 import CustomButton from "../../../../../components/CustomButton";
@@ -15,10 +15,9 @@ import type { TicketDetailCommentsProps } from "../../../../../components/types"
 const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
   ticket,
   user,
+  isInternal,
   newComment,
   setNewComment,
-  isNote: _,
-  setIsNote,
   commentAttachments,
   commentAttachmentError,
   commentFileInputRef,
@@ -30,29 +29,16 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
   openLightbox,
   feedHeight,
 }) => {
-  // Internal (team-only) comments are hidden from clients — they only see the
-  // public "All" tab. Switching tabs also sets whether a new comment is a note.
-  const canViewInternal = user.role.name !== RoleName.CUSTOMER;
-  // Default to the Internal tab for staff; clients only ever have the public tab.
-  const [activeTab, setActiveTab] = useState<"all" | "internal">(
-    canViewInternal ? "internal" : "all",
-  );
-  const isInternal = canViewInternal && activeTab === "internal";
-
-  // Keep the parent's note flag in sync with the active tab (covers the
-  // default tab on mount as well as tab switches).
-  useEffect(() => {
-    setIsNote(isInternal);
-  }, [isInternal, setIsNote]);
+  // Which thread to show is driven by the parent's Comments/Internal tab.
   const visibleComments = ticket.comments.filter((c: any) =>
     isInternal ? c.isNote : !c.isNote,
   );
   const listEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to the latest comment when one is added or the tab changes.
+  // Auto-scroll to the latest comment when one is added or the thread changes.
   useEffect(() => {
     listEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [visibleComments.length, activeTab]);
+  }, [visibleComments.length, isInternal]);
 
   return (
     <div
@@ -70,58 +56,6 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
           : {}),
       }}
     >
-      {canViewInternal && (
-        <div
-          style={{
-            display: "flex",
-            gap: 6,
-            padding: 4,
-            marginBottom: 4,
-            flexShrink: 0,
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid var(--border-glass)",
-            borderRadius: 10,
-          }}
-        >
-          {(
-            [
-              { key: "all", label: "Comments", icon: "MessageCircle" },
-              { key: "internal", label: "Internal", icon: "Lock" },
-            ] as const
-          ).map((tab) => {
-            const active = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => {
-                  setActiveTab(tab.key);
-                  setIsNote(tab.key === "internal");
-                }}
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 6,
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  background: active ? "var(--accent-primary)" : "transparent",
-                  color: active ? "#fff" : "var(--text-secondary)",
-                  transition: "var(--transition-fast)",
-                }}
-              >
-                <CustomIcon name={tab.icon} size={15} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
       <div className={`${styles.commentsScroll} ${cs.scroll}`}>
       {/* Push a short thread to the bottom (next to the composer) so the feed
           fills the column without an awkward mid-panel gap. Collapses to 0 when
@@ -288,38 +222,24 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
 
       <div className={`${styles.commentInput} ${cs.inputGlow} glass-card`}>
         <form onSubmit={handleAddComment} className={styles.inputWrapper}>
-          <CustomTextArea
-            placeholder={
-              isInternal
-                ? "Add an internal note (visible to the team only)..."
-                : "Type your message here..."
-            }
-            rows={4}
-            value={newComment}
-            onChange={(e: any) => setNewComment(e.target.value)}
-            onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-              // Enter sends the comment; Shift+Enter inserts a newline.
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                if (
-                  !commentSendDisabled &&
-                  (newComment.trim() || commentAttachments.length > 0)
-                ) {
-                  handleAddComment(e as unknown as React.FormEvent);
-                }
-              }
-            }}
-            style={{ width: "100%", resize: "none" }}
-          />
-          {commentAttachments.length > 0 && (
-            <div
+          {isInternal && (
+            <span
               style={{
                 display: "flex",
-                flexWrap: "wrap",
-                gap: 8,
-                marginTop: 8,
+                alignItems: "center",
+                gap: 6,
+                fontSize: "0.8rem",
+                fontWeight: 600,
+                color: "var(--accent-warning, #f59e0b)",
               }}
             >
+              <CustomIcon name="Lock" size={14} />
+              Posting as internal note
+            </span>
+          )}
+
+          {commentAttachments.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {commentAttachments.map((src, idx) => (
                 <div
                   key={idx}
@@ -373,7 +293,6 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
               style={{
                 fontSize: "0.75rem",
                 color: "var(--accent-danger)",
-                marginTop: 4,
               }}
             >
               {commentAttachmentError}
@@ -387,49 +306,77 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
             onChange={handleCommentAttachmentSelect}
             style={{ display: "none" }}
           />
-          <div className={styles.inputActions}>
-            {isInternal ? (
-              <span
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  color: "var(--accent-warning, #f59e0b)",
-                }}
-              >
-                <CustomIcon name="Lock" size={14} />
-                Posting as internal note
-              </span>
-            ) : null}
-            <CustomButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => commentFileInputRef.current?.click()}
-              disabled={commentAttachments.length >= MAX_ATTACHMENTS}
-              icon={<CustomIcon name="Paperclip" size={16} />}
-              title={
-                commentAttachments.length >= MAX_ATTACHMENTS
-                  ? `Maximum ${MAX_ATTACHMENTS} images reached`
-                  : "Attach image"
+
+          {/* Textarea with the attach + send buttons docked inside it. */}
+          <div style={{ position: "relative" }}>
+            <CustomTextArea
+              placeholder={
+                isInternal
+                  ? "Add an internal note (visible to the team only)..."
+                  : "Type your message here..."
               }
-              style={{ marginLeft: "auto" }}
+              rows={2}
+              autoResize
+              value={newComment}
+              onChange={(e: any) => setNewComment(e.target.value)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                // Enter sends the comment; Shift+Enter inserts a newline.
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (
+                    !commentSendDisabled &&
+                    (newComment.trim() || commentAttachments.length > 0)
+                  ) {
+                    handleAddComment(e as unknown as React.FormEvent);
+                  }
+                }
+              }}
+              style={{
+                width: "100%",
+                resize: "none",
+                minHeight: 56,
+                maxHeight: 160,
+                overflowY: "auto",
+                paddingRight: 92,
+              }}
             />
-            <CustomButton
-              type="submit"
-              variant="gradient"
-              icon={<CustomIcon name="Send" size={16} />}
-              disabled={
-                commentSendDisabled ||
-                (!newComment.trim() && commentAttachments.length === 0)
-              }
-              loading={isSubmittingComment}
-              title="Send comment"
+            <div
+              style={{
+                position: "absolute",
+                right: 10,
+                bottom: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
             >
-              Send
-            </CustomButton>
+              <CustomButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => commentFileInputRef.current?.click()}
+                disabled={commentAttachments.length >= MAX_ATTACHMENTS}
+                icon={<CustomIcon name="Paperclip" size={16} />}
+                title={
+                  commentAttachments.length >= MAX_ATTACHMENTS
+                    ? `Maximum ${MAX_ATTACHMENTS} images reached`
+                    : "Attach image"
+                }
+                style={{ width: 34, height: 34, padding: 0, borderRadius: 8 }}
+              />
+              <CustomButton
+                type="submit"
+                variant="gradient"
+                icon={<CustomIcon name="Send" size={16} />}
+                disabled={
+                  commentSendDisabled ||
+                  (!newComment.trim() && commentAttachments.length === 0)
+                }
+                loading={isSubmittingComment}
+                title="Send comment"
+                style={{ width: 34, height: 34, padding: 0, borderRadius: 8 }}
+              />
+            </div>
           </div>
         </form>
       </div>

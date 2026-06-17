@@ -50,9 +50,9 @@ const TicketDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [ticket, setTicket] = useState<ITicketDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"comments" | "history">(
-    "comments",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "comments" | "internal" | "history"
+  >("comments");
   const [newComment, setNewComment] = useState("");
   const [isNote, setIsNote] = useState(false);
 
@@ -760,10 +760,26 @@ const TicketDetail: React.FC = () => {
           <div className={styles.tabs}>
             <div
               className={`${styles.tab} ${activeTab === "comments" ? styles.tabActive : ""}`}
-              onClick={() => setActiveTab("comments")}
+              onClick={() => {
+                setActiveTab("comments");
+                setIsNote(false);
+              }}
             >
-              Comments ({ticket.comments.length})
+              Comments (
+              {ticket.comments.filter((c: any) => !c.isNote).length})
             </div>
+            {user?.role?.name !== RoleName.CUSTOMER && (
+              <div
+                className={`${styles.tab} ${activeTab === "internal" ? styles.tabActive : ""}`}
+                onClick={() => {
+                  setActiveTab("internal");
+                  setIsNote(true);
+                }}
+              >
+                Internal (
+                {ticket.comments.filter((c: any) => c.isNote).length})
+              </div>
+            )}
             <div
               className={`${styles.tab} ${activeTab === "history" ? styles.tabActive : ""}`}
               onClick={() => setActiveTab("history")}
@@ -772,10 +788,11 @@ const TicketDetail: React.FC = () => {
             </div>
           </div>
 
-          {activeTab === "comments" ? (
+          {activeTab !== "history" ? (
             <TicketDetailComments
               ticket={ticket}
               user={user}
+              isInternal={activeTab === "internal"}
               newComment={newComment}
               setNewComment={setNewComment}
               isNote={isNote}
@@ -792,7 +809,7 @@ const TicketDetail: React.FC = () => {
               feedHeight={feedHeight}
             />
           ) : (
-            <TicketDetailHistory ticket={ticket} />
+            <TicketDetailHistory ticket={ticket} feedHeight={feedHeight} />
           )}
         </div>
 

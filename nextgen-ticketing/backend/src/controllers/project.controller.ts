@@ -21,6 +21,11 @@ export const projectController = {
         query.managerId = userId;
       }
 
+      // Employee: only projects whose team(s) they belong to.
+      if (role === RoleName.EMPLOYEE && userId) {
+        query.teamMemberId = userId;
+      }
+
       const projects = await projectRepository.findMany(query);
       res.json({ success: true, projects });
     } catch (err: any) {

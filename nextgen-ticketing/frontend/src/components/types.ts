@@ -96,6 +96,8 @@ export interface CustomTextAreaProps<
   name?: Path<T>;
   control?: Control<T>;
   rules?: RegisterOptions<T, Path<T>>;
+  /** Grow the textarea height to fit its content (capped by CSS max-height). */
+  autoResize?: boolean;
 }
 
 export interface TableColumn<T> {
@@ -307,6 +309,8 @@ export interface StandardListLayoutProps {
 export interface TicketDetailCommentsProps {
   ticket: TicketDetail;
   user: any;
+  /** Which thread to show — driven by the parent's Comments/Internal tab. */
+  isInternal: boolean;
   newComment: string;
   setNewComment: (val: string) => void;
   isNote: boolean;

@@ -707,6 +707,7 @@ export const ticketUsecase = {
           statusId: existingTicket.statusId,
           qaId: existingTicket.qaId,
           subject: existingTicket.subject,
+          projectId: existingTicket.projectId,
         },
         data: {
           statusId: data.statusId,
@@ -852,6 +853,17 @@ export const ticketUsecase = {
       }
       notifySet.delete(ctx.assigneeId);
 
+      const projectTeams = await ticketRepository.findTeamsByMembersAndProjects(
+        [],
+        [ticket.projectId],
+      );
+
+      for (const team of projectTeams) {
+        if (team.teamLeadId) {
+          notifySet.add(team.teamLeadId);
+        }
+      }
+
       const staffNotifications = await Promise.all(
         Array.from(notifySet).map(async (sId: string) => {
           const notification = await ticketRepository.createNotification({
@@ -907,7 +919,7 @@ export const ticketUsecase = {
       : changeSummary;
 
     // Perform all necessary DB lookups in parallel to save DB hits
-    const [admins, fullTicket, owner] = await Promise.all([
+    const [admins, fullTicket, owner, projectTeams] = await Promise.all([
       ticketRepository.findAdmins(),
       ticketRepository.findTicketById(ctx.ticketId),
       ctx.existingTicket.ownerId
@@ -916,6 +928,12 @@ export const ticketUsecase = {
             select: { role: { select: { name: true, roleType: true } } },
           })
         : Promise.resolve(null),
+      ctx.existingTicket.projectId
+        ? ticketRepository.findTeamsByMembersAndProjects(
+            [],
+            [ctx.existingTicket.projectId],
+          )
+        : Promise.resolve([]),
     ]);
 
     // Check owner roles
@@ -947,6 +965,13 @@ export const ticketUsecase = {
     const qaId = ctx.data.qaId ?? ctx.existingTicket.qaId;
     if (qaId) {
       notifyIds.add(qaId);
+    }
+
+    // Add team leads associated with the ticket's project
+    for (const team of projectTeams) {
+      if (team.teamLeadId) {
+        notifyIds.add(team.teamLeadId);
+      }
     }
 
     // A new (non-null) assignee, different from before, counts as an assignment.
@@ -1077,6 +1102,17 @@ export const ticketUsecase = {
       notifyIds.add(ticket.assigneeId);
     if (ticket.ownerId && ticket.ownerId !== ctx.authorId)
       notifyIds.add(ticket.ownerId);
+
+    const projectTeams = await ticketRepository.findTeamsByMembersAndProjects(
+      [],
+      [ticket.projectId],
+    );
+
+    for (const team of projectTeams) {
+      if (team.teamLeadId) {
+        notifyIds.add(team.teamLeadId);
+      }
+    }
 
     // If a client commented, notify managers
     const author = await prisma.user.findUnique({

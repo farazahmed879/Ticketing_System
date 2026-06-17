@@ -203,6 +203,16 @@ export const ticketRepository = {
     });
   },
 
+  async findTeamLeads() {
+    return prisma.user.findMany({
+      where: {
+        isLead: true,
+        deleted: false,
+      },
+      select: { id: true },
+    });
+  },
+
   async updateMany(ids: string[], data: any) {
     return prisma.ticket.updateMany({
       where: { id: { in: ids } },

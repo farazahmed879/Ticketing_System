@@ -54,7 +54,10 @@ export const ticketController = {
 
   async getTicketById(req: AuthRequest, res: Response) {
     try {
-      const ticket = await ticketUsecase.getTicketById(req.params.id as string, req.user);
+      const ticket = await ticketUsecase.getTicketById(
+        req.params.id as string,
+        req.user,
+      );
       res.json({ success: true, ticket });
     } catch (error: any) {
       const status = error.message === "Ticket not found" ? 404 : 500;

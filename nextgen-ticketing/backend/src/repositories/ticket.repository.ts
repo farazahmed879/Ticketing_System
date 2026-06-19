@@ -226,6 +226,15 @@ export const ticketRepository = {
     });
   },
 
+  // Project ids a manager manages (Project.managerId === user).
+  async findManagedProjectIds(userId: string) {
+    const projects = await prisma.project.findMany({
+      where: { deleted: false, managerId: userId },
+      select: { id: true },
+    });
+    return projects.map((p) => p.id);
+  },
+
   // Project ids a client is attached to (Project.clientIds contains the user).
   async findClientProjectIds(userId: string) {
     const projects = await prisma.project.findMany({
@@ -249,6 +258,24 @@ export const ticketRepository = {
       for (const m of t.memberIds) ids.add(m);
     }
     return Array.from(ids);
+  },
+
+  // Project ids of every team this user is the lead of (so a team lead can see
+  // the unassigned tickets in their team's project(s)). Resolved from the
+  // Project side (Project.teamIds) so it works even if Team.projectIds is not
+  // in sync.
+  async findLedTeamProjectIds(userId: string) {
+    const ledTeams = await prisma.team.findMany({
+      where: { deleted: false, teamLeadId: userId },
+      select: { id: true },
+    });
+    const ledTeamIds = ledTeams.map((t) => t.id);
+    if (!ledTeamIds.length) return [];
+    const projects = await prisma.project.findMany({
+      where: { deleted: false, teamIds: { hasSome: ledTeamIds } },
+      select: { id: true },
+    });
+    return projects.map((p) => p.id);
   },
 
   // Teams used to resolve a ticket's team lead: any team that belongs to one of

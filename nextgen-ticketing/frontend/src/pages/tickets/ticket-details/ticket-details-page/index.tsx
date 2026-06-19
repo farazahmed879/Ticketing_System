@@ -164,9 +164,12 @@ const TicketDetail: React.FC = () => {
   };
 
   const isClient = user?.role?.name === RoleName.CUSTOMER;
+  // Team leads of the ticket's project can assign it to their team members.
+  const isLeadOfTicket = !!ticket?.teamLeadIds?.includes(user?.id ?? "");
   const canAssign =
     user?.role?.name === RoleName.ADMIN ||
-    user?.role?.permissions?.tickets?.assign;
+    user?.role?.permissions?.tickets?.assign ||
+    isLeadOfTicket;
   // Admins and managers can (re)assign QA, so they need the members list too.
   const canAssignQA =
     user?.role?.name === RoleName.ADMIN ||
@@ -262,9 +265,11 @@ const TicketDetail: React.FC = () => {
   // --- Detect changes ---
   const hasContentChanges = (() => {
     if (!ticket) return false;
+    // Trim both sides — otherwise a stored subject/issue with surrounding
+    // whitespace would always read as "changed" and keep the Update bar shown.
     return (
-      subjectDraft.trim() !== ticket.subject ||
-      issueDraft.trim() !== ticket.issue ||
+      subjectDraft.trim() !== (ticket.subject || "").trim() ||
+      issueDraft.trim() !== (ticket.issue || "").trim() ||
       JSON.stringify(attachmentsDraft) !==
         JSON.stringify(ticket.attachments || [])
     );
@@ -379,11 +384,11 @@ const TicketDetail: React.FC = () => {
   const buildUpdatePayload = () => {
     const payload: any = {};
 
-    // Content changes
-    if (subjectDraft.trim() !== ticket!.subject) {
+    // Content changes (trim both sides to match the dirty-detection logic).
+    if (subjectDraft.trim() !== (ticket!.subject || "").trim()) {
       payload.subject = subjectDraft.trim();
     }
-    if (issueDraft.trim() !== ticket!.issue) {
+    if (issueDraft.trim() !== (ticket!.issue || "").trim()) {
       payload.issue = issueDraft.trim();
     }
     if (

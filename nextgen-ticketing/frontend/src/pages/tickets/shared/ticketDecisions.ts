@@ -202,11 +202,12 @@ export const handleStatusChange = async (
     return;
   }
 
-  // Extra restrictions for a team lead acting on a team member's ticket
-  // (not their own).
+  // A team lead acting on a team member's ticket (not their own) manages it
+  // (assign → Open, review a Resolved ticket) but does not do the dev work
+  // itself, so they cannot move it into In Progress or Resolved.
   if (teamLeadIds.includes(user?.id) && body.assigneeId !== user?.id) {
     if (
-      [StatusName.OPEN, StatusName.IN_PROCESS, StatusName.RESOLVED].includes(
+      [StatusName.IN_PROCESS, StatusName.RESOLVED].includes(
         body.targetStatusName,
       ) &&
       body.currentStatusName !== body.targetStatusName
@@ -215,13 +216,6 @@ export const handleStatusChange = async (
         "error",
         UIMessages.BOARD.ACCESS_DENIED(body.targetStatusName || "this status"),
       );
-      return;
-    }
-    if (
-      ![StatusName.RESOLVED].includes(body.currentStatusName) &&
-      body.targetStatusName !== body.currentStatusName
-    ) {
-      showNotification("error", UIMessages.BOARD.UPDATE_STATUS_CHANGED);
       return;
     }
   }

@@ -262,6 +262,98 @@ const ProjectDetail: React.FC = () => {
             </div>
           )}
 
+          {/* Assigned Teams */}
+          <div className="glass-card" style={{ padding: 24 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                marginBottom: 20,
+              }}
+            >
+              <CustomIcon
+                name="Users"
+                size={20}
+                color="var(--accent-primary)"
+              />
+              <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
+                Teams ({project.teams?.length || 0})
+              </h3>
+            </div>
+            {project.teams && project.teams.length > 0 ? (
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 12 }}
+              >
+                {project.teams.map((t) => (
+                  <div
+                    key={t.id}
+                    onClick={() => navigate(`/teams/${t.id}`)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        navigate(`/teams/${t.id}`);
+                      }
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid var(--border-glass)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background:
+                          "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "white",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <CustomIcon name="Users" size={16} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: "0.95rem", fontWeight: 500 }}>
+                        {t.name}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "var(--text-muted)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                          marginTop: 2,
+                        }}
+                      >
+                        <CustomIcon name="UserCheck" size={12} />
+                        {t.teamLead?.fullname
+                          ? `Lead: ${t.teamLead.fullname}`
+                          : "No lead assigned"}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+                No teams assigned to this project.
+              </p>
+            )}
+          </div>
+
           {/* Clients */}
           <div className="glass-card" style={{ padding: 24 }}>
             <div

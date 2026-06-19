@@ -78,13 +78,40 @@ export const ticketUsecase = {
           ],
         },
       ];
-    } else if (user.role !== RoleName.ADMIN && user.role !== RoleName.AGENT) {
+    } else if (user.role === RoleName.AGENT) {
+      // Managers see tickets in the projects they manage, plus any ticket they
+      // personally own or are assigned.
+      const managedProjectIds = await ticketRepository.findManagedProjectIds(
+        user.id,
+      );
+      const visibility: any[] = [
+        { ownerId: user.id },
+        { assigneeId: user.id },
+      ];
+      if (managedProjectIds.length) {
+        visibility.push({ projectId: { in: managedProjectIds } });
+      }
+      where.AND = [...(where.AND || []), { OR: visibility }];
+    } else if (user.role !== RoleName.ADMIN) {
       // Regular users see tickets they own or are assigned. Team leads also see
-      // every ticket assigned to a member of any team they lead
-      // (ticket -> assignee -> team -> teamLead === user).
+      // every ticket assigned to a member of any team they lead, plus every
+      // UNASSIGNED ticket in the project(s) their team is on.
       const visibility: any[] = [{ ownerId: user.id }, { assigneeId: user.id }];
       if (myLedMemberIds.length) {
         visibility.push({ assigneeId: { in: myLedMemberIds } });
+      }
+      const ledProjectIds = await ticketRepository.findLedTeamProjectIds(
+        user.id,
+      );
+      if (ledProjectIds.length) {
+        // Unassigned = no assignee. On MongoDB the field can be either null
+        // (explicitly unassigned) or unset (never assigned), so match both.
+        visibility.push({
+          AND: [
+            { projectId: { in: ledProjectIds } },
+            { OR: [{ assigneeId: null }, { assigneeId: { isSet: false } }] },
+          ],
+        });
       }
       where.AND = [...(where.AND || []), { OR: visibility }];
     }

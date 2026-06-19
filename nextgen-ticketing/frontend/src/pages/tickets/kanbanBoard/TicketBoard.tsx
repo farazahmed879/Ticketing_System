@@ -256,7 +256,22 @@ const TicketBoard: React.FC = () => {
       const allTickets = ticketsRes.data.tickets;
       const allStatuses = getStatuses();
 
-      const boardColumns: Column[] = allStatuses.map((s: any) => ({
+      // The backend already decides which tickets a user may see. If it returns
+      // a ticket whose status the role's default column set hides (e.g. an
+      // unassigned/New ticket for a team lead), add that column so the ticket
+      // isn't silently dropped.
+      const coveredIds = new Set(allStatuses.map((s: any) => s.id));
+      const extraStatuses = TICKET_STATUSES.filter(
+        (s: any) =>
+          !coveredIds.has(s.id) &&
+          s.name !== StatusName.TRASH &&
+          allTickets.some((t: Ticket) => t.status.id === s.id),
+      );
+      const orderedStatuses = [...allStatuses, ...extraStatuses].sort(
+        (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0),
+      );
+
+      const boardColumns: Column[] = orderedStatuses.map((s: any) => ({
         id: s.id,
         name: s.name,
         color: s.color,
@@ -303,9 +318,13 @@ const TicketBoard: React.FC = () => {
     ticket: Ticket,
     targetStatusName: string,
   ) => {
+    // Admins, managers and the ticket's team lead assign via the modal — moving
+    // a ticket to Assigned/Open opens the detail modal so an assignee is picked.
+    const isLeadOfTicket = !!ticket?.teamLeadIds?.includes(user?.id ?? "");
     if (
       (user?.role?.name === RoleName.ADMIN ||
-        user?.role.name === RoleName.AGENT) &&
+        user?.role.name === RoleName.AGENT ||
+        isLeadOfTicket) &&
       targetStatusName === StatusName.OPEN
     ) {
       showNotification(

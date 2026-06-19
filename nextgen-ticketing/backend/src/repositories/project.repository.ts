@@ -44,7 +44,13 @@ export const projectRepository = {
         department: { select: { id: true, name: true } },
         clients: { select: { id: true, fullname: true, image: true } },
         manager: { select: { id: true, fullname: true, image: true } },
-        teams: { select: { id: true, name: true } },
+        teams: {
+          select: {
+            id: true,
+            name: true,
+            teamLead: { select: { id: true, fullname: true, image: true } },
+          },
+        },
         tickets: {
           where: { deleted: false },
           select: {

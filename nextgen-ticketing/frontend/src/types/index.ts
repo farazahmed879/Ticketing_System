@@ -82,7 +82,11 @@ export interface Project {
   managerId?: string;
   manager?: { id: string; fullname: string; image?: string };
   teamIds?: string[];
-  teams?: { id: string; name: string }[];
+  teams?: {
+    id: string;
+    name: string;
+    teamLead?: { id: string; fullname: string; image?: string };
+  }[];
   tickets?: {
     id: string;
     uid: number;

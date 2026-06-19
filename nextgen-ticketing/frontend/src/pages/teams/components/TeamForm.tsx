@@ -4,6 +4,7 @@ import CustomInput from "../../../components/CustomInput";
 import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomMultiSelect from "../../../components/CustomMultiSelect";
+import { RoleName } from "../../../utils/constants";
 import type { Team, User } from "../../../types";
 
 interface TeamFormData {
@@ -57,12 +58,15 @@ const TeamForm: React.FC<TeamFormProps> = ({
     }
   }, [initialData, reset]);
 
-  const userOptions = users.map((u) => ({
-    value: u.id,
-    label: u.fullname,
-    sublabel: u.email,
-    image: u.image,
-  }));
+  // Managers cannot be added to a team (neither as members nor as lead).
+  const userOptions = users
+    .filter((u) => u.role?.name !== RoleName.AGENT)
+    .map((u) => ({
+      value: u.id,
+      label: u.fullname,
+      sublabel: u.email,
+      image: u.image,
+    }));
 
   return (
     <form

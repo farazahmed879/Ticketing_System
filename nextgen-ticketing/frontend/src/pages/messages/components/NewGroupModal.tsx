@@ -13,6 +13,7 @@ interface NewGroupModalProps {
   userSearch: string;
   onUserSearchChange: (val: string) => void;
   filteredUsers: any[];
+  onlineUserIds: Set<string>;
   selectedGroupMembers: string[];
   onToggleMember: (userId: string) => void;
   onCreateGroup: () => Promise<void>;
@@ -26,6 +27,7 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({
   userSearch,
   onUserSearchChange,
   filteredUsers,
+  onlineUserIds,
   selectedGroupMembers,
   onToggleMember,
   onCreateGroup,
@@ -96,35 +98,52 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({
                     borderRadius: 12,
                   }}
                 >
-                  <div
-                    className="glass-card"
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      overflow: "hidden",
-                      color: "var(--text-primary)",
-                    }}
-                  >
-                    {u.image ? (
-                      <img
-                        src={u.image}
-                        alt=""
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    ) : (
-                      <CustomIcon name="User" size={20} />
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <div
+                      className="glass-card"
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
+                        color: "var(--text-primary)",
+                      }}
+                    >
+                      {u.image ? (
+                        <img
+                          src={u.image}
+                          alt=""
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        <CustomIcon name="User" size={20} />
+                      )}
+                    </div>
+                    {onlineUserIds.has(u.id) && (
+                      <span className={styles.onlineDot} />
                     )}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600 }}>{u.fullname}</div>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      {u.fullname}
+                      {onlineUserIds.has(u.id) && (
+                        <span className={styles.onlineTag}>Online</span>
+                      )}
+                    </div>
                     <div
                       style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}
                     >

@@ -13,6 +13,7 @@ interface ConversationSidebarProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   unreadCounts: Record<string, number>;
+  onlineUserIds: Set<string>;
   canManageGroup: boolean;
   isCustomer: boolean;
   onNewGroupClick: () => void;
@@ -26,6 +27,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   searchTerm,
   onSearchChange,
   unreadCounts,
+  onlineUserIds,
   canManageGroup,
   isCustomer,
   onNewGroupClick,
@@ -98,40 +100,47 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
               }`}
               onClick={() => onSelectConv(conv.id)}
             >
-              <div
-                className="glass-card"
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: conv.isGroup ? 12 : "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
-                  background: conv.isGroup
-                    ? "rgba(124,58,237,0.15)"
-                    : undefined,
-                }}
-              >
-                {conv.isGroup ? (
-                  <CustomIcon
-                    name="Users"
-                    size={20}
-                    color="var(--accent-primary)"
-                  />
-                ) : conv.partner?.image ? (
-                  <img
-                    src={conv.partner.image}
-                    alt=""
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                ) : (
-                  <CustomIcon name="User" size={20} />
-                )}
+              <div style={{ position: "relative", flexShrink: 0 }}>
+                <div
+                  className="glass-card"
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: conv.isGroup ? 12 : "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
+                    background: conv.isGroup
+                      ? "rgba(124,58,237,0.15)"
+                      : undefined,
+                  }}
+                >
+                  {conv.isGroup ? (
+                    <CustomIcon
+                      name="Users"
+                      size={20}
+                      color="var(--accent-primary)"
+                    />
+                  ) : conv.partner?.image ? (
+                    <img
+                      src={conv.partner.image}
+                      alt=""
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <CustomIcon name="User" size={20} />
+                  )}
+                </div>
+                {!conv.isGroup &&
+                  conv.partner &&
+                  onlineUserIds.has(conv.partner.id) && (
+                    <span className={styles.onlineDot} />
+                  )}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div

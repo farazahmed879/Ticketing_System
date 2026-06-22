@@ -9,6 +9,7 @@ interface AddGroupMembersModalProps {
   isOpen: boolean;
   onClose: () => void;
   users: any[];
+  onlineUserIds: Set<string>;
   onAddMembers: (memberIds: string[]) => Promise<void>;
   existingMemberIds: string[];
 }
@@ -17,6 +18,7 @@ const AddGroupMembersModal: React.FC<AddGroupMembersModalProps> = ({
   isOpen,
   onClose,
   users,
+  onlineUserIds,
   onAddMembers,
   existingMemberIds,
 }) => {
@@ -115,35 +117,52 @@ const AddGroupMembersModal: React.FC<AddGroupMembersModalProps> = ({
                     gap: "12px",
                   }}
                 >
-                  <div
-                    className="glass-card"
-                    style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      overflow: "hidden",
-                      color: "var(--text-primary)",
-                    }}
-                  >
-                    {u.image ? (
-                      <img
-                        src={u.image}
-                        alt=""
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    ) : (
-                      <CustomIcon name="User" size={20} />
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <div
+                      className="glass-card"
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
+                        color: "var(--text-primary)",
+                      }}
+                    >
+                      {u.image ? (
+                        <img
+                          src={u.image}
+                          alt=""
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        <CustomIcon name="User" size={20} />
+                      )}
+                    </div>
+                    {onlineUserIds.has(u.id) && (
+                      <span className={styles.onlineDot} />
                     )}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600 }}>{u.fullname}</div>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      {u.fullname}
+                      {onlineUserIds.has(u.id) && (
+                        <span className={styles.onlineTag}>Online</span>
+                      )}
+                    </div>
                     <div
                       style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}
                     >

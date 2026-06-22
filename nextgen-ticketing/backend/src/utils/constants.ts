@@ -167,6 +167,7 @@ export const SocketEvent = {
   NOTIFICATIONS_UPDATE: "notifications:update",
   NOTIFICATIONS_NEW: "notifications:new",
   USERS_ONLINE: "users:online",
+  USERS_GET_ONLINE: "users:getOnline",
 } as const;
 export type SocketEvent = (typeof SocketEvent)[keyof typeof SocketEvent];
 

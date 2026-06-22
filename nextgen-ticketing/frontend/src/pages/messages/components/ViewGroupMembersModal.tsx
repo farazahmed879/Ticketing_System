@@ -2,11 +2,13 @@ import React from "react";
 import Modal from "../../../components/Modal";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
+import styles from "../Messages.module.css";
 
 interface ViewGroupMembersModalProps {
   isOpen: boolean;
   onClose: () => void;
   members: any[];
+  onlineUserIds: Set<string>;
   canManageGroup?: boolean;
   onAddMemberClick?: () => void;
 }
@@ -15,6 +17,7 @@ const ViewGroupMembersModal: React.FC<ViewGroupMembersModalProps> = ({
   isOpen,
   onClose,
   members,
+  onlineUserIds,
   canManageGroup,
   onAddMemberClick,
 }) => {
@@ -62,35 +65,47 @@ const ViewGroupMembersModal: React.FC<ViewGroupMembersModalProps> = ({
               background: "rgba(124, 58, 237, 0.05)",
             }}
           >
-            <div
-              className="glass-card"
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                overflow: "hidden",
-                color: "var(--text-primary)",
-              }}
-            >
-              {member.image ? (
-                <img
-                  src={member.image}
-                  alt=""
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                />
-              ) : (
-                <CustomIcon name="User" size={20} />
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <div
+                className="glass-card"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                  color: "var(--text-primary)",
+                }}
+              >
+                {member.image ? (
+                  <img
+                    src={member.image}
+                    alt=""
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <CustomIcon name="User" size={20} />
+                )}
+              </div>
+              {onlineUserIds.has(member.id) && (
+                <span className={styles.onlineDot} />
               )}
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600 }}>{member.fullname}</div>
+              <div
+                style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}
+              >
+                {member.fullname}
+                {onlineUserIds.has(member.id) && (
+                  <span className={styles.onlineTag}>Online</span>
+                )}
+              </div>
               <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
                 {member.role?.name || "Member"}
               </div>

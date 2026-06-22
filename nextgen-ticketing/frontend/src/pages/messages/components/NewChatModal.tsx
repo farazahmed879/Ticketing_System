@@ -11,6 +11,7 @@ interface NewChatModalProps {
   userSearch: string;
   onUserSearchChange: (val: string) => void;
   filteredUsers: any[];
+  onlineUserIds: Set<string>;
   onStartChat: (userId: string) => void;
 }
 
@@ -21,6 +22,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
   userSearch,
   onUserSearchChange,
   filteredUsers,
+  onlineUserIds,
   onStartChat,
 }) => {
   return (
@@ -55,31 +57,36 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
                 className={styles.userSelectItem}
                 onClick={() => onStartChat(u.id)}
               >
-                <div
-                  className="glass-card"
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    overflow: "hidden",
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  {u.image ? (
-                    <img
-                      src={u.image}
-                      alt=""
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <CustomIcon name="User" size={20} />
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <div
+                    className="glass-card"
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      overflow: "hidden",
+                      color: "var(--text-primary)",
+                    }}
+                  >
+                    {u.image ? (
+                      <img
+                        src={u.image}
+                        alt=""
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <CustomIcon name="User" size={20} />
+                    )}
+                  </div>
+                  {onlineUserIds.has(u.id) && (
+                    <span className={styles.onlineDot} />
                   )}
                 </div>
                 <div>
@@ -92,6 +99,9 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
                     }}
                   >
                     {u.fullname}
+                    {onlineUserIds.has(u.id) && (
+                      <span className={styles.onlineTag}>Online</span>
+                    )}
                     <span
                       style={{
                         fontSize: "0.7rem",

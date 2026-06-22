@@ -109,6 +109,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           style={{ display: "none" }}
         />
         <CustomButton
+          type="button"
           variant="ghost"
           onClick={() => fileInputRef.current?.click()}
           disabled={attachments.length >= MAX_ATTACHMENTS}

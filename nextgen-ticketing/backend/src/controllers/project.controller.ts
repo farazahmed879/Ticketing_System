@@ -26,8 +26,19 @@ export const projectController = {
         query.teamMemberId = userId;
       }
 
-      const projects = await projectRepository.findMany(query);
-      res.json({ success: true, projects });
+      // Pagination
+      const limitVal = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+      const pageVal = req.query.page ? parseInt(req.query.page as string) : undefined;
+
+      const take = limitVal && limitVal !== -1 ? limitVal : undefined;
+      const skip = pageVal !== undefined && take !== undefined ? pageVal * take : undefined;
+
+      // Remove pagination keys from query to prevent filtering on them in repository where clause
+      delete query.limit;
+      delete query.page;
+
+      const { projects, total } = await projectRepository.findMany(query, skip, take);
+      res.json({ success: true, projects, total });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
     }

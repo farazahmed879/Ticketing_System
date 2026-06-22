@@ -2,7 +2,7 @@ import prisma from "../prisma";
 import { TICKET_STATUSES, PRIORITIES } from "../utils/constants";
 
 export const projectRepository = {
-  async findMany(params: any = {}) {
+  async findMany(params: any = {}, skip?: number, take?: number) {
     const { departmentId, clientId, managerId, teamMemberId, status, search } =
       params;
     const where: any = { deleted: false };
@@ -25,16 +25,23 @@ export const projectRepository = {
       ];
     }
 
-    return prisma.project.findMany({
-      where,
-      include: {
-        department: { select: { id: true, name: true } },
-        clients: { select: { id: true, fullname: true, image: true } },
-        manager: { select: { id: true, fullname: true, image: true } },
-        teams: { select: { id: true, name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const [projects, total] = await prisma.$transaction([
+      prisma.project.findMany({
+        where,
+        include: {
+          department: { select: { id: true, name: true } },
+          clients: { select: { id: true, fullname: true, image: true } },
+          manager: { select: { id: true, fullname: true, image: true } },
+          teams: { select: { id: true, name: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+      }),
+      prisma.project.count({ where }),
+    ]);
+
+    return { projects, total };
   },
 
   async findById(id: string) {

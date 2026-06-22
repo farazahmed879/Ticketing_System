@@ -6,6 +6,7 @@ export const candidateRepository = {
       where: { ...where, deleted: false },
       include: {
         _count: { select: { interviews: true } },
+        createdBy: { select: { id: true, fullname: true, image: true } },
       },
       skip,
       take,
@@ -21,6 +22,7 @@ export const candidateRepository = {
     return prisma.candidate.findFirst({
       where: { id, deleted: false },
       include: {
+        createdBy: { select: { id: true, fullname: true, image: true } },
         interviews: {
           where: { deleted: false },
           include: {

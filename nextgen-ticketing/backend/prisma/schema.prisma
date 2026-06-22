@@ -63,6 +63,7 @@ model User {
   approvedTimesheets TimesheetEntry[] @relation("TimesheetApprover")
 
   announcements Announcement[]
+  createdCandidates Candidate[] @relation("CandidateCreator")
 
   scheduledInterviews Interview[]         @relation("InterviewScheduler")
   interviewPanels     InterviewPanel[]
@@ -399,6 +400,11 @@ model Candidate {
   dob             DateTime?
   nationality     String?
   city            String?
+  immediateJoiner Boolean     @default(false)
+
+  createdById     String?     @db.ObjectId
+  createdBy       User?       @relation("CandidateCreator", fields: [createdById], references: [id])
+
   interviews      Interview[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt

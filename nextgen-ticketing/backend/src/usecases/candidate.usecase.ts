@@ -8,14 +8,18 @@ import { resumeParserService } from "../services/resumeParserService";
 
 export const candidateUsecase = {
   async getAllCandidates(filters: any) {
-    const { search, status, position, skills, aiPrompt, limit, page } = filters;
+    const { search, status, position, skills, aiPrompt, limit, page, city, immediateJoiner, dateFrom, dateTo } = filters;
     const where: any = {};
 
     const take = limit ? parseInt(limit as string) : undefined;
     const skip = page && take ? parseInt(page as string) * take : undefined;
 
     if (status && status !== "all") {
-      where.status = status;
+      if (status === "exclude_hired") {
+        where.status = { not: "Hired" };
+      } else {
+        where.status = status;
+      }
     }
 
     if (position) {
@@ -24,6 +28,26 @@ export const candidateUsecase = {
 
     if (skills) {
       where.technicalSkills = { contains: skills, mode: "insensitive" };
+    }
+
+    if (city) {
+      where.city = { contains: city, mode: "insensitive" };
+    }
+
+    if (immediateJoiner === "true") {
+      where.immediateJoiner = true;
+    } else if (immediateJoiner === "false") {
+      where.immediateJoiner = false;
+    }
+
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) where.createdAt.gte = new Date(dateFrom as string);
+      if (dateTo) {
+        const to = new Date(dateTo as string);
+        to.setHours(23, 59, 59, 999);
+        where.createdAt.lte = to;
+      }
     }
 
     if (search) {
@@ -39,52 +63,65 @@ export const candidateUsecase = {
     let candidates: any[];
     let total: number;
 
-    console.log("where", where);
-    console.log("aiPrompt", aiPrompt);
-    console.log("take", take);
-    console.log("skip", skip);
-
     if (aiPrompt) {
       // For AI prompt, we need all matching candidates to score them
       candidates = await candidateRepository.findMany(where);
-      total = candidates.length;
 
-      const promptWords = (aiPrompt as string)
-        .toLowerCase()
+      const normalizeTechTerms = (text: string) => {
+        return text
+          .toLowerCase()
+          .replace(/front[-\s]end/g, "frontend")
+          .replace(/back[-\s]end/g, "backend")
+          .replace(/full[-\s]stack/g, "fullstack")
+          .replace(/react[-\s]js/g, "reactjs")
+          .replace(/node[-\s]js/g, "nodejs")
+          .replace(/vue[-\s]js/g, "vuejs");
+      };
+
+      const promptWords = normalizeTechTerms(aiPrompt as string)
         .replace(/[^a-z0-9\s]/g, "")
         .split(/\s+/)
+        .map((w) => (w.endsWith("s") && w.length > 3 ? w.slice(0, -1) : w))
         .filter((w) => w.length > 2);
 
-      const scoredCandidates = candidates.map((c) => {
-        let score = 0;
-        const candidateText = [
-          c.technicalSkills,
-          c.workExperience,
-          c.objective,
-          c.notes,
-          c.position,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
+      const scoredCandidates = candidates
+        .map((c) => {
+          let score = 0;
+          const candidateText = normalizeTechTerms(
+            [
+              c.technicalSkills,
+              c.workExperience,
+              c.objective,
+              c.notes,
+              c.position,
+            ]
+              .filter(Boolean)
+              .join(" "),
+          );
 
-        promptWords.forEach((word) => {
-          const regex = new RegExp(`\\b${word}\\b`, "g");
-          const matches = candidateText.match(regex);
-          if (matches) {
-            score += matches.length * 10;
+          promptWords.forEach((word) => {
+            const regex = new RegExp(`\\b${word}(s|es)?\\b`, "g");
+            const matches = candidateText.match(regex);
+            if (matches) {
+              score += matches.length * 10;
+            }
+          });
+
+          if (
+            c.position &&
+            promptWords.some((w) => {
+              const pos = normalizeTechTerms(c.position);
+              return new RegExp(`\\b${w}(s|es)?\\b`).test(pos);
+            })
+          ) {
+            score += 25;
           }
-        });
 
-        if (
-          c.position &&
-          promptWords.some((w) => c.position.toLowerCase().includes(w))
-        ) {
-          score += 25;
-        }
+          return { ...c, matchScore: Math.min(score, 100) };
+        })
+        .filter((c) => c.matchScore > 0);
 
-        return { ...c, matchScore: Math.min(score, 100) };
-      });
+      total = scoredCandidates.length;
 
       scoredCandidates.sort(
         (a, b) => (b.matchScore || 0) - (a.matchScore || 0),
@@ -114,9 +151,10 @@ export const candidateUsecase = {
     return candidate;
   },
 
-  async createCandidate(data: any) {
+  async createCandidate(data: any, createdById?: string) {
     return candidateRepository.create({
       ...data,
+      createdById: createdById || null,
       phone: data.phone || null,
       cnic: data.cnic || null,
       address: data.address || null,
@@ -133,6 +171,7 @@ export const candidateUsecase = {
       dob: data.dob ? new Date(data.dob) : null,
       nationality: data.nationality || null,
       city: data.city || null,
+      immediateJoiner: data.immediateJoiner === true || data.immediateJoiner === "true" ? true : false,
     });
   },
 
@@ -154,6 +193,7 @@ export const candidateUsecase = {
       dob: data.dob ? new Date(data.dob) : null,
       nationality: data.nationality || null,
       city: data.city || null,
+      immediateJoiner: data.immediateJoiner === true || data.immediateJoiner === "true" ? true : false,
     });
   },
 

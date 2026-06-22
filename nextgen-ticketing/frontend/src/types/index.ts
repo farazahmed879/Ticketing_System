@@ -275,6 +275,8 @@ export interface Candidate {
   observingSkills?: string;
   status: string;
   isConverted?: boolean;
+  immediateJoiner?: boolean;
+  createdBy?: { id: string; fullname: string; image?: string };
   _count?: { interviews: number };
   createdAt: string;
   updatedAt: string;
@@ -384,6 +386,7 @@ export interface CandidateFormData {
   city: string;
   observingSkills?: string;
   isConverted?: boolean;
+  immediateJoiner?: boolean | string;
 }
 
 export interface TicketFormData {

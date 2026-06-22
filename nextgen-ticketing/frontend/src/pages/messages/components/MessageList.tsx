@@ -14,8 +14,8 @@ interface MessageListProps {
   openLightbox: (images: string[], index: number) => void;
   scrollToBottom: () => void;
   showScrollBottom: boolean;
-  messagesEndRef: React.RefObject<HTMLDivElement>;
-  messagesContainerRef: React.RefObject<HTMLDivElement>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  messagesContainerRef: React.RefObject<HTMLDivElement | null>;
   handleScroll: () => void;
 }
 

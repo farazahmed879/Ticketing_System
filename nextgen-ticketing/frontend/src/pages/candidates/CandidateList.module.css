@@ -33,3 +33,121 @@
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
+.notesContainer {
+  position: relative;
+  display: inline-block;
+  max-width: 150px;
+}
+
+.notesText {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
+}
+
+.notesTooltip {
+  visibility: hidden;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-glass);
+  padding: 8px 12px;
+  border-radius: 8px;
+  width: max-content;
+  max-width: 300px;
+  white-space: pre-wrap;
+  z-index: 100;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.notesContainer:hover .notesTooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+/* Anchor for the floating advanced-filters dropdown */
+.filterAnchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Floating advanced filters card */
+.advancedPanel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 340px;
+  max-height: calc(100vh - 320px);
+  overflow-y: auto;
+  padding: 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+  backdrop-filter: var(--blur-md);
+  animation: filterSlideDown 0.2s ease;
+}
+
+@keyframes filterSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filterField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.filterLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.filterActions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 10px;
+  border-top: 1px solid var(--border-glass);
+  padding-top: 12px;
+  position: sticky;
+  bottom: -18px;
+  margin: 0 -18px -18px;
+  padding: 12px 18px;
+  background: var(--bg-card);
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+}

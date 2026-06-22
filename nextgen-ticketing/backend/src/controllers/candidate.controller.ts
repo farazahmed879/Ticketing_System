@@ -28,7 +28,7 @@ export const candidateController = {
 
   async createCandidate(req: AuthRequest, res: Response) {
     try {
-      const candidate = await candidateUsecase.createCandidate(req.body);
+      const candidate = await candidateUsecase.createCandidate(req.body, req.user?.id);
       res.status(201).json({ success: true, candidate });
     } catch (error: any) {
       if (error.code === "P2002") {

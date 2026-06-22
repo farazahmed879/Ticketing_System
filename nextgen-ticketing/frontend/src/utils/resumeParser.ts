@@ -1,9 +1,13 @@
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
-import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+// Inline the worker into the bundle (Vite `?worker&inline`) so it loads from a
+// blob URL instead of a separate /assets/*.mjs file. This avoids production
+// failures on static hosts that serve `.mjs` with the wrong MIME type, which
+// breaks the dynamic worker import ("Failed to fetch dynamically imported module").
+import PdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?worker&inline";
 
-// Configure PDF.js worker using the local bundled file
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+// Configure PDF.js to use the inlined worker instance.
+pdfjsLib.GlobalWorkerOptions.workerPort = new PdfWorker();
 
 export interface ResumeData {
   objective: string;

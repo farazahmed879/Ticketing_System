@@ -82,7 +82,11 @@ export interface Project {
   managerId?: string;
   manager?: { id: string; fullname: string; image?: string };
   teamIds?: string[];
-  teams?: { id: string; name: string }[];
+  teams?: {
+    id: string;
+    name: string;
+    teamLead?: { id: string; fullname: string; image?: string };
+  }[];
   tickets?: {
     id: string;
     uid: number;
@@ -271,6 +275,8 @@ export interface Candidate {
   observingSkills?: string;
   status: string;
   isConverted?: boolean;
+  immediateJoiner?: boolean;
+  createdBy?: { id: string; fullname: string; image?: string };
   _count?: { interviews: number };
   createdAt: string;
   updatedAt: string;
@@ -380,6 +386,7 @@ export interface CandidateFormData {
   city: string;
   observingSkills?: string;
   isConverted?: boolean;
+  immediateJoiner?: boolean | string;
 }
 
 export interface TicketFormData {

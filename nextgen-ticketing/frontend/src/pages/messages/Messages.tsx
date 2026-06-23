@@ -46,6 +46,7 @@ const Messages: React.FC = () => {
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [, setUnreadMessageNotifications] = useState<any[]>([]);
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
 
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -205,6 +206,22 @@ const Messages: React.FC = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
+
+  useEffect(() => {
+    const handleOnlineUsers = (
+      onlineUsers: { userId: string; status: string }[],
+    ) => {
+      setOnlineUserIds(new Set(onlineUsers.map((u) => u.userId)));
+    };
+
+    socket.on("users:online", handleOnlineUsers);
+    // Pull the current snapshot since the socket is already connected.
+    socket.emit("users:getOnline");
+
+    return () => {
+      socket.off("users:online", handleOnlineUsers);
+    };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -400,11 +417,10 @@ const Messages: React.FC = () => {
     messageId: string,
     createdAt: string | Date,
   ) => {
+    // The delete icon only renders within the 5-minute window; this guard
+    // silently ignores any stale click rather than opening the modal.
     const ageInMs = Date.now() - new Date(createdAt).getTime();
-    if (ageInMs > 5 * 60 * 1000) {
-      alert("You can only delete messages within 5 minutes of sending them.");
-      return;
-    }
+    if (ageInMs > 5 * 60 * 1000) return;
     setMessageToDelete(messageId);
   };
 
@@ -447,6 +463,7 @@ const Messages: React.FC = () => {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         unreadCounts={unreadCounts}
+        onlineUserIds={onlineUserIds}
         canManageGroup={canManageGroup || false}
         isCustomer={isCustomer || false}
         onNewGroupClick={handleOpenGroupModal}
@@ -458,6 +475,7 @@ const Messages: React.FC = () => {
           <>
             <ChatHeader
               selectedConv={selectedConv}
+              onlineUserIds={onlineUserIds}
               onViewMembers={() => setIsViewMembersModalOpen(true)}
               onDeleteChat={handleDeleteChat}
               onCloseChat={handleCloseChat}
@@ -467,6 +485,7 @@ const Messages: React.FC = () => {
               messages={messages}
               userId={user?.id}
               selectedConv={selectedConv}
+              onlineUserIds={onlineUserIds}
               onReply={setReplyingTo}
               onDeleteMessage={handleDeleteMessageClick}
               openLightbox={openLightbox}
@@ -554,6 +573,7 @@ const Messages: React.FC = () => {
         isOpen={isUserModalOpen}
         onClose={() => setIsUserModalOpen(false)}
         isCustomer={isCustomer || false}
+        onlineUserIds={onlineUserIds}
         userSearch={userSearch}
         onUserSearchChange={setUserSearch}
         filteredUsers={users.filter(
@@ -571,6 +591,7 @@ const Messages: React.FC = () => {
           setGroupName("");
           setSelectedGroupMembers([]);
         }}
+        onlineUserIds={onlineUserIds}
         groupName={groupName}
         onGroupNameChange={setGroupName}
         userSearch={userSearch}
@@ -589,6 +610,7 @@ const Messages: React.FC = () => {
         <AddGroupMembersModal
           isOpen={isAddMembersModalOpen}
           onClose={() => setIsAddMembersModalOpen(false)}
+          onlineUserIds={onlineUserIds}
           users={users}
           onAddMembers={addMembersToGroup}
           existingMemberIds={selectedConv?.members?.map((m: any) => m.id) || []}
@@ -599,6 +621,7 @@ const Messages: React.FC = () => {
         <ViewGroupMembersModal
           isOpen={isViewMembersModalOpen}
           onClose={() => setIsViewMembersModalOpen(false)}
+          onlineUserIds={onlineUserIds}
           members={selectedConv?.members || []}
           canManageGroup={canManageGroup || false}
           onAddMemberClick={handleOpenAddMembersModal}

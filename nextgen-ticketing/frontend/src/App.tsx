@@ -33,7 +33,7 @@ import Timesheet from "./pages/timesheet/Timesheet.tsx";
 import TimesheetReview from "./pages/timesheet/TimesheetReview.tsx";
 import TimesheetReport from "./pages/timesheet/TimesheetReport.tsx";
 import CandidateList from "./pages/candidates/CandidateList.tsx";
-import CandidateDetail from "./pages/candidates/CandidateDetail.tsx";
+import CandidateDetail from "./pages/candidates/candidate-details/CandidateDetail.tsx";
 import CandidateLeaderboard from "./pages/candidates/CandidateLeaderboard.tsx";
 import InterviewList from "./pages/interviews/InterviewList.tsx";
 import InterviewDetail from "./pages/interviews/InterviewDetail.tsx";

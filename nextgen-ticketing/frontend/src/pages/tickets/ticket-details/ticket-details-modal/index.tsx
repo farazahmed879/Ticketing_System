@@ -430,9 +430,13 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     JSON.stringify(attachmentsDraft) !==
       JSON.stringify(displayTicket?.attachments || []);
 
+  // Team leads of the ticket's project can assign it to their team members.
+  const isLeadOfTicket = !!displayTicket?.teamLeadIds?.includes(user?.id);
+
   const canAssign =
     user?.role?.name === RoleName.ADMIN ||
-    user?.role?.permissions?.tickets?.assign;
+    user?.role?.permissions?.tickets?.assign ||
+    isLeadOfTicket;
 
   const canAssignQA =
     user?.role?.name === RoleName.ADMIN || user?.role?.name === RoleName.AGENT;

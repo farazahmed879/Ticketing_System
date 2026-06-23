@@ -6,6 +6,7 @@ import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
 import { Link } from "react-router-dom";
 import { CandidateStatus } from "../../utils/constants";
+import { formatDate } from "../../utils/helpers";
 import styles from "./CandidateList.module.css";
 
 export const statusBadgeVariant = (status: string) => {
@@ -71,6 +72,29 @@ export const getCandidateColumns = (
       ),
     },
     {
+      header: "Notes",
+      key: "notes",
+      render: (c) => (
+        c.notes ? (
+          <div className={styles.notesContainer}>
+            <span className={styles.notesText}>{c.notes}</span>
+            <div className={styles.notesTooltip}>{c.notes}</div>
+          </div>
+        ) : (
+          <span style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>—</span>
+        )
+      ),
+    },
+    {
+      header: "Location",
+      key: "location",
+      render: (c) => (
+        <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+          {c.city ? (c.nationality ? `${c.city}, ${c.nationality}` : c.city) : (c.nationality || c.address || "—")}
+        </span>
+      ),
+    },
+    {
       header: "Interviews",
       key: "interviews",
       render: (c) => (
@@ -78,6 +102,47 @@ export const getCandidateColumns = (
           <CustomIcon name="CalendarCheck" size={14} />
           {c._count?.interviews || 0}
         </span>
+      ),
+    },
+    {
+      header: "Created By",
+      key: "addedBy",
+      render: (c) => (
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {c.createdBy?.image ? (
+            <img 
+              src={c.createdBy.image} 
+              alt={c.createdBy.fullname} 
+              style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} 
+            />
+          ) : c.createdBy ? (
+            <div style={{ 
+              width: 32, height: 32, borderRadius: "50%", 
+              background: "var(--accent-primary)", 
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "0.85rem", color: "#fff", fontWeight: 600
+            }}>
+              {c.createdBy.fullname.charAt(0)}
+            </div>
+          ) : (
+            <div style={{ 
+              width: 32, height: 32, borderRadius: "50%", 
+              background: "var(--bg-input)", 
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "0.85rem", color: "var(--text-muted)"
+            }}>
+              —
+            </div>
+          )}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span style={{ fontSize: "0.85rem", color: c.createdBy ? "var(--text-primary)" : "var(--text-muted)", fontWeight: 500, whiteSpace: "nowrap" }}>
+              {c.createdBy?.fullname || "System"}
+            </span>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+              {formatDate(c.createdAt)}
+            </span>
+          </div>
+        </div>
       ),
     },
     {

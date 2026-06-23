@@ -55,6 +55,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         nationality: "",
         city: "",
         observingSkills: "",
+        immediateJoiner: "false",
       },
     });
 
@@ -108,6 +109,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         nationality: initialData.nationality || "",
         city: initialData.city || "",
         observingSkills: initialData.observingSkills || "",
+        immediateJoiner: initialData.immediateJoiner ? "true" : "false",
       });
 
       if (
@@ -151,6 +153,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         nationality: "",
         city: "",
         observingSkills: "",
+        immediateJoiner: "false",
       });
       setResumeData({
         objective: "",
@@ -326,6 +329,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
       objective: resumeData.objective || null,
       technicalSkills: resumeData.technicalSkills || null,
       workExperience: resumeData.workExperience || null,
+      immediateJoiner: data.immediateJoiner === "true" || data.immediateJoiner === true,
     };
     onSubmit(payload);
   };
@@ -350,6 +354,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
       nationality: "",
       city: "",
       observingSkills: "",
+      immediateJoiner: "false",
     });
     setResumeData({
       objective: "",
@@ -429,6 +434,18 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
                 label: s,
                 value: s,
               }))}
+            />
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 4, marginBottom: 4 }}>
+            <CustomSelect
+              name="immediateJoiner"
+              control={control}
+              label="Immediate Joiner"
+              options={[
+                { label: "No", value: "false" },
+                { label: "Yes", value: "true" },
+              ]}
             />
           </div>
 

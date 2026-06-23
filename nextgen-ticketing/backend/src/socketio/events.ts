@@ -208,6 +208,16 @@ export function setupSocketEvents(io: Server) {
     });
 
     // ========== ONLINE STATUS ==========
+    // Let a freshly-mounted client (e.g. the chat screen) pull the current
+    // online snapshot instead of waiting for the next connect/disconnect.
+    socket.on(SocketEvent.USERS_GET_ONLINE, () => {
+      const users = Array.from(onlineUsers.values()).map((u) => ({
+        userId: u.userId,
+        status: u.status,
+      }));
+      socket.emit(SocketEvent.USERS_ONLINE, users);
+    });
+
     socket.on('status:set', (data: { status: 'active' | 'idle' }) => {
       const u = onlineUsers.get(user.id);
       if (u) {

@@ -5,7 +5,7 @@ import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
-import { RoleName, PROJECT_STATUS_OPTIONS } from "../../utils/constants";
+import { RoleName, PROJECT_STATUS_OPTIONS, DEFAULT_PAGE_SIZE } from "../../utils/constants";
 import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomInput from "../../components/CustomInput";
@@ -15,6 +15,7 @@ import type { TableColumn } from "../../components/types";
 import ProjectModal from "./components/ProjectModal";
 import { useAuth } from "../../context/AuthContext";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import CustomPagination from "../../components/CustomPagination";
 
 import StandardListLayout from "../../components/StandardListLayout";
 import { getProjectColumns } from "./columns";
@@ -38,6 +39,14 @@ const ProjectList: React.FC = () => {
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
+
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncedStatus, setDebouncedStatus] = useState("");
+
   const canCreate =
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.groups?.create === true;
@@ -53,8 +62,8 @@ const ProjectList: React.FC = () => {
   // (e.g. React StrictMode's double-mount in dev, or rapid re-triggers).
   const inFlightKey = useRef<string | null>(null);
 
-  const fetchData = async (searchTerm = "", status = "") => {
-    const key = `${searchTerm}__${status}__${user?.id ?? ""}`;
+  const fetchData = async (searchTerm = "", status = "", page = currentPage, limit = itemsPerPage) => {
+    const key = `${searchTerm}__${status}__${user?.id ?? ""}__${page}__${limit}`;
     if (inFlightKey.current === key) return;
     inFlightKey.current = key;
     try {
@@ -65,9 +74,12 @@ const ProjectList: React.FC = () => {
           userId: user?.id,
           search: searchTerm || undefined,
           status: status || undefined,
+          page,
+          limit,
         },
       });
       setProjects(projectsRes.data.projects);
+      setTotalItems(projectsRes.data.total || 0);
     } catch (err) {
       console.error("Failed to fetch projects data", err);
       showNotification("error", "Failed to load projects data");
@@ -107,12 +119,23 @@ const ProjectList: React.FC = () => {
     }
   };
 
-  // Debounced server-side search/filter — refetch when search or status settles.
+  // Debounce search/filter inputs and reset page to 0 when they change
   useEffect(() => {
-    const handle = setTimeout(() => fetchData(search, statusFilter), 300);
+    const handle = setTimeout(() => {
+      setDebouncedSearch(search);
+      setDebouncedStatus(statusFilter);
+      setCurrentPage(0);
+    }, 300);
     return () => clearTimeout(handle);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, statusFilter]);
+
+  // Refetch when pagination or debounced filters change
+  useEffect(() => {
+    if (user) {
+      fetchData(debouncedSearch, debouncedStatus, currentPage, itemsPerPage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, debouncedStatus, currentPage, itemsPerPage, user]);
 
   const handleEdit = (project: Project) => {
     // Load the client/manager/team option lists (same as the Add flow) so the
@@ -241,6 +264,19 @@ const ProjectList: React.FC = () => {
               style={{ minWidth: 200 }}
             />
           </div>
+        }
+        pagination={
+          <CustomPagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(totalItems / itemsPerPage)}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageSizeChange={(size) => {
+              setItemsPerPage(size);
+              setCurrentPage(0);
+            }}
+          />
         }
       >
         <CustomTable

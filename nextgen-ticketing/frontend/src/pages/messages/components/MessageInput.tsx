@@ -15,7 +15,7 @@ interface MessageInputProps {
   onAttachmentsChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   attachmentError: string | null;
   removeAttachment: (idx: number) => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
@@ -109,6 +109,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           style={{ display: "none" }}
         />
         <CustomButton
+          type="button"
           variant="ghost"
           onClick={() => fileInputRef.current?.click()}
           disabled={attachments.length >= MAX_ATTACHMENTS}

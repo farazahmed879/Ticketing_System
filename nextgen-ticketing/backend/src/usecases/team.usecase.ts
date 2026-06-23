@@ -1,6 +1,22 @@
 import { teamRepository } from "../repositories/team.repository";
 import { userRepository } from "../repositories/user.repository";
 import prisma from "../prisma";
+import { RoleName } from "../utils/constants";
+
+// Managers cannot be team members or the team lead. Throws if any of the given
+// user ids belong to a manager.
+async function assertNoManagers(userIds: (string | undefined | null)[]) {
+  const ids = Array.from(new Set(userIds.filter(Boolean) as string[]));
+  if (!ids.length) return;
+  const managers = await prisma.user.findMany({
+    where: { id: { in: ids }, role: { name: RoleName.AGENT } },
+    select: { fullname: true },
+  });
+  if (managers.length) {
+    const names = managers.map((m) => m.fullname).join(", ");
+    throw new Error(`Managers cannot be added to a team: ${names}.`);
+  }
+}
 
 export const teamUsecase = {
   async getTeams(
@@ -24,6 +40,7 @@ export const teamUsecase = {
   },
 
   async createTeam(data: any) {
+    await assertNoManagers([...(data.memberIds || []), data.teamLeadId]);
     // The team lead is always a member of the team.
     const memberIds: string[] = Array.from(
       new Set([
@@ -55,6 +72,8 @@ export const teamUsecase = {
   async updateTeam(id: string, data: any) {
     const existingTeam = await teamRepository.findById(id);
     if (!existingTeam) throw new Error("Team not found");
+
+    await assertNoManagers([...(data.memberIds || []), data.teamLeadId]);
 
     const updateData: any = {};
     if (data.name) updateData.name = data.name;

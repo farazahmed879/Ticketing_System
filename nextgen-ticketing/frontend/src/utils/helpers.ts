@@ -31,3 +31,18 @@ export const formatCurrency = (amount: number, currency: string = "USD"): string
     currency: currency,
   }).format(amount);
 };
+
+/**
+ * Formats a date string or object into a custom format showing short month names (e.g., "Jan 12, 2024").
+ * @param date The date to format
+ * @returns The formatted date string
+ */
+export const formatDate = (date: string | Date): string => {
+  if (!date) return "";
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};

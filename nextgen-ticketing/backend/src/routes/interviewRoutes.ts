@@ -5,7 +5,7 @@ import { RoleName } from '../utils/constants';
 
 const router = Router();
 
-const allowedRoles = [RoleName.ADMIN, RoleName.AGENT, RoleName.EMPLOYEE];
+const allowedRoles = [RoleName.ADMIN, RoleName.AGENT, RoleName.EMPLOYEE, RoleName.HR];
 
 router.get('/', authMiddleware, checkRole(allowedRoles), interviewController.getAllInterviews);
 router.get('/:id', authMiddleware, checkRole(allowedRoles), interviewController.getInterviewById);

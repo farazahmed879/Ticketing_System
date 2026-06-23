@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { format } from "date-fns";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
@@ -9,13 +9,14 @@ interface MessageListProps {
   messages: Message[];
   userId: string | undefined;
   selectedConv: Conversation;
+  onlineUserIds: Set<string>;
   onReply: (msg: Message) => void;
   onDeleteMessage: (msgId: string, createdAt: string | Date) => void;
   openLightbox: (images: string[], index: number) => void;
   scrollToBottom: () => void;
   showScrollBottom: boolean;
-  messagesEndRef: React.RefObject<HTMLDivElement>;
-  messagesContainerRef: React.RefObject<HTMLDivElement>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  messagesContainerRef: React.RefObject<HTMLDivElement | null>;
   handleScroll: () => void;
 }
 
@@ -23,6 +24,7 @@ const MessageList: React.FC<MessageListProps> = ({
   messages,
   userId,
   selectedConv,
+  onlineUserIds,
   onReply,
   onDeleteMessage,
   openLightbox,
@@ -32,8 +34,6 @@ const MessageList: React.FC<MessageListProps> = ({
   messagesContainerRef,
   handleScroll,
 }) => {
-  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
-
   return (
     <div
       className={styles.messagesContainer}
@@ -44,17 +44,28 @@ const MessageList: React.FC<MessageListProps> = ({
         {messages.map((msg) => {
           const isOwn = msg.senderId === userId;
           const hasAttachments = msg.attachments && msg.attachments.length > 0;
+          const canDelete =
+            isOwn &&
+            Date.now() - new Date(msg.createdAt).getTime() < 5 * 60 * 1000;
           return (
             <div
               key={msg.id}
               className={`${styles.messageWrapper} ${
                 isOwn ? styles.messageOwn : styles.messageOther
               }`}
-              onMouseEnter={() => setHoveredMessageId(msg.id)}
-              onMouseLeave={() => setHoveredMessageId(null)}
             >
               {selectedConv.isGroup && !isOwn && msg.sender && (
                 <span className={styles.senderName}>
+                  <span
+                    className={`${styles.senderStatusDot} ${
+                      onlineUserIds.has(msg.senderId)
+                        ? styles.senderStatusOnline
+                        : styles.senderStatusOffline
+                    }`}
+                    title={
+                      onlineUserIds.has(msg.senderId) ? "Online" : "Offline"
+                    }
+                  />
                   {msg.sender.fullname}
                 </span>
               )}
@@ -122,46 +133,39 @@ const MessageList: React.FC<MessageListProps> = ({
                   <span className={styles.messageText}>{msg.body}</span>
                 )}
               </div>
-              <span
-                className={styles.messageTime}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                {format(new Date(msg.createdAt), "MMM d, yyyy, h:mm a")}
-                {hoveredMessageId === msg.id && (
-                  <div style={{ display: "flex", gap: 4, marginLeft: 4 }}>
+              <div className={styles.messageMeta}>
+                <span className={styles.messageTime}>
+                  {format(new Date(msg.createdAt), "MMM d, yyyy, h:mm a")}
+                </span>
+                <div className={styles.messageActions}>
+                  <CustomButton
+                    variant="ghost"
+                    size="sm"
+                    style={{ padding: 4 }}
+                    onClick={() => onReply(msg)}
+                    title="Reply"
+                    icon={
+                      <CustomIcon
+                        name="CornerUpLeft"
+                        size={14}
+                        color="var(--text-muted)"
+                      />
+                    }
+                  />
+                  {canDelete && (
                     <CustomButton
                       variant="ghost"
                       size="sm"
                       style={{ padding: 4 }}
-                      onClick={() => onReply(msg)}
-                      title="Reply"
+                      onClick={() => onDeleteMessage(msg.id, msg.createdAt)}
+                      title="Delete message"
                       icon={
-                        <CustomIcon
-                          name="CornerUpLeft"
-                          size={14}
-                          color="var(--text-muted)"
-                        />
+                        <CustomIcon name="Trash2" size={14} color="#ef4444" />
                       }
                     />
-                    {isOwn && (
-                      <CustomButton
-                        variant="ghost"
-                        size="sm"
-                        style={{ padding: 4 }}
-                        onClick={() => onDeleteMessage(msg.id, msg.createdAt)}
-                        title="Delete message"
-                        icon={
-                          <CustomIcon name="Trash2" size={14} color="#ef4444" />
-                        }
-                      />
-                    )}
-                  </div>
-                )}
-              </span>
+                  )}
+                </div>
+              </div>
             </div>
           );
         })}

@@ -122,7 +122,7 @@ const CandidateList: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
       showNotification(
         "success",
-        `Candidate ${currentEditingId ? "updated" : "created"} successfully`
+        `Candidate ${currentEditingId ? "updated" : "created"} successfully`,
       );
       setIsModalOpen(false);
       setCurrentEditingId(null);
@@ -130,7 +130,7 @@ const CandidateList: React.FC = () => {
     onError: (err: any) => {
       showNotification(
         "error",
-        err.response?.data?.error || "Failed to save candidate"
+        err.response?.data?.error || "Failed to save candidate",
       );
     },
   });
@@ -168,7 +168,7 @@ const CandidateList: React.FC = () => {
     onError: (err: any) => {
       showNotification(
         "error",
-        err.response?.data?.error || "Failed to convert candidate"
+        err.response?.data?.error || "Failed to convert candidate",
       );
       setCandidateToConvert(null);
     },
@@ -551,7 +551,7 @@ const CandidateList: React.FC = () => {
       <CandidateModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        candidate={candidates.find((c) => c.id === currentEditingId)}
+        candidate={candidates.find((c: any) => c.id === currentEditingId)}
         onSubmit={handleFormSubmit}
         isSubmitting={isSubmitting}
       />

@@ -42,16 +42,16 @@ const Dashboard: React.FC = () => {
   if (loading) return <DashboardSkeleton />;
 
   const generalAnnouncements = announcements.filter(
-    (ann) =>
+    (ann: { type: any }) =>
       ![AnnouncementType.REVIEW, AnnouncementType.MOMENT].includes(
         ann.type as any,
       ),
   );
   const reviews = announcements.filter(
-    (ann) => ann.type === AnnouncementType.REVIEW,
+    (ann: { type: string }) => ann.type === AnnouncementType.REVIEW,
   );
   const moments = announcements.filter(
-    (ann) => ann.type === AnnouncementType.MOMENT,
+    (ann: { type: string }) => ann.type === AnnouncementType.MOMENT,
   );
 
   const cards = [

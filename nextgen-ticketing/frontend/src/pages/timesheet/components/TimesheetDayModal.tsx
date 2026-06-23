@@ -277,7 +277,7 @@ const TimesheetDayModal: React.FC<Props> = ({
                   control={control}
                   label="Project"
                   placeholder="Select Project"
-                  options={projects.map((p) => ({
+                  options={projects.map((p: any) => ({
                     value: p.id,
                     label: p.name,
                   }))}
@@ -288,10 +288,12 @@ const TimesheetDayModal: React.FC<Props> = ({
                   control={control}
                   label="Ticket"
                   placeholder="Link Ticket"
-                  options={tickets.map((t) => ({
-                    value: t.id,
-                    label: `#${t.uid} ${t.subject.substring(0, 20)}...`,
-                  }))}
+                  options={tickets.map(
+                    (t: { id: any; uid: any; subject: string }) => ({
+                      value: t.id,
+                      label: `#${t.uid} ${t.subject.substring(0, 20)}...`,
+                    }),
+                  )}
                   disabled={isApproved}
                 />
                 {!isApproved && (

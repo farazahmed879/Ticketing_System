@@ -7,7 +7,7 @@ import CustomButton from "../../components/CustomButton";
 import CustomColorPicker from "../../components/CustomColorPicker";
 import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
-import Profile from "../profile/Profile";
+import Profile from "../profile";
 import styles from "./Settings.module.css";
 import { t } from "i18next";
 

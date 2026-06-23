@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import CustomButton from "../../components/CustomButton";
@@ -13,16 +12,20 @@ import type { TimesheetEntry } from "../../types";
 import { useNavigate } from "react-router-dom";
 import { RoleName } from "../../utils/constants";
 import CustomBadge from "../../components/CustomBadge";
-import CustomSelect from "../../components/CustomSelect";
+import CustomImage from "../../components/CustomImage";
 import StandardListLayout from "../../components/StandardListLayout/StandardListLayout";
 
-import CustomInput from "../../components/CustomInput/CustomInput";
-import CustomImage from "../../components/CustomImage";
+import { TimesheetReviewHeader } from "./components/TimesheetReviewHeader";
+import { TimesheetReviewFilter } from "./components/TimesheetReviewFilter";
+import { TimesheetReviewSidebar } from "./components/TimesheetReviewSidebar";
+import { useTimesheetReviewColumns } from "./components/TimesheetReviewColumns";
 
 const TimesheetReview: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [selectedEntry, setSelectedEntry] = useState<TimesheetEntry | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<TimesheetEntry | null>(
+    null,
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -140,128 +143,27 @@ const TimesheetReview: React.FC = () => {
     }),
   ];
 
+  const columns = useTimesheetReviewColumns({
+    setSelectedEntry,
+    setIsModalOpen,
+    handleApprove,
+  });
+
   return (
     <StandardListLayout
-      header={
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
-            <CustomButton
-              variant="ghost"
-              onClick={() => navigate("/timesheet")}
-              icon={<CustomIcon name="ArrowLeft" size={20} />}
-              style={{
-                width: 40,
-                height: 40,
-                padding: 0,
-                borderRadius: "12px",
-                background: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid var(--border-glass)",
-              }}
-            />
-            <div>
-              <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
-                Timesheet Approvals
-              </h1>
-              <p
-                style={{
-                  color: "var(--text-muted)",
-                  margin: "4px 0 0 0",
-                  fontSize: "0.9rem",
-                }}
-              >
-                Review and manage team timesheet entries
-              </p>
-            </div>
-          </div>
-        </div>
-      }
+      header={<TimesheetReviewHeader onBack={() => navigate("/timesheet")} />}
       filters={
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <div style={{ display: "flex", gap: 8 }}>
-              <CustomSelect
-                value={month}
-                onChange={setMonth}
-                options={months}
-                style={{ width: 150 }}
-                placeholder="Month"
-              />
-              <CustomSelect
-                value={year}
-                onChange={setYear}
-                options={years}
-                style={{ width: 100 }}
-                placeholder="Year"
-              />
-            </div>
-            <div
-              className="glass-card"
-              style={{ display: "flex", padding: 4, borderRadius: 12 }}
-            >
-              <button
-                onClick={() => setSelectedStatus("PENDING")}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: 8,
-                  border: "none",
-                  background:
-                    selectedStatus === "PENDING"
-                      ? "var(--accent-primary)"
-                      : "transparent",
-                  color:
-                    selectedStatus === "PENDING"
-                      ? "white"
-                      : "var(--text-muted)",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  transition: "all 0.2s",
-                }}
-              >
-                Pending
-              </button>
-              <button
-                onClick={() => setSelectedStatus("APPROVED")}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: 8,
-                  border: "none",
-                  background:
-                    selectedStatus === "APPROVED"
-                      ? "var(--accent-primary)"
-                      : "transparent",
-                  color:
-                    selectedStatus === "APPROVED"
-                      ? "white"
-                      : "var(--text-muted)",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  transition: "all 0.2s",
-                }}
-              >
-                Approved
-              </button>
-            </div>
-          </div>
-          <CustomButton
-            variant="secondary"
-            onClick={fetchEntries}
-            icon={<CustomIcon name="RotateCcw" size={18} />}
-          >
-            Refresh
-          </CustomButton>
-        </div>
+        <TimesheetReviewFilter
+          month={month}
+          setMonth={setMonth}
+          months={months}
+          year={year}
+          setYear={setYear}
+          years={years}
+          selectedStatus={selectedStatus}
+          setSelectedStatus={setSelectedStatus}
+          onRefresh={fetchEntries}
+        />
       }
     >
       <div
@@ -347,10 +249,13 @@ const TimesheetReview: React.FC = () => {
                   <h2
                     style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700 }}
                   >
-                    {users.find((u) => u.id === selectedUserId)?.fullname}
+                    {users.find((u: any) => u.id === selectedUserId)?.fullname}
                   </h2>
                   <CustomBadge variant="primary">
-                    {users.find((u) => u.id === selectedUserId)?.role?.name}
+                    {
+                      users.find((u: any) => u.id === selectedUserId)?.role
+                        ?.name
+                    }
                   </CustomBadge>
                 </div>
                 <div
@@ -367,7 +272,7 @@ const TimesheetReview: React.FC = () => {
                     style={{ display: "flex", alignItems: "center", gap: 6 }}
                   >
                     <CustomIcon name="Mail" size={14} />
-                    {users.find((u) => u.id === selectedUserId)?.email}
+                    {users.find((u: any) => u.id === selectedUserId)?.email}
                   </span>
                   <span
                     style={{ display: "flex", alignItems: "center", gap: 6 }}
@@ -397,146 +302,7 @@ const TimesheetReview: React.FC = () => {
 
           <div style={{ flex: 1, overflow: "auto", paddingRight: 4 }}>
             <CustomTable
-              columns={[
-                {
-                  header: "User",
-                  key: "user",
-                  render: (e) => (
-                    <div
-                      style={{ display: "flex", alignItems: "center", gap: 12 }}
-                    >
-                      <div
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: "50%",
-                          background: "rgba(255,255,255,0.05)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          overflow: "hidden",
-                          border: "1px solid var(--border-glass)",
-                        }}
-                      >
-                        {e.user?.image ? (
-                          <CustomImage
-                            src={e.user.image}
-                            alt=""
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                          />
-                        ) : (
-                          <CustomIcon
-                            name="User"
-                            size={18}
-                            color="var(--text-muted)"
-                          />
-                        )}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                          {e.user?.fullname}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "0.75rem",
-                            color: "var(--text-muted)",
-                          }}
-                        >
-                          {e.user?.email}
-                        </div>
-                      </div>
-                    </div>
-                  ),
-                },
-                {
-                  header: "Date",
-                  key: "date",
-                  render: (e) => (
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      <span style={{ fontWeight: 600 }}>
-                        {format(new Date(e.date), "MMM dd, yyyy")}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: "0.75rem",
-                          color: "var(--text-muted)",
-                        }}
-                      >
-                        {format(new Date(e.date), "EEEE")}
-                      </span>
-                    </div>
-                  ),
-                },
-                {
-                  header: "Hours",
-                  key: "totalHours",
-                  render: (e) => (
-                    <div
-                      style={{
-                        display: "inline-flex",
-                        padding: "4px 10px",
-                        borderRadius: 8,
-                        background: "rgba(124, 58, 237, 0.1)",
-                        color: "var(--accent-primary)",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {e.totalHours}h
-                    </div>
-                  ),
-                },
-                {
-                  header: "Status",
-                  key: "status",
-                  render: (e) => (
-                    <CustomBadge
-                      variant={
-                        e.status === "APPROVED"
-                          ? "success"
-                          : e.status === "REJECTED"
-                            ? "danger"
-                            : "warning"
-                      }
-                    >
-                      {e.status}
-                    </CustomBadge>
-                  ),
-                },
-                {
-                  header: "Actions",
-                  key: "actions",
-                  render: (e) => (
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <CustomButton
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedEntry(e);
-                          setIsModalOpen(true);
-                        }}
-                        icon={<CustomIcon name="Eye" size={16} />}
-                        style={{ padding: "8px" }}
-                      />
-                      {e.status === "PENDING" && (
-                        <CustomButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleApprove(e.id)}
-                          icon={<CustomIcon name="CheckCircle2" size={16} />}
-                          style={{
-                            color: "var(--accent-success)",
-                            padding: "8px",
-                          }}
-                        />
-                      )}
-                    </div>
-                  ),
-                },
-              ]}
+              columns={columns}
               data={entries}
               loading={loading}
               emptyMessage={`No ${selectedStatus.toLowerCase()} timesheets found`}
@@ -544,7 +310,6 @@ const TimesheetReview: React.FC = () => {
           </div>
         </div>
 
-        {/* Sidebar: Users List */}
         <div
           className="glass-card"
           style={{
@@ -555,195 +320,13 @@ const TimesheetReview: React.FC = () => {
             overflow: "hidden",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginBottom: 20,
-            }}
-          >
-            <CustomIcon name="Users" size={20} color="var(--accent-primary)" />
-            <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
-              Team Members
-            </h3>
-          </div>
-
-          <div style={{ marginBottom: 16 }}>
-            <CustomInput
-              placeholder="Search members..."
-              value={userSearch}
-              onChange={(e) => setUserSearch(e.target.value)}
-              icon={
-                <CustomIcon name="Search" size={16} color="var(--text-muted)" />
-              }
-            />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              flex: 1,
-              minHeight: 0,
-              overflow: "hidden",
-            }}
-          >
-            <button
-              onClick={() => setSelectedUserId(null)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px",
-                borderRadius: 12,
-                border: "1px solid",
-                borderColor:
-                  selectedUserId === null
-                    ? "var(--accent-primary)"
-                    : "transparent",
-                background:
-                  selectedUserId === null
-                    ? "rgba(124, 58, 237, 0.1)"
-                    : "rgba(255,255,255,0.02)",
-                color:
-                  selectedUserId === null
-                    ? "var(--accent-primary)"
-                    : "var(--text-primary)",
-                cursor: "pointer",
-                textAlign: "left",
-                transition: "all 0.2s",
-                marginBottom: 4,
-              }}
-            >
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.05)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <CustomIcon name="LayoutGrid" size={16} />
-              </div>
-              <span style={{ fontWeight: 600 }}>All Users</span>
-            </button>
-
-            <div
-              style={{
-                flex: 1,
-                overflowY: "auto",
-                paddingRight: 8,
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-              }}
-            >
-              {filteredUsers.map((u) => (
-                <button
-                  key={u.id}
-                  onClick={() => setSelectedUserId(u.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "10px 12px",
-                    borderRadius: 12,
-                    border: "1px solid",
-                    borderColor:
-                      selectedUserId === u.id
-                        ? "var(--accent-primary)"
-                        : "transparent",
-                    background:
-                      selectedUserId === u.id
-                        ? "rgba(124, 58, 237, 0.1)"
-                        : "transparent",
-                    color:
-                      selectedUserId === u.id
-                        ? "var(--accent-primary)"
-                        : "var(--text-secondary)",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: "50%",
-                      overflow: "hidden",
-                      background: "rgba(255,255,255,0.05)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      border: "1px solid var(--border-glass)",
-                    }}
-                  >
-                    {u.image ? (
-                      <CustomImage
-                        src={u.image}
-                        alt=""
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    ) : (
-                      <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>
-                        {u.fullname.charAt(0)}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ flex: 1, overflow: "hidden" }}>
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        fontSize: "0.85rem",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {u.fullname}
-                    </div>
-                    <div
-                      style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}
-                    >
-                      {u.role?.name}
-                    </div>
-                  </div>
-                  {selectedUserId === u.id && (
-                    <div
-                      style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: "var(--accent-primary)",
-                      }}
-                    />
-                  )}
-                </button>
-              ))}
-              {filteredUsers.length === 0 && (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "20px",
-                    color: "var(--text-muted)",
-                    fontSize: "0.85rem",
-                  }}
-                >
-                  No members found
-                </div>
-              )}
-            </div>
-          </div>
+          <TimesheetReviewSidebar
+            userSearch={userSearch}
+            setUserSearch={setUserSearch}
+            filteredUsers={filteredUsers}
+            selectedUserId={selectedUserId}
+            setSelectedUserId={setSelectedUserId}
+          />
         </div>
       </div>
 

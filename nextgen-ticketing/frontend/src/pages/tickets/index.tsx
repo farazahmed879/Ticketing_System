@@ -195,7 +195,7 @@ const TicketList: React.FC = () => {
     onError: (err: any) => {
       showNotification(
         "error",
-        err.response?.data?.error || "Failed to create ticket"
+        err.response?.data?.error || "Failed to create ticket",
       );
     },
   });
@@ -219,7 +219,7 @@ const TicketList: React.FC = () => {
     onError: (err: any) => {
       showNotification(
         "error",
-        err.response?.data?.error || "Failed to delete ticket"
+        err.response?.data?.error || "Failed to delete ticket",
       );
     },
   });
@@ -257,7 +257,11 @@ const TicketList: React.FC = () => {
               <ListAndKanbanSwitcher navigate={navigate} selectedValue="list" />
               <div
                 className={styles.search}
-                style={{ border: "none", background: "transparent", padding: 0 }}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  padding: 0,
+                }}
               >
                 <CustomInput
                   placeholder="Search by subject or ID..."
@@ -266,7 +270,7 @@ const TicketList: React.FC = () => {
                     setSearch(e.target.value)
                   }
                   icon={<CustomIcon name="Search" size={18} />}
-                  containerStyle={{ width: "100%" , paddingLeft: "0px" }}
+                  containerStyle={{ width: "100%", paddingLeft: "0px" }}
                 />
               </div>
               <div className={styles.filterAnchor}>
@@ -332,7 +336,7 @@ const TicketList: React.FC = () => {
                         value={draftPriorities}
                         onChange={(vals) => setDraftPriorities(vals)}
                         placeholder="All Priorities"
-                        options={priorities.map((p) => ({
+                        options={priorities.map((p: { name: any }) => ({
                           label: p.name,
                           value: p.name,
                         }))}
@@ -349,7 +353,7 @@ const TicketList: React.FC = () => {
                         value={draftProjects}
                         onChange={(vals) => setDraftProjects(vals)}
                         placeholder="All Projects"
-                        options={projects.map((p) => ({
+                        options={projects.map((p: { name: any; id: any }) => ({
                           label: p.name,
                           value: p.id,
                         }))}
@@ -366,7 +370,7 @@ const TicketList: React.FC = () => {
                         value={draftAssignees}
                         onChange={(vals) => setDraftAssignees(vals)}
                         placeholder="All Assignees"
-                        options={agents.map((a) => ({
+                        options={agents.map((a: any) => ({
                           label: a.fullname,
                           value: a.id,
                         }))}
@@ -384,10 +388,12 @@ const TicketList: React.FC = () => {
                           value={draftClients}
                           onChange={(vals) => setDraftClients(vals)}
                           placeholder="All Clients"
-                          options={clients.map((c) => ({
-                            label: c.fullname,
-                            value: c.id,
-                          }))}
+                          options={clients.map(
+                            (c: { fullname: any; id: any }) => ({
+                              label: c.fullname,
+                              value: c.id,
+                            }),
+                          )}
                           style={{ width: "100%" }}
                         />
                       </div>

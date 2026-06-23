@@ -98,7 +98,7 @@ const UserList: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       showNotification(
         "success",
-        editingUser ? "User updated successfully" : "User created successfully"
+        editingUser ? "User updated successfully" : "User created successfully",
       );
       setIsModalOpen(false);
       setEditingUser(null);
@@ -154,8 +154,6 @@ const UserList: React.FC = () => {
     handleEdit,
     handleDelete,
   );
-
-
 
   useEffect(() => {
     const handleOnlineUsers = (
@@ -222,7 +220,10 @@ const UserList: React.FC = () => {
               placeholder="All Roles"
               options={[
                 { value: "all", label: "All Roles" },
-                ...roles.map((r) => ({ value: r.id, label: r.name })),
+                ...roles.map((r: { id: any; name: any }) => ({
+                  value: r.id,
+                  label: r.name,
+                })),
               ]}
               style={{ width: 200 }}
             />

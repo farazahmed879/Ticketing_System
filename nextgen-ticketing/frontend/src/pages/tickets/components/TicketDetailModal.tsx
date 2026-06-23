@@ -35,8 +35,8 @@ import {
   readAttachmentFiles,
 } from "../../../utils/attachments";
 import CommentSection from "../ticket-details/ticket-details-modal/components/CommentsSection";
-import {
 import CustomImage from "../../../components/CustomImage";
+import {
   type ClientDecision,
   buildClientDecisionBody,
   getDecisionDialog,

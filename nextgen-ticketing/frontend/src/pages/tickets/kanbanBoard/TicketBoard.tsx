@@ -583,11 +583,13 @@ const TicketBoard: React.FC = () => {
                             value={draftAgents}
                             onChange={(vals) => setDraftAgents(vals)}
                             placeholder="All Developers"
-                            options={agents.map((a) => ({
-                              value: a.id,
-                              label: a.fullname,
-                              image: a.image,
-                            }))}
+                            options={agents.map(
+                              (a: { id: any; fullname: any; image: any }) => ({
+                                value: a.id,
+                                label: a.fullname,
+                                image: a.image,
+                              }),
+                            )}
                             style={{ width: "100%" }}
                           />
                         </div>
@@ -625,7 +627,7 @@ const TicketBoard: React.FC = () => {
                         value={draftProjects}
                         onChange={(vals) => setDraftProjects(vals)}
                         placeholder="All Projects"
-                        options={projects.map((p) => ({
+                        options={projects.map((p: any) => ({
                           value: p.id,
                           label: p.name,
                         }))}
@@ -643,7 +645,7 @@ const TicketBoard: React.FC = () => {
                           value={draftCustomers}
                           onChange={(vals) => setDraftCustomers(vals)}
                           placeholder="All Clients"
-                          options={customers.map((c) => ({
+                          options={customers.map((c: any) => ({
                             value: c.id,
                             label: c.fullname,
                             image: c.image,

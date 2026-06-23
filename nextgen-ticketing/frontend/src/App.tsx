@@ -11,34 +11,34 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { useTranslation } from "react-i18next";
 import Login from "./pages/auth/Login.tsx";
 // import Register from "./pages/auth/Register.tsx";
-import Dashboard from "./pages/dashboard/Dashboard.tsx";
-import TicketList from "./pages/tickets/TicketList.tsx";
+import Dashboard from "./pages/dashboard/index.tsx";
+import TicketList from "./pages/tickets/index.tsx";
 import TicketBoard from "./pages/tickets/kanbanBoard/TicketBoard.tsx";
 import TicketDetail from "./pages/tickets/ticket-details/ticket-details-page/index.tsx";
-import Messages from "./pages/messages/Messages.tsx";
-import DepartmentList from "./pages/departments/DepartmentList.tsx";
+import Messages from "./pages/messages/index.tsx";
+import DepartmentList from "./pages/departments/index.tsx";
 import DepartmentDetail from "./pages/departments/DepartmentDetail.tsx";
-import TeamList from "./pages/teams/TeamList.tsx";
+import TeamList from "./pages/teams/index.tsx";
 import TeamDetail from "./pages/teams/TeamDetail.tsx";
-import ProjectList from "./pages/projects/ProjectList.tsx";
+import ProjectList from "./pages/projects/index.tsx";
 import ProjectDetail from "./pages/projects/ProjectDetail.tsx";
-import UserList from "./pages/users/UserList.tsx";
-import RoleList from "./pages/roles/RoleList.tsx";
+import UserList from "./pages/users/index.tsx";
+import RoleList from "./pages/roles/index.tsx";
 import MainLayout from "./layouts/MainLayout.tsx";
 import FullScreenLoader from "./components/FullScreenLoader";
-import Notifications from "./pages/notifications/Notifications.tsx";
-import Requests from "./pages/requests/Requests.tsx";
-import Settings from "./pages/settings/Settings.tsx";
-import Profile from "./pages/profile/Profile.tsx";
-import Timesheet from "./pages/timesheet/Timesheet.tsx";
+import Notifications from "./pages/notifications/index.tsx";
+import Requests from "./pages/requests/index.tsx";
+import Settings from "./pages/settings/index.tsx";
+import Profile from "./pages/profile/index.tsx";
+import Timesheet from "./pages/timesheet/index.tsx";
 import TimesheetReview from "./pages/timesheet/TimesheetReview.tsx";
 import TimesheetReport from "./pages/timesheet/TimesheetReport.tsx";
-import CandidateList from "./pages/candidates/CandidateList.tsx";
+import CandidateList from "./pages/candidates/index.tsx";
 import CandidateDetail from "./pages/candidates/candidate-details/CandidateDetail.tsx";
 import CandidateLeaderboard from "./pages/candidates/CandidateLeaderboard.tsx";
-import InterviewList from "./pages/interviews/InterviewList.tsx";
+import InterviewList from "./pages/interviews/index.tsx";
 import InterviewDetail from "./pages/interviews/InterviewDetail.tsx";
-import AnnouncementList from "./pages/announcements/AnnouncementList.tsx";
+import AnnouncementList from "./pages/announcements/index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
@@ -68,52 +68,52 @@ const App: React.FC = () => {
         <AuthProvider>
           <Router>
             <Routes>
-            <Route path="/login" element={<Login />} />
-            {/* <Route path="/register" element={<Register />} /> */}
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <MainLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Dashboard />} />
-              <Route path="tickets" element={<TicketList />} />
-              <Route path="tickets/board" element={<TicketBoard />} />
-              <Route path="tickets/:id" element={<TicketDetail />} />
-              <Route path="messages" element={<Messages />} />
-              <Route path="teams" element={<TeamList />} />
-              <Route path="teams/:id" element={<TeamDetail />} />
-              <Route path="departments" element={<DepartmentList />} />
-              <Route path="departments/:id" element={<DepartmentDetail />} />
-              <Route path="projects" element={<ProjectList />} />
-              <Route path="projects/:id" element={<ProjectDetail />} />
-              <Route path="timesheet" element={<Timesheet />} />
-              <Route path="timesheet/review" element={<TimesheetReview />} />
-              <Route path="timesheet/report" element={<TimesheetReport />} />
-              <Route path="users" element={<UserList />} />
-              <Route path="roles" element={<RoleList />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path="requests" element={<Requests />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="profile/:id?" element={<Profile />} />
-              <Route path="candidates" element={<CandidateList />} />
+              <Route path="/login" element={<Login />} />
+              {/* <Route path="/register" element={<Register />} /> */}
               <Route
-                path="candidates/leaderboard"
-                element={<CandidateLeaderboard />}
-              />
-              <Route path="candidates/:id" element={<CandidateDetail />} />
-              <Route path="interviews" element={<InterviewList />} />
-              <Route path="interviews/:id" element={<InterviewDetail />} />
-              <Route path="announcements" element={<AnnouncementList />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
-      </AuthProvider>
-    </NotificationProvider>
-  </QueryClientProvider>
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Dashboard />} />
+                <Route path="tickets" element={<TicketList />} />
+                <Route path="tickets/board" element={<TicketBoard />} />
+                <Route path="tickets/:id" element={<TicketDetail />} />
+                <Route path="messages" element={<Messages />} />
+                <Route path="teams" element={<TeamList />} />
+                <Route path="teams/:id" element={<TeamDetail />} />
+                <Route path="departments" element={<DepartmentList />} />
+                <Route path="departments/:id" element={<DepartmentDetail />} />
+                <Route path="projects" element={<ProjectList />} />
+                <Route path="projects/:id" element={<ProjectDetail />} />
+                <Route path="timesheet" element={<Timesheet />} />
+                <Route path="timesheet/review" element={<TimesheetReview />} />
+                <Route path="timesheet/report" element={<TimesheetReport />} />
+                <Route path="users" element={<UserList />} />
+                <Route path="roles" element={<RoleList />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="requests" element={<Requests />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="profile/:id?" element={<Profile />} />
+                <Route path="candidates" element={<CandidateList />} />
+                <Route
+                  path="candidates/leaderboard"
+                  element={<CandidateLeaderboard />}
+                />
+                <Route path="candidates/:id" element={<CandidateDetail />} />
+                <Route path="interviews" element={<InterviewList />} />
+                <Route path="interviews/:id" element={<InterviewDetail />} />
+                <Route path="announcements" element={<AnnouncementList />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Router>
+        </AuthProvider>
+      </NotificationProvider>
+    </QueryClientProvider>
   );
 };
 

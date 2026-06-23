@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Dashboard.module.css";
+import CustomImage from "../../../components/CustomImage";
 
 interface ReviewsSectionProps {
   reviews: any[];
@@ -48,7 +49,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
               <div className={styles.reviewerSection}>
                 <div className={styles.reviewerAvatarWrapper}>
                   {review.author?.image ? (
-                    <img
+                    <CustomImage
                       src={review.author.image}
                       alt={review.author.fullname}
                       className={styles.reviewerAvatar}

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import styles from "../UserList.module.css";
+import CustomImage from "../../../components/CustomImage";
 const UserCard = ({
   data,
   isOnline,
@@ -46,7 +47,7 @@ const UserCard = ({
           style={{ width: 48, height: 48, fontSize: "1.1rem" }}
         >
           {data.image ? (
-            <img src={data.image} alt={data.fullname} />
+            <CustomImage src={data.image} alt={data.fullname} />
           ) : (
             data.fullname.charAt(0)
           )}

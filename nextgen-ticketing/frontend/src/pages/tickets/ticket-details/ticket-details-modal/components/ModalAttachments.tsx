@@ -6,6 +6,7 @@ import {
   MAX_ATTACHMENTS,
 } from "../../../../../utils/attachments";
 import type { TicketDetail } from "../../../../../types";
+import CustomImage from "../../../../../components/CustomImage";
 
 interface ModalAttachmentsProps {
   displayTicket: TicketDetail | any;
@@ -98,7 +99,7 @@ const ModalAttachments: React.FC<ModalAttachmentsProps> = ({
                   border: "1px solid var(--border-glass)",
                 }}
               >
-                <img
+                <CustomImage
                   src={src}
                   alt={`attachment-${idx}`}
                   style={{
@@ -245,7 +246,7 @@ const ModalAttachments: React.FC<ModalAttachmentsProps> = ({
                       background: "transparent",
                     }}
                   >
-                    <img
+                    <CustomImage
                       src={src}
                       alt={`attachment-${idx}`}
                       style={{

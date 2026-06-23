@@ -5,7 +5,9 @@ import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
 import Highlight from "../../components/Highlight";
+import CustomTooltip from "../../components/CustomTooltip";
 import { ProjectStatus } from "../../utils/constants";
+import styles from "./columns.module.css";
 
 export const statusBadgeVariant = (status: string) => {
   switch (status) {
@@ -34,19 +36,8 @@ export const getProjectColumns = (
       header: "Project",
       key: "name",
       render: (p) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            className="glass-card"
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 8,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "rgba(16, 185, 129, 0.1)",
-            }}
-          >
+        <div className="flex-row-12">
+          <div className={`glass-card icon-box ${styles.iconBox}`}>
             <CustomIcon
               name="FolderKanban"
               size={18}
@@ -54,18 +45,10 @@ export const getProjectColumns = (
             />
           </div>
           <div>
-            <div style={{ fontWeight: 600 }}>
+            <div className="font-semibold">
               <Highlight text={p.name} query={search} />
             </div>
-            <div
-              style={{
-                fontSize: "0.8rem",
-                color: "var(--text-muted)",
-                display: "flex",
-                gap: 8,
-                alignItems: "center",
-              }}
-            >
+            <div className={styles.projectMeta}>
               <span>
                 {p.description ? (
                   <Highlight text={p.description} query={search} />
@@ -75,10 +58,8 @@ export const getProjectColumns = (
               </span>
               {p.manager && (
                 <>
-                  <span style={{ opacity: 0.5 }}>•</span>
-                  <span
-                    style={{ display: "flex", alignItems: "center", gap: 4 }}
-                  >
+                  <span className="separator-dot">•</span>
+                  <span className={styles.metaItem}>
                     <CustomIcon
                       name="User"
                       size={12}
@@ -90,10 +71,8 @@ export const getProjectColumns = (
               )}
               {p.teams && p.teams.length > 0 && (
                 <>
-                  <span style={{ opacity: 0.5 }}>•</span>
-                  <span
-                    style={{ display: "flex", alignItems: "center", gap: 4 }}
-                  >
+                  <span className="separator-dot">•</span>
+                  <span className={styles.metaItem}>
                     <CustomIcon
                       name="Users"
                       size={12}
@@ -113,25 +92,15 @@ export const getProjectColumns = (
       header: "Clients",
       key: "clients",
       render: (p) => (
-        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+        <div className="flex-wrap-4">
           {p.clients?.length ? (
             p.clients.map((c) => (
-              <span
-                key={c.id}
-                style={{
-                  fontSize: "0.75rem",
-                  background: "rgba(255,255,255,0.05)",
-                  padding: "2px 8px",
-                  borderRadius: 4,
-                }}
-              >
+              <span key={c.id} className="chip">
                 {c.fullname}
               </span>
             ))
           ) : (
-            <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
-              No clients assigned
-            </span>
+            <span className="text-xs-muted">No clients assigned</span>
           )}
         </div>
       ),
@@ -152,29 +121,33 @@ export const getProjectColumns = (
       header: "Actions",
       key: "actions",
       render: (p) => (
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className={styles.actions}>
           {canUpdate && (
-            <CustomButton
-              variant="ghost"
-              size="sm"
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                handleEdit(p);
-              }}
-              icon={<CustomIcon name="Edit2" size={16} />}
-            />
+            <CustomTooltip text="Edit">
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  handleEdit(p);
+                }}
+                icon={<CustomIcon name="Edit2" size={16} />}
+              />
+            </CustomTooltip>
           )}
           {canDelete && (
-            <CustomButton
-              variant="ghost"
-              size="sm"
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                handleDeleteClick(p.id);
-              }}
-              icon={<CustomIcon name="Trash2" size={16} />}
-              style={{ color: "var(--accent-danger)" }}
-            />
+            <CustomTooltip text="Delete">
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  handleDeleteClick(p.id);
+                }}
+                icon={<CustomIcon name="Trash2" size={16} />}
+                style={{ color: "var(--accent-danger)" }}
+              />
+            </CustomTooltip>
           )}
         </div>
       ),

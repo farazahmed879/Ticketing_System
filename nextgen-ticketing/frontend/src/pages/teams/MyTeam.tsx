@@ -5,6 +5,7 @@ import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useAuth } from "../../context/AuthContext";
 import styles from "./MyTeam.module.css";
+import CustomImage from "../../components/CustomImage";
 
 interface TeamMember {
   id: string;
@@ -245,7 +246,7 @@ const MyTeam: React.FC = () => {
                 }}
               >
                 {team.teamLead.image ? (
-                  <img
+                  <CustomImage
                     src={team.teamLead.image}
                     alt={team.teamLead.fullname}
                   />
@@ -298,7 +299,7 @@ const MyTeam: React.FC = () => {
                     }}
                   >
                     {member.image ? (
-                      <img src={member.image} alt={member.fullname} />
+                      <CustomImage src={member.image} alt={member.fullname} />
                     ) : (
                       getInitials(member.fullname)
                     )}

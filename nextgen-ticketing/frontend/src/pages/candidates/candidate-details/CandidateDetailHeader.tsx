@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import CustomBadge from "../../../components/CustomBadge";
@@ -28,6 +29,8 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
   isConverting,
   onConvert,
 }) => {
+  const navigate = useNavigate();
+
   return (
     <div
       className="glass-card"
@@ -39,6 +42,19 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+        <CustomButton
+          variant="ghost"
+          onClick={() => navigate("/candidates")}
+          icon={<CustomIcon name="ArrowLeft" size={20} />}
+          style={{ 
+            width: 40, 
+            height: 40, 
+            padding: 0, 
+            borderRadius: '12px',
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid var(--border-glass)'
+          }}
+        />
         <div
           style={{
             width: 70,

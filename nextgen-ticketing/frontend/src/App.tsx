@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { useTranslation } from "react-i18next";
@@ -51,12 +52,22 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   return <>{children}</>;
 };
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 const App: React.FC = () => {
   return (
-    <NotificationProvider>
-      <AuthProvider>
-        <Router>
-          <Routes>
+    <QueryClientProvider client={queryClient}>
+      <NotificationProvider>
+        <AuthProvider>
+          <Router>
+            <Routes>
             <Route path="/login" element={<Login />} />
             {/* <Route path="/register" element={<Register />} /> */}
             <Route
@@ -102,6 +113,7 @@ const App: React.FC = () => {
         </Router>
       </AuthProvider>
     </NotificationProvider>
+  </QueryClientProvider>
   );
 };
 

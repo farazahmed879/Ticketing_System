@@ -31,6 +31,7 @@ import ModalTimestamps from "./components/ModalTimestamps";
 import styles from "./TicketDetailModal.module.css";
 import { readAttachmentFiles } from "../../../../utils/attachments";
 import CustomDropdownMenu from "./components/CustomDropDownTicketModal";
+import CustomImage from "../../../../components/CustomImage";
 
 const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   isOpen,
@@ -820,7 +821,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 <CustomIcon name="ChevronLeft" size={24} />
               </button>
             )}
-            <img
+            <CustomImage
               src={lightbox.images[lightbox.index]}
               alt={`lightbox-zoom-${lightbox.index}`}
               onClick={(e) => e.stopPropagation()}

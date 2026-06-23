@@ -11,6 +11,7 @@ import {
   ACCEPT_ATTRIBUTE,
   MAX_ATTACHMENTS,
 } from "../../../../../utils/attachments";
+import CustomImage from "../../../../../components/CustomImage";
 
 const CommentSection = ({
   fullTicketData,
@@ -282,7 +283,7 @@ const CommentSection = ({
                                       background: "transparent",
                                     }}
                                   >
-                                    <img
+                                    <CustomImage
                                       src={src}
                                       alt={`attachment-${idx}`}
                                       style={{
@@ -338,7 +339,7 @@ const CommentSection = ({
                           border: "1px solid var(--border-glass)",
                         }}
                       >
-                        <img
+                        <CustomImage
                           src={src}
                           alt={`attachment-${idx}`}
                           style={{

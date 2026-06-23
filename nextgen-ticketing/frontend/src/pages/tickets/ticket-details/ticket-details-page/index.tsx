@@ -39,6 +39,7 @@ import TicketDetailComments from "./components/TicketDetailComments";
 import TicketDetailHistory from "./components/TicketDetailHistory";
 
 import type { TicketDetail as ITicketDetail } from "../../../../types";
+import CustomImage from "../../../../components/CustomImage";
 
 interface SidebarDraft {
   statusId: string;
@@ -1032,7 +1033,7 @@ const TicketDetail: React.FC = () => {
               </button>
             )}
 
-            <img
+            <CustomImage
               src={lightbox.images[lightbox.index]}
               alt={`attachment-${lightbox.index}`}
               onClick={(e) => e.stopPropagation()}

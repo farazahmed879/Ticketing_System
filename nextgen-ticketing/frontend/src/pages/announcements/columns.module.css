@@ -1,0 +1,22 @@
+.typeBadge {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.projectText {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.authorCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}

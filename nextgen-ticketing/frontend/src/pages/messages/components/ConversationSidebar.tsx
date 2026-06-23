@@ -5,6 +5,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomInput from "../../../components/CustomInput";
 import styles from "../Messages.module.css";
 import type { Conversation } from "../../../types";
+import CustomImage from "../../../components/CustomImage";
 
 interface ConversationSidebarProps {
   conversations: Conversation[];
@@ -123,7 +124,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                       color="var(--accent-primary)"
                     />
                   ) : conv.partner?.image ? (
-                    <img
+                    <CustomImage
                       src={conv.partner.image}
                       alt=""
                       style={{

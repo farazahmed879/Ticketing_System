@@ -1,11 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
-import { RoleName, PROJECT_STATUS_OPTIONS, DEFAULT_PAGE_SIZE } from "../../utils/constants";
+import {
+  RoleName,
+  PROJECT_STATUS_OPTIONS,
+  DEFAULT_PAGE_SIZE,
+} from "../../utils/constants";
 import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomInput from "../../components/CustomInput";
@@ -21,17 +26,13 @@ import StandardListLayout from "../../components/StandardListLayout";
 import { getProjectColumns } from "./columns";
 
 const ProjectList: React.FC = () => {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
-  const [clients, setClients] = useState<any[]>([]);
-  const [managers, setManagers] = useState<any[]>([]);
-  const [teams, setTeams] = useState<any[]>([]);
   const { showNotification, setIsLoading } = useNotification();
   const { user } = useAuth();
 
@@ -41,7 +42,6 @@ const ProjectList: React.FC = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalItems, setTotalItems] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
 
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -57,41 +57,40 @@ const ProjectList: React.FC = () => {
     user?.role?.name === RoleName.ADMIN ||
     user?.role?.permissions?.groups?.delete === true;
 
-  // Tracks the params of the request currently in flight. Prevents an
-  // identical request from being fired again while one is already running
-  // (e.g. React StrictMode's double-mount in dev, or rapid re-triggers).
-  const inFlightKey = useRef<string | null>(null);
-
-  const fetchData = async (searchTerm = "", status = "", page = currentPage, limit = itemsPerPage) => {
-    const key = `${searchTerm}__${status}__${user?.id ?? ""}__${page}__${limit}`;
-    if (inFlightKey.current === key) return;
-    inFlightKey.current = key;
-    try {
-      setLoading(true);
+  const { data: projectsData, isLoading: loading } = useQuery({
+    queryKey: [
+      "projects",
+      debouncedSearch,
+      debouncedStatus,
+      currentPage,
+      itemsPerPage,
+      user?.id,
+    ],
+    queryFn: async () => {
       const projectsRes = await api.get(API_ROUTES.PROJECTS.BASE, {
         params: {
           role: user?.role?.name,
           userId: user?.id,
-          search: searchTerm || undefined,
-          status: status || undefined,
-          page,
-          limit,
+          search: debouncedSearch || undefined,
+          status: debouncedStatus || undefined,
+          page: currentPage,
+          limit: itemsPerPage,
         },
       });
-      setProjects(projectsRes.data.projects);
-      setTotalItems(projectsRes.data.total || 0);
-    } catch (err) {
-      console.error("Failed to fetch projects data", err);
-      showNotification("error", "Failed to load projects data");
-    } finally {
-      setLoading(false);
-      inFlightKey.current = null;
-    }
-  };
+      return {
+        projects: projectsRes.data.projects,
+        total: projectsRes.data.total || 0,
+      };
+    },
+    enabled: !!user,
+  });
 
-  const projectModal = async () => {
-    try {
-      setLoading(true);
+  const projects = projectsData?.projects || [];
+  const totalItems = projectsData?.total || 0;
+
+  const { data: modalData } = useQuery({
+    queryKey: ["projects", "modal-data"],
+    queryFn: async () => {
       const [clientsRes, teamsRes] = await Promise.all([
         api.get(API_ROUTES.USERS.GET_BY_ROLES, {
           params: { roles: [RoleName.CUSTOMER, RoleName.AGENT], limit: -1 },
@@ -100,24 +99,23 @@ const ProjectList: React.FC = () => {
           params: { limit: -1 },
         }),
       ]);
-      setClients(
-        clientsRes.data.accounts.filter(
+      const accounts = clientsRes.data.accounts || [];
+      return {
+        clients: accounts.filter(
           (u: any) => u.role?.name === RoleName.CUSTOMER,
         ),
-      );
-      setManagers(
-        clientsRes.data.accounts.filter(
+        managers: accounts.filter(
           (u: any) => u.role?.name === RoleName.AGENT,
         ),
-      );
-      setTeams(teamsRes.data.teams || []);
-    } catch (err) {
-      console.error("Failed to fetch projects data", err);
-      showNotification("error", "Failed to load projects data");
-    } finally {
-      setLoading(false);
-    }
-  };
+        teams: teamsRes.data.teams || [],
+      };
+    },
+    enabled: isModalOpen,
+  });
+
+  const clients = modalData?.clients || [];
+  const managers = modalData?.managers || [];
+  const teams = modalData?.teams || [];
 
   // Debounce search/filter inputs and reset page to 0 when they change
   useEffect(() => {
@@ -129,18 +127,7 @@ const ProjectList: React.FC = () => {
     return () => clearTimeout(handle);
   }, [search, statusFilter]);
 
-  // Refetch when pagination or debounced filters change
-  useEffect(() => {
-    if (user) {
-      fetchData(debouncedSearch, debouncedStatus, currentPage, itemsPerPage);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, debouncedStatus, currentPage, itemsPerPage, user]);
-
   const handleEdit = (project: Project) => {
-    // Load the client/manager/team option lists (same as the Add flow) so the
-    // edit form can show and pre-select the current assignments.
-    projectModal();
     setEditingProject(project);
     setIsModalOpen(true);
   };
@@ -150,53 +137,67 @@ const ProjectList: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!projectToDelete) return;
-    setConfirmLoading(true);
-    try {
-      await api.delete(API_ROUTES.PROJECTS.BY_ID(projectToDelete));
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(API_ROUTES.PROJECTS.BY_ID(id));
+    },
+    onMutate: () => setConfirmLoading(true),
+    onSettled: () => setConfirmLoading(false),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
       showNotification("success", "Project deleted successfully");
-      fetchData(search, statusFilter);
-    } catch (err: any) {
+      setIsDeleteModalOpen(false);
+      setProjectToDelete(null);
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
         err.response?.data?.error || "Failed to delete project",
       );
-    } finally {
-      setConfirmLoading(false);
-      setIsDeleteModalOpen(false);
-      setProjectToDelete(null);
-    }
+    },
+  });
+
+  const handleDeleteConfirm = async () => {
+    if (!projectToDelete) return;
+    deleteMutation.mutate(projectToDelete);
   };
 
-  const handleSubmit = async (data: any) => {
-    setIsLoading(
-      true,
-      editingProject ? "Updating project..." : "Creating project...",
-    );
-    try {
+  const submitMutation = useMutation({
+    mutationFn: async (data: any) => {
       if (editingProject) {
-        await api.put(API_ROUTES.PROJECTS.BY_ID(editingProject.id), data);
-        showNotification("success", "Project updated successfully");
+        return api.put(API_ROUTES.PROJECTS.BY_ID(editingProject.id), data);
       } else {
-        await api.post(API_ROUTES.PROJECTS.BASE, data);
-        showNotification("success", "Project created successfully");
+        return api.post(API_ROUTES.PROJECTS.BASE, data);
       }
+    },
+    onMutate: () =>
+      setIsLoading(
+        true,
+        editingProject ? "Updating project..." : "Creating project...",
+      ),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      showNotification(
+        "success",
+        `Project ${editingProject ? "updated" : "created"} successfully`,
+      );
       setIsModalOpen(false);
       setEditingProject(null);
-      fetchData(search, statusFilter);
-    } catch (err: any) {
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
         err.response?.data?.error || "Operation failed",
       );
-    } finally {
-      setIsLoading(false, "");
-    }
+    },
+  });
+
+  const handleSubmit = async (data: any) => {
+    submitMutation.mutate(data);
   };
 
   const handleCreateButtonClick = () => {
-    projectModal();
     setEditingProject(null);
     setIsModalOpen(true);
   };

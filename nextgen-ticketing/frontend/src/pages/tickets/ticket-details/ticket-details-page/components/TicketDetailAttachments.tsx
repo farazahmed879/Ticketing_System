@@ -6,6 +6,7 @@ import {
   MAX_ATTACHMENTS,
 } from "../../../../../utils/attachments";
 import type { TicketDetailAttachmentsProps } from "../../../../../components/types";
+import CustomImage from "../../../../../components/CustomImage";
 
 const TicketDetailAttachments: React.FC<TicketDetailAttachmentsProps> = ({
   ticket,
@@ -84,7 +85,7 @@ const TicketDetailAttachments: React.FC<TicketDetailAttachmentsProps> = ({
                   border: "1px solid var(--border-glass)",
                 }}
               >
-                <img
+                <CustomImage
                   src={src}
                   alt={`attachment-${idx}`}
                   style={{
@@ -195,7 +196,7 @@ const TicketDetailAttachments: React.FC<TicketDetailAttachmentsProps> = ({
                     background: "transparent",
                   }}
                 >
-                  <img
+                  <CustomImage
                     src={src}
                     alt={`attachment-${idx}`}
                     style={{

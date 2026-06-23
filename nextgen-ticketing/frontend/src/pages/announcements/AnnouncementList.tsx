@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
@@ -22,8 +23,7 @@ const AnnouncementList: React.FC = () => {
   const entityName = isCustomer ? "Review" : "Shoutout";
   const entityNamePlural = isCustomer ? "Reviews" : "Shoutouts";
 
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] =
     useState<Announcement | null>(null);
@@ -34,14 +34,12 @@ const AnnouncementList: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [page, setPage] = useState(0);
   const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState("");
   const { showNotification, setIsLoading } = useNotification();
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+  const { data: announcementsData, isLoading: loading } = useQuery({
+    queryKey: ["announcements", page, limit, search],
+    queryFn: async () => {
       const response = await api.get(API_ROUTES.ANNOUNCEMENTS.BASE, {
         params: {
           page: page + 1,
@@ -49,44 +47,50 @@ const AnnouncementList: React.FC = () => {
           search,
         },
       });
-      setAnnouncements(response.data.announcements);
-      setTotalItems(response.data.pagination.total);
-      setTotalPages(response.data.pagination.totalPages);
-    } catch (err) {
-      console.error("Failed to fetch announcements", err);
-      showNotification("error", "Failed to load announcements");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        announcements: response.data.announcements,
+        total: response.data.pagination.total || 0,
+        totalPages: response.data.pagination.totalPages || 0,
+      };
+    },
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [page, limit, search]);
+  const announcements = announcementsData?.announcements || [];
+  const totalItems = announcementsData?.total || 0;
+  const totalPages = announcementsData?.totalPages || 0;
 
-  const handleSubmit = async (data: any) => {
-    setIsSaving(true);
-    setIsLoading(true, "Saving announcement...");
-    try {
+  const saveMutation = useMutation({
+    mutationFn: async (data: any) => {
       if (editingAnnouncement) {
-        await api.put(
-          API_ROUTES.ANNOUNCEMENTS.BY_ID(editingAnnouncement.id),
-          data,
-        );
-        showNotification("success", "Announcement updated successfully");
+        return api.put(API_ROUTES.ANNOUNCEMENTS.BY_ID(editingAnnouncement.id), data);
       } else {
-        await api.post(API_ROUTES.ANNOUNCEMENTS.BASE, data);
-        showNotification("success", "Announcement created successfully");
+        return api.post(API_ROUTES.ANNOUNCEMENTS.BASE, data);
       }
-      setIsModalOpen(false);
-      setEditingAnnouncement(null);
-      fetchData();
-    } catch (err: any) {
-      showNotification("error", "Operation failed");
-    } finally {
+    },
+    onMutate: () => {
+      setIsSaving(true);
+      setIsLoading(true, "Saving announcement...");
+    },
+    onSettled: () => {
       setIsSaving(false);
       setIsLoading(false, "");
-    }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      showNotification(
+        "success",
+        editingAnnouncement ? "Announcement updated successfully" : "Announcement created successfully"
+      );
+      setIsModalOpen(false);
+      setEditingAnnouncement(null);
+    },
+    onError: () => {
+      showNotification("error", "Operation failed");
+    },
+  });
+
+  const handleSubmit = async (data: any) => {
+    saveMutation.mutate(data);
   };
 
   const handleEdit = (ann: Announcement) => {
@@ -99,18 +103,25 @@ const AnnouncementList: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!announcementToDelete) return;
-    try {
-      await api.delete(API_ROUTES.ANNOUNCEMENTS.BY_ID(announcementToDelete));
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(API_ROUTES.ANNOUNCEMENTS.BY_ID(id));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
       showNotification("success", "Announcement deleted successfully");
       setIsDeleteModalOpen(false);
-      fetchData();
-    } catch (err: any) {
-      showNotification("error", "Failed to delete announcement");
-    } finally {
       setAnnouncementToDelete(null);
-    }
+    },
+    onError: () => {
+      showNotification("error", "Failed to delete announcement");
+      setAnnouncementToDelete(null);
+    },
+  });
+
+  const confirmDelete = async () => {
+    if (!announcementToDelete) return;
+    deleteMutation.mutate(announcementToDelete);
   };
 
   const columns = getAnnouncementColumns(entityName, handleEdit, handleDelete);

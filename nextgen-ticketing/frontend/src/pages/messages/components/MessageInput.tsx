@@ -4,6 +4,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Messages.module.css";
 import { MAX_ATTACHMENTS } from "../../../utils/attachments";
 import type { Message } from "../../../types";
+import CustomImage from "../../../components/CustomImage";
 
 interface MessageInputProps {
   newMessage: string;
@@ -86,7 +87,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         <div className={styles.attachmentPreviewContainer}>
           {attachments.map((src, idx) => (
             <div key={idx} className={styles.attachmentPreview}>
-              <img src={src} alt={`preview-${idx}`} />
+              <CustomImage src={src} alt={`preview-${idx}`} />
               <CustomButton
                 variant="ghost"
                 size="sm"

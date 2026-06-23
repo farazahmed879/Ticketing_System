@@ -1,0 +1,21 @@
+.iconBox {
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.deptName {
+  cursor: pointer;
+}
+
+.deptName:hover {
+  color: var(--accent-primary);
+}
+
+.deptTitle {
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}

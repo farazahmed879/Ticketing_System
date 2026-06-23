@@ -4,6 +4,7 @@ import CustomInput from "../../../components/CustomInput";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import styles from "../Messages.module.css";
+import CustomImage from "../../../components/CustomImage";
 
 interface AddGroupMembersModalProps {
   isOpen: boolean;
@@ -132,7 +133,7 @@ const AddGroupMembersModal: React.FC<AddGroupMembersModalProps> = ({
                       }}
                     >
                       {u.image ? (
-                        <img
+                        <CustomImage
                           src={u.image}
                           alt=""
                           style={{

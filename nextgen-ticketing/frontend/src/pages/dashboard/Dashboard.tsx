@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
@@ -8,7 +9,6 @@ import { API_ROUTES } from "../../utils/apiRoutes";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import type { DashboardStats as Stats } from "../../types";
 import { DashboardSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 
 // Sub-components
@@ -24,33 +24,20 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [newHires, setNewHires] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [seenMomentIds, setSeenMomentIds] = useState<string[]>([]);
+  const { data: dashboardData, isLoading: loading } = useQuery({
+    queryKey: ["dashboardStats"],
+    queryFn: async () => {
+      const statsRes = await api.get(API_ROUTES.DASHBOARD.STATS);
+      return statsRes.data;
+    },
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const statsRes = await api.get(API_ROUTES.DASHBOARD.STATS);
-        setStats(statsRes.data.stats);
-        // Clients aren't "new hires" — exclude them from the dashboard.
-        setNewHires(
-          (statsRes.data.newHires || []).filter(
-            (hire: any) => hire?.role?.name !== RoleName.CUSTOMER,
-          ),
-        );
-        setAnnouncements(statsRes.data.announcements || []);
-        setSeenMomentIds(statsRes.data.seenMomentIds || []);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const stats = dashboardData?.stats || null;
+  const newHires = (dashboardData?.newHires || []).filter(
+    (hire: any) => hire?.role?.name !== RoleName.CUSTOMER,
+  );
+  const announcements = dashboardData?.announcements || [];
+  const seenMomentIds = dashboardData?.seenMomentIds || [];
 
   if (loading) return <DashboardSkeleton />;
 
@@ -113,9 +100,7 @@ const Dashboard: React.FC = () => {
 
       {/* Row 2: New Hires & Moments of Joy */}
       <div className={styles.heroSection}>
-        <NewHiresSection
-          newHires={newHires}
-        />
+        <NewHiresSection newHires={newHires} />
         <MomentsSection moments={moments} seenMomentIds={seenMomentIds} />
       </div>
 
@@ -126,7 +111,6 @@ const Dashboard: React.FC = () => {
             user?.role?.name === RoleName.HR) && <LeaderboardSection />}
         </div>
       </div>
-
     </div>
   );
 };

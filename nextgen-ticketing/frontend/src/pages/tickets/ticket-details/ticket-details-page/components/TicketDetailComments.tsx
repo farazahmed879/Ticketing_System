@@ -11,6 +11,7 @@ import styles from "../TicketDetail.module.css";
 import cs from "../../../shared/commentThread.module.css";
 import { RoleName } from "../../../../../utils/constants";
 import type { TicketDetailCommentsProps } from "../../../../../components/types";
+import CustomImage from "../../../../../components/CustomImage";
 
 const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
   ticket,
@@ -198,7 +199,7 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
                             background: "transparent",
                           }}
                         >
-                          <img
+                          <CustomImage
                             src={src}
                             alt={`attachment-${idx}`}
                             style={{
@@ -252,7 +253,7 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
                     border: "1px solid var(--border-glass)",
                   }}
                 >
-                  <img
+                  <CustomImage
                     src={src}
                     alt={`attachment-${idx}`}
                     style={{

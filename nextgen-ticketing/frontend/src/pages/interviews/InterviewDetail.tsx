@@ -18,6 +18,7 @@ import CustomButton from "../../components/CustomButton";
 import CustomSelect from "../../components/CustomSelect";
 import CustomTextArea from "../../components/CustomTextArea";
 import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
+import CustomImage from "../../components/CustomImage";
 
 const statusBadgeVariant = (status: string) => {
   switch (status) {
@@ -224,37 +225,26 @@ const InterviewDetail: React.FC = () => {
 
   return (
     <div className={`animate-fade-in ${styles.container}`}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
-          <CustomButton
-            variant="ghost"
-            onClick={() => navigate("/interviews")}
-            icon={<CustomIcon name="ArrowLeft" size={20} />}
-            style={{ 
-              width: 40, 
-              height: 40, 
-              padding: 0, 
-              borderRadius: '12px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid var(--border-glass)'
-            }}
-          />
-          <div>
-            <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
-              Interview Details
-            </h1>
-            <p style={{ color: "var(--text-muted)", margin: "4px 0 0 0", fontSize: '0.9rem' }}>
-              Review candidate assessment and panel feedback
-            </p>
-          </div>
-        </div>
-      </div>
 
       {/* Header Card */}
       <div className={`glass-card ${styles.headerCard}`}>
         <div className={styles.headerTop}>
-          <div>
-            <h1 className={styles.headerTitle}>{interview.title}</h1>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 20 }}>
+            <CustomButton
+              variant="ghost"
+              onClick={() => navigate("/interviews")}
+              icon={<CustomIcon name="ArrowLeft" size={20} />}
+              style={{ 
+                width: 40, 
+                height: 40, 
+                padding: 0, 
+                borderRadius: '12px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-glass)'
+              }}
+            />
+            <div>
+              <h1 className={styles.headerTitle}>{interview.title}</h1>
             <div className={styles.headerMeta}>
               <span className={styles.metaItem}>
                 <CustomIcon name="Calendar" size={16} />
@@ -275,6 +265,7 @@ const InterviewDetail: React.FC = () => {
                 Scheduled by {interview.scheduledBy.fullname}
               </span>
             </div>
+          </div>
           </div>
           <div className={styles.statusActions}>
             <CustomBadge variant={statusBadgeVariant(interview.status)}>
@@ -355,7 +346,7 @@ const InterviewDetail: React.FC = () => {
                 <div key={pm.id} className={styles.panelCard}>
                   <div className={styles.panelAvatar}>
                     {pm.user.image ? (
-                      <img src={pm.user.image} alt={pm.user.fullname} />
+                      <CustomImage src={pm.user.image} alt={pm.user.fullname} />
                     ) : (
                       pm.user.fullname.charAt(0)
                     )}

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
@@ -15,8 +16,7 @@ import StandardListLayout from "../../components/StandardListLayout";
 import { getRoleColumns } from "./columns";
 
 const RoleList: React.FC = () => {
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const statuses = TICKET_STATUSES;
   const { showNotification, setIsLoading } = useNotification();
@@ -28,58 +28,62 @@ const RoleList: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalItems, setTotalItems] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [rolesRes] = await Promise.all([
-        api.get(API_ROUTES.ROLES.BASE, {
-          params: {
-            limit: itemsPerPage,
-            page: currentPage,
-          },
-        }),
-      ]);
-      setRoles(rolesRes.data.roles);
-      setTotalItems(rolesRes.data.total);
-    } catch (err) {
-      console.error("Failed to fetch data", err);
-      showNotification("error", "Failed to load roles");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: rolesData, isLoading: loading } = useQuery({
+    queryKey: ["roles", currentPage, itemsPerPage],
+    queryFn: async () => {
+      const rolesRes = await api.get(API_ROUTES.ROLES.BASE, {
+        params: {
+          limit: itemsPerPage,
+          page: currentPage,
+        },
+      });
+      return {
+        roles: rolesRes.data.roles,
+        total: rolesRes.data.total || 0,
+      };
+    },
+  });
 
-  useEffect(() => {
-    setLoading(true);
-    fetchData();
-  }, [currentPage, itemsPerPage]);
+  const roles = rolesData?.roles || [];
+  const totalItems = rolesData?.total || 0;
 
-  const handleSubmit = async (data: RoleFormData) => {
-    setIsSaving(true);
-    setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
-    try {
+  const saveMutation = useMutation({
+    mutationFn: async (data: RoleFormData) => {
       if (editingRole) {
-        await api.put(API_ROUTES.ROLES.BY_ID(editingRole.id), data);
-        showNotification("success", "Role updated successfully");
+        return api.put(API_ROUTES.ROLES.BY_ID(editingRole.id), data);
       } else {
-        await api.post(API_ROUTES.ROLES.BASE, data);
-        showNotification("success", "Role created successfully");
+        return api.post(API_ROUTES.ROLES.BASE, data);
       }
-      setIsModalOpen(false);
-      setEditingRole(null);
-      fetchData();
-    } catch (err: any) {
-      showNotification(
-        "error",
-        err.response?.data?.error || "Operation failed",
-      );
-    } finally {
+    },
+    onMutate: () => {
+      setIsSaving(true);
+      setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
+    },
+    onSettled: () => {
       setIsSaving(false);
       setIsLoading(false, "");
-    }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
+      showNotification(
+        "success",
+        editingRole ? "Role updated successfully" : "Role created successfully"
+      );
+      setIsModalOpen(false);
+      setEditingRole(null);
+    },
+    onError: (err: any) => {
+      showNotification(
+        "error",
+        err.response?.data?.error || "Operation failed"
+      );
+    },
+  });
+
+  const handleSubmit = async (data: RoleFormData) => {
+    saveMutation.mutate(data);
   };
 
   const handleEdit = (role: Role) => {
@@ -92,23 +96,30 @@ const RoleList: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!roleToDelete) return;
-    setIsDeleting(true);
-    try {
-      await api.delete(API_ROUTES.ROLES.BY_ID(roleToDelete));
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(API_ROUTES.ROLES.BY_ID(id));
+    },
+    onMutate: () => setIsDeleting(true),
+    onSettled: () => setIsDeleting(false),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roles"] });
       showNotification("success", "Role deleted successfully");
       setIsDeleteModalOpen(false);
-      fetchData();
-    } catch (err: any) {
+      setRoleToDelete(null);
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
-        err.response?.data?.error || "Failed to delete role",
+        err.response?.data?.error || "Failed to delete role"
       );
-    } finally {
-      setIsDeleting(false);
       setRoleToDelete(null);
-    }
+    },
+  });
+
+  const confirmDelete = async () => {
+    if (!roleToDelete) return;
+    deleteMutation.mutate(roleToDelete);
   };
 
   const columns = getRoleColumns(handleEdit, handleDelete);

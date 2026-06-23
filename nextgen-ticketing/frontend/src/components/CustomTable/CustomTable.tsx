@@ -41,7 +41,11 @@ const CustomTable = <T extends { id: string | number }>({
             data.map((item, rowIndex) => (
               <tr
                 key={item.id}
-                onClick={() => onRowClick?.(item)}
+                onClick={() => {
+                  const selection = window.getSelection();
+                  if (selection && selection.toString().trim().length > 0) return;
+                  onRowClick?.(item);
+                }}
                 style={{ cursor: onRowClick ? "pointer" : "default" }}
               >
                 {columns.map((column, colIndex) => (

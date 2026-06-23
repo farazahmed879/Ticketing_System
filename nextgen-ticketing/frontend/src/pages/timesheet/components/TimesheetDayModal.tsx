@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import Modal from "../../../components/Modal";
 import CustomInput from "../../../components/CustomInput";
@@ -40,8 +41,7 @@ const TimesheetDayModal: React.FC<Props> = ({
   existingEntry,
   googleEvents,
 }) => {
-  const [projects, setProjects] = useState<any[]>([]);
-  const [tickets, setTickets] = useState<any[]>([]);
+  const queryClient = useQueryClient();
   const { showNotification, setIsLoading } = useNotification();
 
   const { handleSubmit, control, reset, watch } = useForm<TimesheetFormData>({
@@ -82,42 +82,51 @@ const TimesheetDayModal: React.FC<Props> = ({
     }
   }, [existingEntry, reset]);
 
-  useEffect(() => {
-    const fetchMetadata = async () => {
-      try {
-        const [pRes, tRes] = await Promise.all([
-          api.get(API_ROUTES.COMMON.GROUPS),
-          api.get(API_ROUTES.TICKETS.BASE, { params: { limit: -1 } }),
-        ]);
-        setProjects(pRes.data.groups);
-        setTickets(tRes.data.tickets);
-      } catch (err) {
-        console.error("Failed to fetch metadata", err);
-      }
-    };
-    fetchMetadata();
-  }, []);
+  const { data: metadata } = useQuery({
+    queryKey: ["timesheet-metadata"],
+    queryFn: async () => {
+      const [pRes, tRes] = await Promise.all([
+        api.get(API_ROUTES.COMMON.GROUPS),
+        api.get(API_ROUTES.TICKETS.BASE, { params: { limit: -1 } }),
+      ]);
+      return {
+        projects: pRes.data.groups || [],
+        tickets: tRes.data.tickets || [],
+      };
+    },
+    enabled: isOpen,
+  });
 
-  const handleSave = async (data: TimesheetFormData) => {
-    setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
-    try {
-      await api.post(API_ROUTES.TIMESHEETS.ENTRIES, {
+  const projects = metadata?.projects || [];
+  const tickets = metadata?.tickets || [];
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: TimesheetFormData) => {
+      return api.post(API_ROUTES.TIMESHEETS.ENTRIES, {
         date: date.toISOString(),
         totalHours: parseFloat(data.totalHours),
         notes: data.notes,
         tasks: data.tasks.filter((t) => t.description?.trim() || t.hours > 0),
       });
+    },
+    onMutate: () => setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timesheets"] });
       showNotification("success", "Timesheet saved successfully");
       onClose();
-    } catch (err: any) {
+    },
+    onError: (err: any) => {
       console.error("Failed to save timesheet", err);
       showNotification(
         "error",
         err.response?.data?.error || "Failed to save timesheet",
       );
-    } finally {
-      setIsLoading(false, "");
-    }
+    },
+  });
+
+  const handleSave = async (data: TimesheetFormData) => {
+    saveMutation.mutate(data);
   };
 
   return (

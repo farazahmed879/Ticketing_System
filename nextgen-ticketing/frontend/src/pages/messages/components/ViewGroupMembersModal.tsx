@@ -3,6 +3,7 @@ import Modal from "../../../components/Modal";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import styles from "../Messages.module.css";
+import CustomImage from "../../../components/CustomImage";
 
 interface ViewGroupMembersModalProps {
   isOpen: boolean;
@@ -80,7 +81,7 @@ const ViewGroupMembersModal: React.FC<ViewGroupMembersModalProps> = ({
                 }}
               >
                 {member.image ? (
-                  <img
+                  <CustomImage
                     src={member.image}
                     alt=""
                     style={{

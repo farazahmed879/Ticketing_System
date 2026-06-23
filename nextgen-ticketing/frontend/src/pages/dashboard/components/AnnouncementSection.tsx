@@ -5,6 +5,7 @@ import { AnnouncementType } from "../../../utils/constants";
 import styles from "../Dashboard.module.css";
 
 import type { AnnouncementSectionProps } from "../../../types";
+import CustomImage from "../../../components/CustomImage";
 
 const AnnouncementSection: React.FC<AnnouncementSectionProps> = ({ announcements, t }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -41,7 +42,7 @@ const AnnouncementSection: React.FC<AnnouncementSectionProps> = ({ announcements
             <div className={styles.announcementFooter}>
               <div className={styles.announcementAuthor}>
                 {ann.author?.image ? (
-                  <img src={ann.author.image} alt="" className={styles.authorAvatar} />
+                  <CustomImage src={ann.author.image} alt="" className={styles.authorAvatar} />
                 ) : (
                   <div className={styles.authorAvatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.1)', fontSize: '10px' }}>
                     {ann.author?.fullname?.charAt(0)}

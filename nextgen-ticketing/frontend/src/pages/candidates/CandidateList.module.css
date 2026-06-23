@@ -151,3 +151,126 @@
   border-bottom-left-radius: 14px;
   border-bottom-right-radius: 14px;
 }
+
+.actions {
+  display: flex;
+  gap: 0;
+}
+
+.creatorCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.creatorImg {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.creatorAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #fff;
+  font-weight: 600;
+}
+
+.creatorPlaceholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.matchScoreBg {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.matchScoreBar {
+  height: 100%;
+  background: var(--accent-primary);
+}
+
+.rankBadge1 {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  font-weight: 800;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.rankBadge2 {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #C0C0C0, #808080);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+}
+
+.rankBadge3 {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #CD7F32, #8B4513);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+}
+
+.rankBadgeOther {
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-left: 10px;
+}
+
+.leaderboardAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--bg-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border: 1px solid var(--border-glass);
+}
+
+.ratingCircle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid var(--border-glass);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+

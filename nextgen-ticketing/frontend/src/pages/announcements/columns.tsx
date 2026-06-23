@@ -2,8 +2,10 @@ import type { TableColumn } from "../../components/types";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
+import CustomTooltip from "../../components/CustomTooltip";
 import { format } from "date-fns";
 import { AnnouncementType } from "../../utils/constants";
+import styles from "./columns.module.css";
 
 export interface Announcement {
   id: string;
@@ -28,7 +30,7 @@ export const getAnnouncementColumns = (
   {
     header: "Title",
     key: "title",
-    render: (ann) => <div style={{ fontWeight: 600 }}>{ann.title}</div>,
+    render: (ann) => <div className="font-semibold">{ann.title}</div>,
   },
   {
     header: "Type",
@@ -48,16 +50,10 @@ export const getAnnouncementColumns = (
       else if (ann.type === AnnouncementType.MOMENT) variant = "primary";
 
       return (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <div className={styles.typeBadge}>
           <CustomBadge variant={variant}>{ann.type.toUpperCase()}</CustomBadge>
           {ann.project && (
-            <span
-              style={{
-                fontSize: "0.75rem",
-                color: "var(--text-muted)",
-                marginTop: 2,
-              }}
-            >
+            <span className={styles.projectText}>
               Project: {ann.project.name}
             </span>
           )}
@@ -74,11 +70,11 @@ export const getAnnouncementColumns = (
     header: "Author",
     key: "author",
     render: (ann) => (
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
+      <div className={styles.authorCell}>
+        <span className="font-semibold text-sm">
           {ann.author.fullname}
         </span>
-        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+        <span className="text-xs-muted">
           {(ann.author as any).title || (ann.author as any).role?.name}
         </span>
       </div>
@@ -88,23 +84,25 @@ export const getAnnouncementColumns = (
     header: "Actions",
     key: "actions",
     render: (ann) => (
-      <div style={{ display: "flex", gap: 8 }}>
-        <CustomButton
-          variant="ghost"
-          size="sm"
-          onClick={() => handleEdit(ann)}
-          icon={<CustomIcon name="Edit2" size={16} />}
-          title={`Edit ${entityName}`}
-        />
-        <CustomButton
-          variant="ghost"
-          size="sm"
-          onClick={() => handleDelete(ann.id)}
-          icon={
-            <CustomIcon name="Trash2" size={16} color="var(--accent-danger)" />
-          }
-          title={`Delete ${entityName}`}
-        />
+      <div className={styles.actions}>
+        <CustomTooltip text={`Edit ${entityName}`}>
+          <CustomButton
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(ann)}
+            icon={<CustomIcon name="Edit2" size={16} />}
+          />
+        </CustomTooltip>
+        <CustomTooltip text={`Delete ${entityName}`}>
+          <CustomButton
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(ann.id)}
+            icon={
+              <CustomIcon name="Trash2" size={16} color="var(--accent-danger)" />
+            }
+          />
+        </CustomTooltip>
       </div>
     ),
   },

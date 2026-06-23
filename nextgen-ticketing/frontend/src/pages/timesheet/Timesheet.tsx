@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   format,
   addMonths,
@@ -34,35 +35,29 @@ const MOCK_GOOGLE_EVENTS = [
 
 const Timesheet: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [entries, setEntries] = useState<TimesheetEntry[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const fetchEntries = async () => {
-    try {
+  const { data: entriesData, isLoading: loading } = useQuery({
+    queryKey: ["timesheets", format(currentMonth, "yyyy-MM")],
+    queryFn: async () => {
       const start = startOfWeek(startOfMonth(currentMonth));
       const end = endOfWeek(endOfMonth(currentMonth));
 
       const res = await api.get(API_ROUTES.TIMESHEETS.ENTRIES, {
         params: {
-          startDate: start.toISOString(),
-          endDate: end.toISOString(),
+          startDate: format(start, "yyyy-MM-dd"),
+          endDate: format(end, "yyyy-MM-dd"),
         },
       });
-      setEntries(res.data.entries);
-    } catch (err) {
-      console.error("Failed to fetch timesheet entries", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data.entries;
+    },
+    enabled: !!user,
+  });
 
-  useEffect(() => {
-    fetchEntries();
-  }, [currentMonth]);
+  const entries: TimesheetEntry[] = entriesData || [];
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
@@ -288,7 +283,6 @@ const Timesheet: React.FC = () => {
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
-            fetchEntries();
           }}
           date={selectedDate}
           existingEntry={entries.find((e) =>

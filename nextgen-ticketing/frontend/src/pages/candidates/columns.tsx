@@ -4,10 +4,12 @@ import type { NavigateFunction } from "react-router-dom";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
+import CustomTooltip from "../../components/CustomTooltip";
 import { Link } from "react-router-dom";
 import { CandidateStatus } from "../../utils/constants";
 import { formatDate } from "../../utils/helpers";
 import styles from "./CandidateList.module.css";
+import CustomImage from "../../components/CustomImage";
 
 export const statusBadgeVariant = (status: string) => {
   switch (status) {
@@ -36,21 +38,17 @@ export const getCandidateColumns = (
       header: "Candidate",
       key: "name",
       render: (c) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="flex-row-12">
           <div className={styles.avatar}>{c.name.charAt(0)}</div>
           <div>
             <Link
               to={`/candidates/${c.id}`}
-              style={{
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                textDecoration: "none",
-              }}
-              className="hover-glow"
+              style={{ color: "var(--text-primary)", textDecoration: "none" }}
+              className="hover-glow font-semibold"
             >
               {c.name}
             </Link>
-            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+            <div className="text-xs-muted">
               {c.email}
             </div>
           </div>
@@ -60,13 +58,13 @@ export const getCandidateColumns = (
     {
       header: "Position",
       key: "position",
-      render: (c) => <span style={{ fontWeight: 500 }}>{c.position}</span>,
+      render: (c) => <span className="font-medium">{c.position}</span>,
     },
     {
       header: "Phone",
       key: "phone",
       render: (c) => (
-        <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+        <span className="text-base-sm text-secondary">
           {c.phone || "—"}
         </span>
       ),
@@ -81,7 +79,7 @@ export const getCandidateColumns = (
             <div className={styles.notesTooltip}>{c.notes}</div>
           </div>
         ) : (
-          <span style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>—</span>
+          <span className="text-sm-secondary">—</span>
         )
       ),
     },
@@ -89,7 +87,7 @@ export const getCandidateColumns = (
       header: "Location",
       key: "location",
       render: (c) => (
-        <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+        <span className="text-base-sm text-secondary">
           {c.city ? (c.nationality ? `${c.city}, ${c.nationality}` : c.city) : (c.nationality || c.address || "—")}
         </span>
       ),
@@ -108,37 +106,27 @@ export const getCandidateColumns = (
       header: "Created By",
       key: "addedBy",
       render: (c) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className={styles.creatorCell}>
           {c.createdBy?.image ? (
-            <img 
+            <CustomImage 
               src={c.createdBy.image} 
               alt={c.createdBy.fullname} 
-              style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} 
+              className={styles.creatorImg} 
             />
           ) : c.createdBy ? (
-            <div style={{ 
-              width: 32, height: 32, borderRadius: "50%", 
-              background: "var(--accent-primary)", 
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "0.85rem", color: "#fff", fontWeight: 600
-            }}>
+            <div className={styles.creatorAvatar}>
               {c.createdBy.fullname.charAt(0)}
             </div>
           ) : (
-            <div style={{ 
-              width: 32, height: 32, borderRadius: "50%", 
-              background: "var(--bg-input)", 
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "0.85rem", color: "var(--text-muted)"
-            }}>
+            <div className={styles.creatorPlaceholder}>
               —
             </div>
           )}
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: "0.85rem", color: c.createdBy ? "var(--text-primary)" : "var(--text-muted)", fontWeight: 500, whiteSpace: "nowrap" }}>
+          <div className="flex-col">
+            <span className="font-medium text-sm" style={{ color: c.createdBy ? "var(--text-primary)" : "var(--text-muted)", whiteSpace: "nowrap" }}>
               {c.createdBy?.fullname || "System"}
             </span>
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+            <span className="text-xs-muted" style={{ whiteSpace: "nowrap" }}>
               {formatDate(c.createdAt)}
             </span>
           </div>
@@ -159,19 +147,20 @@ export const getCandidateColumns = (
       key: "resumeUrl",
       render: (c) =>
         c.resumeUrl ? (
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              window.open(c.resumeUrl, "_blank");
-            }}
-            icon={<CustomIcon name="FileText" size={18} />}
-            style={{ color: "var(--accent-primary)" }}
-            title="View Resume"
-          />
+          <CustomTooltip text="View Resume">
+            <CustomButton
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(c.resumeUrl, "_blank");
+              }}
+              icon={<CustomIcon name="FileText" size={18} />}
+              style={{ color: "var(--accent-primary)" }}
+            />
+          </CustomTooltip>
         ) : (
-          <span style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>
+          <span className="text-xs-muted">
             No Resume
           </span>
         ),
@@ -180,42 +169,45 @@ export const getCandidateColumns = (
       header: "Actions",
       key: "actions",
       render: (c) => (
-        <div style={{ display: "flex", gap: 0 }}>
+        <div className={styles.actions}>
           {!c.isConverted && (
+            <CustomTooltip text="Convert to User">
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConvertClick(c.id);
+                }}
+                icon={<CustomIcon name="UserPlus" size={18} />}
+                style={{ color: "var(--accent-success)" }}
+              />
+            </CustomTooltip>
+          )}
+          <CustomTooltip text="Edit Candidate">
             <CustomButton
               variant="ghost"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                handleConvertClick(c.id);
+                setCurrentEditingId(c.id);
+                setIsModalOpen(true);
               }}
-              icon={<CustomIcon name="UserPlus" size={18} />}
-              style={{ color: "var(--accent-success)" }}
-              title="Convert to User"
+              icon={<CustomIcon name="Edit2" size={18} />}
             />
-          )}
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setCurrentEditingId(c.id);
-              setIsModalOpen(true);
-            }}
-            icon={<CustomIcon name="Edit2" size={18} />}
-            title="Edit Candidate"
-          />
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(c.id);
-            }}
-            icon={<CustomIcon name="Trash2" size={18} />}
-            style={{ color: "var(--accent-danger)" }}
-            title="Delete Candidate"
-          />
+          </CustomTooltip>
+          <CustomTooltip text="Delete Candidate">
+            <CustomButton
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(c.id);
+              }}
+              icon={<CustomIcon name="Trash2" size={18} />}
+              style={{ color: "var(--accent-danger)" }}
+            />
+          </CustomTooltip>
         </div>
       ),
     },
@@ -226,25 +218,14 @@ export const getCandidateColumns = (
       header: "Match Score",
       key: "matchScore",
       render: (c: any) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div
-            style={{
-              width: "100%",
-              height: 6,
-              background: "rgba(255,255,255,0.1)",
-              borderRadius: 3,
-              overflow: "hidden",
-            }}
-          >
+        <div className="flex-row">
+          <div className={styles.matchScoreBg}>
             <div
-              style={{
-                width: `${c.matchScore || 0}%`,
-                height: "100%",
-                background: "var(--accent-primary)",
-              }}
+              className={styles.matchScoreBar}
+              style={{ width: `${c.matchScore || 0}%` }}
             />
           </div>
-          <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
+          <span className="text-sm font-semibold">
             {c.matchScore || 0}%
           </span>
         </div>
@@ -270,72 +251,13 @@ export interface LeaderboardEntry {
 const getRankBadge = (index: number) => {
   switch (index) {
     case 0:
-      return (
-        <div
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #FFD700, #FFA500)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#000",
-            fontWeight: 800,
-            boxShadow: "0 0 15px rgba(255, 215, 0, 0.4)",
-          }}
-        >
-          1
-        </div>
-      );
+      return <div className={styles.rankBadge1}>1</div>;
     case 1:
-      return (
-        <div
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #C0C0C0, #808080)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#fff",
-            fontWeight: 700,
-          }}
-        >
-          2
-        </div>
-      );
+      return <div className={styles.rankBadge2}>2</div>;
     case 2:
-      return (
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #CD7F32, #8B4513)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#fff",
-            fontWeight: 700,
-          }}
-        >
-          3
-        </div>
-      );
+      return <div className={styles.rankBadge3}>3</div>;
     default:
-      return (
-        <span
-          style={{
-            color: "var(--text-muted)",
-            fontWeight: 600,
-            marginLeft: 10,
-          }}
-        >
-          {index + 1}
-        </span>
-      );
+      return <span className={styles.rankBadgeOther}>{index + 1}</span>;
   }
 };
 
@@ -369,32 +291,19 @@ export const getLeaderboardColumns = (
     header: "Candidate",
     key: "name",
     render: (item) => (
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 12,
-            background: "var(--bg-input)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "1.2rem",
-            fontWeight: 600,
-            border: "1px solid var(--border-glass)",
-          }}
-        >
+      <div className="flex-row-12">
+        <div className={styles.leaderboardAvatar}>
           {item.name.charAt(0)}
         </div>
         <div>
           <div
             onClick={() => navigate(`/candidates/${item.id}`)}
-            style={{ fontWeight: 600, cursor: "pointer" }}
-            className="hover-glow"
+            style={{ cursor: "pointer" }}
+            className="font-semibold hover-glow"
           >
             {item.name}
           </div>
-          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+          <div className="text-xs-muted">
             {item.position}
           </div>
         </div>
@@ -405,16 +314,10 @@ export const getLeaderboardColumns = (
     header: "Avg. Rating",
     key: "averageRating",
     render: (item) => (
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div className="flex-row">
         <div
+          className={styles.ratingCircle}
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: "50%",
-            border: "3px solid var(--border-glass)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
             borderColor:
               item.averageRating >= 4
                 ? "var(--accent-success)"
@@ -423,12 +326,12 @@ export const getLeaderboardColumns = (
                   : "var(--border-glass)",
           }}
         >
-          <span style={{ fontWeight: 700, fontSize: "1rem" }}>
+          <span className="font-semibold text-base">
             {item.averageRating}
           </span>
         </div>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", gap: 2 }}>
+        <div className="flex-col">
+          <div className="flex-row-4">
             {[1, 2, 3, 4, 5].map((star) => (
               <CustomIcon
                 key={star}
@@ -448,7 +351,7 @@ export const getLeaderboardColumns = (
               />
             ))}
           </div>
-          <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+          <span className="text-xs-muted">
             from {item.feedbackCount} reviews
           </span>
         </div>
@@ -459,15 +362,15 @@ export const getLeaderboardColumns = (
     header: "Interviews",
     key: "interviewCount",
     render: (item) => (
-      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div className="flex-col">
+        <div className="flex-row">
           <CustomIcon name="Calendar" size={14} color="var(--accent-primary)" />
-          <span style={{ fontWeight: 600 }}>
+          <span className="font-semibold">
             {item.interviewCount} Sessions
           </span>
         </div>
         {item.lastInterviewDate && (
-          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+          <span className="text-xs-muted">
             Last: {new Date(item.lastInterviewDate).toLocaleDateString()}
           </span>
         )}
@@ -478,18 +381,16 @@ export const getLeaderboardColumns = (
     header: "Top Recommendation",
     key: "topRecommendation",
     render: (item) => (
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div className="flex-row">
         <div
+          className="status-dot"
           style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
             backgroundColor: getRecommendationColor(item.topRecommendation),
           }}
         />
         <span
+          className="font-medium"
           style={{
-            fontWeight: 500,
             color: getRecommendationColor(item.topRecommendation),
           }}
         >

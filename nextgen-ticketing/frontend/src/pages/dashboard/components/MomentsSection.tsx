@@ -5,6 +5,7 @@ import { useAuth } from "../../../context/AuthContext";
 import styles from "../Dashboard.module.css";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
+import CustomImage from "../../../components/CustomImage";
 
 interface MomentsSectionProps {
   moments: any[];
@@ -102,7 +103,7 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
               <div className={styles.momentHeader}>
                 <div className={styles.momentAuthor}>
                   {mom.author?.image ? (
-                    <img src={mom.author.image} alt="" className={styles.momentAvatar} />
+                    <CustomImage src={mom.author.image} alt="" className={styles.momentAvatar} />
                   ) : (
                     <div
                       className={styles.momentAvatar}
@@ -204,7 +205,7 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
             <div className={styles.highlightFooter}>
               <div className={styles.momentAuthor}>
                 {selectedMoment.author?.image ? (
-                  <img
+                  <CustomImage
                     src={selectedMoment.author.image}
                     alt=""
                     className={styles.highlightAvatar}

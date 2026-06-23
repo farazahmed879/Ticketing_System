@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
@@ -26,11 +27,9 @@ import CustomAvatarStack from "../../components/CustomAvatarStack";
 import { truncateString } from "../../utils/helpers";
 
 const TicketList: React.FC = () => {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Advanced ("More") filters — each supports multiple selections.
@@ -66,13 +65,6 @@ const TicketList: React.FC = () => {
   // Create Ticket Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Metadata for form
-  const [priorities, setPriorities] = useState<any[]>([]);
-  const [projects, setProjects] = useState<any[]>([]);
-  const [types, setTypes] = useState<any[]>([]);
-  const [agents, setAgents] = useState<any[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
-
   // Delete Ticket State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState<string | null>(null);
@@ -83,37 +75,50 @@ const TicketList: React.FC = () => {
 
   const isCustomer = user?.role?.name === RoleName.CUSTOMER;
 
-  useEffect(() => {
-    const fetchMetadata = async () => {
-      try {
-        const [pRes, gRes, tRes, aRes, cRes] = await Promise.all([
-          api.get(API_ROUTES.COMMON.PRIORITIES),
-          api.get(API_ROUTES.PROJECTS.BASE, {
-            params: {
-              role: user?.role?.name,
-              userId: user?.id,
-            },
-          }),
-          api.get(API_ROUTES.COMMON.TYPES),
-          api.get(API_ROUTES.USERS.BASE, { params: { type: "employees" } }),
-          api.get(API_ROUTES.USERS.BASE, { params: { type: "clients" } }),
-        ]);
-        setPriorities(pRes.data.priorities);
-        setProjects(gRes.data.projects);
-        setTypes(tRes.data.types);
-        setAgents(aRes.data.accounts);
-        setClients(cRes.data.accounts);
-      } catch (err) {
-        console.error("Failed to fetch metadata", err);
-      }
-    };
-    if (user) {
-      fetchMetadata();
-    }
-  }, [user]);
+  const { data: metadata } = useQuery({
+    queryKey: ["ticket-metadata", user?.id],
+    queryFn: async () => {
+      const [pRes, gRes, tRes, aRes, cRes] = await Promise.all([
+        api.get(API_ROUTES.COMMON.PRIORITIES),
+        api.get(API_ROUTES.PROJECTS.BASE, {
+          params: { role: user?.role?.name, userId: user?.id },
+        }),
+        api.get(API_ROUTES.COMMON.TYPES),
+        api.get(API_ROUTES.USERS.BASE, { params: { type: "employees" } }),
+        api.get(API_ROUTES.USERS.BASE, { params: { type: "clients" } }),
+      ]);
+      return {
+        priorities: pRes.data.priorities,
+        projects: gRes.data.projects,
+        types: tRes.data.types,
+        agents: aRes.data.accounts,
+        clients: cRes.data.accounts,
+      };
+    },
+    enabled: !!user,
+  });
 
-  const fetchTickets = async () => {
-    try {
+  const priorities = metadata?.priorities || [];
+  const projects = metadata?.projects || [];
+  const types = metadata?.types || [];
+  const agents = metadata?.agents || [];
+  const clients = metadata?.clients || [];
+
+  const { data: ticketData, isLoading: loading } = useQuery({
+    queryKey: [
+      "tickets",
+      {
+        search,
+        status: statusNames,
+        priority: priorityNames,
+        project: projectIds,
+        assignee: assigneeIds,
+        owner: ownerIds,
+        page,
+        limit: itemsPerPage,
+      },
+    ],
+    queryFn: async () => {
       const res = await api.get(API_ROUTES.TICKETS.BASE, {
         params: {
           search,
@@ -126,28 +131,12 @@ const TicketList: React.FC = () => {
           limit: itemsPerPage,
         },
       });
-      setTickets(res.data.tickets);
-      setTotalCount(res.data.totalCount);
-    } catch (err) {
-      console.error("Failed to fetch tickets", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data;
+    },
+  });
 
-  useEffect(() => {
-    setLoading(true);
-    fetchTickets();
-  }, [
-    search,
-    statusNames,
-    priorityNames,
-    projectIds,
-    assigneeIds,
-    ownerIds,
-    page,
-    itemsPerPage,
-  ]);
+  const tickets: Ticket[] = ticketData?.tickets || [];
+  const totalCount = ticketData?.totalCount || 0;
 
   const toggleMoreFilters = () => {
     if (showMoreFilters) {
@@ -188,46 +177,56 @@ const TicketList: React.FC = () => {
     setShowMoreFilters(false);
   };
 
-  const handleCreateTicket = async (data: TicketFormData) => {
-    setIsLoading(true, UIMessages.LOADING.CREATING_TICKET);
-    try {
-      await api.post(API_ROUTES.TICKETS.BASE, {
+  const createMutation = useMutation({
+    mutationFn: async (data: TicketFormData) => {
+      return api.post(API_ROUTES.TICKETS.BASE, {
         ...data,
         projectId: data.projectId || null,
         assigneeId: data.assigneeId || null,
       });
+    },
+    onMutate: () => setIsLoading(true, UIMessages.LOADING.CREATING_TICKET),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
       setIsModalOpen(false);
-      fetchTickets();
       showNotification("success", "Ticket created successfully!");
-    } catch (err: any) {
-      console.error("Failed to create ticket", err);
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
-        err.response?.data?.error || "Failed to create ticket",
+        err.response?.data?.error || "Failed to create ticket"
       );
-    } finally {
-      setIsLoading(false, "");
-    }
+    },
+  });
+
+  const handleCreateTicket = async (data: TicketFormData) => {
+    createMutation.mutate(data);
   };
 
-  const handleDeleteTicket = async () => {
-    if (!ticketToDelete) return;
-    setIsLoading(true, UIMessages.LOADING.DELETING);
-    try {
-      await api.delete(API_ROUTES.TICKETS.BY_ID(ticketToDelete));
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(API_ROUTES.TICKETS.BY_ID(id));
+    },
+    onMutate: () => setIsLoading(true, UIMessages.LOADING.DELETING),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
       showNotification("success", "Ticket deleted successfully!");
       setIsDeleteModalOpen(false);
       setTicketToDelete(null);
-      fetchTickets();
-    } catch (err: any) {
-      console.error("Failed to delete ticket", err);
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
-        err.response?.data?.error || "Failed to delete ticket",
+        err.response?.data?.error || "Failed to delete ticket"
       );
-    } finally {
-      setIsLoading(false, "");
-    }
+    },
+  });
+
+  const handleDeleteTicket = async () => {
+    if (!ticketToDelete) return;
+    deleteMutation.mutate(ticketToDelete);
   };
 
   return (

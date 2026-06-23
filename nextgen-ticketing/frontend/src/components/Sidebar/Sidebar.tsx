@@ -8,6 +8,7 @@ import styles from "./Sidebar.module.css";
 
 import type { SidebarProps } from "../../types";
 import { RoleName } from "../../utils/constants";
+import CustomImage from "../CustomImage";
 
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse, unreadMessageCount }) => {
   const { user, logout } = useAuth();
@@ -187,7 +188,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse, unread
       </button>
 
       <div className={styles.logo}>
-        <img
+        <CustomImage
           src="/logo-sq.png"
           alt="Logo"
           style={{ width: 32, height: 32, objectFit: "contain", flexShrink: 0 }}

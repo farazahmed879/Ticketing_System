@@ -3,6 +3,7 @@ import Modal from "../../../components/Modal";
 import CustomInput from "../../../components/CustomInput";
 import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Messages.module.css";
+import CustomImage from "../../../components/CustomImage";
 
 interface NewChatModalProps {
   isOpen: boolean;
@@ -72,7 +73,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
                     }}
                   >
                     {u.image ? (
-                      <img
+                      <CustomImage
                         src={u.image}
                         alt=""
                         style={{

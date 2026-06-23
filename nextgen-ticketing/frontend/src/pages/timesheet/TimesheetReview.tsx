@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
@@ -16,28 +17,104 @@ import CustomSelect from "../../components/CustomSelect";
 import StandardListLayout from "../../components/StandardListLayout/StandardListLayout";
 
 import CustomInput from "../../components/CustomInput/CustomInput";
+import CustomImage from "../../components/CustomImage";
 
 const TimesheetReview: React.FC = () => {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [entries, setEntries] = useState<TimesheetEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedEntry, setSelectedEntry] = useState<TimesheetEntry | null>(
-    null,
-  );
+  const [selectedEntry, setSelectedEntry] = useState<TimesheetEntry | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-  const [users, setUsers] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>("PENDING");
   const [month, setMonth] = useState<string>(new Date().getMonth().toString());
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [userSearch, setUserSearch] = useState("");
 
+  const { data: usersData } = useQuery({
+    queryKey: ["users", "timesheet-review"],
+    queryFn: async () => {
+      const res = await api.get(API_ROUTES.USERS.GET_BY_ROLES, {
+        params: {
+          roles: [
+            RoleName.AGENT,
+            RoleName.EMPLOYEE,
+            RoleName.HR,
+            RoleName.ADMIN,
+          ],
+          limit: -1,
+        },
+      });
+      return res.data.accounts;
+    },
+  });
+
+  const users = usersData || [];
+
+  const { data: entriesData, isLoading: loading } = useQuery({
+    queryKey: [
+      "timesheets",
+      "pending",
+      selectedStatus,
+      selectedUserId,
+      month,
+      year,
+    ],
+    queryFn: async () => {
+      const res = await api.get(API_ROUTES.TIMESHEETS.PENDING, {
+        params: {
+          status: selectedStatus,
+          userId: selectedUserId || undefined,
+          month: month === "all" ? undefined : month,
+          year: year === "all" ? undefined : year,
+        },
+      });
+      return res.data.entries;
+    },
+  });
+
+  const entries: TimesheetEntry[] = entriesData || [];
+
+  const fetchEntries = () => {
+    queryClient.invalidateQueries({ queryKey: ["timesheets", "pending"] });
+  };
+
   const filteredUsers = users.filter(
-    (u) =>
+    (u: any) =>
       u.fullname.toLowerCase().includes(userSearch.toLowerCase()) ||
       u.email?.toLowerCase().includes(userSearch.toLowerCase()),
   );
+
+  const approveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.post(API_ROUTES.TIMESHEETS.APPROVE(id));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timesheets"] });
+      setIsModalOpen(false);
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.post(API_ROUTES.TIMESHEETS.REJECT(id), {
+        reason: rejectReason,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["timesheets"] });
+      setIsModalOpen(false);
+      setRejectReason("");
+    },
+  });
+
+  const handleApprove = async (id: string) => {
+    approveMutation.mutate(id);
+  };
+
+  const handleReject = async (id: string) => {
+    rejectMutation.mutate(id);
+  };
 
   const months = [
     { value: "all", label: "All Months" },
@@ -62,75 +139,6 @@ const TimesheetReview: React.FC = () => {
       return { value: y.toString(), label: y.toString() };
     }),
   ];
-
-  const fetchUsers = async () => {
-    try {
-      const res = await api.get(API_ROUTES.USERS.GET_BY_ROLES, {
-        params: {
-          roles: [
-            RoleName.AGENT,
-            RoleName.EMPLOYEE,
-            RoleName.HR,
-            RoleName.ADMIN,
-          ],
-          limit: -1,
-        },
-      });
-      setUsers(res.data.accounts);
-    } catch (err) {
-      console.error("Failed to fetch users", err);
-    }
-  };
-
-  const fetchEntries = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get(API_ROUTES.TIMESHEETS.PENDING, {
-        params: {
-          status: selectedStatus,
-          userId: selectedUserId || undefined,
-          month: month === "all" ? undefined : month,
-          year: year === "all" ? undefined : year,
-        },
-      });
-      setEntries(res.data.entries);
-    } catch (err) {
-      console.error("Failed to fetch timesheets", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    fetchEntries();
-  }, [selectedStatus, selectedUserId, month, year]);
-
-  const handleApprove = async (id: string) => {
-    try {
-      await api.post(API_ROUTES.TIMESHEETS.APPROVE(id));
-      setEntries(entries.filter((e) => e.id !== id));
-      setIsModalOpen(false);
-    } catch (err) {
-      console.error("Failed to approve timesheet", err);
-    }
-  };
-
-  const handleReject = async (id: string) => {
-    try {
-      await api.post(API_ROUTES.TIMESHEETS.REJECT(id), {
-        reason: rejectReason,
-      });
-      setEntries(entries.filter((e) => e.id !== id));
-      setIsModalOpen(false);
-      setRejectReason("");
-    } catch (err) {
-      console.error("Failed to reject timesheet", err);
-    }
-  };
 
   return (
     <StandardListLayout
@@ -303,9 +311,9 @@ const TimesheetReview: React.FC = () => {
                   background: "var(--bg-card)",
                 }}
               >
-                {users.find((u) => u.id === selectedUserId)?.image ? (
-                  <img
-                    src={users.find((u) => u.id === selectedUserId)?.image}
+                {users.find((u: any) => u.id === selectedUserId)?.image ? (
+                  <CustomImage
+                    src={users.find((u: any) => u.id === selectedUserId)?.image}
                     alt=""
                     style={{
                       width: "100%",
@@ -411,7 +419,7 @@ const TimesheetReview: React.FC = () => {
                         }}
                       >
                         {e.user?.image ? (
-                          <img
+                          <CustomImage
                             src={e.user.image}
                             alt=""
                             style={{
@@ -677,7 +685,7 @@ const TimesheetReview: React.FC = () => {
                     }}
                   >
                     {u.image ? (
-                      <img
+                      <CustomImage
                         src={u.image}
                         alt=""
                         style={{

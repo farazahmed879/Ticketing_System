@@ -1,29 +1,28 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import CustomIcon from "../../components/CustomIcon";
+
 import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
-import styles from "./InterviewList.module.css";
+
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { RoleName, UIMessages, DEFAULT_PAGE_SIZE } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
 
 import type { Interview } from "../../types";
 import CustomTable from "../../components/CustomTable";
-import CustomButton from "../../components/CustomButton";
-import CustomFilterBar from "../../components/CustomFilterBar";
-import CustomDatePicker from "../../components/CustomDatePicker";
 import ScheduleInterviewModal from "./ScheduleInterviewModal";
 import CustomPagination from "../../components/CustomPagination";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
 import StandardListLayout from "../../components/StandardListLayout";
 import { getInterviewColumns } from "./columns";
+import { InterviewListHeader } from "./components/InterviewListHeader";
+import { InterviewListFilter } from "./components/InterviewListFilter";
 
 const InterviewList: React.FC = () => {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [interviews, setInterviews] = useState<Interview[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { showNotification, setIsLoading } = useNotification();
   const { user } = useAuth();
@@ -42,9 +41,22 @@ const InterviewList: React.FC = () => {
     user?.role?.name === RoleName.HR ||
     user?.role?.permissions?.interviews?.create;
 
+  const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [draftActiveFilter, setDraftActiveFilter] = useState("all");
+  const [draftStartDate, setDraftStartDate] = useState("");
+  const [draftEndDate, setDraftEndDate] = useState("");
+
+  const activeMoreFilters =
+    (startDate && endDate ? 1 : 0) + (activeFilter !== "all" ? 1 : 0);
+  const draftSelectedCount =
+    (draftStartDate && draftEndDate ? 1 : 0) +
+    (draftActiveFilter !== "all" ? 1 : 0);
+
   const [editingInterview, setEditingInterview] = useState<Interview | null>(
     null,
   );
@@ -55,7 +67,6 @@ const InterviewList: React.FC = () => {
   );
 
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalItems, setTotalItems] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
 
   const filters = [
@@ -66,10 +77,19 @@ const InterviewList: React.FC = () => {
     { value: "cancelled", label: "Cancelled" },
   ];
 
-  const fetchInterviews = async () => {
-    setLoading(true);
-    try {
+  const { data: interviewsData, isLoading: loading } = useQuery({
+    queryKey: [
+      "interviews",
+      search,
+      activeFilter,
+      startDate,
+      endDate,
+      currentPage,
+      itemsPerPage,
+    ],
+    queryFn: async () => {
       const params: any = {
+        search,
         filter: activeFilter,
         limit: itemsPerPage,
         page: currentPage,
@@ -77,36 +97,52 @@ const InterviewList: React.FC = () => {
       if (startDate && endDate) {
         params.startDate = startDate;
         params.endDate = endDate;
-        delete params.filter;
       }
-
       const res = await api.get(API_ROUTES.INTERVIEWS.BASE, { params });
-      setInterviews(res.data.interviews);
-      setTotalItems(res.data.total);
-    } catch (err) {
-      console.error("Failed to fetch interviews", err);
-      showNotification("error", "Failed to load interviews");
-    } finally {
-      setLoading(false);
+      return {
+        interviews: res.data.interviews,
+        total: res.data.total || 0,
+      };
+    },
+  });
+
+  const interviews = interviewsData?.interviews || [];
+  const totalItems = interviewsData?.total || 0;
+
+  const toggleMoreFilters = () => {
+    if (showMoreFilters) {
+      setShowMoreFilters(false);
+    } else {
+      setDraftActiveFilter(activeFilter);
+      setDraftStartDate(startDate);
+      setDraftEndDate(endDate);
+      setShowMoreFilters(true);
     }
   };
 
-  useEffect(() => {
-    setLoading(true);
-    fetchInterviews();
-  }, [activeFilter, currentPage, itemsPerPage]);
+  const applyMoreFilters = () => {
+    setActiveFilter(draftActiveFilter);
+    setStartDate(draftStartDate);
+    setEndDate(draftEndDate);
+    setCurrentPage(0);
+    setShowMoreFilters(false);
+  };
 
-  const handleDateFilter = () => {
-    if (startDate && endDate) {
-      setCurrentPage(0);
-      fetchInterviews();
-    }
+  const clearMoreFilters = () => {
+    setDraftActiveFilter("all");
+    setDraftStartDate("");
+    setDraftEndDate("");
+    setActiveFilter("all");
+    setStartDate("");
+    setEndDate("");
+    setCurrentPage(0);
+    setShowMoreFilters(false);
   };
 
   const handleScheduleSuccess = () => {
     setIsModalOpen(false);
     setEditingInterview(null);
-    fetchInterviews();
+    queryClient.invalidateQueries({ queryKey: ["interviews"] });
   };
 
   const handleDeleteClick = (id: string) => {
@@ -114,23 +150,30 @@ const InterviewList: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!interviewToDelete) return;
-    setIsLoading(true, UIMessages.LOADING.DELETING);
-    try {
-      await api.delete(API_ROUTES.INTERVIEWS.BY_ID(interviewToDelete));
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(API_ROUTES.INTERVIEWS.BY_ID(id));
+    },
+    onMutate: () => setIsLoading(true, UIMessages.LOADING.DELETING),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["interviews"] });
       showNotification("success", "Interview deleted successfully");
-      fetchInterviews();
-    } catch (err: any) {
+      setIsDeleteModalOpen(false);
+      setInterviewToDelete(null);
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
         err.response?.data?.error || "Failed to delete interview",
       );
-    } finally {
-      setIsLoading(false, "");
-      setIsDeleteModalOpen(false);
       setInterviewToDelete(null);
-    }
+    },
+  });
+
+  const confirmDelete = async () => {
+    if (!interviewToDelete) return;
+    deleteMutation.mutate(interviewToDelete);
   };
 
   const columns = getInterviewColumns(
@@ -145,82 +188,32 @@ const InterviewList: React.FC = () => {
     <>
       <StandardListLayout
         header={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
+          <InterviewListHeader
+            canCreateInterviews={canCreateInterviews}
+            onScheduleClick={() => {
+              setEditingInterview(null);
+              setIsModalOpen(true);
             }}
-          >
-            <div>
-              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
-                Interviews
-              </h1>
-              <p style={{ color: "var(--text-muted)" }}>
-                Schedule and manage candidate interviews
-              </p>
-            </div>
-            {canCreateInterviews && (
-              <CustomButton
-                variant="gradient"
-                icon={<CustomIcon name="Plus" size={20} />}
-                onClick={() => {
-                  setEditingInterview(null);
-                  setIsModalOpen(true);
-                }}
-              >
-                Schedule Interview
-              </CustomButton>
-            )}
-          </div>
+          />
         }
         filters={
-          <div
-            style={{
-              display: "flex",
-              gap: 16,
-              flexWrap: "wrap",
-              alignItems: "center",
-            }}
-          >
-            <CustomFilterBar
-              options={filters}
-              activeOption={activeFilter}
-              onChange={(val) => {
-                setActiveFilter(val);
-                setCurrentPage(0);
-                setStartDate("");
-                setEndDate("");
-              }}
-            />
-
-            <div className={styles.dateFilter}>
-              <CustomDatePicker
-                value={startDate}
-                onChange={(val: string) => setStartDate(val)}
-                placeholder="Start Date"
-                className={styles.dateInput}
-              />
-              <span style={{ color: "var(--text-muted)", marginTop: 4 }}>
-                to
-              </span>
-              <CustomDatePicker
-                value={endDate}
-                onChange={(val: string) => setEndDate(val)}
-                placeholder="End Date"
-                className={styles.dateInput}
-              />
-              <CustomButton
-                variant="outline"
-                size="sm"
-                onClick={handleDateFilter}
-                disabled={!startDate || !endDate}
-                containerStyle={{ marginTop: 4 }}
-              >
-                Apply
-              </CustomButton>
-            </div>
-          </div>
+          <InterviewListFilter
+            search={search}
+            setSearch={setSearch}
+            showMoreFilters={showMoreFilters}
+            activeMoreFilters={activeMoreFilters}
+            draftSelectedCount={draftSelectedCount}
+            toggleMoreFilters={toggleMoreFilters}
+            filters={filters}
+            draftActiveFilter={draftActiveFilter}
+            setDraftActiveFilter={setDraftActiveFilter}
+            draftStartDate={draftStartDate}
+            setDraftStartDate={setDraftStartDate}
+            draftEndDate={draftEndDate}
+            setDraftEndDate={setDraftEndDate}
+            clearMoreFilters={clearMoreFilters}
+            applyMoreFilters={applyMoreFilters}
+          />
         }
         pagination={
           <CustomPagination

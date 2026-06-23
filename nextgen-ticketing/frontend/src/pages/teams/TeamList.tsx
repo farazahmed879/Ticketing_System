@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
@@ -12,19 +13,19 @@ import type { Team, User } from "../../types";
 import TeamModal from "./components/TeamModal";
 import { useAuth } from "../../context/AuthContext";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import styles from "./MyTeam.module.css";
 
 import StandardListLayout from "../../components/StandardListLayout";
 import { getTeamColumns } from "./columns";
 
 const TeamList: React.FC = () => {
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [teamToDelete, setTeamToDelete] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
 
   const { showNotification, setIsLoading } = useNotification();
   const { user } = useAuth();
@@ -40,59 +41,48 @@ const TeamList: React.FC = () => {
     user?.role?.name === RoleName.HR ||
     user?.role?.name === RoleName.AGENT;
 
-  const fetchData = async (searchTerm = "") => {
-    try {
-      setLoading(true);
+  // Debounced server-side search — refetch when the search term settles.
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(handle);
+  }, [search]);
+
+  const { data: teamsData, isLoading: loading } = useQuery({
+    queryKey: ["teams", isManagerOrAdmin, debouncedSearch],
+    queryFn: async () => {
       const endpoint = isManagerOrAdmin
         ? API_ROUTES.TEAMS.BASE
         : API_ROUTES.TEAMS.MY_TEAM;
 
-      // Server-side search (only the teams list endpoint supports it).
       const config = isManagerOrAdmin
-        ? { params: { search: searchTerm || undefined } }
+        ? { params: { search: debouncedSearch || undefined } }
         : undefined;
 
       const teamsRes = await api.get(endpoint, config);
-      setTeams(teamsRes.data.teams || teamsRes.data.accounts || []); // Match backend response key
-    } catch (err) {
-      console.error("Failed to fetch teams data", err);
-      showNotification("error", "Failed to load teams data");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return teamsRes.data.teams || teamsRes.data.accounts || [];
+    },
+  });
 
-  const fetchModalApis = async () => {
-    try {
-      setLoading(true);
+  const teams: Team[] = teamsData || [];
 
-      const usersRes = await api.get(API_ROUTES.USERS.BASE + "?limit=1000"); // Get all users for member selection
-
+  const { data: usersData } = useQuery({
+    queryKey: ["users", "internal-team-modal"],
+    queryFn: async () => {
+      const usersRes = await api.get(API_ROUTES.USERS.BASE + "?limit=1000");
       const allUsers = usersRes.data.accounts || [];
-      const internalUsers = allUsers.filter(
+      return allUsers.filter(
         (u: any) =>
           u.role?.name !== RoleName.CUSTOMER &&
-          u.role?.roleType !== "isCustomer"
+          u.role?.roleType !== "isCustomer",
       );
-      setUsers(internalUsers);
-    } catch (err) {
-      console.error("Failed to fetch teams data", err);
-      showNotification("error", "Failed to load teams data");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    enabled: isModalOpen,
+  });
 
-  // Debounced server-side search — refetch when the search term settles.
-  useEffect(() => {
-    const handle = setTimeout(() => fetchData(search), 300);
-    return () => clearTimeout(handle);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search]);
+  const users: User[] = usersData || [];
 
   const handleEdit = (team: Team) => {
     setEditingTeam(team);
-    fetchModalApis();
     setIsModalOpen(true);
   };
 
@@ -101,46 +91,61 @@ const TeamList: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!teamToDelete) return;
-    setIsLoading(true, UIMessages.LOADING.DELETING);
-    try {
-      await api.delete(API_ROUTES.TEAMS.BY_ID(teamToDelete));
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(API_ROUTES.TEAMS.BY_ID(id));
+    },
+    onMutate: () => setIsLoading(true, UIMessages.LOADING.DELETING),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
       showNotification("success", "Team deleted successfully");
-      fetchData(search);
-    } catch (err: any) {
+      setIsDeleteModalOpen(false);
+      setTeamToDelete(null);
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
         err.response?.data?.error || "Failed to delete team",
       );
-    } finally {
-      setIsLoading(false, "");
-      setIsDeleteModalOpen(false);
-      setTeamToDelete(null);
-    }
+    },
+  });
+
+  const confirmDelete = async () => {
+    if (!teamToDelete) return;
+    deleteMutation.mutate(teamToDelete);
   };
 
-  const handleSubmit = async (data: any) => {
-    setIsLoading(true, editingTeam ? "Updating team..." : "Creating team...");
-    try {
+  const submitMutation = useMutation({
+    mutationFn: async (data: any) => {
       if (editingTeam) {
-        await api.put(API_ROUTES.TEAMS.BY_ID(editingTeam.id), data);
-        showNotification("success", "Team updated successfully");
+        return api.put(API_ROUTES.TEAMS.BY_ID(editingTeam.id), data);
       } else {
-        await api.post(API_ROUTES.TEAMS.BASE, data);
-        showNotification("success", "Team created successfully");
+        return api.post(API_ROUTES.TEAMS.BASE, data);
       }
+    },
+    onMutate: () =>
+      setIsLoading(true, editingTeam ? "Updating team..." : "Creating team..."),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teams"] });
+      showNotification(
+        "success",
+        `Team ${editingTeam ? "updated" : "created"} successfully`,
+      );
       setIsModalOpen(false);
       setEditingTeam(null);
-      fetchData(search);
-    } catch (err: any) {
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
         err.response?.data?.error || "Operation failed",
       );
-    } finally {
-      setIsLoading(false, "");
-    }
+    },
+  });
+
+  const handleSubmit = async (data: any) => {
+    submitMutation.mutate(data);
   };
 
   const columns = getTeamColumns(
@@ -152,7 +157,6 @@ const TeamList: React.FC = () => {
 
   const handleCreateTeamClick = () => {
     setEditingTeam(null);
-    fetchModalApis();
     setIsModalOpen(true);
   };
 
@@ -160,13 +164,7 @@ const TeamList: React.FC = () => {
     <>
       <StandardListLayout
         header={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+          <div className={styles.header}>
             <div>
               <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Teams</h1>
               <p style={{ color: "var(--text-muted)" }}>

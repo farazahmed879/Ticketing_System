@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import StatsCards from "./components/StatsCards";
@@ -11,22 +12,15 @@ import styles from "./Dashboard.module.css";
 
 const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: projectsData, isLoading: loading } = useQuery({
+    queryKey: ["customerProjects"],
+    queryFn: async () => {
+      const res = await api.get(API_ROUTES.PROJECTS.BASE);
+      return res.data.projects as Project[];
+    },
+  });
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const res = await api.get(API_ROUTES.PROJECTS.BASE);
-        setProjects(res.data.projects);
-      } catch (err) {
-        console.error("Failed to fetch client projects", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProjects();
-  }, []);
+  const projects = projectsData || [];
 
   const cards = [
     {

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
@@ -8,7 +9,7 @@ import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { UIMessages } from "../../utils/constants";
-import type { User, Role, UserFormData } from "../../types";
+import type { User, UserFormData } from "../../types";
 import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomPagination from "../../components/CustomPagination";
@@ -27,9 +28,7 @@ const UserList: React.FC = () => {
   const canEditUsers =
     currentUser?.role?.name === RoleName.ADMIN ||
     currentUser?.role?.name === RoleName.HR;
-  const [users, setUsers] = useState<User[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { showNotification, setIsLoading } = useNotification();
 
@@ -37,7 +36,6 @@ const UserList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalItems, setTotalItems] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
@@ -49,57 +47,72 @@ const UserList: React.FC = () => {
 
   // Listen to real-time online users from socket
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [uRes, rRes] = await Promise.all([
-        api.get(API_ROUTES.USERS.BASE, {
-          params: {
-            type: roleFilter === "all" ? "all" : roleFilter,
-            limit: itemsPerPage,
-            page: currentPage,
-            search: searchTerm,
-          },
-        }),
-        api.get(API_ROUTES.ROLES.BASE),
-      ]);
-      setUsers(uRes.data.accounts);
-      setTotalItems(uRes.data.total);
-      setRoles(rRes.data.roles);
-    } catch (err) {
-      console.error("Failed to fetch data", err);
-      showNotification("error", "Failed to load users");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: usersData, isLoading: usersLoading } = useQuery({
+    queryKey: ["users", roleFilter, currentPage, searchTerm, itemsPerPage],
+    queryFn: async () => {
+      const res = await api.get(API_ROUTES.USERS.BASE, {
+        params: {
+          type: roleFilter === "all" ? "all" : roleFilter,
+          limit: itemsPerPage,
+          page: currentPage,
+          search: searchTerm,
+        },
+      });
+      return {
+        users: res.data.accounts,
+        total: res.data.total || 0,
+      };
+    },
+  });
 
-  const handleSubmit = async (data: UserFormData) => {
-    setIsLoading(
-      true,
-      editingUser
-        ? UIMessages.LOADING.UPDATING_USER
-        : UIMessages.LOADING.CREATING_USER,
-    );
-    try {
+  const { data: rolesData, isLoading: rolesLoading } = useQuery({
+    queryKey: ["roles"],
+    queryFn: async () => {
+      const res = await api.get(API_ROUTES.ROLES.BASE);
+      return res.data.roles;
+    },
+  });
+
+  const users = usersData?.users || [];
+  const totalItems = usersData?.total || 0;
+  const roles = rolesData || [];
+  const loading = usersLoading || rolesLoading;
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: UserFormData) => {
       if (editingUser) {
-        await api.put(API_ROUTES.USERS.BY_ID(editingUser.id), data);
-        showNotification("success", "User updated successfully");
+        return api.put(API_ROUTES.USERS.BY_ID(editingUser.id), data);
       } else {
-        await api.post(API_ROUTES.USERS.BASE, data);
-        showNotification("success", "User created successfully");
+        return api.post(API_ROUTES.USERS.BASE, data);
       }
+    },
+    onMutate: () =>
+      setIsLoading(
+        true,
+        editingUser
+          ? UIMessages.LOADING.UPDATING_USER
+          : UIMessages.LOADING.CREATING_USER,
+      ),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      showNotification(
+        "success",
+        editingUser ? "User updated successfully" : "User created successfully"
+      );
       setIsModalOpen(false);
       setEditingUser(null);
-      fetchData();
-    } catch (err: any) {
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
         err.response?.data?.error || err.message || "Operation failed",
       );
-    } finally {
-      setIsLoading(false, "");
-    }
+    },
+  });
+
+  const handleSubmit = async (data: UserFormData) => {
+    saveMutation.mutate(data);
   };
 
   const handleEdit = (u: User) => {
@@ -112,20 +125,27 @@ const UserList: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!userToDelete) return;
-    setIsDeleting(true);
-    try {
-      await api.delete(API_ROUTES.USERS.BY_ID(userToDelete));
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(API_ROUTES.USERS.BY_ID(id));
+    },
+    onMutate: () => setIsDeleting(true),
+    onSettled: () => setIsDeleting(false),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
       showNotification("success", "User deleted successfully");
       setIsDeleteModalOpen(false);
-      fetchData();
-    } catch (err: any) {
-      showNotification("error", "Failed to delete user");
-    } finally {
-      setIsDeleting(false);
       setUserToDelete(null);
-    }
+    },
+    onError: () => {
+      showNotification("error", "Failed to delete user");
+      setUserToDelete(null);
+    },
+  });
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    deleteMutation.mutate(userToDelete);
   };
 
   const columns = getUserColumns(
@@ -135,14 +155,7 @@ const UserList: React.FC = () => {
     handleDelete,
   );
 
-  useEffect(() => {
-    setLoading(true);
-    const delayDebounceFn = setTimeout(() => {
-      fetchData();
-    }, 500);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [roleFilter, currentPage, searchTerm, itemsPerPage]);
 
   useEffect(() => {
     const handleOnlineUsers = (

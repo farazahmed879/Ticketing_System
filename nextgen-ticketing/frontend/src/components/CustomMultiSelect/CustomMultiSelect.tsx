@@ -3,6 +3,7 @@ import { Controller, type FieldValues } from "react-hook-form";
 import CustomIcon from "../CustomIcon";
 import styles from "./CustomMultiSelect.module.css";
 import type { CustomMultiSelectProps } from "../types";
+import CustomImage from "../CustomImage";
 
 const CustomMultiSelect = <T extends FieldValues = any>({
   options,
@@ -167,7 +168,7 @@ const CustomMultiSelect = <T extends FieldValues = any>({
                     </div>
                     <div className={styles.optionContent}>
                       {option.image ? (
-                        <img
+                        <CustomImage
                           src={option.image}
                           alt=""
                           className={styles.optionImage}

@@ -12,6 +12,7 @@ import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import { RoleName, UIMessages } from "../../utils/constants";
 import UserModal from "../users/components/UserModal";
 import type { Role, UserFormData } from "../../types";
+import CustomImage from "../../components/CustomImage";
 
 const Profile: React.FC = () => {
   const { id } = useParams();
@@ -90,45 +91,6 @@ const Profile: React.FC = () => {
       className="animate-fade-in"
       style={{ display: "flex", flexDirection: "column", gap: 24 }}
     >
-      {/* Back Button (Only if viewing another user) */}
-      {id && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 15,
-            marginBottom: 8,
-          }}
-        >
-          <CustomButton
-            variant="ghost"
-            onClick={() => navigate("/users")}
-            icon={<CustomIcon name="ArrowLeft" size={20} />}
-            style={{
-              width: 40,
-              height: 40,
-              padding: 0,
-              borderRadius: "12px",
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid var(--border-glass)",
-            }}
-          />
-          <div>
-            <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
-              User Profile
-            </h1>
-            <p
-              style={{
-                color: "var(--text-muted)",
-                margin: "4px 0 0 0",
-                fontSize: "0.9rem",
-              }}
-            >
-              Detailed overview of team member information
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Header Card */}
       <div
@@ -142,6 +104,21 @@ const Profile: React.FC = () => {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          {id && (
+            <CustomButton
+              variant="ghost"
+              onClick={() => navigate("/users")}
+              icon={<CustomIcon name="ArrowLeft" size={20} />}
+              style={{
+                width: 40,
+                height: 40,
+                padding: 0,
+                borderRadius: "12px",
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid var(--border-glass)",
+              }}
+            />
+          )}
           <div
             style={{
               width: 80,
@@ -162,7 +139,7 @@ const Profile: React.FC = () => {
             }}
           >
             {user.image ? (
-              <img
+              <CustomImage
                 src={user.image}
                 alt={user.fullname}
                 style={{

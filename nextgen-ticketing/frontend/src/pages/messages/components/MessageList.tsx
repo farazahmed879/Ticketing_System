@@ -4,6 +4,7 @@ import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Messages.module.css";
 import type { Message, Conversation } from "../../../types";
+import CustomImage from "../../../components/CustomImage";
 
 interface MessageListProps {
   messages: Message[];
@@ -103,7 +104,7 @@ const MessageList: React.FC<MessageListProps> = ({
                       onClick={() => openLightbox(msg.attachments!, 0)}
                       title="View image"
                     >
-                      <img
+                      <CustomImage
                         src={msg.attachments![0]}
                         alt="attachment"
                         style={{ borderRadius: "inherit" }}
@@ -120,7 +121,7 @@ const MessageList: React.FC<MessageListProps> = ({
                           onClick={() => openLightbox(msg.attachments!, i)}
                           title="View image"
                         >
-                          <img
+                          <CustomImage
                             src={src}
                             alt={`attachment-${i}`}
                             style={{ borderRadius: "inherit" }}

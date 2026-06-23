@@ -5,6 +5,7 @@ import CustomIcon from "../CustomIcon";
 import styles from "./CustomSelect.module.css";
 
 import type { CustomSelectProps } from "../types";
+import CustomImage from "../CustomImage";
 
 const CustomSelect = <T extends FieldValues>({
   options,
@@ -165,7 +166,7 @@ const CustomSelect = <T extends FieldValues>({
                   <span className={styles.optionIcon}>{triggerIcon}</span>
                 )}
                 {!isMulti && selectedOption?.image && (
-                  <img
+                  <CustomImage
                     src={selectedOption.image}
                     alt=""
                     className={styles.optionImage}
@@ -249,7 +250,7 @@ const CustomSelect = <T extends FieldValues>({
                     >
                       <div className={styles.optionContent}>
                         {option.image && (
-                          <img
+                          <CustomImage
                             src={option.image}
                             alt=""
                             className={styles.optionImage}

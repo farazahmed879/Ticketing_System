@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Lightbox from "./components/Lightbox";
 import CustomIcon from "../../components/CustomIcon";
 import { useSearchParams } from "react-router-dom";
@@ -25,7 +26,7 @@ import MessageInput from "./components/MessageInput";
 
 const Messages: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
+
   const [activeConv, setActiveConv] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -39,11 +40,16 @@ const Messages: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [userSearch, setUserSearch] = useState("");
   const [groupName, setGroupName] = useState("");
-  const [selectedGroupMembers, setSelectedGroupMembers] = useState<string[]>([]);
+  const [selectedGroupMembers, setSelectedGroupMembers] = useState<string[]>(
+    [],
+  );
   const [showScrollBottom, setShowScrollBottom] = useState(false);
   const [attachments, setAttachments] = useState<string[]>([]);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
-  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
+  const [lightbox, setLightbox] = useState<{
+    images: string[];
+    index: number;
+  } | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [, setUnreadMessageNotifications] = useState<any[]>([]);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
@@ -102,16 +108,26 @@ const Messages: React.FC = () => {
     });
   };
 
-  const fetchConversations = async () => {
-    try {
+  const queryClient = useQueryClient();
+  const { data: convData, isLoading: loading } = useQuery({
+    queryKey: ["conversations"],
+    queryFn: async () => {
       const res = await api.get(API_ROUTES.MESSAGES.CONVERSATIONS);
-      setConversations(res.data.conversations);
-
       const notifRes = await api.get(API_ROUTES.NOTIFICATIONS.BASE, {
         params: { limit: 100 },
       });
-      const notifItems = notifRes.data.items || [];
-      const unreadMessageNotifs = notifItems.filter(
+      return {
+        conversations: res.data.conversations as Conversation[],
+        notifications: notifRes.data.items as any[],
+      };
+    },
+  });
+
+  useEffect(() => {
+    if (convData) {
+      setConversations(convData.conversations);
+
+      const unreadMessageNotifs = convData.notifications.filter(
         (n: any) => n.unread && n.type === "message",
       );
 
@@ -132,16 +148,10 @@ const Messages: React.FC = () => {
       } else if (userIdFromParam) {
         startChatWithUser(userIdFromParam);
       }
-    } catch (err) {
-      console.error("Failed to fetch conversations", err);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [convData]);
 
   useEffect(() => {
-    fetchConversations();
-
     socket.on("chat:receive", (data: { roomId: string; message: Message }) => {
       if (activeConvRef.current === data.roomId) {
         setMessages((prev) => [...prev, data.message]);
@@ -157,7 +167,7 @@ const Messages: React.FC = () => {
       setConversations((prev) => {
         const index = prev.findIndex((c) => c.id === data.roomId);
         if (index === -1) {
-          fetchConversations();
+          queryClient.invalidateQueries({ queryKey: ["conversations"] });
           return prev;
         }
         const updated = [...prev];

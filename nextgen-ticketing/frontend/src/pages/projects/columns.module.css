@@ -1,0 +1,22 @@
+.iconBox {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.projectMeta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}

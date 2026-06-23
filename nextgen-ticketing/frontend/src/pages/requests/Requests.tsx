@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import styles from "./Requests.module.css";
@@ -19,44 +20,44 @@ import { getRequestColumns } from "./columns";
 
 const Requests: React.FC = () => {
   const { user } = useAuth();
-  const { showNotification } = useNotification();
-  const [requests, setRequests] = useState<UserRequest[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { showNotification, setIsLoading } = useNotification();
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState("PENDING");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [requestToDelete, setRequestToDelete] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchRequests = async () => {
-    try {
+  const { data: requestData, isLoading: loading } = useQuery({
+    queryKey: ["requests"],
+    queryFn: async () => {
       const res = await api.get(API_ROUTES.REQUESTS.BASE);
-      setRequests(res.data.requests);
-    } catch (err) {
-      console.error("Failed to fetch requests", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data.requests;
+    },
+  });
 
-  useEffect(() => {
-    fetchRequests();
-  }, []);
+  const requests: UserRequest[] = requestData || [];
 
-  const handleUpdateStatus = async (id: string, status: string) => {
-    try {
-      await api.patch(API_ROUTES.REQUESTS.BY_ID(id), { status });
-      setRequests((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, status } : r)),
-      );
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      return api.patch(API_ROUTES.REQUESTS.BY_ID(id), { status });
+    },
+    onMutate: () => setIsLoading(true, "Updating request..."),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
       showNotification(
         "success",
-        `Request ${status === "APPROVED" ? "approved" : "rejected"} successfully`,
+        `Request ${variables.status === "APPROVED" ? "approved" : "rejected"} successfully`,
       );
-    } catch (err) {
+    },
+    onError: (err) => {
       console.error("Failed to update request status", err);
       showNotification("error", "Failed to update request status");
-    }
+    },
+  });
+
+  const handleUpdateStatus = async (id: string, status: string) => {
+    updateMutation.mutate({ id, status });
   };
 
   const handleDelete = (id: string) => {
@@ -64,21 +65,27 @@ const Requests: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!requestToDelete) return;
-    try {
-      setIsDeleting(true);
-      await api.delete(API_ROUTES.REQUESTS.BY_ID(requestToDelete));
-      setRequests((prev) => prev.filter((r) => r.id !== requestToDelete));
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(API_ROUTES.REQUESTS.BY_ID(id));
+    },
+    onMutate: () => setIsLoading(true, "Deleting request..."),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["requests"] });
       setIsDeleteModalOpen(false);
+      setRequestToDelete(null);
       showNotification("success", "Request deleted successfully");
-    } catch (err) {
+    },
+    onError: (err) => {
       console.error("Failed to delete request", err);
       showNotification("error", "Failed to delete request");
-    } finally {
-      setIsDeleting(false);
-      setRequestToDelete(null);
-    }
+    },
+  });
+
+  const confirmDelete = async () => {
+    if (!requestToDelete) return;
+    deleteMutation.mutate(requestToDelete);
   };
 
   const filteredRequests = requests.filter(
@@ -99,8 +106,8 @@ const Requests: React.FC = () => {
     handleDelete,
   );
 
-  const handleRequestSuccess = (newRequest: any) => {
-    setRequests((prev) => [newRequest, ...prev]);
+  const handleRequestSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["requests"] });
     showNotification("success", "Request submitted successfully");
   };
 
@@ -164,7 +171,6 @@ const Requests: React.FC = () => {
         title="Delete Request"
         message="Are you sure you want to delete this request? This action cannot be undone."
         confirmText="Delete"
-        loading={isDeleting}
         type="danger"
       />
     </>

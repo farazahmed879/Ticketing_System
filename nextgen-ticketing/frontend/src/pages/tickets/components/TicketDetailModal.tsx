@@ -36,6 +36,7 @@ import {
 } from "../../../utils/attachments";
 import CommentSection from "../ticket-details/ticket-details-modal/components/CommentsSection";
 import {
+import CustomImage from "../../../components/CustomImage";
   type ClientDecision,
   buildClientDecisionBody,
   getDecisionDialog,
@@ -1415,7 +1416,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                 border: "1px solid var(--border-glass)",
                               }}
                             >
-                              <img
+                              <CustomImage
                                 src={src}
                                 alt={`attachment-${idx}`}
                                 style={{
@@ -1570,7 +1571,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                       background: "transparent",
                                     }}
                                   >
-                                    <img
+                                    <CustomImage
                                       src={src}
                                       alt={`attachment-${idx}`}
                                       style={{
@@ -1756,7 +1757,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 <CustomIcon name="ChevronLeft" size={24} />
               </button>
             )}
-            <img
+            <CustomImage
               src={lightbox.images[lightbox.index]}
               alt={`attachment-${lightbox.index}`}
               onClick={(e) => e.stopPropagation()}

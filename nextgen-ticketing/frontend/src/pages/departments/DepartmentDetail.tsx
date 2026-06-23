@@ -149,26 +149,65 @@ const DepartmentDetail: React.FC = () => {
 
   return (
     <div style={{ padding: "20px 40px", display: "flex", flexDirection: "column", gap: 30 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+      {/* Header card */}
+      <div
+        className="glass-card"
+        style={{
+          padding: 30,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 24,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <CustomButton
             variant="ghost"
             onClick={() => navigate("/departments")}
             icon={<CustomIcon name="ArrowLeft" size={20} />}
-            style={{ 
-              width: 40, 
-              height: 40, 
-              padding: 0, 
-              borderRadius: '12px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid var(--border-glass)'
+            style={{
+              width: 40,
+              height: 40,
+              padding: 0,
+              borderRadius: "12px",
+              background: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid var(--border-glass)",
             }}
           />
+          <div
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: 16,
+              background:
+                "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              boxShadow: "0 4px 15px rgba(124, 58, 237, 0.3)",
+            }}
+          >
+            <CustomIcon name="Building2" size={32} />
+          </div>
           <div>
-            <h1 style={{ fontSize: "2rem", fontWeight: 700, margin: 0 }}>
+            <h1
+              style={{
+                fontSize: "1.8rem",
+                fontWeight: 800,
+                margin: 0,
+                color: "var(--text-primary)",
+              }}
+            >
               {department.name}
             </h1>
-            <p style={{ color: "var(--text-muted)", margin: "4px 0 0 0", fontSize: '0.9rem' }}>
+            <p
+              style={{
+                color: "var(--text-muted)",
+                margin: "4px 0 0 0",
+                fontSize: "0.9rem",
+              }}
+            >
               Department Details & Insights
             </p>
           </div>
@@ -183,7 +222,6 @@ const DepartmentDetail: React.FC = () => {
           </CustomButton>
         </div>
       </div>
-
       <div className="glass-card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
         <h3 style={{ margin: 0, fontSize: "1.2rem" }}>About Department</h3>
         <p style={{ color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>

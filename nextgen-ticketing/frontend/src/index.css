@@ -308,3 +308,67 @@ textarea:focus {
     transform: translateY(0);
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   Reusable Utility Classes
+   ══════════════════════════════════════════════════════ */
+
+/* ── Flex Layout ── */
+.flex-row       { display: flex; align-items: center; gap: 8px; }
+.flex-row-4     { display: flex; align-items: center; gap: 4px; }
+.flex-row-12    { display: flex; align-items: center; gap: 12px; }
+.flex-col       { display: flex; flex-direction: column; gap: 4px; }
+.flex-col-2     { display: flex; flex-direction: column; gap: 2px; }
+.flex-between   { display: flex; justify-content: space-between; align-items: center; }
+.flex-wrap-4    { display: flex; gap: 4px; flex-wrap: wrap; }
+.flex-center    { display: flex; align-items: center; justify-content: center; }
+
+/* ── Typography ── */
+.font-semibold  { font-weight: 600; }
+.font-medium    { font-weight: 500; }
+.text-xs        { font-size: 0.75rem; }
+.text-xs-muted  { font-size: 0.8rem;  color: var(--text-muted); }
+.text-sm        { font-size: 0.85rem; }
+.text-sm-secondary { font-size: 0.85rem; color: var(--text-secondary); }
+.text-sm-muted  { font-size: 0.85rem; color: var(--text-muted); }
+.text-base-sm   { font-size: 0.9rem; }
+.text-base-muted { font-size: 0.9rem; color: var(--text-muted); }
+
+/* ── Color Accents ── */
+.text-danger    { color: var(--accent-danger); }
+.text-success   { color: var(--accent-success); }
+.text-muted     { color: var(--text-muted); }
+.text-secondary { color: var(--text-secondary); }
+
+/* ── Component Primitives ── */
+.icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.separator-dot {
+  opacity: 0.5;
+}
+
+.chip {
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.hover-glow:hover {
+  color: var(--accent-primary);
+}

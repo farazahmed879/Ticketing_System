@@ -65,36 +65,6 @@ const ProjectDetail: React.FC = () => {
       className="animate-fade-in"
       style={{ display: "flex", flexDirection: "column", gap: 24 }}
     >
-      {/* Back button + title */}
-      <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
-        <CustomButton
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          icon={<CustomIcon name="ArrowLeft" size={20} />}
-          style={{
-            width: 40,
-            height: 40,
-            padding: 0,
-            borderRadius: "12px",
-            background: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid var(--border-glass)",
-          }}
-        />
-        <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
-            Project Details
-          </h1>
-          <p
-            style={{
-              color: "var(--text-muted)",
-              margin: "4px 0 0 0",
-              fontSize: "0.9rem",
-            }}
-          >
-            Overview, owners, and clients
-          </p>
-        </div>
-      </div>
 
       {/* Header card */}
       <div
@@ -108,6 +78,19 @@ const ProjectDetail: React.FC = () => {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <CustomButton
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            icon={<CustomIcon name="ArrowLeft" size={20} />}
+            style={{
+              width: 40,
+              height: 40,
+              padding: 0,
+              borderRadius: "12px",
+              background: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid var(--border-glass)",
+            }}
+          />
           <div
             style={{
               width: 72,

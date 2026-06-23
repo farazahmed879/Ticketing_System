@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
@@ -14,11 +15,11 @@ import CustomPagination from "../../components/CustomPagination";
 import { useNavigate } from "react-router-dom";
 import { getDepartmentColumns } from "./columns";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import styles from "./DepartmentList.module.css";
 
 const DepartmentList: React.FC = () => {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDept, setEditingDept] = useState<Department | null>(null);
@@ -31,23 +32,15 @@ const DepartmentList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage] = useState(10);
 
-  const fetchDepts = async () => {
-    try {
-      if (loading) return; // Prevent multiple simultaneous fetches
-      setLoading(true);
+  const { data: departmentData, isLoading: loading } = useQuery({
+    queryKey: ["departments"],
+    queryFn: async () => {
       const res = await api.get(API_ROUTES.DEPARTMENTS.BASE);
-      setDepartments(res.data.departments);
-    } catch (err) {
-      console.error("Failed to fetch departments", err);
-      showNotification("error", "Failed to load departments");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data.departments;
+    },
+  });
 
-  useEffect(() => {
-    fetchDepts();
-  }, []);
+  const departments: Department[] = departmentData || [];
 
   const filteredDepartments = useMemo(() => {
     return departments.filter(
@@ -72,49 +65,64 @@ const DepartmentList: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!deptToDelete) return;
-    setIsLoading(true, UIMessages.LOADING.DELETING);
-    try {
-      await api.delete(API_ROUTES.DEPARTMENTS.BY_ID(deptToDelete));
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(API_ROUTES.DEPARTMENTS.BY_ID(id));
+    },
+    onMutate: () => setIsLoading(true, UIMessages.LOADING.DELETING),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["departments"] });
       showNotification("success", "Department deleted successfully");
-      fetchDepts();
-    } catch (err: any) {
+      setIsDeleteModalOpen(false);
+      setDeptToDelete(null);
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
         err.response?.data?.error || "Failed to delete department",
       );
-    } finally {
-      setIsLoading(false, "");
-      setIsDeleteModalOpen(false);
-      setDeptToDelete(null);
-    }
+    },
+  });
+
+  const confirmDelete = async () => {
+    if (!deptToDelete) return;
+    deleteMutation.mutate(deptToDelete);
   };
 
-  const handleSubmit = async (data: any) => {
-    setIsLoading(
-      true,
-      editingDept ? "Updating department..." : "Creating department...",
-    );
-    try {
+  const submitMutation = useMutation({
+    mutationFn: async (data: any) => {
       if (editingDept) {
-        await api.put(API_ROUTES.DEPARTMENTS.BY_ID(editingDept.id), data);
-        showNotification("success", "Department updated successfully");
+        return api.put(API_ROUTES.DEPARTMENTS.BY_ID(editingDept.id), data);
       } else {
-        await api.post(API_ROUTES.DEPARTMENTS.BASE, data);
-        showNotification("success", "Department created successfully");
+        return api.post(API_ROUTES.DEPARTMENTS.BASE, data);
       }
+    },
+    onMutate: () =>
+      setIsLoading(
+        true,
+        editingDept ? "Updating department..." : "Creating department...",
+      ),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["departments"] });
+      showNotification(
+        "success",
+        `Department ${editingDept ? "updated" : "created"} successfully`,
+      );
       setIsModalOpen(false);
       setEditingDept(null);
-      fetchDepts();
-    } catch (err: any) {
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
         err.response?.data?.error || "Operation failed",
       );
-    } finally {
-      setIsLoading(false, "");
-    }
+    },
+  });
+
+  const handleSubmit = async (data: any) => {
+    submitMutation.mutate(data);
   };
 
   const columns = getDepartmentColumns(navigate, handleEdit, handleDeleteClick);
@@ -123,13 +131,7 @@ const DepartmentList: React.FC = () => {
     <>
       <StandardListLayout
         header={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+          <div className={styles.header}>
             <div>
               <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
                 Departments

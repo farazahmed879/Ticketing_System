@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import CustomInput from "../../components/CustomInput";
@@ -11,7 +12,6 @@ import {
   DEFAULT_PAGE_SIZE,
 } from "../../utils/constants";
 import { useNavigate } from "react-router-dom";
-import type { Candidate } from "../../types";
 import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 
@@ -25,8 +25,7 @@ import { getCandidateColumns } from "./columns";
 import styles from "./CandidateList.module.css";
 
 const CandidateList: React.FC = () => {
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,7 +49,6 @@ const CandidateList: React.FC = () => {
   const [dateToFilter, setDateToFilter] = useState("");
 
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalItems, setTotalItems] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -71,9 +69,22 @@ const CandidateList: React.FC = () => {
     aiPrompt: "",
   });
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
+  const { data: candidatesData, isLoading: loading } = useQuery({
+    queryKey: [
+      "candidates",
+      statusFilter,
+      !isAiMode ? searchTerm : undefined,
+      !isAiMode ? positionFilter : undefined,
+      !isAiMode ? skillsFilter : undefined,
+      isAiMode ? aiPrompt : undefined,
+      cityFilter,
+      immediateJoinerFilter,
+      dateFromFilter,
+      dateToFilter,
+      currentPage,
+      itemsPerPage,
+    ],
+    queryFn: async () => {
       const res = await api.get(API_ROUTES.CANDIDATES.BASE, {
         params: {
           status: statusFilter === "all" ? undefined : statusFilter,
@@ -89,73 +100,88 @@ const CandidateList: React.FC = () => {
           page: currentPage,
         },
       });
-      setCandidates(res.data.candidates);
-      setTotalItems(res.data.total);
-    } catch (err) {
-      console.error("Failed to fetch candidates", err);
-      showNotification("error", "Failed to load candidates");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        candidates: res.data.candidates,
+        total: res.data.total || 0,
+      };
+    },
+  });
 
-  useEffect(() => {
-    setLoading(true);
-    fetchData();
-  }, [statusFilter, immediateJoinerFilter, dateFromFilter, dateToFilter, currentPage, itemsPerPage]);
+  const candidates = candidatesData?.candidates || [];
+  const totalItems = candidatesData?.total || 0;
 
-  // Auto-refetch when a previously-applied text filter is cleared via keyboard,
-  // so users don't have to click Filter again to see the unfiltered list.
-  useEffect(() => {
-    const active = activeFiltersRef.current;
-    const filterCleared =
-      (active.search && !searchTerm) ||
-      (active.position && !positionFilter) ||
-      (active.skills && !skillsFilter) ||
-      (active.aiPrompt && !aiPrompt);
-    if (!filterCleared) return;
-    activeFiltersRef.current = {
-      search: searchTerm,
-      position: positionFilter,
-      skills: skillsFilter,
-      aiPrompt: aiPrompt,
-    };
-    setCurrentPage(0);
-    fetchData();
-  }, [searchTerm, positionFilter, skillsFilter, aiPrompt]);
+  const saveMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      if (currentEditingId) {
+        return api.put(API_ROUTES.CANDIDATES.BY_ID(currentEditingId), payload);
+      } else {
+        return api.post(API_ROUTES.CANDIDATES.BASE, payload);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      showNotification(
+        "success",
+        `Candidate ${currentEditingId ? "updated" : "created"} successfully`
+      );
+      setIsModalOpen(false);
+      setCurrentEditingId(null);
+    },
+    onError: (err: any) => {
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to save candidate"
+      );
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(API_ROUTES.CANDIDATES.BY_ID(id));
+    },
+    onMutate: () => setIsLoading(true, UIMessages.LOADING.DELETING),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      showNotification("success", "Candidate deleted successfully");
+      setIsDeleteModalOpen(false);
+      setCandidateToDelete(null);
+    },
+    onError: () => {
+      showNotification("error", "Failed to delete candidate");
+      setCandidateToDelete(null);
+    },
+  });
+
+  const convertMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.post(API_ROUTES.CANDIDATES.CONVERT(id));
+    },
+    onMutate: () => setIsLoading(true, "Converting candidate..."),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      showNotification("success", "Candidate converted to user successfully");
+      setIsConvertModalOpen(false);
+      setCandidateToConvert(null);
+    },
+    onError: (err: any) => {
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to convert candidate"
+      );
+      setCandidateToConvert(null);
+    },
+  });
 
   const handleSearch = () => {
     setCurrentPage(0);
-    activeFiltersRef.current = {
-      search: searchTerm,
-      position: positionFilter,
-      skills: skillsFilter,
-      aiPrompt: aiPrompt,
-    };
-    fetchData();
   };
 
   const handleFormSubmit = async (payload: any) => {
     setIsSubmitting(true);
-    try {
-      if (currentEditingId) {
-        await api.put(API_ROUTES.CANDIDATES.BY_ID(currentEditingId), payload);
-        showNotification("success", "Candidate updated successfully");
-      } else {
-        await api.post(API_ROUTES.CANDIDATES.BASE, payload);
-        showNotification("success", "Candidate created successfully");
-      }
-      setIsModalOpen(false);
-      setCurrentEditingId(null);
-      fetchData();
-    } catch (err: any) {
-      showNotification(
-        "error",
-        err.response?.data?.error || "Failed to save candidate",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    await saveMutation.mutateAsync(payload);
+    setIsSubmitting(false);
   };
 
   const handleDelete = (id: string) => {
@@ -165,18 +191,7 @@ const CandidateList: React.FC = () => {
 
   const confirmDelete = async () => {
     if (!candidateToDelete) return;
-    setIsLoading(true, UIMessages.LOADING.DELETING);
-    try {
-      await api.delete(API_ROUTES.CANDIDATES.BY_ID(candidateToDelete));
-      showNotification("success", "Candidate deleted successfully");
-      setIsDeleteModalOpen(false);
-      fetchData();
-    } catch (err: any) {
-      showNotification("error", "Failed to delete candidate");
-    } finally {
-      setIsLoading(false, "");
-      setCandidateToDelete(null);
-    }
+    deleteMutation.mutate(candidateToDelete);
   };
 
   const handleConvertClick = (id: string) => {
@@ -186,21 +201,7 @@ const CandidateList: React.FC = () => {
 
   const confirmConvert = async () => {
     if (!candidateToConvert) return;
-    setIsLoading(true, "Converting candidate...");
-    try {
-      await api.post(API_ROUTES.CANDIDATES.CONVERT(candidateToConvert));
-      showNotification("success", "Candidate converted to user successfully");
-      fetchData();
-    } catch (err: any) {
-      showNotification(
-        "error",
-        err.response?.data?.error || "Failed to convert candidate",
-      );
-    } finally {
-      setIsLoading(false, "");
-      setIsConvertModalOpen(false);
-      setCandidateToConvert(null);
-    }
+    convertMutation.mutate(candidateToConvert);
   };
 
   const columns = getCandidateColumns(
@@ -252,7 +253,14 @@ const CandidateList: React.FC = () => {
           </div>
         }
         filters={
-          <div style={{ display: "flex", gap: 12, alignItems: "center", width: "100%" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "center",
+              width: "100%",
+            }}
+          >
             {/* AI Mode Toggle */}
             <CustomButton
               variant={isAiMode ? "gradient" : "outline"}
@@ -282,10 +290,16 @@ const CandidateList: React.FC = () => {
             {/* Search Bar */}
             <div style={{ flex: 1, minWidth: 160 }}>
               <CustomInput
-                placeholder={isAiMode ? "Senior React developer with strong communication skills..." : "Search by name, email, position..."}
+                placeholder={
+                  isAiMode
+                    ? "Senior React developer with strong communication skills..."
+                    : "Search by name, email, position..."
+                }
                 value={isAiMode ? aiPrompt : searchTerm}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  isAiMode ? setAiPrompt(e.target.value) : setSearchTerm(e.target.value)
+                  isAiMode
+                    ? setAiPrompt(e.target.value)
+                    : setSearchTerm(e.target.value)
                 }
                 onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
                   e.key === "Enter" && handleSearch()
@@ -295,10 +309,7 @@ const CandidateList: React.FC = () => {
             </div>
 
             {isAiMode && (
-              <CustomButton
-                variant="primary"
-                onClick={handleSearch}
-              >
+              <CustomButton variant="primary" onClick={handleSearch}>
                 Analyze
               </CustomButton>
             )}
@@ -307,7 +318,14 @@ const CandidateList: React.FC = () => {
             <div className={styles.filterAnchor}>
               <CustomButton
                 variant={
-                  showMoreFilters || positionFilter || skillsFilter || statusFilter !== "exclude_hired" || cityFilter || immediateJoinerFilter || dateFromFilter || dateToFilter
+                  showMoreFilters ||
+                  positionFilter ||
+                  skillsFilter ||
+                  statusFilter !== "exclude_hired" ||
+                  cityFilter ||
+                  immediateJoinerFilter ||
+                  dateFromFilter ||
+                  dateToFilter
                     ? "primary"
                     : "secondary"
                 }
@@ -464,7 +482,13 @@ const CandidateList: React.FC = () => {
                   </div>
 
                   <div className={styles.filterActions}>
-                    {(positionFilter || skillsFilter || statusFilter !== "exclude_hired" || cityFilter || immediateJoinerFilter || dateFromFilter || dateToFilter) && (
+                    {(positionFilter ||
+                      skillsFilter ||
+                      statusFilter !== "exclude_hired" ||
+                      cityFilter ||
+                      immediateJoinerFilter ||
+                      dateFromFilter ||
+                      dateToFilter) && (
                       <CustomButton
                         variant="ghost"
                         onClick={() => {
@@ -499,7 +523,6 @@ const CandidateList: React.FC = () => {
             </div>
           </div>
         }
-
         pagination={
           <CustomPagination
             currentPage={currentPage}
@@ -561,7 +584,7 @@ const CandidateList: React.FC = () => {
         onClose={() => setIsBulkModalOpen(false)}
         onSuccess={() => {
           setIsBulkModalOpen(false);
-          fetchData();
+          queryClient.invalidateQueries({ queryKey: ["candidates"] });
         }}
       />
     </>

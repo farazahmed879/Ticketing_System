@@ -3,6 +3,7 @@ import type { UserRequest } from "../../types";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
+import CustomTooltip from "../../components/CustomTooltip";
 import { formatDistanceToNow } from "date-fns";
 import styles from "./Requests.module.css";
 import type { User } from "../../types";
@@ -67,32 +68,35 @@ export const getRequestColumns = (
       <div className={styles.actions}>
         {r.status === "PENDING" && hasPermission("requests.update") && (
           <>
-            <CustomButton
-              variant="ghost"
-              size="sm"
-              onClick={() => handleUpdateStatus(r.id, "APPROVED")}
-              title="Approve"
-              style={{ color: "var(--accent-success)" }}
-              icon={<CustomIcon name="CheckCircle2" size={18} />}
-            />
-            <CustomButton
-              variant="ghost"
-              size="sm"
-              onClick={() => handleUpdateStatus(r.id, "REJECTED")}
-              title="Reject"
-              style={{ color: "var(--accent-danger)" }}
-              icon={<CustomIcon name="XCircle" size={18} />}
-            />
+            <CustomTooltip text="Approve">
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                onClick={() => handleUpdateStatus(r.id, "APPROVED")}
+                style={{ color: "var(--accent-success)" }}
+                icon={<CustomIcon name="CheckCircle2" size={18} />}
+              />
+            </CustomTooltip>
+            <CustomTooltip text="Reject">
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                onClick={() => handleUpdateStatus(r.id, "REJECTED")}
+                style={{ color: "var(--accent-danger)" }}
+                icon={<CustomIcon name="XCircle" size={18} />}
+              />
+            </CustomTooltip>
           </>
         )}
         {(r.userId === user?.id || hasPermission("requests.delete")) && (
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDelete(r.id)}
-            title="Delete"
-            icon={<CustomIcon name="Trash2" size={18} />}
-          />
+          <CustomTooltip text="Delete">
+            <CustomButton
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDelete(r.id)}
+              icon={<CustomIcon name="Trash2" size={18} />}
+            />
+          </CustomTooltip>
         )}
       </div>
     ),

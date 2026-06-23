@@ -13,6 +13,7 @@ import {
 import { useAuth } from "../../../context/AuthContext";
 import { RoleName } from "../../../utils/constants";
 import type { Ticket, TicketFormData } from "../../../types";
+import CustomImage from "../../../components/CustomImage";
 
 interface TicketFormProps {
   initialData?: Ticket | null;
@@ -367,7 +368,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
                 border: "1px solid var(--border-glass)",
               }}
             >
-              <img
+              <CustomImage
                 src={src}
                 alt={`attachment-${idx}`}
                 style={{

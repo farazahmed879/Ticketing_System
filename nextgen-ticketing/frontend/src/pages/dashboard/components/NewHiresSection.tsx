@@ -3,6 +3,7 @@ import { formatDistanceToNow, isToday, isYesterday } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Dashboard.module.css";
+import CustomImage from "../../../components/CustomImage";
 
 interface NewHiresSectionProps {
   newHires: any[];
@@ -54,7 +55,7 @@ const NewHiresSection: React.FC<NewHiresSectionProps> = ({ newHires }) => {
               >
                 <div className={styles.avatarWrapper}>
                   {hire.image ? (
-                    <img
+                    <CustomImage
                       src={hire.image}
                       alt={hire.fullname}
                       className={styles.hireAvatar}

@@ -3,7 +3,9 @@ import type { Role } from "../../types";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
+import CustomTooltip from "../../components/CustomTooltip";
 import { RoleName } from "../../utils/constants";
+import styles from "./columns.module.css";
 
 export const getRoleColumns = (
   handleEdit: (role: Role) => void,
@@ -13,14 +15,7 @@ export const getRoleColumns = (
     header: "Role Name",
     key: "name",
     render: (role) => (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          fontWeight: 600,
-        }}
-      >
+      <div className={styles.roleName}>
         <CustomIcon
           name="Shield"
           size={18}
@@ -36,7 +31,7 @@ export const getRoleColumns = (
     header: "Description",
     key: "description",
     render: (role) => (
-      <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+      <span className="text-base-sm text-secondary">
         {role.description || "-"}
       </span>
     ),
@@ -45,7 +40,7 @@ export const getRoleColumns = (
     header: "Type",
     key: "type",
     render: (role: any) => (
-      <div style={{ display: "flex", gap: 8 }}>
+      <div className="flex-row">
         {role.isAdmin && (
           <CustomBadge variant="danger">{RoleName.ADMIN}</CustomBadge>
         )}
@@ -78,22 +73,24 @@ export const getRoleColumns = (
     header: "Actions",
     key: "actions",
     render: (role) => (
-      <div style={{ display: "flex", gap: 0 }}>
-        <CustomButton
-          variant="ghost"
-          size="sm"
-          onClick={() => handleEdit(role)}
-          title="Edit Role"
-          icon={<CustomIcon name="Edit2" size={18} />}
-        />
-        <CustomButton
-          variant="danger"
-          size="sm"
-          onClick={() => handleDelete(role.id)}
-          title="Delete Role"
-          icon={<CustomIcon name="Trash2" size={18} />}
-          style={{ background: "transparent" }}
-        />
+      <div className={styles.actions}>
+        <CustomTooltip text="Edit Role">
+          <CustomButton
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(role)}
+            icon={<CustomIcon name="Edit2" size={18} />}
+          />
+        </CustomTooltip>
+        <CustomTooltip text="Delete Role">
+          <CustomButton
+            variant="danger"
+            size="sm"
+            onClick={() => handleDelete(role.id)}
+            icon={<CustomIcon name="Trash2" size={18} />}
+            style={{ background: "transparent" }}
+          />
+        </CustomTooltip>
       </div>
     ),
   },

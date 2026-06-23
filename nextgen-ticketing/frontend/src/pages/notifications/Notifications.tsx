@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import { formatDistanceToNow } from "date-fns";
 import api from "../../services/api";
@@ -13,38 +14,34 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 import type { NotificationItem } from "../../types";
 
 const Notifications: React.FC = () => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [isMarkAllReadOpen, setIsMarkAllReadOpen] = useState(false);
   const [isClearAllOpen, setIsClearAllOpen] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const navigate = useNavigate();
 
-  const fetchNotifications = async () => {
-    try {
+  const { data: notificationsData, isLoading: loading } = useQuery({
+    queryKey: ["notifications", page, itemsPerPage],
+    queryFn: async () => {
       const res = await api.get(
         `${API_ROUTES.NOTIFICATIONS.BASE}?limit=${itemsPerPage}&page=${page}`,
       );
-      setNotifications(res.data.items);
-      setTotalCount(res.data.totalCount);
-    } catch (err) {
-      console.error("Failed to fetch notifications", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        items: res.data.items as NotificationItem[],
+        totalCount: res.data.totalCount as number,
+      };
+    },
+  });
+
+  const notifications = notificationsData?.items || [];
+  const totalCount = notificationsData?.totalCount || 0;
 
   useEffect(() => {
-    fetchNotifications();
-  }, [page, itemsPerPage]);
-
-  useEffect(() => {
-    const handleNewNotification = (notification: NotificationItem) => {
-      setNotifications((prev) => [notification, ...prev]);
-      setTotalCount((prev) => prev + 1);
+    const handleNewNotification = () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      // We could also optimistically update the cache here, but invalidation is safer
     };
 
     socket.on("notifications:new", handleNewNotification);
@@ -52,44 +49,55 @@ const Notifications: React.FC = () => {
     return () => {
       socket.off("notifications:new", handleNewNotification);
     };
-  }, []);
+  }, [queryClient]);
 
-  const handleMarkAsRead = async (id: string) => {
-    try {
-      await api.put(API_ROUTES.NOTIFICATIONS.MARK_READ(id));
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, unread: false } : n)),
-      );
-    } catch (err) {
-      console.error("Failed to mark notification as read", err);
-    }
+  const markAsReadMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.put(API_ROUTES.NOTIFICATIONS.MARK_READ(id));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const handleMarkAsRead = (id: string) => {
+    markAsReadMutation.mutate(id);
   };
 
-  const handleMarkAllRead = async () => {
-    setConfirmLoading(true);
-    try {
-      await api.put(API_ROUTES.NOTIFICATIONS.READ_ALL);
-      setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
-    } catch (err) {
-      console.error("Failed to mark all as read", err);
-    } finally {
+  const markAllReadMutation = useMutation({
+    mutationFn: async () => {
+      return api.put(API_ROUTES.NOTIFICATIONS.READ_ALL);
+    },
+    onMutate: () => setConfirmLoading(true),
+    onSettled: () => {
       setConfirmLoading(false);
       setIsMarkAllReadOpen(false);
-    }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const handleMarkAllRead = () => {
+    markAllReadMutation.mutate();
   };
 
-  const handleClearAll = async () => {
-    setConfirmLoading(true);
-    try {
-      await api.delete(API_ROUTES.NOTIFICATIONS.CLEAR);
-      setNotifications([]);
-      setTotalCount(0);
-    } catch (err) {
-      console.error("Failed to clear notifications", err);
-    } finally {
+  const clearAllMutation = useMutation({
+    mutationFn: async () => {
+      return api.delete(API_ROUTES.NOTIFICATIONS.CLEAR);
+    },
+    onMutate: () => setConfirmLoading(true),
+    onSettled: () => {
       setConfirmLoading(false);
       setIsClearAllOpen(false);
-    }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const handleClearAll = () => {
+    clearAllMutation.mutate();
   };
 
   const getIcon = (type: string) => {

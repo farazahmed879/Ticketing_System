@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../../components/CustomIcon";
 import api from "../../../services/api";
@@ -31,21 +32,16 @@ import { handleStatusChange } from "../shared/ticketDecisions";
 
 const TicketBoard: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [columns, setColumns] = useState<Column[]>([]);
   const [collapsedColumns, setCollapsedColumns] = useState<string[]>([]);
-  const [agents, setAgents] = useState<any[]>([]);
-  const [qaList, setQaList] = useState<any[]>([]);
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
   const [selectedStatusNames, setSelectedStatusNames] = useState<string[]>([]);
-  // const [priorities, setPriorities] = useState<any[]>([]);
   const [selectedPriorityNames, setSelectedPriorityNames] = useState<string[]>(
     [],
   );
-  const [projects, setProjects] = useState<any[]>([]);
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
-  const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
   const [myTicketsOnly, setMyTicketsOnly] = useState(false);
 
   // Advanced filters dropdown (draft → Apply)
@@ -181,8 +177,9 @@ const TicketBoard: React.FC = () => {
         : TICKET_STATUSES.filter((s: any) => s.name !== StatusName.TRASH);
   };
 
-  const fetchMetadata = useCallback(async () => {
-    try {
+  const { data: metadata } = useQuery({
+    queryKey: ["ticket-board-metadata", user?.id],
+    queryFn: async () => {
       const [usersRes, groupsRes] = await Promise.all([
         api.get(API_ROUTES.USERS.GET_BY_ROLES, {
           params: {
@@ -203,29 +200,38 @@ const TicketBoard: React.FC = () => {
           },
         }),
       ]);
+      return {
+        accounts: usersRes.data.accounts,
+        projects: groupsRes.data.projects,
+      };
+    },
+    enabled: !!user,
+  });
 
-      const allAccounts = usersRes.data.accounts;
+  const agents =
+    metadata?.accounts?.filter((u: any) => u.role.name === RoleName.EMPLOYEE) ||
+    [];
+  const qaList =
+    metadata?.accounts?.filter((u: any) => u.role.name === RoleName.QA) || [];
+  const customers =
+    metadata?.accounts?.filter((u: any) => u.role.name === RoleName.CUSTOMER) ||
+    [];
+  const projects = metadata?.projects || [];
 
-      setAgents(
-        allAccounts.filter((u: any) => u.role.name === RoleName.EMPLOYEE),
-      );
-      setQaList(allAccounts.filter((u: any) => u.role.name === RoleName.QA));
-      setCustomers(
-        allAccounts.filter((u: any) => u.role.name === RoleName.CUSTOMER),
-      );
-
-      setProjects(groupsRes.data.projects);
-    } catch (err) {
-      console.error("Failed to fetch metadata", err);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    fetchMetadata();
-  }, [fetchMetadata]);
-
-  const fetchBoardData = useCallback(async () => {
-    try {
+  const { data: boardData, isLoading: loading } = useQuery({
+    queryKey: [
+      "tickets",
+      "board",
+      {
+        myTicketsOnly,
+        selectedAgentIds,
+        selectedStatusNames,
+        selectedPriorityNames,
+        selectedProjectIds,
+        selectedCustomerIds,
+      },
+    ],
+    queryFn: async () => {
       const ticketsRes = await api.get(API_ROUTES.TICKETS.BASE, {
         params: {
           limit: -1,
@@ -252,58 +258,41 @@ const TicketBoard: React.FC = () => {
               : undefined,
         },
       });
+      return ticketsRes.data.tickets;
+    },
+  });
 
-      const allTickets = ticketsRes.data.tickets;
-      const allStatuses = getStatuses();
+  useEffect(() => {
+    if (!boardData) return;
+    const allTickets = boardData;
+    const allStatuses = getStatuses();
 
-      // The backend already decides which tickets a user may see. If it returns
-      // a ticket whose status the role's default column set hides (e.g. an
-      // unassigned/New ticket for a team lead), add that column so the ticket
-      // isn't silently dropped.
-      const coveredIds = new Set(allStatuses.map((s: any) => s.id));
-      const extraStatuses = TICKET_STATUSES.filter(
-        (s: any) =>
-          !coveredIds.has(s.id) &&
-          s.name !== StatusName.TRASH &&
-          allTickets.some((t: Ticket) => t.status.id === s.id),
-      );
-      const orderedStatuses = [...allStatuses, ...extraStatuses].sort(
-        (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0),
-      );
+    const coveredIds = new Set(allStatuses.map((s: any) => s.id));
+    const extraStatuses = TICKET_STATUSES.filter(
+      (s: any) =>
+        !coveredIds.has(s.id) &&
+        s.name !== StatusName.TRASH &&
+        allTickets.some((t: Ticket) => t.status.id === s.id),
+    );
+    const orderedStatuses = [...allStatuses, ...extraStatuses].sort(
+      (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0),
+    );
 
-      const boardColumns: Column[] = orderedStatuses.map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        color: s.color,
-        tickets:
-          user?.role?.name == RoleName.CUSTOMER &&
-          s.name == StatusName.IN_PROCESS
-            ? allTickets.filter(
-                (t: Ticket) =>
-                  t.status.id === s.id || t.status.name == StatusName.RESOLVED,
-              )
-            : allTickets.filter((t: Ticket) => t.status.id === s.id),
-      }));
+    const boardColumns: Column[] = orderedStatuses.map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      color: s.color,
+      tickets:
+        user?.role?.name == RoleName.CUSTOMER && s.name == StatusName.IN_PROCESS
+          ? allTickets.filter(
+              (t: Ticket) =>
+                t.status.id === s.id || t.status.name == StatusName.RESOLVED,
+            )
+          : allTickets.filter((t: Ticket) => t.status.id === s.id),
+    }));
 
-      setColumns(boardColumns);
-    } catch (err) {
-      console.error("Failed to fetch board data", err);
-      showNotification("error", UIMessages.BOARD.LOAD_FAILED);
-    } finally {
-      setLoading(false);
-      setIsLoading(false, "");
-    }
-  }, [
-    myTicketsOnly,
-    selectedAgentIds,
-    selectedStatusNames,
-    selectedPriorityNames,
-    selectedProjectIds,
-    selectedCustomerIds,
-    user?.role?.name,
-    showNotification,
-    setIsLoading,
-  ]);
+    setColumns(boardColumns);
+  }, [boardData, user]);
 
   const openTicketDetail = (ticket: Ticket) => {
     setSelectedTicket(ticket);
@@ -379,7 +368,7 @@ const TicketBoard: React.FC = () => {
       // drag-drop path, where the modal is already closed) and refresh.
       onSuccess: () => {
         setIsDetailModalOpen(false);
-        fetchBoardData();
+        queryClient.invalidateQueries({ queryKey: ["tickets"] });
       },
     });
 
@@ -387,60 +376,68 @@ const TicketBoard: React.FC = () => {
     e.dataTransfer.setData("ticketId", ticketId);
   };
 
-  const handleCreateTicket = async (data: TicketFormData) => {
-    setIsLoading(true, UIMessages.LOADING.CREATING_TICKET);
-    try {
-      await api.post(API_ROUTES.TICKETS.BASE, {
+  const createMutation = useMutation({
+    mutationFn: async (data: TicketFormData) => {
+      return api.post(API_ROUTES.TICKETS.BASE, {
         ...data,
         projectId: data.projectId || null,
         assigneeId: data.assigneeId || null,
       });
+    },
+    onMutate: () => setIsLoading(true, UIMessages.LOADING.CREATING_TICKET),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
       setIsCreateModalOpen(false);
-      fetchBoardData();
       showNotification("success", "Ticket created successfully!");
-    } catch (err: any) {
-      console.error("Failed to create ticket", err);
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
         err.response?.data?.error || "Failed to create ticket",
       );
-    } finally {
-      setIsLoading(false, "");
-    }
+    },
+  });
+
+  const handleCreateTicket = async (data: TicketFormData) => {
+    createMutation.mutate(data);
   };
 
-  const handleDeleteTicket = async () => {
-    if (!ticketToDelete) return;
-    setIsLoading(true, UIMessages.LOADING.DELETING);
-    try {
-      await api.delete(API_ROUTES.TICKETS.BY_ID(ticketToDelete));
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.delete(API_ROUTES.TICKETS.BY_ID(id));
+    },
+    onMutate: () => setIsLoading(true, UIMessages.LOADING.DELETING),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
       showNotification("success", "Ticket deleted successfully!");
       setIsDeleteModalOpen(false);
       setTicketToDelete(null);
-      fetchBoardData();
-    } catch (err: any) {
-      console.error("Failed to delete ticket", err);
+    },
+    onError: (err: any) => {
       showNotification(
         "error",
         err.response?.data?.error || "Failed to delete ticket",
       );
-    } finally {
-      setIsLoading(false, "");
-    }
+    },
+  });
+
+  const handleDeleteTicket = async () => {
+    if (!ticketToDelete) return;
+    deleteMutation.mutate(ticketToDelete);
   };
 
   useEffect(() => {
-    fetchBoardData();
-
     // Listen for real-time updates
     socket.on("ticket:updated", () => {
-      fetchBoardData();
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
     });
 
     return () => {
       socket.off("ticket:updated");
     };
-  }, [fetchBoardData]);
+  }, [queryClient]);
 
   return (
     <div className={styles.boardContainer}>

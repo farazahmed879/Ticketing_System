@@ -4,6 +4,9 @@ import CustomIcon from "../../components/CustomIcon";
 import CustomButton from "../../components/CustomButton";
 import Highlight from "../../components/Highlight";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
+import CustomTooltip from "../../components/CustomTooltip";
+import styles from "./columns.module.css";
+import CustomImage from "../../components/CustomImage";
 
 export const getTeamColumns = (
   search: string,
@@ -15,26 +18,15 @@ export const getTeamColumns = (
     header: "Team Name",
     key: "name",
     render: (t) => (
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div
-          className="glass-card"
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 8,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(59, 130, 246, 0.1)",
-          }}
-        >
+      <div className="flex-row-12">
+        <div className={`glass-card icon-box ${styles.iconBox}`}>
           <CustomIcon name="Users" size={18} color="var(--accent-secondary)" />
         </div>
         <div>
-          <div style={{ fontWeight: 600 }}>
+          <div className="font-semibold">
             <Highlight text={t.name} query={search} />
           </div>
-          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+          <div className="text-xs-muted">
             {t.description ? (
               <Highlight text={t.description} query={search} />
             ) : (
@@ -49,32 +41,12 @@ export const getTeamColumns = (
     header: "Team Lead",
     key: "teamLead",
     render: (t) => (
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div className={styles.leadCell}>
         {t.teamLead ? (
           <>
-            <div
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: "50%",
-                background: "var(--bg-input)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "0.7rem",
-                fontWeight: 600,
-              }}
-            >
+            <div className={styles.leadAvatar}>
               {t.teamLead.image ? (
-                <img
-                  src={t.teamLead.image}
-                  alt={t.teamLead.fullname}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    borderRadius: "50%",
-                  }}
-                />
+                <CustomImage src={t.teamLead.image} alt={t.teamLead.fullname} />
               ) : (
                 <CustomAvatarStack
                   items={[
@@ -88,12 +60,10 @@ export const getTeamColumns = (
                 />
               )}
             </div>
-            <span style={{ fontSize: "0.85rem" }}>{t.teamLead.fullname}</span>
+            <span className="text-sm">{t.teamLead.fullname}</span>
           </>
         ) : (
-          <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-            No Team Lead
-          </span>
+          <span className="text-sm-muted">No Team Lead</span>
         )}
       </div>
     ),
@@ -119,7 +89,7 @@ export const getTeamColumns = (
     header: "Projects",
     key: "projects",
     render: (t) => (
-      <span style={{ fontSize: "0.9rem" }}>
+      <span className="text-base-sm">
         {t.projects?.length || 0} Assigned
       </span>
     ),
@@ -130,26 +100,30 @@ export const getTeamColumns = (
           header: "Actions",
           key: "actions" as keyof Team,
           render: (t: Team) => (
-            <div style={{ display: "flex", gap: 8 }}>
-              <CustomButton
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEdit(t);
-                }}
-                icon={<CustomIcon name="Edit2" size={16} />}
-              />
-              <CustomButton
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(t.id);
-                }}
-                icon={<CustomIcon name="Trash2" size={16} />}
-                style={{ color: "var(--accent-danger)" }}
-              />
+            <div className={styles.actions}>
+              <CustomTooltip text="Edit">
+                <CustomButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(t);
+                  }}
+                  icon={<CustomIcon name="Edit2" size={16} />}
+                />
+              </CustomTooltip>
+              <CustomTooltip text="Delete">
+                <CustomButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(t.id);
+                  }}
+                  icon={<CustomIcon name="Trash2" size={16} />}
+                  style={{ color: "var(--accent-danger)" }}
+                />
+              </CustomTooltip>
             </div>
           ),
         },

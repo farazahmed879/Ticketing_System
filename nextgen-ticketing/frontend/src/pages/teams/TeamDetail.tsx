@@ -7,6 +7,7 @@ import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
 import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import type { Team } from "../../types";
+import CustomImage from "../../components/CustomImage";
 
 const getInitials = (name?: string) =>
   (name || "?")
@@ -50,8 +51,17 @@ const TeamDetail: React.FC = () => {
       className="animate-fade-in"
       style={{ display: "flex", flexDirection: "column", gap: 24 }}
     >
-      {/* Back button + title */}
-      <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+
+      {/* Header card */}
+      <div
+        className="glass-card"
+        style={{
+          padding: 30,
+          display: "flex",
+          alignItems: "center",
+          gap: 24,
+        }}
+      >
         <CustomButton
           variant="ghost"
           onClick={() => navigate(-1)}
@@ -65,32 +75,6 @@ const TeamDetail: React.FC = () => {
             border: "1px solid var(--border-glass)",
           }}
         />
-        <div>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
-            Team Details
-          </h1>
-          <p
-            style={{
-              color: "var(--text-muted)",
-              margin: "4px 0 0 0",
-              fontSize: "0.9rem",
-            }}
-          >
-            Members, lead, and assigned projects
-          </p>
-        </div>
-      </div>
-
-      {/* Header card */}
-      <div
-        className="glass-card"
-        style={{
-          padding: 30,
-          display: "flex",
-          alignItems: "center",
-          gap: 24,
-        }}
-      >
         <div
           style={{
             width: 72,
@@ -211,7 +195,7 @@ const TeamDetail: React.FC = () => {
                     }}
                   >
                     {m.image ? (
-                      <img
+                      <CustomImage
                         src={m.image}
                         alt={m.fullname}
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
@@ -294,7 +278,7 @@ const TeamDetail: React.FC = () => {
                   }}
                 >
                   {team.teamLead.image ? (
-                    <img
+                    <CustomImage
                       src={team.teamLead.image}
                       alt={team.teamLead.fullname}
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}

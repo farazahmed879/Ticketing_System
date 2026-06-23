@@ -1,0 +1,38 @@
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iconBox {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.leadCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.leadAvatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.leadAvatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}

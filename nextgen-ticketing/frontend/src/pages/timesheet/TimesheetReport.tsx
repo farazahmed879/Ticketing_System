@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import CustomButton from '../../components/CustomButton';
 import CustomTable from '../../components/CustomTable';
@@ -16,28 +17,20 @@ import { useNavigate } from 'react-router-dom';
 
 const TimesheetReport: React.FC = () => {
   const navigate = useNavigate();
-  const [report, setReport] = useState<ITimesheetReport | null>(null);
-  const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(new Date().getMonth());
   const [year, setYear] = useState(new Date().getFullYear());
 
-  const fetchReport = async () => {
-    setLoading(true);
-    try {
+  const { data: reportData, isLoading: loading } = useQuery<ITimesheetReport>({
+    queryKey: ['timesheets', 'report', month, year],
+    queryFn: async () => {
       const res = await api.get(API_ROUTES.TIMESHEETS.REPORT, {
         params: { month, year }
       });
-      setReport(res.data.report);
-    } catch (err) {
-      console.error('Failed to fetch report', err);
-    } finally {
-      setLoading(false);
+      return res.data.report;
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchReport();
-  }, [month, year]);
+  const report = reportData || null;
 
   const months = [
     "January", "February", "March", "April", "May", "June",

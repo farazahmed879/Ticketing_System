@@ -2,6 +2,7 @@ import React from "react";
 import { createPortal } from "react-dom";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
+import CustomImage from "../../../components/CustomImage";
 
 interface LightboxProps {
   images: string[];
@@ -45,7 +46,7 @@ const Lightbox: React.FC<LightboxProps> = ({ images, index, onClose }) => {
         }}
         icon={<CustomIcon name="X" size={24} />}
       />
-      <img
+      <CustomImage
         src={images[index]}
         alt="attachment"
         onClick={(e) => e.stopPropagation()}

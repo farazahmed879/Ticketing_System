@@ -12,6 +12,7 @@ import {
   compressImage,
 } from "../../../utils/attachments";
 import type { User, Role, UserFormData } from "../../../types";
+import CustomImage from "../../../components/CustomImage";
 
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2 MB upload cap
 
@@ -389,7 +390,7 @@ const UserForm: React.FC<UserFormProps> = ({
                 {isProcessingAvatar ? (
                   <CustomIcon name="Loader" size={28} color="white" />
                 ) : avatar ? (
-                  <img
+                  <CustomImage
                     src={avatar}
                     alt="Profile preview"
                     style={{

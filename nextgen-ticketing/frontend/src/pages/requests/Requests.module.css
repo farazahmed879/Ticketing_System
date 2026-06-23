@@ -2,7 +2,6 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 32px;
 }
 
 .filters {
@@ -105,9 +104,18 @@
   font-weight: 700;
 }
 
-.pending { background: rgba(255, 152, 0, 0.1); color: #ff9800; }
-.approved { background: rgba(76, 175, 80, 0.1); color: #4caf50; }
-.rejected { background: rgba(244, 67, 54, 0.1); color: #f44336; }
+.pending {
+  background: rgba(255, 152, 0, 0.1);
+  color: #ff9800;
+}
+.approved {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+.rejected {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
 
 .actions {
   display: flex;

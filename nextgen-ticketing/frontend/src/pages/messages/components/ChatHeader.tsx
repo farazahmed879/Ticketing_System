@@ -3,6 +3,7 @@ import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Messages.module.css";
 import type { Conversation } from "../../../types";
+import CustomImage from "../../../components/CustomImage";
 
 interface ChatHeaderProps {
   selectedConv: Conversation;
@@ -74,7 +75,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           {selectedConv.isGroup ? (
             <CustomIcon name="Users" size={20} color="var(--accent-primary)" />
           ) : selectedConv.partner?.image ? (
-            <img
+            <CustomImage
               src={selectedConv.partner.image}
               alt=""
               style={{

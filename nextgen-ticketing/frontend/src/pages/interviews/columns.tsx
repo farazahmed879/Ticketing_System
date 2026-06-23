@@ -4,6 +4,7 @@ import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
+import CustomTooltip from "../../components/CustomTooltip";
 import { InterviewStatus } from "../../utils/constants";
 import styles from "./InterviewList.module.css";
 
@@ -53,10 +54,8 @@ export const getInterviewColumns = (
           {i.candidate.name.charAt(0)}
         </div>
         <div>
-          <div style={{ fontWeight: 600 }}>{i.candidate.name}</div>
-          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-            {i.candidate.position}
-          </div>
+          <div className="font-semibold">{i.candidate.name}</div>
+          <div className="text-xs-muted">{i.candidate.position}</div>
         </div>
       </div>
     ),
@@ -64,7 +63,7 @@ export const getInterviewColumns = (
   {
     header: "Interview",
     key: "title",
-    render: (i) => <span style={{ fontWeight: 500 }}>{i.title}</span>,
+    render: (i) => <span className="font-medium">{i.title}</span>,
   },
   {
     header: "Date & Time",
@@ -97,7 +96,7 @@ export const getInterviewColumns = (
     header: "Feedback",
     key: "feedbacks",
     render: (i) => (
-      <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+      <span className="text-sm-muted">
         {i._count?.feedbacks || 0} / {i.panelMembers.length}
       </span>
     ),
@@ -115,33 +114,35 @@ export const getInterviewColumns = (
     header: "Actions",
     key: "actions",
     render: (i) => (
-      <div style={{ display: "flex", gap: 0 }}>
+      <div className={styles.actions}>
         {canUpdateInterviews && (
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            icon={<CustomIcon name="Edit2" size={17} />}
-            onClick={(e) => {
-              e.stopPropagation();
-              setEditingInterview(i);
-              setIsModalOpen(true);
-            }}
-            title="Edit Interview"
-          />
+          <CustomTooltip text="Edit Interview">
+            <CustomButton
+              variant="ghost"
+              size="sm"
+              icon={<CustomIcon name="Edit2" size={17} />}
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingInterview(i);
+                setIsModalOpen(true);
+              }}
+            />
+          </CustomTooltip>
         )}
 
         {canDeleteInterviews && (
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            icon={<CustomIcon name="Trash2" size={17} />}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(i.id);
-            }}
-            style={{ color: "var(--accent-danger)" }}
-            title="Delete Interview"
-          />
+          <CustomTooltip text="Delete Interview">
+            <CustomButton
+              variant="ghost"
+              size="sm"
+              icon={<CustomIcon name="Trash2" size={17} />}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(i.id);
+              }}
+              style={{ color: "var(--accent-danger)" }}
+            />
+          </CustomTooltip>
         )}
       </div>
     ),

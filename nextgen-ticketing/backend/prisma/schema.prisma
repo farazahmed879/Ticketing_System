@@ -390,6 +390,10 @@ model Candidate {
   objective       String?
   technicalSkills String?
   workExperience  String?
+  // AI search enrichment: populated by the LLM extraction step (write-time).
+  skills          String[]    // normalized skill tags, e.g. ["python", "fastapi"]
+  yearsExperience Float?      // total years of experience parsed from workExperience
+  skillEmbedding  Float[]     // BGE vector of the profile text (semantic search)
   linkedin        String?
   portfolio       String?
   github          String?

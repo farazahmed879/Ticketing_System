@@ -5,6 +5,47 @@ import prisma from "../prisma";
 import { RoleName } from "../utils/constants";
 import { uploadToGoogleDrive } from "../services/googleDriveService";
 import { resumeParserService } from "../services/resumeParserService";
+import { llamaParseService } from "../services/llamaParseService";
+import { aiSearchService } from "../services/aiSearchService";
+import { embeddingService } from "../services/embeddingService";
+
+/**
+ * Best-effort write-time enrichment + embedding: derive normalized skills +
+ * yearsExperience (Claude) and a semantic profile vector (BGE) from the
+ * candidate's text. Never blocks the write — on any failure we persist what we
+ * have and rely on the backfill script to fill the rest in later.
+ */
+async function safeEnrichAndEmbed(data: any): Promise<{
+  skills: string[];
+  yearsExperience: number | null;
+  skillEmbedding: number[];
+}> {
+  const text = aiSearchService.candidateEnrichmentText(data);
+  if (!text) return { skills: [], yearsExperience: null, skillEmbedding: [] };
+
+  let skills: string[] = [];
+  let yearsExperience: number | null = null;
+  try {
+    ({ skills, yearsExperience } = await aiSearchService.enrichCandidate(text));
+  } catch (err) {
+    console.error("Candidate enrichment failed (persisting empty):", err);
+  }
+
+  let skillEmbedding: number[] = [];
+  try {
+    // Embed a concise role+skills text (avoids diluting the signal with prose).
+    const profileText = aiSearchService.embeddingProfileText({
+      position: data.position,
+      skills,
+      technicalSkills: data.technicalSkills,
+    });
+    skillEmbedding = await embeddingService.embedProfile(profileText);
+  } catch (err) {
+    console.error("Candidate embedding failed (persisting empty):", err);
+  }
+
+  return { skills, yearsExperience, skillEmbedding };
+}
 
 export const candidateUsecase = {
   async getAllCandidates(filters: any) {
@@ -64,74 +105,146 @@ export const candidateUsecase = {
     let total: number;
 
     if (aiPrompt) {
-      // For AI prompt, we need all matching candidates to score them
-      candidates = await candidateRepository.findMany(where);
+      try {
+        // Hybrid AI search:
+        //  1) Claude parses the NL query into structured constraints + topic.
+        //  2) Structured constraints (years/status/failed-before) filter in Mongo.
+        //  3) The topic (skills/role/keywords) is matched SEMANTICALLY via BGE
+        //     vector cosine — so "frontend" matches "front-end engineer".
+        const filter = await aiSearchService.parseQuery(aiPrompt as string);
+        const aiWhere = aiSearchService.toPrismaWhere(filter);
 
-      const normalizeTechTerms = (text: string) => {
-        return text
-          .toLowerCase()
-          .replace(/front[-\s]end/g, "frontend")
-          .replace(/back[-\s]end/g, "backend")
-          .replace(/full[-\s]stack/g, "fullstack")
-          .replace(/react[-\s]js/g, "reactjs")
-          .replace(/node[-\s]js/g, "nodejs")
-          .replace(/vue[-\s]js/g, "vuejs");
-      };
+        // Merge any UI filters already in `where` with the structured constraints.
+        const merged: any = { ...where };
+        if (aiWhere.AND) {
+          merged.AND = [...(where.AND || []), ...aiWhere.AND];
+        }
 
-      const promptWords = normalizeTechTerms(aiPrompt as string)
-        .replace(/[^a-z0-9\s]/g, "")
-        .split(/\s+/)
-        .map((w) => (w.endsWith("s") && w.length > 3 ? w.slice(0, -1) : w))
-        .filter((w) => w.length > 2);
+        // Fetch all structurally-matching candidates; rank + paginate in app.
+        let matched = await candidateRepository.findMany(merged);
 
-      const scoredCandidates = candidates
-        .map((c) => {
-          let score = 0;
-          const candidateText = normalizeTechTerms(
-            [
-              c.technicalSkills,
-              c.workExperience,
-              c.objective,
-              c.notes,
-              c.position,
-            ]
-              .filter(Boolean)
-              .join(" "),
-          );
+        const topicText = aiSearchService.queryTopicText(filter);
+        if (topicText) {
+          const queryVec = await embeddingService.embedQuery(topicText);
+          // Exact skill requirements from the query (normalized tags), e.g.
+          // ["java"]. Matched against candidate skills by EXACT tag equality so
+          // "java" never matches "javascript".
+          const querySkills = filter.skills.map((s) => s.toLowerCase());
 
-          promptWords.forEach((word) => {
-            const regex = new RegExp(`\\b${word}(s|es)?\\b`, "g");
-            const matches = candidateText.match(regex);
-            if (matches) {
-              score += matches.length * 10;
-            }
+          // Hybrid score = semantic similarity + a boost for exact skill matches.
+          const SKILL_BOOST = 0.2;
+          const scored = matched.map((c) => {
+            const sim = embeddingService.cosineSimilarity(
+              queryVec,
+              (c as any).skillEmbedding || [],
+            );
+            const cSkills = new Set(
+              ((c as any).skills || []).map((s: string) => s.toLowerCase()),
+            );
+            const overlap = querySkills.length
+              ? querySkills.filter((s) => cSkills.has(s)).length /
+                querySkills.length
+              : 0;
+            const score = sim + SKILL_BOOST * overlap;
+            return {
+              ...c,
+              _score: score,
+              matchScore: Math.min(100, Math.round(score * 100)),
+            };
           });
+          scored.sort((a, b) => b._score - a._score);
 
-          if (
-            c.position &&
-            promptWords.some((w) => {
-              const pos = normalizeTechTerms(c.position);
-              return new RegExp(`\\b${w}(s|es)?\\b`).test(pos);
-            })
-          ) {
-            score += 25;
-          }
+          // Keep results within a margin of the best match (and above a sane
+          // floor); never return empty when there are structural matches.
+          const top = scored[0]?._score ?? 0;
+          const REL_GAP = 0.08;
+          const ABS_FLOOR = 0.48;
+          const above = scored.filter(
+            (c) => c._score >= Math.max(ABS_FLOOR, top - REL_GAP),
+          );
+          const ranked = above.length > 0 ? above : scored;
+          matched = ranked.map(({ _score, ...c }) => c);
+        }
 
-          return { ...c, matchScore: Math.min(score, 100) };
-        })
-        .filter((c) => c.matchScore > 0);
+        total = matched.length;
+        candidates =
+          take !== undefined && skip !== undefined
+            ? matched.slice(skip, skip + take)
+            : matched;
+      } catch (err) {
+        // Fallback (error only): naive keyword scorer over all candidates,
+        // so search degrades gracefully if the LLM call fails.
+        console.error("AI search failed, falling back to keyword scorer:", err);
 
-      total = scoredCandidates.length;
+        candidates = await candidateRepository.findMany(where);
 
-      scoredCandidates.sort(
-        (a, b) => (b.matchScore || 0) - (a.matchScore || 0),
-      );
+        // Colleague's improved keyword scorer (normalizes front-end/back-end
+        // etc. + simple plurals) — reused here as the error-only fallback.
+        const normalizeTechTerms = (text: string) =>
+          text
+            .toLowerCase()
+            .replace(/front[-\s]end/g, "frontend")
+            .replace(/back[-\s]end/g, "backend")
+            .replace(/full[-\s]stack/g, "fullstack")
+            .replace(/react[-\s]js/g, "reactjs")
+            .replace(/node[-\s]js/g, "nodejs")
+            .replace(/vue[-\s]js/g, "vuejs");
 
-      // Manually paginate the scored results
-      if (take !== undefined && skip !== undefined) {
-        candidates = scoredCandidates.slice(skip, skip + take);
-      } else {
-        candidates = scoredCandidates;
+        const promptWords = normalizeTechTerms(aiPrompt as string)
+          .replace(/[^a-z0-9\s]/g, "")
+          .split(/\s+/)
+          .map((w) => (w.endsWith("s") && w.length > 3 ? w.slice(0, -1) : w))
+          .filter((w) => w.length > 2);
+
+        const scoredCandidates = candidates
+          .map((c) => {
+            let score = 0;
+            const candidateText = normalizeTechTerms(
+              [
+                c.technicalSkills,
+                c.workExperience,
+                c.objective,
+                c.notes,
+                c.position,
+              ]
+                .filter(Boolean)
+                .join(" "),
+            );
+
+            promptWords.forEach((word) => {
+              const regex = new RegExp(`\\b${word}(s|es)?\\b`, "g");
+              const matches = candidateText.match(regex);
+              if (matches) {
+                score += matches.length * 10;
+              }
+            });
+
+            if (
+              c.position &&
+              promptWords.some((w) => {
+                const pos = normalizeTechTerms(c.position);
+                return new RegExp(`\\b${w}(s|es)?\\b`).test(pos);
+              })
+            ) {
+              score += 25;
+            }
+
+            return { ...c, matchScore: Math.min(score, 100) };
+          })
+          .filter((c) => c.matchScore > 0);
+
+        total = scoredCandidates.length;
+
+        scoredCandidates.sort(
+          (a, b) => (b.matchScore || 0) - (a.matchScore || 0),
+        );
+
+        // Manually paginate the scored results
+        if (take !== undefined && skip !== undefined) {
+          candidates = scoredCandidates.slice(skip, skip + take);
+        } else {
+          candidates = scoredCandidates;
+        }
       }
     } else {
       [candidates, total] = await Promise.all([
@@ -152,9 +265,13 @@ export const candidateUsecase = {
   },
 
   async createCandidate(data: any, createdById?: string) {
+    const enrichment = await safeEnrichAndEmbed(data);
     return candidateRepository.create({
       ...data,
       createdById: createdById || null,
+      skills: enrichment.skills,
+      yearsExperience: enrichment.yearsExperience,
+      skillEmbedding: enrichment.skillEmbedding,
       phone: data.phone || null,
       cnic: data.cnic || null,
       address: data.address || null,
@@ -176,8 +293,12 @@ export const candidateUsecase = {
   },
 
   async updateCandidate(id: string, data: any) {
+    const enrichment = await safeEnrichAndEmbed(data);
     return candidateRepository.update(id, {
       ...data,
+      skills: enrichment.skills,
+      yearsExperience: enrichment.yearsExperience,
+      skillEmbedding: enrichment.skillEmbedding,
       phone: data.phone || null,
       cnic: data.cnic || null,
       address: data.address || null,
@@ -244,10 +365,25 @@ export const candidateUsecase = {
       projects: "",
     };
     try {
-      const text = await resumeParserService.extractText(
-        file.buffer,
-        file.mimetype,
-      );
+      // Primary: LlamaParse (handles layout/tables/scanned PDFs). Falls back to
+      // the basic pdf-parse/mammoth extractor if LlamaParse is unavailable.
+      let text: string;
+      try {
+        text = await llamaParseService.extractText(
+          file.buffer,
+          file.originalname,
+          file.mimetype,
+        );
+      } catch (llamaError) {
+        console.error(
+          "LlamaParse failed, falling back to basic extractor:",
+          llamaError,
+        );
+        text = await resumeParserService.extractText(
+          file.buffer,
+          file.mimetype,
+        );
+      }
       parsedData = { ...parsedData, ...resumeParserService.parseData(text) };
     } catch (parseError) {
       console.error("Failed to parse resume text:", parseError);

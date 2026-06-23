@@ -158,7 +158,7 @@ export const candidateUsecase = {
           // floor); never return empty when there are structural matches.
           const top = scored[0]?._score ?? 0;
           const REL_GAP = 0.08;
-          const ABS_FLOOR = 0.48;
+          const ABS_FLOOR = 0.6;
           const above = scored.filter(
             (c) => c._score >= Math.max(ABS_FLOOR, top - REL_GAP),
           );

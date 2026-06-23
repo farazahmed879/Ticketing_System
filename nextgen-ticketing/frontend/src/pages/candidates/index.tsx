@@ -39,6 +39,10 @@ const CandidateList: React.FC = () => {
   const [skillsFilter, setSkillsFilter] = useState("");
   const [isAiMode, setIsAiMode] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
+  // Applied (submitted) search values — the query reads THESE, not the live
+  // input, so it only refetches on Search/Analyze/Enter, never on each keystroke.
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [appliedAiPrompt, setAppliedAiPrompt] = useState("");
   const [currentEditingId, setCurrentEditingId] = useState<string | null>(null);
 
   // More Filters state
@@ -73,10 +77,10 @@ const CandidateList: React.FC = () => {
     queryKey: [
       "candidates",
       statusFilter,
-      !isAiMode ? searchTerm : undefined,
+      !isAiMode ? appliedSearch : undefined,
       !isAiMode ? positionFilter : undefined,
       !isAiMode ? skillsFilter : undefined,
-      isAiMode ? aiPrompt : undefined,
+      isAiMode ? appliedAiPrompt : undefined,
       cityFilter,
       immediateJoinerFilter,
       dateFromFilter,
@@ -88,10 +92,10 @@ const CandidateList: React.FC = () => {
       const res = await api.get(API_ROUTES.CANDIDATES.BASE, {
         params: {
           status: statusFilter === "all" ? undefined : statusFilter,
-          search: !isAiMode && searchTerm ? searchTerm : undefined,
+          search: !isAiMode && appliedSearch ? appliedSearch : undefined,
           position: !isAiMode && positionFilter ? positionFilter : undefined,
           skills: !isAiMode && skillsFilter ? skillsFilter : undefined,
-          aiPrompt: isAiMode && aiPrompt ? aiPrompt : undefined,
+          aiPrompt: isAiMode && appliedAiPrompt ? appliedAiPrompt : undefined,
           city: cityFilter || undefined,
           immediateJoiner: immediateJoinerFilter || undefined,
           dateFrom: dateFromFilter || undefined,
@@ -175,6 +179,10 @@ const CandidateList: React.FC = () => {
   });
 
   const handleSearch = () => {
+    // Commit the live input so the query runs — this is the only place the
+    // search/AI prompt actually triggers a fetch.
+    setAppliedSearch(searchTerm);
+    setAppliedAiPrompt(aiPrompt);
     setCurrentPage(0);
   };
 
@@ -275,6 +283,8 @@ const CandidateList: React.FC = () => {
                   skills: "",
                   aiPrompt: "",
                 };
+                setAppliedSearch("");
+                setAppliedAiPrompt("");
                 if (!isAiMode) {
                   setSearchTerm("");
                   setPositionFilter("");
@@ -308,11 +318,9 @@ const CandidateList: React.FC = () => {
               />
             </div>
 
-            {isAiMode && (
-              <CustomButton variant="primary" onClick={handleSearch}>
-                Analyze
-              </CustomButton>
-            )}
+            <CustomButton variant="primary" onClick={handleSearch}>
+              {isAiMode ? "Analyze" : "Search"}
+            </CustomButton>
 
             {/* Filters Dropdown */}
             <div className={styles.filterAnchor}>

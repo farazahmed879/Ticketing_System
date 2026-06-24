@@ -48,9 +48,7 @@ export const getCandidateColumns = (
             >
               {c.name}
             </Link>
-            <div className="text-xs-muted">
-              {c.email}
-            </div>
+            <div className="text-xs-muted">{c.email}</div>
           </div>
         </div>
       ),
@@ -64,15 +62,13 @@ export const getCandidateColumns = (
       header: "Phone",
       key: "phone",
       render: (c) => (
-        <span className="text-base-sm text-secondary">
-          {c.phone || "—"}
-        </span>
+        <span className="text-base-sm text-secondary">{c.phone || "—"}</span>
       ),
     },
     {
       header: "Notes",
       key: "notes",
-      render: (c) => (
+      render: (c) =>
         c.notes ? (
           <div className={styles.notesContainer}>
             <span className={styles.notesText}>{c.notes}</span>
@@ -80,15 +76,18 @@ export const getCandidateColumns = (
           </div>
         ) : (
           <span className="text-sm-secondary">—</span>
-        )
-      ),
+        ),
     },
     {
       header: "Location",
       key: "location",
       render: (c) => (
         <span className="text-base-sm text-secondary">
-          {c.city ? (c.nationality ? `${c.city}, ${c.nationality}` : c.city) : (c.nationality || c.address || "—")}
+          {c.city
+            ? c.nationality
+              ? `${c.city}, ${c.nationality}`
+              : c.city
+            : c.nationality || c.address || "—"}
         </span>
       ),
     },
@@ -108,22 +107,28 @@ export const getCandidateColumns = (
       render: (c) => (
         <div className={styles.creatorCell}>
           {c.createdBy?.image ? (
-            <CustomImage 
-              src={c.createdBy.image} 
-              alt={c.createdBy.fullname} 
-              className={styles.creatorImg} 
+            <CustomImage
+              src={c.createdBy.image}
+              alt={c.createdBy.fullname}
+              className={styles.creatorImg}
             />
           ) : c.createdBy ? (
             <div className={styles.creatorAvatar}>
               {c.createdBy.fullname.charAt(0)}
             </div>
           ) : (
-            <div className={styles.creatorPlaceholder}>
-              —
-            </div>
+            <div className={styles.creatorPlaceholder}>—</div>
           )}
           <div className="flex-col">
-            <span className="font-medium text-sm" style={{ color: c.createdBy ? "var(--text-primary)" : "var(--text-muted)", whiteSpace: "nowrap" }}>
+            <span
+              className="font-medium text-sm"
+              style={{
+                color: c.createdBy
+                  ? "var(--text-primary)"
+                  : "var(--text-muted)",
+                whiteSpace: "nowrap",
+              }}
+            >
               {c.createdBy?.fullname || "System"}
             </span>
             <span className="text-xs-muted" style={{ whiteSpace: "nowrap" }}>
@@ -160,9 +165,7 @@ export const getCandidateColumns = (
             />
           </CustomTooltip>
         ) : (
-          <span className="text-xs-muted">
-            No Resume
-          </span>
+          <span className="text-xs-muted">No Resume</span>
         ),
     },
     {
@@ -184,7 +187,7 @@ export const getCandidateColumns = (
               />
             </CustomTooltip>
           )}
-          <CustomTooltip text="Edit Candidate">
+          <CustomTooltip text="Edit">
             <CustomButton
               variant="ghost"
               size="sm"
@@ -196,7 +199,7 @@ export const getCandidateColumns = (
               icon={<CustomIcon name="Edit2" size={18} />}
             />
           </CustomTooltip>
-          <CustomTooltip text="Delete Candidate">
+          <CustomTooltip text="Delete">
             <CustomButton
               variant="ghost"
               size="sm"
@@ -225,9 +228,7 @@ export const getCandidateColumns = (
               style={{ width: `${c.matchScore || 0}%` }}
             />
           </div>
-          <span className="text-sm font-semibold">
-            {c.matchScore || 0}%
-          </span>
+          <span className="text-sm font-semibold">{c.matchScore || 0}%</span>
         </div>
       ),
     });
@@ -292,9 +293,7 @@ export const getLeaderboardColumns = (
     key: "name",
     render: (item) => (
       <div className="flex-row-12">
-        <div className={styles.leaderboardAvatar}>
-          {item.name.charAt(0)}
-        </div>
+        <div className={styles.leaderboardAvatar}>{item.name.charAt(0)}</div>
         <div>
           <div
             onClick={() => navigate(`/candidates/${item.id}`)}
@@ -303,9 +302,7 @@ export const getLeaderboardColumns = (
           >
             {item.name}
           </div>
-          <div className="text-xs-muted">
-            {item.position}
-          </div>
+          <div className="text-xs-muted">{item.position}</div>
         </div>
       </div>
     ),
@@ -326,9 +323,7 @@ export const getLeaderboardColumns = (
                   : "var(--border-glass)",
           }}
         >
-          <span className="font-semibold text-base">
-            {item.averageRating}
-          </span>
+          <span className="font-semibold text-base">{item.averageRating}</span>
         </div>
         <div className="flex-col">
           <div className="flex-row-4">
@@ -365,9 +360,7 @@ export const getLeaderboardColumns = (
       <div className="flex-col">
         <div className="flex-row">
           <CustomIcon name="Calendar" size={14} color="var(--accent-primary)" />
-          <span className="font-semibold">
-            {item.interviewCount} Sessions
-          </span>
+          <span className="font-semibold">{item.interviewCount} Sessions</span>
         </div>
         {item.lastInterviewDate && (
           <span className="text-xs-muted">

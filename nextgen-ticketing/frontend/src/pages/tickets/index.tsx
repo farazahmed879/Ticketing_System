@@ -580,7 +580,7 @@ const TicketList: React.FC = () => {
                       ...(user?.role?.name === RoleName.ADMIN
                         ? [
                             {
-                              label: "Delete Ticket",
+                              label: "Delete",
                               icon: "Trash2",
                               onClick: () => {
                                 setTicketToDelete(t.id);

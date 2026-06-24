@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "../../../components/Modal";
 import CustomButton from "../../../components/CustomButton";
 import CandidateForm from "./CandidateForm";
+import FullScreenLoader from "../../../components/FullScreenLoader/FullScreenLoader";
 import type { Candidate } from "../../../types";
 
 interface CandidateModalProps {
@@ -19,9 +20,23 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
   onSubmit,
   isSubmitting = false,
 }) => {
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsUploadingResume(false);
+    }
+  }, [isOpen]);
+
   return (
-    <Modal
-      isOpen={isOpen}
+    <>
+      {isSubmitting && (
+        <FullScreenLoader
+          subMessage={candidate ? "Updating Candidate..." : "Creating Candidate..."}
+        />
+      )}
+      <Modal
+        isOpen={isOpen}
       onClose={onClose}
       title={candidate ? "Edit Candidate" : "Add New Candidate"}
       maxWidth="1400px"
@@ -48,7 +63,8 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
             variant="gradient"
             type="submit"
             form="candidate-form"
-            loading={isSubmitting}
+            loading={isSubmitting || isUploadingResume}
+            disabled={isUploadingResume}
           >
             {candidate ? "Update Candidate" : "Create Candidate"}
           </CustomButton>
@@ -59,8 +75,10 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
         initialData={candidate}
         onSubmit={onSubmit}
         onCancel={onClose}
+        onUploadStateChange={setIsUploadingResume}
       />
     </Modal>
+    </>
   );
 };
 

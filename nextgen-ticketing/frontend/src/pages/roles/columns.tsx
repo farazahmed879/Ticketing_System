@@ -74,7 +74,7 @@ export const getRoleColumns = (
     key: "actions",
     render: (role) => (
       <div className={styles.actions}>
-        <CustomTooltip text="Edit Role">
+        <CustomTooltip text="Edit">
           <CustomButton
             variant="ghost"
             size="sm"
@@ -82,13 +82,13 @@ export const getRoleColumns = (
             icon={<CustomIcon name="Edit2" size={18} />}
           />
         </CustomTooltip>
-        <CustomTooltip text="Delete Role">
+        <CustomTooltip text="Delete">
           <CustomButton
-            variant="danger"
+            variant="ghost"
             size="sm"
             onClick={() => handleDelete(role.id)}
             icon={<CustomIcon name="Trash2" size={18} />}
-            style={{ background: "transparent" }}
+            style={{ color: "var(--accent-danger)" }}
           />
         </CustomTooltip>
       </div>

@@ -116,7 +116,7 @@ export const getInterviewColumns = (
     render: (i) => (
       <div className={styles.actions}>
         {canUpdateInterviews && (
-          <CustomTooltip text="Edit Interview">
+          <CustomTooltip text="Edit">
             <CustomButton
               variant="ghost"
               size="sm"
@@ -131,7 +131,7 @@ export const getInterviewColumns = (
         )}
 
         {canDeleteInterviews && (
-          <CustomTooltip text="Delete Interview">
+          <CustomTooltip text="Delete">
             <CustomButton
               variant="ghost"
               size="sm"

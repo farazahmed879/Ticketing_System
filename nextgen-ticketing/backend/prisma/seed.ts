@@ -7,6 +7,7 @@ import {
   PriorityName,
   TicketType,
   TICKET_STATUSES,
+  TICKET_TYPES,
 } from "../src/utils/constants";
 
 const prisma = new PrismaClient();
@@ -309,17 +310,13 @@ async function main() {
   console.log("  ✅ Role permissions updated with board transitions");
 
   // ========== TYPES ==========
-  const types = [
-    { name: TicketType.ISSUE },
-    { name: TicketType.TASK },
-    { name: TicketType.REQUEST },
-  ];
-
-  for (const t of types) {
+  // Create each type with its fixed ObjectId (the frontend sends these exact
+  // ids on ticket creation). Upsert by id so the canonical id always exists.
+  for (const t of TICKET_TYPES) {
     await prisma.type.upsert({
-      where: { name: t.name },
-      update: {},
-      create: t,
+      where: { id: t.id },
+      update: { name: t.name },
+      create: { id: t.id, name: t.name },
     });
   }
   console.log("  ✅ Types seeded");

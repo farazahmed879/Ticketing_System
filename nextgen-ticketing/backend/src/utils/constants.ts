@@ -25,6 +25,16 @@ export const TicketType = {
 } as const;
 export type TicketType = (typeof TicketType)[keyof typeof TicketType];
 
+// Canonical ticket types with fixed ObjectIds. The frontend sends these exact
+// ids when creating a ticket, and Ticket.type is a real relation (connect), so
+// the Type collection must contain documents with these ids in every
+// environment. Keep in sync with the frontend TICKET_TYPES constant.
+export const TICKET_TYPES = [
+  { id: "69e5da910e2d511b4eab95f5", name: TicketType.ISSUE },
+  { id: "69e5da910e2d511b4eab95f6", name: TicketType.TASK },
+  { id: "69e5da920e2d511b4eab95f7", name: TicketType.REQUEST },
+];
+
 export const TICKET_STATUSES = [
   {
     id: "69e5da8a0e2d511b4eab95ea",

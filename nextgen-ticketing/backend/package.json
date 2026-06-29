@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts",
+    "fix:type-ids": "ts-node prisma/fix-type-ids.ts"
   },
   "keywords": [],
   "author": "",

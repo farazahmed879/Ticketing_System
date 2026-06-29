@@ -1,7 +1,6 @@
 import React from "react";
 
 import type { FullScreenLoaderProps } from "../types";
-import CustomImage from "../CustomImage";
 
 const FullScreenLoader: React.FC<FullScreenLoaderProps> = ({
   subMessage = "Ticketing System",
@@ -66,7 +65,7 @@ const FullScreenLoader: React.FC<FullScreenLoaderProps> = ({
             justifyContent: "center",
           }}
         >
-          <CustomImage
+          <img
             src="/InsigniaStandalone.svg"
             alt="Loading..."
             style={{ width: 48, height: 48 }}

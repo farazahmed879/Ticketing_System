@@ -52,7 +52,10 @@ export const getUserColumns = (
             {u.fullname}
             {u.isLead && <span className={styles.leadBadge}>LEAD</span>}
           </div>
-          <div style={{ color: getRoleStyle(u.role?.name).color }} className="text-xs font-semibold">
+          <div
+            style={{ color: getRoleStyle(u.role?.name).color }}
+            className="text-xs font-semibold"
+          >
             {u.role?.name}
           </div>
         </div>
@@ -75,9 +78,7 @@ export const getUserColumns = (
     header: "Emergency Contact",
     key: "emergencyContact",
     render: (u) => (
-      <span className="text-sm-secondary">
-        {u.emergencyContact || "—"}
-      </span>
+      <span className="text-sm-secondary">{u.emergencyContact || "—"}</span>
     ),
   },
   {
@@ -112,7 +113,7 @@ export const getUserColumns = (
     render: (u) => (
       <div className={styles.actions}>
         {canEditUsers && (
-          <CustomTooltip text="Edit User">
+          <CustomTooltip text="Edit">
             <CustomButton
               variant="ghost"
               size="sm"
@@ -127,7 +128,11 @@ export const getUserColumns = (
           </CustomTooltip>
         )}
         {canEditUsers && (
-          <CustomTooltip text={u.role.isAdmin ? "Admin accounts cannot be deleted" : "Delete User"}>
+          <CustomTooltip
+            text={
+              u.role.isAdmin ? "Admin accounts cannot be deleted" : "Delete"
+            }
+          >
             <CustomButton
               variant="ghost"
               size="sm"

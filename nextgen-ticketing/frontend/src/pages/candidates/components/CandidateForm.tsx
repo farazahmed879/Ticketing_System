@@ -25,11 +25,13 @@ interface CandidateFormProps {
   onSubmit: (data: any) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
+  onUploadStateChange?: (isUploading: boolean) => void;
 }
 
 const CandidateForm: React.FC<CandidateFormProps> = ({
   initialData,
   onSubmit,
+  onUploadStateChange,
 }) => {
   const { showNotification } = useNotification();
 
@@ -170,6 +172,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
   const handleResumeSelect = async (file: File) => {
     setResumeFile(file);
     setResumeUploading(true);
+    onUploadStateChange?.(true);
     setHasUploadedResume(false);
     setExpandedSections({});
 
@@ -305,6 +308,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
       setResumeFile(null);
     } finally {
       setResumeUploading(false);
+      onUploadStateChange?.(false);
     }
   };
 

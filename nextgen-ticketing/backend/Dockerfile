@@ -14,7 +14,6 @@ RUN npm install
 COPY prisma ./prisma/
 
 # Generate Prisma Client
-ENV DATABASE_URL="mongodb+srv://farazahmedshaikh879_db_user:Bm1AheusjlqVufGz@cluster0.pxvrnbb.mongodb.net/TicketingSystem?retryWrites=true&w=majority"
 RUN npx prisma generate
 
 # Copy the rest of the application code

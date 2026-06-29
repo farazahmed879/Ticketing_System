@@ -13,8 +13,7 @@ RUN npm install
 COPY . .
 
 # Set build-time variables (can be overridden during build)
-ARG VITE_API_URL=https://ticketing-system-backend-0-0-10.onrender.com
-ENV VITE_API_URL=$VITE_API_URL
+# ENV VITE_API_URL=$VITE_API_URL
 
 # Build the application
 RUN npm run build

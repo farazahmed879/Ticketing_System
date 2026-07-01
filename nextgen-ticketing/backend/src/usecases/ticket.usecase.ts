@@ -557,7 +557,7 @@ export const ticketUsecase = {
       data.assigneeId !== undefined &&
       data.assigneeId !== existingTicket.assigneeId
     ) {
-      if (!!isAdmin && !isManager) {
+      if (!isAdmin && !isManager) {
         throw new Error("Only Admins and Managers can assign tickets.");
       }
     }

@@ -5,10 +5,8 @@ import { candidateUsecase } from "../usecases/candidate.usecase";
 export const candidateController = {
   async getAllCandidates(req: AuthRequest, res: Response) {
     try {
-      const { candidates, total } = await candidateUsecase.getAllCandidates(
-        req.query,
-      );
-      res.json({ success: true, candidates, total });
+      const result = await candidateUsecase.getAllCandidates(req.query);
+      res.json({ success: true, ...result });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }

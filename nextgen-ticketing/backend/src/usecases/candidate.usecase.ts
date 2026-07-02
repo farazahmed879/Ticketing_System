@@ -118,6 +118,29 @@ export const candidateUsecase = {
         const filter = await aiSearchService.parseQuery(aiPrompt as string);
         const aiWhere = aiSearchService.toPrismaWhere(filter);
 
+        const topicText = aiSearchService.queryTopicText(filter);
+        const roleKey = aiSearchService.roleOf(filter.position);
+        const hasSkills = filter.skills.length > 0;
+
+        // If the query is too vague to search on, tell the user instead of
+        // returning arbitrary matches. Loose keywords/position don't count as a
+        // concrete signal here — only a real skill, role, seniority, or status.
+        const hasConcreteSignal =
+          hasSkills ||
+          !!roleKey ||
+          filter.minYearsExperience != null ||
+          filter.statuses.length > 0 ||
+          filter.failedInterviewBefore;
+        if (filter.vague && !hasConcreteSignal) {
+          return {
+            candidates: [],
+            total: 0,
+            vague: true,
+            message:
+              'Your search is too vague to match on. Try naming a skill, technology, or role — e.g. "React developer", "3+ years Python", or ".net devs".',
+          };
+        }
+
         // Merge any UI filters already in `where` with the structured constraints.
         const merged: any = { ...where };
         if (aiWhere.AND) {
@@ -127,44 +150,57 @@ export const candidateUsecase = {
         // Fetch all structurally-matching candidates; rank + paginate in app.
         let matched = await candidateRepository.findMany(merged);
 
-        const topicText = aiSearchService.queryTopicText(filter);
-
-        if (filter.skills.length > 0) {
-          // --- Skill-first path ---
-          // Semantic sim is only a tie-breaker here, so it's optional: if the
-          // embedding call fails we still rank by exact skill coverage.
+        if (hasSkills || roleKey) {
+          // --- Skill / role path ---
+          // Exact skill coverage (if the query named skills) and/or role-tech
+          // count (if it named a role like "backend") drive the results. When
+          // both are present the explicit skill is mandatory and the role is a
+          // ranking signal. Semantic sim is only a final tie-breaker, so it's
+          // optional: if the embedding call fails we still rank by skills/role.
           let queryVec: number[] = [];
           try {
             queryVec = await embeddingService.embedQuery(topicText);
           } catch (embedErr) {
-            console.error("Query embed failed; ranking by skills only:", embedErr);
+            console.error("Query embed failed; ranking by skills/role only:", embedErr);
           }
 
           const scored = matched
             .map((c) => {
-              const coverage = aiSearchService.skillCoverage(
-                filter.skills,
-                (c as any).skills,
-              );
+              const coverage = hasSkills
+                ? aiSearchService.skillCoverage(filter.skills, (c as any).skills)
+                : 0;
+              const roleHits = roleKey
+                ? aiSearchService.roleSkillHits(roleKey, c as any)
+                : 0;
               const sim = queryVec.length
                 ? embeddingService.cosineSimilarity(
                     queryVec,
                     (c as any).skillEmbedding || [],
                   )
                 : 0;
-              return {
-                ...c,
-                _coverage: coverage,
-                _sim: sim,
-                matchScore: Math.round(coverage * 100),
-              };
+              // Skill coverage drives the score when skills were named; role
+              // score is filled in below (relative to the strongest match).
+              const matchScore = hasSkills ? Math.round(coverage * 100) : 0;
+              return { ...c, _coverage: coverage, _role: roleHits, _sim: sim, matchScore };
             })
-            // Must actually have at least one of the requested skills. No match
-            // => not returned (empty is better than false results).
-            .filter((c) => c._coverage > 0)
-            .sort((a, b) => b._coverage - a._coverage || b._sim - a._sim);
+            // Must have a requested skill (skill query) or at least one role
+            // technology (role query). No match => not returned.
+            .filter((c) => (hasSkills ? c._coverage > 0 : c._role > 0))
+            .sort(
+              (a, b) =>
+                b._coverage - a._coverage ||
+                b._role - a._role ||
+                b._sim - a._sim,
+            );
 
-          matched = scored.map(({ _coverage, _sim, ...c }) => c);
+          // Role-only queries: show how strongly each candidate fits the role,
+          // relative to the best match (so the ranking is visible, not all 100%).
+          if (!hasSkills && roleKey) {
+            const maxRole = scored[0]?._role || 1;
+            for (const c of scored) c.matchScore = Math.round((c._role / maxRole) * 100);
+          }
+
+          matched = scored.map(({ _coverage, _role, _sim, ...c }) => c);
         } else if (topicText) {
           // --- Semantic-only path (no explicit skill in the query) ---
           const queryVec = await embeddingService.embedQuery(topicText);

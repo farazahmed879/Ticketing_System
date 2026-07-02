@@ -142,13 +142,13 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         setLocalUsers(
           members.filter(
             (m: any) =>
-              m.role.type === ROLE_TYPE.EMPLOYEE ||
-              m.role.type === ROLE_TYPE.AGENT ||
-              m.role.type === ROLE_TYPE.ADMIN,
+              m.role.roleType === ROLE_TYPE.EMPLOYEE ||
+              m.role.roleType === ROLE_TYPE.AGENT ||
+              m.role.roleType === ROLE_TYPE.ADMIN,
           ),
         );
         setLocalQaList(
-          members.filter((m: any) => m.role.type === ROLE_TYPE.QA),
+          members.filter((m: any) => m.role.roleType === ROLE_TYPE.QA),
         );
       } catch (err) {
         console.error("Failed to fetch project members for modal", err);

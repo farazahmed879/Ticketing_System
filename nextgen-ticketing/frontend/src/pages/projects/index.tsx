@@ -103,9 +103,11 @@ const ProjectList: React.FC = () => {
       const accounts = clientsRes.data.accounts || [];
       return {
         clients: accounts.filter(
-          (u: any) => u.role?.type === ROLE_TYPE.CUSTOMER,
+          (u: any) => u.role?.roleType === ROLE_TYPE.CUSTOMER,
         ),
-        managers: accounts.filter((u: any) => u.role?.type === ROLE_TYPE.AGENT),
+        managers: accounts.filter(
+          (u: any) => u.role?.roleType === ROLE_TYPE.AGENT,
+        ),
         teams: teamsRes.data.teams || [],
       };
     },

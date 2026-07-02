@@ -211,13 +211,14 @@ const TicketBoard: React.FC = () => {
 
   const agents =
     metadata?.accounts?.filter(
-      (u: any) => u.role.type === ROLE_TYPE.EMPLOYEE,
+      (u: any) => u.role.roleType === ROLE_TYPE.EMPLOYEE,
     ) || [];
   const qaList =
-    metadata?.accounts?.filter((u: any) => u.role.type === ROLE_TYPE.QA) || [];
+    metadata?.accounts?.filter((u: any) => u.role.roleType === ROLE_TYPE.QA) ||
+    [];
   const customers =
     metadata?.accounts?.filter(
-      (u: any) => u.role.type === ROLE_TYPE.CUSTOMER,
+      (u: any) => u.role.roleType === ROLE_TYPE.CUSTOMER,
     ) || [];
   const projects = metadata?.projects || [];
 

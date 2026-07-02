@@ -322,7 +322,7 @@ const Profile: React.FC = () => {
                 </label>
                 <span>#{user.id.toString().slice(-6).toUpperCase()}</span>
               </div>
-              {user.role?.type !== ROLE_TYPE.CUSTOMER && (
+              {user.role?.roleType !== ROLE_TYPE.CUSTOMER && (
                 <div className={styles.infoItem}>
                   <label>Leave Balance</label>
                   <span

@@ -69,9 +69,9 @@ export const userRepository = {
     return prisma.user.findMany({
       where: {
         role: {
-          name: "Admin"
+          name: "Admin",
         },
-        deleted: false
+        deleted: false,
       },
     });
   },
@@ -95,7 +95,7 @@ export const userRepository = {
           fullname: true,
           email: true,
           image: true,
-          role: { select: { name: true } },
+          role: { select: { name: true, roleType: true } },
         },
       },
     } as const;

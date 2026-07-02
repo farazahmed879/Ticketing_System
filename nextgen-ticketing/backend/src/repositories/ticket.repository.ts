@@ -1,11 +1,17 @@
 import prisma from "../prisma";
-import { StatusName, ActionName, RoleName, TICKET_STATUSES, PRIORITIES } from "../utils/constants";
+import {
+  StatusName,
+  ActionName,
+  RoleName,
+  TICKET_STATUSES,
+  PRIORITIES,
+} from "../utils/constants";
 
 // Helper function to map string IDs back to status and priority objects
 const mapTicketStatusAndPriority = (ticket: any) => {
   if (!ticket) return ticket;
-  const status = TICKET_STATUSES.find(s => s.id === ticket.statusId) || null;
-  const priority = PRIORITIES.find(p => p.id === ticket.priorityId) || null;
+  const status = TICKET_STATUSES.find((s) => s.id === ticket.statusId) || null;
+  const priority = PRIORITIES.find((p) => p.id === ticket.priorityId) || null;
   return { ...ticket, status, priority };
 };
 
@@ -63,25 +69,24 @@ export const ticketRepository = {
   },
 
   async findStatusByName(name: string) {
-    return TICKET_STATUSES.find(s => s.name === name) || null;
+    return TICKET_STATUSES.find((s) => s.name === name) || null;
   },
 
   async findStatusById(id: string) {
-    return TICKET_STATUSES.find(s => s.id === id) || null;
+    return TICKET_STATUSES.find((s) => s.id === id) || null;
   },
 
   async findPriorityById(id: string) {
-    return PRIORITIES.find(p => p.id === id) || null;
+    return PRIORITIES.find((p) => p.id === id) || null;
   },
 
   async findPriorityByName(name: string) {
-    return PRIORITIES.find(p => p.name === name) || null;
+    return PRIORITIES.find((p) => p.name === name) || null;
   },
 
   async findUserById(id: string) {
     return prisma.user.findUnique({ where: { id } });
   },
-
 
   async findTicketById(id: string) {
     const ticket = await prisma.ticket.findUnique({
@@ -105,7 +110,9 @@ export const ticketRepository = {
                 id: true,
                 fullname: true,
                 image: true,
-                role: { select: { name: true, isCustomer: true } },
+                role: {
+                  select: { name: true, isCustomer: true, roleType: true },
+                },
               },
             },
           },

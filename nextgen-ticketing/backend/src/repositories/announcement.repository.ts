@@ -4,26 +4,28 @@ export const announcementRepository = {
   async findMany(where: any, skip?: number, take?: number) {
     try {
       if (!(prisma as any).announcement) {
-        console.error("Prisma Error: 'announcement' model not found on prisma client. Please run 'prisma generate'.");
+        console.error(
+          "Prisma Error: 'announcement' model not found on prisma client. Please run 'prisma generate'.",
+        );
         return [];
       }
       return await (prisma as any).announcement.findMany({
         where: { ...where, deleted: false },
         include: {
           author: {
-            select: { 
-              id: true, 
-              fullname: true, 
+            select: {
+              id: true,
+              fullname: true,
               image: true,
               title: true,
               role: {
-                select: { name: true }
-              }
+                select: { name: true, roleType: true },
+              },
             },
           },
           project: {
-            select: { id: true, name: true }
-          }
+            select: { id: true, name: true },
+          },
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -54,19 +56,19 @@ export const announcementRepository = {
       where: { id },
       include: {
         author: {
-          select: { 
-            id: true, 
-            fullname: true, 
+          select: {
+            id: true,
+            fullname: true,
             image: true,
             title: true,
             role: {
-              select: { name: true }
-            }
+              select: { name: true, roleType: true },
+            },
           },
         },
         project: {
-          select: { id: true, name: true }
-        }
+          select: { id: true, name: true },
+        },
       },
     });
   },
@@ -76,19 +78,19 @@ export const announcementRepository = {
       data,
       include: {
         author: {
-          select: { 
-            id: true, 
-            fullname: true, 
+          select: {
+            id: true,
+            fullname: true,
             image: true,
             title: true,
             role: {
-              select: { name: true }
-            }
+              select: { name: true, roleType: true },
+            },
           },
         },
         project: {
-          select: { id: true, name: true }
-        }
+          select: { id: true, name: true },
+        },
       },
     });
   },
@@ -102,8 +104,8 @@ export const announcementRepository = {
           select: { id: true, fullname: true, image: true },
         },
         project: {
-          select: { id: true, name: true }
-        }
+          select: { id: true, name: true },
+        },
       },
     });
   },

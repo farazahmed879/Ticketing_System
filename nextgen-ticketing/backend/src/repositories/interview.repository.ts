@@ -48,7 +48,7 @@ export const interviewRepository = {
                 fullname: true,
                 image: true,
                 email: true,
-                role: { select: { name: true } },
+                role: { select: { name: true, roleType: true } },
               },
             },
           },

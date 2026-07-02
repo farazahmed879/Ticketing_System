@@ -35,7 +35,7 @@ const Dashboard: React.FC = () => {
 
   const stats = dashboardData?.stats || null;
   const newHires = (dashboardData?.newHires || []).filter(
-    (hire: any) => hire?.role?.type !== ROLE_TYPE.CUSTOMER,
+    (hire: any) => hire?.role?.roleType !== ROLE_TYPE.CUSTOMER,
   );
   const announcements = dashboardData?.announcements || [];
   const seenMomentIds = dashboardData?.seenMomentIds || [];

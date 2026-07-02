@@ -21,7 +21,11 @@ export const projectRepository = {
         { name: { contains: term, mode: "insensitive" } },
         { description: { contains: term, mode: "insensitive" } },
         { status: { contains: term, mode: "insensitive" } },
-        { clients: { some: { fullname: { contains: term, mode: "insensitive" } } } },
+        {
+          clients: {
+            some: { fullname: { contains: term, mode: "insensitive" } },
+          },
+        },
       ];
     }
 
@@ -79,8 +83,8 @@ export const projectRepository = {
 
     const mappedTickets = project.tickets.map((ticket: any) => ({
       ...ticket,
-      status: TICKET_STATUSES.find(s => s.id === ticket.statusId) || null,
-      priority: PRIORITIES.find(p => p.id === ticket.priorityId) || null,
+      status: TICKET_STATUSES.find((s) => s.id === ticket.statusId) || null,
+      priority: PRIORITIES.find((p) => p.id === ticket.priorityId) || null,
     }));
 
     return { ...project, tickets: mappedTickets };
@@ -146,7 +150,7 @@ export const projectRepository = {
                 id: true,
                 fullname: true,
                 image: true,
-                role: { select: { name: true } },
+                role: { select: { name: true, roleType: true } },
               },
             },
           },

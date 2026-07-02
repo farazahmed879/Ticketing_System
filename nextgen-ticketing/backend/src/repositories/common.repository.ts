@@ -1,5 +1,10 @@
 import prisma from "../prisma";
-import { RoleName, TICKET_STATUSES, PRIORITIES, TICKET_TYPES } from "../utils/constants";
+import {
+  RoleName,
+  TICKET_STATUSES,
+  PRIORITIES,
+  TICKET_TYPES,
+} from "../utils/constants";
 
 export const commonRepository = {
   async findStatuses() {
@@ -93,7 +98,7 @@ export const commonRepository = {
       user?.role.toLowerCase() === RoleName.EMPLOYEE.toLowerCase();
     const userId = user?.id;
     const ticketWhere: any = { deleted: false };
-    
+
     let clientProjectIds: string[] = [];
     if (isCustomer) {
       const clientProjects = await prisma.project.findMany({
@@ -112,14 +117,18 @@ export const commonRepository = {
 
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const unresolvedStatusIds = TICKET_STATUSES.filter(s => !s.isResolved).map(s => s.id);
-    const resolvedStatusIds = TICKET_STATUSES.filter(s => s.isResolved).map(s => s.id);
+    const unresolvedStatusIds = TICKET_STATUSES.filter(
+      (s) => !s.isResolved,
+    ).map((s) => s.id);
+    const resolvedStatusIds = TICKET_STATUSES.filter((s) => s.isResolved).map(
+      (s) => s.id,
+    );
 
     // Dynamic stats depending on role
     let totalTicketsPromise;
     let openTicketsPromise;
     let resolvedTicketsPromise;
-    
+
     let projectTicketsPromise = Promise.resolve(0);
     let projectOpenTicketsPromise = Promise.resolve(0);
     let projectResolvedTicketsPromise = Promise.resolve(0);
@@ -127,34 +136,50 @@ export const commonRepository = {
     if (isCustomer) {
       // Count for client's own created tickets
       totalTicketsPromise = prisma.ticket.count({
-        where: { deleted: false, ownerId: userId }
+        where: { deleted: false, ownerId: userId },
       });
       openTicketsPromise = prisma.ticket.count({
-        where: { deleted: false, ownerId: userId, statusId: { in: unresolvedStatusIds } }
+        where: {
+          deleted: false,
+          ownerId: userId,
+          statusId: { in: unresolvedStatusIds },
+        },
       });
       resolvedTicketsPromise = prisma.ticket.count({
-        where: { deleted: false, ownerId: userId, statusId: { in: resolvedStatusIds } }
+        where: {
+          deleted: false,
+          ownerId: userId,
+          statusId: { in: resolvedStatusIds },
+        },
       });
 
       // Count for client's project tickets
       if (clientProjectIds.length > 0) {
         projectTicketsPromise = prisma.ticket.count({
-          where: { deleted: false, projectId: { in: clientProjectIds } }
+          where: { deleted: false, projectId: { in: clientProjectIds } },
         });
         projectOpenTicketsPromise = prisma.ticket.count({
-          where: { deleted: false, projectId: { in: clientProjectIds }, statusId: { in: unresolvedStatusIds } }
+          where: {
+            deleted: false,
+            projectId: { in: clientProjectIds },
+            statusId: { in: unresolvedStatusIds },
+          },
         });
         projectResolvedTicketsPromise = prisma.ticket.count({
-          where: { deleted: false, projectId: { in: clientProjectIds }, statusId: { in: resolvedStatusIds } }
+          where: {
+            deleted: false,
+            projectId: { in: clientProjectIds },
+            statusId: { in: resolvedStatusIds },
+          },
         });
       }
     } else {
       totalTicketsPromise = prisma.ticket.count({ where: ticketWhere });
       openTicketsPromise = prisma.ticket.count({
-        where: { ...ticketWhere, statusId: { in: unresolvedStatusIds } }
+        where: { ...ticketWhere, statusId: { in: unresolvedStatusIds } },
       });
       resolvedTicketsPromise = prisma.ticket.count({
-        where: { ...ticketWhere, statusId: { in: resolvedStatusIds } }
+        where: { ...ticketWhere, statusId: { in: resolvedStatusIds } },
       });
     }
 
@@ -167,7 +192,7 @@ export const commonRepository = {
       projectResolvedTickets,
       totalUsers,
       recentTickets,
-      recentUsers
+      recentUsers,
     ] = await Promise.all([
       totalTicketsPromise,
       openTicketsPromise,
@@ -197,15 +222,15 @@ export const commonRepository = {
           image: true,
           title: true,
           createdAt: true,
-          role: { select: { id: true, name: true } },
+          role: { select: { id: true, name: true, roleType: true } },
         },
       }),
     ]);
 
-    const mappedRecentTickets = recentTickets.map(ticket => ({
+    const mappedRecentTickets = recentTickets.map((ticket) => ({
       ...ticket,
-      status: TICKET_STATUSES.find(s => s.id === ticket.statusId) || null,
-      priority: PRIORITIES.find(p => p.id === ticket.priorityId) || null,
+      status: TICKET_STATUSES.find((s) => s.id === ticket.statusId) || null,
+      priority: PRIORITIES.find((p) => p.id === ticket.priorityId) || null,
     }));
 
     return {

@@ -34,6 +34,7 @@ export const authUsecase = {
         isLead: user.isLead,
         role: {
           name: user.role.name,
+          roleType: user.role.roleType,
           permissions: user.role.permissions,
         },
       },
@@ -116,6 +117,7 @@ export const authUsecase = {
         isLead: user.isLead,
         role: {
           name: user.role.name,
+          roleType: user.role.roleType,
           permissions: user.role.permissions,
         },
       },

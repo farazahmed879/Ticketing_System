@@ -73,7 +73,7 @@ const TeamList: React.FC = () => {
       const allUsers = usersRes.data.accounts || [];
       return allUsers.filter(
         (u: any) =>
-          u.role?.type !== ROLE_TYPE.CUSTOMER &&
+          u.role?.roleType !== ROLE_TYPE.CUSTOMER &&
           u.role?.roleType !== "isCustomer",
       );
     },

@@ -78,7 +78,7 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
           const isOwnComment = (comment as any).authorId === user?.id;
           const isClientComment =
             (comment as any).author?.role?.isCustomer === true ||
-            (comment as any).author?.role?.type === ROLE_TYPE.CUSTOMER;
+            (comment as any).author?.role?.roleType === ROLE_TYPE.CUSTOMER;
           return (
             <div
               key={comment.id}

@@ -42,6 +42,9 @@ const candidateFilterSchema = z.object({
   // Loose free-text terms for a fallback contains-match across text fields,
   // used to catch intent the structured fields above don't capture.
   keywords: z.array(z.string()).default([]),
+  // True when the query is too vague/subjective to search on (no concrete
+  // skill, role, seniority, or status) — e.g. "good candidates", "best people".
+  vague: z.boolean().default(false),
 });
 
 export type CandidateFilter = z.infer<typeof candidateFilterSchema>;
@@ -83,6 +86,11 @@ const filterToolInputSchema = {
       description:
         "Any remaining free-text terms from the query not captured by the fields above, for a loose text match.",
     },
+    vague: {
+      type: "boolean",
+      description:
+        "true ONLY when the query has no concrete, matchable criteria — no skill/technology, role (backend/frontend/etc.), seniority/years, or status — and is just a subjective or generic ask (e.g. 'good candidates', 'best people', 'top talent', 'rockstars', 'smart devs', 'anyone', 'someone nice'). false whenever the query names any concrete criterion.",
+    },
   },
   required: [
     "skills",
@@ -91,6 +99,7 @@ const filterToolInputSchema = {
     "statuses",
     "failedInterviewBefore",
     "keywords",
+    "vague",
   ],
 };
 
@@ -105,7 +114,8 @@ Rules:
 - position: the role keyword only (e.g. "python developer" -> position "developer" is too generic; prefer leaving position null and putting "python" in skills unless a clear role like "backend"/"frontend"/"devops"/"qa" is stated).
 - statuses: leave EMPTY unless the user explicitly restricts to a status. Searching all statuses is the default.
 - failedInterviewBefore: true only when the user asks for people who failed/were rejected previously.
-- keywords: leftover meaningful terms not captured above. Do not duplicate skills here.`;
+- keywords: leftover meaningful terms not captured above. Do not duplicate skills here.
+- vague: set true ONLY when the query names no concrete criterion at all (no skill/technology, role, seniority/years, or status) and is just a subjective/generic ask like "good candidates", "best people", "top talent", "rockstars", "someone experienced". If the query names any real skill, role, or filter, set vague=false.`;
 
 let client: Anthropic | null = null;
 function getClient(): Anthropic {
@@ -279,6 +289,76 @@ export function skillCoverage(
 }
 
 // ---------------------------------------------------------------------------
+// Role matching.
+//
+// A role like "backend" isn't a skill tag — embedding the bare word can't tell
+// a backend dev from a UX designer (all "developers" cluster together). Instead
+// we map each role to its indicative technologies and rank a candidate by how
+// many of those they actually have (substring match over skills + position).
+// Stems are curated to be specific enough for substring matching (no 2-letter
+// tokens like "ui"/"go"/"ml" that would match inside unrelated words).
+// ---------------------------------------------------------------------------
+const ROLE_KEYWORDS: Record<string, string[]> = {
+  frontend: ["react", "angular", "vue", "svelte", "nextjs", "next.js", "nuxt",
+    "tailwind", "bootstrap", "jquery", "redux", "webflow", "html", "css",
+    "scss", "sass", "frontend", "front-end", "front end"],
+  backend: ["node", "express", "nestjs", "django", "flask", "fastapi", "spring",
+    "laravel", "symfony", "rails", ".net", "dotnet", "asp.net", "c#", "servlet",
+    "hibernate", "graphql", "microservice", "kafka", "rabbitmq", "redis",
+    "mongo", "postgres", "mysql", "php", "restful", "rest api", "backend",
+    "back-end", "back end"],
+  devops: ["docker", "kubernetes", "k8s", "terraform", "ansible", "ci/cd",
+    "jenkins", "github actions", "gitlab", "cloudflare", "prometheus",
+    "grafana", "devops", "aws", "azure", "gcp", "linux", "bash"],
+  qa: ["selenium", "cypress", "playwright", "jest", "junit", "testng",
+    "test automation", "manual testing", "quality assurance", "postman",
+    "appium", "cucumber"],
+  data: ["pandas", "numpy", "spark", "hadoop", "airflow", "dbt", "snowflake",
+    "bigquery", "power bi", "tableau", "etl", "data engineer", "data science",
+    "data analyst"],
+  ml: ["tensorflow", "pytorch", "scikit", "sklearn", "keras", "machine learning",
+    "deep learning", "llm", "opencv", "hugging", "nlp", "computer vision",
+    "generative ai"],
+  mobile: ["react native", "flutter", "swift", "kotlin", "android", "xamarin",
+    "jetpack compose"],
+};
+ROLE_KEYWORDS.fullstack = [
+  ...new Set([...ROLE_KEYWORDS.frontend, ...ROLE_KEYWORDS.backend]),
+];
+
+/** Map a free-text position/role to a known role bucket, or null. */
+export function roleOf(position: string | null | undefined): string | null {
+  if (!position) return null;
+  const p = position.toLowerCase();
+  if (/full[\s-]?stack/.test(p)) return "fullstack";
+  if (/back[\s-]?end/.test(p)) return "backend";
+  if (/front[\s-]?end/.test(p)) return "frontend";
+  if (/devops|site reliability|\bsre\b|infrastructure|cloud engineer/.test(p))
+    return "devops";
+  if (/\bqa\b|quality|tester|test engineer|sdet/.test(p)) return "qa";
+  if (/data engineer|data scientist|data analyst|\bdata\b/.test(p)) return "data";
+  if (/machine learning|deep learning|\bml\b|\bai\b|nlp/.test(p)) return "ml";
+  if (/mobile|android|\bios\b|flutter/.test(p)) return "mobile";
+  return null;
+}
+
+/**
+ * Count DISTINCT role technologies a candidate shows across their skills and
+ * position text. Higher = stronger fit for the role.
+ */
+export function roleSkillHits(
+  role: string,
+  candidate: { skills?: string[] | null; position?: string | null },
+): number {
+  const stems = ROLE_KEYWORDS[role];
+  if (!stems) return 0;
+  const hay = [...(candidate.skills || []), candidate.position || ""]
+    .join(" | ")
+    .toLowerCase();
+  return stems.filter((k) => hay.includes(k)).length;
+}
+
+// ---------------------------------------------------------------------------
 // Write-time enrichment: extract normalized skills + years of experience from
 // a candidate's free-text fields so search can filter on them. The LLM is the
 // semantic layer here — we understand the resume once, at write time.
@@ -381,6 +461,8 @@ export const aiSearchService = {
   canonicalizeSkill,
   candidateSkillSet,
   skillCoverage,
+  roleOf,
+  roleSkillHits,
   enrichCandidate,
   candidateEnrichmentText,
   embeddingProfileText,

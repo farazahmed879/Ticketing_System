@@ -118,6 +118,8 @@ export interface CustomTableProps<T> {
   onRowClick?: (item: T) => void;
   className?: string;
   style?: React.CSSProperties;
+  /** Highlights the row with this id and scrolls it into view (e.g. deep-linking). */
+  highlightRowId?: string | number;
 }
 
 export interface FilterOption {

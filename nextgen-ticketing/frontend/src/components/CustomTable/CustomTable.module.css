@@ -26,3 +26,18 @@
 .table tr:last-child td {
   border-bottom: none;
 }
+
+/* Deep-linked row: briefly draw attention, then fade back to normal. */
+.highlightRow td {
+  background: rgba(124, 58, 237, 0.12);
+  animation: highlightFade 2.5s ease-out forwards;
+}
+
+@keyframes highlightFade {
+  0% {
+    background: rgba(124, 58, 237, 0.28);
+  }
+  100% {
+    background: transparent;
+  }
+}

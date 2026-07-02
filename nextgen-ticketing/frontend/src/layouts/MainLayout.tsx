@@ -379,6 +379,8 @@ const MainLayout: React.FC = () => {
                                 navigate(`/messages?roomId=${n.data.roomId}`);
                               } else if (n.type === "message") {
                                 navigate("/messages");
+                              } else if (n.data?.requestId) {
+                                navigate(`/requests?requestId=${n.data.requestId}`);
                               }
                               setIsNotificationOpen(false);
                             }}

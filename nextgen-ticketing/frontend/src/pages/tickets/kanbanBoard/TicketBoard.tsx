@@ -225,6 +225,7 @@ const TicketBoard: React.FC = () => {
     queryKey: [
       "tickets",
       "board",
+      user?.id,
       {
         myTicketsOnly,
         selectedAgentIds,

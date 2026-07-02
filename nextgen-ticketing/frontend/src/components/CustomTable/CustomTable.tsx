@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { TableRowsSkeleton } from "../CustomSkeleton";
 import tableStyles from "./CustomTable.module.css";
 
@@ -12,7 +12,17 @@ const CustomTable = <T extends { id: string | number }>({
   onRowClick,
   className = "",
   style,
+  highlightRowId,
 }: CustomTableProps<T>) => {
+  const highlightRef = useRef<HTMLTableRowElement>(null);
+
+  // Bring a deep-linked row into view once it renders.
+  useEffect(() => {
+    if (highlightRowId != null && highlightRef.current) {
+      highlightRef.current.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [highlightRowId, data]);
+
   return (
     <div className={`glass-card ${className}`} style={{ padding: 0, ...style }}>
       <table className={tableStyles.table}>
@@ -41,6 +51,10 @@ const CustomTable = <T extends { id: string | number }>({
             data.map((item, rowIndex) => (
               <tr
                 key={item.id}
+                ref={item.id === highlightRowId ? highlightRef : undefined}
+                className={
+                  item.id === highlightRowId ? tableStyles.highlightRow : undefined
+                }
                 onClick={() => {
                   const selection = window.getSelection();
                   if (selection && selection.toString().trim().length > 0) return;

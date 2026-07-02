@@ -134,7 +134,7 @@ const Notifications: React.FC = () => {
     } else if (n.type === "message" || n.data?.roomId) {
       navigate("/messages");
     } else if (n.data?.requestId) {
-      navigate("/requests");
+      navigate(`/requests?requestId=${n.data.requestId}`);
     }
   };
 

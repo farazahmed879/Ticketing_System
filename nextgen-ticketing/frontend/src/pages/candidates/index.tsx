@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
@@ -107,12 +107,25 @@ const CandidateList: React.FC = () => {
       return {
         candidates: res.data.candidates,
         total: res.data.total || 0,
+        vague: res.data.vague || false,
+        vagueMessage: res.data.message as string | undefined,
       };
     },
   });
 
   const candidates = candidatesData?.candidates || [];
   const totalItems = candidatesData?.total || 0;
+
+  // When the AI query is too vague to search on, tell the user via a popup.
+  useEffect(() => {
+    if (candidatesData?.vague) {
+      showNotification(
+        "warning",
+        candidatesData.vagueMessage ||
+          "Your search is too vague. Try naming a skill, technology, or role.",
+      );
+    }
+  }, [candidatesData?.vague, candidatesData?.vagueMessage, showNotification]);
 
   const saveMutation = useMutation({
     mutationFn: async (payload: any) => {

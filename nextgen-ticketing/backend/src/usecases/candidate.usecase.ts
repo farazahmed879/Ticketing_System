@@ -178,9 +178,13 @@ export const candidateUsecase = {
                     (c as any).skillEmbedding || [],
                   )
                 : 0;
-              // Skill coverage drives the score when skills were named; role
-              // score is filled in below (relative to the strongest match).
-              const matchScore = hasSkills ? Math.round(coverage * 100) : 0;
+              // Skill coverage drives the score when skills were named;
+              // otherwise an ABSOLUTE role-fit score: each role technology the
+              // candidate has is ~33%, so a single incidental tool reads as a
+              // weak match (~33%) rather than being inflated to 100%.
+              const matchScore = hasSkills
+                ? Math.round(coverage * 100)
+                : Math.min(100, roleHits * 33);
               return { ...c, _coverage: coverage, _role: roleHits, _sim: sim, matchScore };
             })
             // Must have a requested skill (skill query) or at least one role
@@ -192,13 +196,6 @@ export const candidateUsecase = {
                 b._role - a._role ||
                 b._sim - a._sim,
             );
-
-          // Role-only queries: show how strongly each candidate fits the role,
-          // relative to the best match (so the ranking is visible, not all 100%).
-          if (!hasSkills && roleKey) {
-            const maxRole = scored[0]?._role || 1;
-            for (const c of scored) c.matchScore = Math.round((c._role / maxRole) * 100);
-          }
 
           matched = scored.map(({ _coverage, _role, _sim, ...c }) => c);
         } else if (topicText) {

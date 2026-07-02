@@ -24,7 +24,11 @@ function countWeekdays(startStr: string, endStr: string): number {
   return count;
 }
 
-function computeLeaveDays(type: string, startDate?: string, endDate?: string): number {
+function computeLeaveDays(
+  type: string,
+  startDate?: string,
+  endDate?: string,
+): number {
   if (type === "HALFDAY_LEAVE") return 0.5;
   if (type === "FULLDAY_LEAVE") {
     if (startDate && endDate && new Date(endDate) > new Date(startDate)) {
@@ -40,9 +44,13 @@ function computeLeaveDays(type: string, startDate?: string, endDate?: string): n
 }
 
 export const requestUsecase = {
-  async getRequests(userId?: string) {
+  async getRequests(userIds?: string | string[]) {
     const where: any = {};
-    if (userId) where.userId = userId;
+    if (Array.isArray(userIds)) {
+      where.userId = { in: userIds };
+    } else if (userIds) {
+      where.userId = userIds;
+    }
     return requestRepository.findMany(where);
   },
 
@@ -50,26 +58,30 @@ export const requestUsecase = {
     return requestRepository.findById(id);
   },
 
-  async checkUsersInSameTeam(userId1: string, userId2: string) {
-    const teams1 = await (prisma as any).team.findMany({
+  /**
+   * Member ids of every team the given user leads. Used to scope a team lead's
+   * request list to their team members.
+   */
+  async getLedTeamMemberIds(userId: string): Promise<string[]> {
+    const data = await userRepository.findUserWithTeams(userId);
+    const ids = new Set<string>();
+    (data?.ledTeams || []).forEach((team: any) => {
+      (team.members || []).forEach((m: any) => ids.add(m.id));
+    });
+    return Array.from(ids);
+  },
+
+  /** Whether `leadId` is the team lead of a (non-deleted) team `memberId` belongs to. */
+  async isTeamLeadOfMember(leadId: string, memberId: string): Promise<boolean> {
+    const team = await prisma.team.findFirst({
       where: {
-        OR: [{ memberIds: { has: userId1 } }, { managerId: userId1 }],
+        teamLeadId: leadId,
+        memberIds: { has: memberId },
+        deleted: false,
       },
       select: { id: true },
     });
-
-    const teamIds1 = teams1.map((t: any) => t.id);
-
-    const teams2 = await (prisma as any).team.findMany({
-      where: {
-        AND: [
-          { id: { in: teamIds1 } },
-          { OR: [{ memberIds: { has: userId2 } }, { managerId: userId2 }] },
-        ],
-      },
-    });
-
-    return teams2.length > 0;
+    return !!team;
   },
 
   async createRequest(data: {
@@ -123,26 +135,40 @@ export const requestUsecase = {
     });
 
     // Fetch all teams where this user is either a member or a manager
-    const allTeams = await (prisma as any).team.findMany({
+    const allTeams = await prisma.team.findMany({
       where: {
-        OR: [{ memberIds: { has: data.userId } }, { managerId: data.userId }],
+        OR: [
+          {
+            memberIds: {
+              has: data.userId,
+            },
+          },
+        ],
       },
       include: {
-        manager: {
-          select: { id: true, fullname: true, email: true },
-        },
         members: {
-          where: { deleted: false },
-          include: { role: true },
+          where: {
+            deleted: false,
+          },
+          include: {
+            role: true,
+          },
         },
+        // projects: {
+        //   select: {
+        //     id: true,
+        //     fullname: true,
+        //     email: true,
+        //   },
+        // },
       },
     });
 
     if (allTeams.length > 0) {
       allTeams.forEach((team: any) => {
-        // 2. Add Team Manager
-        if (team.manager && team.manager.id !== data.userId) {
-          targetUserIds.add(team.manager.id);
+        // 2. Add Team Lead
+        if (team && team.teamLeadId !== data.userId) {
+          targetUserIds.add(team.teamLeadId);
         }
       });
     }
@@ -169,7 +195,11 @@ export const requestUsecase = {
     // Adjust leave balance when status transitions involve a leave-type request.
     if (existing.userId && LEAVE_TYPES.has(existing.type)) {
       const data: any = existing.data || {};
-      const days = computeLeaveDays(existing.type, data.startDate, data.endDate);
+      const days = computeLeaveDays(
+        existing.type,
+        data.startDate,
+        data.endDate,
+      );
 
       // Approving for the first time -> decrement balance (block if insufficient).
       if (status === "APPROVED" && previousStatus !== "APPROVED" && days > 0) {

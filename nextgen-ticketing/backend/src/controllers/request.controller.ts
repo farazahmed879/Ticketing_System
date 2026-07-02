@@ -9,14 +9,17 @@ export const requestController = {
       const user = req.user;
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-      let userIdFilter: string | undefined = undefined;
-
-      // If user is not Admin or Agent, only show their own requests
-      if (user.role !== "Admin" && user.role !== "Agent") {
-        userIdFilter = user.id;
+      // Admins and Agents see every request.
+      if (user.role === "Admin" || user.role === "Agent") {
+        const requests = await requestUsecase.getRequests();
+        return res.json({ success: true, requests });
       }
 
-      const requests = await requestUsecase.getRequests(userIdFilter);
+      // Everyone else sees their own requests plus, if they lead any teams,
+      // the requests of those teams' members.
+      const memberIds = await requestUsecase.getLedTeamMemberIds(user.id);
+      const scope = Array.from(new Set([user.id, ...memberIds]));
+      const requests = await requestUsecase.getRequests(scope);
       res.json({ success: true, requests });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
@@ -64,23 +67,14 @@ export const requestController = {
           .json({ success: false, message: "Request not found" });
       }
 
-      // 1. Check basic permission: Admin or role with requests.update = true
+      // Authority is derived server-side (the JWT only carries { id, role },
+      // never permissions): Admins and Agents may act on any request; everyone
+      // else must be the team lead of the request's owner.
       const isAdmin = user.role === "Admin";
-      const hasUpdatePermission =
-        (user.permissions as any)?.requests?.update === true;
+      const isAgent = user.role === "Agent";
 
-      if (!isAdmin && !hasUpdatePermission) {
-        return res
-          .status(403)
-          .json({
-            success: false,
-            message: "Access denied: Missing update permission",
-          });
-      }
-
-      // 2. Team-based restriction for non-admins
       if (!isAdmin) {
-        // Prevent approving own request
+        // Prevent approving your own request.
         if (request.userId === user.id) {
           return res
             .status(403)
@@ -99,18 +93,21 @@ export const requestController = {
             });
         }
 
-        const areInSameTeam = await requestUsecase.checkUsersInSameTeam(
-          user.id,
-          request.userId as string,
-        );
-        if (!areInSameTeam) {
-          return res
-            .status(403)
-            .json({
-              success: false,
-              message:
-                "Access denied: You can only manage requests from your own team members",
-            });
+        // Non-Agents must be the team lead of the requester.
+        if (!isAgent) {
+          const isLead = await requestUsecase.isTeamLeadOfMember(
+            user.id,
+            request.userId as string,
+          );
+          if (!isLead) {
+            return res
+              .status(403)
+              .json({
+                success: false,
+                message:
+                  "Access denied: You can only manage requests from your team members",
+              });
+          }
         }
       }
 

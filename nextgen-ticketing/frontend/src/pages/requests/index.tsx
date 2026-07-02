@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
@@ -22,7 +23,15 @@ const Requests: React.FC = () => {
   const { user } = useAuth();
   const { showNotification, setIsLoading } = useNotification();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const highlightRequestId = searchParams.get("requestId") || undefined;
   const [filter, setFilter] = useState("PENDING");
+
+  // Deep-linked from a notification: show ALL so an already approved/rejected
+  // request isn't hidden by the default PENDING filter.
+  useEffect(() => {
+    if (highlightRequestId) setFilter("ALL");
+  }, [highlightRequestId]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [requestToDelete, setRequestToDelete] = useState<string | null>(null);
@@ -152,6 +161,7 @@ const Requests: React.FC = () => {
           style={{ flex: 1, overflowY: "auto" }}
           columns={columns}
           data={filteredRequests}
+          highlightRowId={highlightRequestId}
           loading={loading}
           loadingMessage="Loading requests..."
           emptyMessage={`No ${filter.toLowerCase()} requests found.`}

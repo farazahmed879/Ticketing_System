@@ -66,7 +66,9 @@ export const getRequestColumns = (
     key: "actions",
     render: (r) => (
       <div className={styles.actions}>
-        {r.status === "PENDING" && hasPermission("requests.update") && (
+        {r.status === "PENDING" &&
+          (hasPermission("requests.update") ||
+            (user?.isLead && r.userId !== user?.id)) && (
           <>
             <CustomTooltip text="Approve">
               <CustomButton

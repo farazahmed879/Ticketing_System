@@ -216,6 +216,69 @@ export function queryTopicText(filter: CandidateFilter): string {
 }
 
 // ---------------------------------------------------------------------------
+// Skill canonicalization.
+//
+// The LLM strips punctuation from tags (".net" -> "net", "c#" -> "c"), and the
+// same skill is written many ways (".net" / "dotnet" / "asp.net", "react" /
+// "react.js"). Exact tag equality therefore misses real matches. We collapse
+// each spelling to one canonical token so query skills and candidate skills can
+// be compared reliably. C# is grouped with .NET because .NET work is done in C#.
+// ---------------------------------------------------------------------------
+const SKILL_ALIAS_GROUPS: string[][] = [
+  // canonical first; every entry maps to the group's canonical form.
+  ["dotnet", "dot net", ".net", "net", "asp.net", "aspnet", "asp net",
+    ".net core", "dotnet core", ".net framework", "vb.net", "vbnet",
+    "c#", "csharp", "c-sharp", "c sharp"],
+  ["cpp", "c++", "cplusplus", "c plus plus"],
+  ["nodejs", "node.js", "node js", "node"],
+  ["reactjs", "react.js", "react js", "react", "react native"],
+  ["nextjs", "next.js", "next js"],
+  ["vuejs", "vue.js", "vue js", "vue"],
+  ["angularjs", "angular.js", "angular js", "angular"],
+  ["javascript", "js"],
+  ["typescript", "ts"],
+  ["postgresql", "postgres", "psql"],
+  ["golang", "go lang", "go"],
+];
+
+// Normalize a tag to a comparison key: lowercase, drop spaces/dots/slashes/
+// hyphens. NOTE: "#" and "+" are kept (so "c#"/"c++" don't collapse into "c").
+const skillKey = (s: string) =>
+  s.toLowerCase().trim().replace(/[\s._/\\-]+/g, "");
+
+const ALIAS_TO_CANON = new Map<string, string>();
+for (const group of SKILL_ALIAS_GROUPS) {
+  const canonical = skillKey(group[0]);
+  for (const alias of group) ALIAS_TO_CANON.set(skillKey(alias), canonical);
+}
+
+/** Collapse a single skill tag to its canonical form. */
+export function canonicalizeSkill(raw: string): string {
+  const key = skillKey(raw);
+  return ALIAS_TO_CANON.get(key) ?? key;
+}
+
+/** Canonical skill set for a candidate (from its normalized `skills[]`). */
+export function candidateSkillSet(skills: string[] | null | undefined): Set<string> {
+  return new Set((skills || []).map(canonicalizeSkill).filter(Boolean));
+}
+
+/**
+ * Fraction of the query's skills the candidate has (0..1), using canonical
+ * matching. Returns 0 when the query names no skills.
+ */
+export function skillCoverage(
+  querySkills: string[],
+  candidateSkills: string[] | null | undefined,
+): number {
+  const q = [...new Set(querySkills.map(canonicalizeSkill).filter(Boolean))];
+  if (q.length === 0) return 0;
+  const have = candidateSkillSet(candidateSkills);
+  const hit = q.filter((s) => have.has(s)).length;
+  return hit / q.length;
+}
+
+// ---------------------------------------------------------------------------
 // Write-time enrichment: extract normalized skills + years of experience from
 // a candidate's free-text fields so search can filter on them. The LLM is the
 // semantic layer here — we understand the resume once, at write time.
@@ -315,6 +378,9 @@ export const aiSearchService = {
   parseQuery,
   toPrismaWhere,
   queryTopicText,
+  canonicalizeSkill,
+  candidateSkillSet,
+  skillCoverage,
   enrichCandidate,
   candidateEnrichmentText,
   embeddingProfileText,

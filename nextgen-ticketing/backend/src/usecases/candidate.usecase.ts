@@ -109,8 +109,12 @@ export const candidateUsecase = {
         // Hybrid AI search:
         //  1) Claude parses the NL query into structured constraints + topic.
         //  2) Structured constraints (years/status/failed-before) filter in Mongo.
-        //  3) The topic (skills/role/keywords) is matched SEMANTICALLY via BGE
-        //     vector cosine — so "frontend" matches "front-end engineer".
+        //  3a) If the query names a SKILL, exact (alias-normalized) skill
+        //      matching against candidate.skills[] is the primary signal — only
+        //      candidates who actually have a required skill are returned, ranked
+        //      by how many they have, then by semantic closeness.
+        //  3b) If the query names NO skill (e.g. "senior frontend dev"), fall
+        //      back to pure semantic vector ranking with a relevance floor.
         const filter = await aiSearchService.parseQuery(aiPrompt as string);
         const aiWhere = aiSearchService.toPrismaWhere(filter);
 
@@ -124,47 +128,72 @@ export const candidateUsecase = {
         let matched = await candidateRepository.findMany(merged);
 
         const topicText = aiSearchService.queryTopicText(filter);
-        if (topicText) {
-          const queryVec = await embeddingService.embedQuery(topicText);
-          // Exact skill requirements from the query (normalized tags), e.g.
-          // ["java"]. Matched against candidate skills by EXACT tag equality so
-          // "java" never matches "javascript".
-          const querySkills = filter.skills.map((s) => s.toLowerCase());
 
-          // Hybrid score = semantic similarity + a boost for exact skill matches.
-          const SKILL_BOOST = 0.2;
+        if (filter.skills.length > 0) {
+          // --- Skill-first path ---
+          // Semantic sim is only a tie-breaker here, so it's optional: if the
+          // embedding call fails we still rank by exact skill coverage.
+          let queryVec: number[] = [];
+          try {
+            queryVec = await embeddingService.embedQuery(topicText);
+          } catch (embedErr) {
+            console.error("Query embed failed; ranking by skills only:", embedErr);
+          }
+
+          const scored = matched
+            .map((c) => {
+              const coverage = aiSearchService.skillCoverage(
+                filter.skills,
+                (c as any).skills,
+              );
+              const sim = queryVec.length
+                ? embeddingService.cosineSimilarity(
+                    queryVec,
+                    (c as any).skillEmbedding || [],
+                  )
+                : 0;
+              return {
+                ...c,
+                _coverage: coverage,
+                _sim: sim,
+                matchScore: Math.round(coverage * 100),
+              };
+            })
+            // Must actually have at least one of the requested skills. No match
+            // => not returned (empty is better than false results).
+            .filter((c) => c._coverage > 0)
+            .sort((a, b) => b._coverage - a._coverage || b._sim - a._sim);
+
+          matched = scored.map(({ _coverage, _sim, ...c }) => c);
+        } else if (topicText) {
+          // --- Semantic-only path (no explicit skill in the query) ---
+          const queryVec = await embeddingService.embedQuery(topicText);
           const scored = matched.map((c) => {
             const sim = embeddingService.cosineSimilarity(
               queryVec,
               (c as any).skillEmbedding || [],
             );
-            const cSkills = new Set(
-              ((c as any).skills || []).map((s: string) => s.toLowerCase()),
-            );
-            const overlap = querySkills.length
-              ? querySkills.filter((s) => cSkills.has(s)).length /
-                querySkills.length
-              : 0;
-            const score = sim + SKILL_BOOST * overlap;
             return {
               ...c,
-              _score: score,
-              matchScore: Math.min(100, Math.round(score * 100)),
+              _score: sim,
+              matchScore: Math.min(100, Math.round(sim * 100)),
             };
           });
           scored.sort((a, b) => b._score - a._score);
 
           // Keep results within a margin of the best match (and above a sane
-          // floor); never return empty when there are structural matches.
+          // floor). If nothing clears the floor, return empty rather than
+          // dumping every candidate.
           const top = scored[0]?._score ?? 0;
           const REL_GAP = 0.08;
           const ABS_FLOOR = 0.6;
-          const above = scored.filter(
+          const ranked = scored.filter(
             (c) => c._score >= Math.max(ABS_FLOOR, top - REL_GAP),
           );
-          const ranked = above.length > 0 ? above : scored;
           matched = ranked.map(({ _score, ...c }) => c);
         }
+        // else: pure structured query (e.g. "rejected candidates") -> return
+        // the structurally-matched set as-is.
 
         total = matched.length;
         candidates =

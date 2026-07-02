@@ -9,7 +9,6 @@ import CustomButton from "../../../../components/CustomButton";
 import api from "../../../../services/api";
 import { API_ROUTES } from "../../../../utils/apiRoutes";
 import {
-  RoleName,
   TICKET_STATUSES,
   StatusName,
   UIMessages,
@@ -32,6 +31,7 @@ import styles from "./TicketDetailModal.module.css";
 import { readAttachmentFiles } from "../../../../utils/attachments";
 import CustomDropdownMenu from "./components/CustomDropDownTicketModal";
 import CustomImage from "../../../../components/CustomImage";
+import { ROLE_TYPE } from "../../../roles/roleConstants";
 
 const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   isOpen,
@@ -47,7 +47,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     ticket?.status?.name === StatusName.CLOSED;
 
   const { user } = useAuth();
-  const isClient = user?.role?.name === RoleName.CUSTOMER;
+  const isClient = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
   const { showNotification, setIsLoading } = useNotification();
   const navigate = useNavigate();
 
@@ -142,12 +142,14 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
         setLocalUsers(
           members.filter(
             (m: any) =>
-              m.role.name === RoleName.EMPLOYEE ||
-              m.role.name === RoleName.AGENT ||
-              m.role.name === RoleName.ADMIN,
+              m.role.type === ROLE_TYPE.EMPLOYEE ||
+              m.role.type === ROLE_TYPE.AGENT ||
+              m.role.type === ROLE_TYPE.ADMIN,
           ),
         );
-        setLocalQaList(members.filter((m: any) => m.role.name === RoleName.QA));
+        setLocalQaList(
+          members.filter((m: any) => m.role.type === ROLE_TYPE.QA),
+        );
       } catch (err) {
         console.error("Failed to fetch project members for modal", err);
         setLocalUsers(users);
@@ -435,32 +437,33 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const isLeadOfTicket = !!displayTicket?.teamLeadIds?.includes(user?.id);
 
   const canAssign =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.tickets?.assign ||
     isLeadOfTicket;
 
   const canAssignQA =
-    user?.role?.name === RoleName.ADMIN || user?.role?.name === RoleName.AGENT;
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.AGENT;
 
   const canUpdate =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.tickets?.update ||
     user?.id === displayTicket.owner.id;
 
   const canViewComments =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.comments?.view;
 
   const canCreateComments =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.comments?.create;
 
   const canEditContent = (() => {
     if (!ticket || !user) return false;
-    const role = user.role?.name;
-    const isAdmin = role === RoleName.ADMIN;
-    const isManager = role === RoleName.AGENT;
-    const isClientUser = role === RoleName.CUSTOMER;
+    const role = user.role?.type;
+    const isAdmin = role === ROLE_TYPE.ADMIN;
+    const isManager = role === ROLE_TYPE.AGENT;
+    const isClientUser = role === ROLE_TYPE.CUSTOMER;
     const isOwner = ticket.owner.id === user.id;
     const ticketIsNew = ticket.status?.name === StatusName.NEW;
     return isAdmin || isManager || (isClientUser && isOwner && ticketIsNew);
@@ -554,7 +557,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               navigate(`/tickets/${displayTicket.id}`);
             },
           },
-          ...(user?.role?.name === RoleName.ADMIN
+          ...(user?.role?.roleType === ROLE_TYPE.ADMIN
             ? [
                 {
                   label: "Delete Ticket",

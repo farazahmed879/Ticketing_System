@@ -1,8 +1,9 @@
 import CustomIcon from "../../../../../components/CustomIcon";
 import styles from "../TicketDetail.module.css";
 import tableStyles from "../../../../dashboard/Dashboard.module.css";
-import { RoleName, StatusName } from "../../../../../utils/constants";
+import { StatusName } from "../../../../../utils/constants";
 import type { TicketDetailSidebarProps } from "../../../../../types";
+import { ROLE_TYPE } from "../../../../roles/roleConstants";
 
 const fmtDate = (d?: string | null) =>
   d
@@ -40,7 +41,7 @@ export const TicketSidebarReadOnly = ({
 }: Pick<TicketDetailSidebarProps, "ticket" | "user">) => {
   // Clients see an "Approved" ticket presented as "Resolved" (matches the rest
   // of the client-facing UX, e.g. the board and the review banner).
-  const isClient = user?.role?.name === RoleName.CUSTOMER;
+  const isClient = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
   const statusName =
     isClient && ticket.status?.name === StatusName.APPROVED
       ? StatusName.RESOLVED
@@ -180,14 +181,26 @@ export const TicketSidebarReadOnly = ({
             marginTop: 4,
           }}
         >
-          <DetailRow icon="Tag" text={`Type: ${ticket.type?.name || "Issue"}`} />
+          <DetailRow
+            icon="Tag"
+            text={`Type: ${ticket.type?.name || "Issue"}`}
+          />
           <DetailRow
             icon="Layers"
             text={`Project: ${ticket.project?.name || "None"}`}
           />
-          <DetailRow icon="Calendar" text={`Due Date: ${fmtDate(ticket.dueDate)}`} />
-          <DetailRow icon="Clock" text={`Created: ${fmtDate(ticket.createdAt)}`} />
-          <DetailRow icon="Clock" text={`Updated: ${fmtDate(ticket.updatedAt)}`} />
+          <DetailRow
+            icon="Calendar"
+            text={`Due Date: ${fmtDate(ticket.dueDate)}`}
+          />
+          <DetailRow
+            icon="Clock"
+            text={`Created: ${fmtDate(ticket.createdAt)}`}
+          />
+          <DetailRow
+            icon="Clock"
+            text={`Updated: ${fmtDate(ticket.updatedAt)}`}
+          />
         </div>
       </div>
     </>

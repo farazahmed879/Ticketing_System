@@ -24,6 +24,7 @@ import CustomPagination from "../../components/CustomPagination";
 
 import StandardListLayout from "../../components/StandardListLayout";
 import { getProjectColumns } from "./columns";
+import { ROLE_TYPE } from "../roles/roleConstants";
 
 const ProjectList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -48,13 +49,13 @@ const ProjectList: React.FC = () => {
   const [debouncedStatus, setDebouncedStatus] = useState("");
 
   const canCreate =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.groups?.create === true;
   const canUpdate =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.groups?.update === true;
   const canDelete =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.groups?.delete === true;
 
   const { data: projectsData, isLoading: loading } = useQuery({
@@ -102,11 +103,9 @@ const ProjectList: React.FC = () => {
       const accounts = clientsRes.data.accounts || [];
       return {
         clients: accounts.filter(
-          (u: any) => u.role?.name === RoleName.CUSTOMER,
+          (u: any) => u.role?.type === ROLE_TYPE.CUSTOMER,
         ),
-        managers: accounts.filter(
-          (u: any) => u.role?.name === RoleName.AGENT,
-        ),
+        managers: accounts.filter((u: any) => u.role?.type === ROLE_TYPE.AGENT),
         teams: teamsRes.data.teams || [],
       };
     },

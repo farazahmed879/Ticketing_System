@@ -8,7 +8,7 @@ import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import styles from "./TicketList.module.css";
-import { RoleName, TICKET_STATUSES, UIMessages } from "../../utils/constants";
+import { TICKET_STATUSES, UIMessages } from "../../utils/constants";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { format, isBefore, startOfDay } from "date-fns";
 
@@ -25,6 +25,7 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 import ListAndKanbanSwitcher from "./components/ListAndKanbanSwitcher";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
 import { truncateString } from "../../utils/helpers";
+import { ROLE_TYPE } from "../roles/roleConstants";
 
 const TicketList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -73,7 +74,7 @@ const TicketList: React.FC = () => {
   const { showNotification, setIsLoading } = useNotification();
   const { user } = useAuth();
 
-  const isCustomer = user?.role?.name === RoleName.CUSTOMER;
+  const isCustomer = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
 
   const { data: metadata } = useQuery({
     queryKey: ["ticket-metadata", user?.id],
@@ -239,7 +240,7 @@ const TicketList: React.FC = () => {
                 Tickets
               </h1>
             </div>
-            {(user?.role?.name === RoleName.ADMIN ||
+            {(user?.role?.roleType === ROLE_TYPE.ADMIN ||
               user?.role?.permissions?.tickets?.create) && (
               <CustomButton
                 variant="gradient"
@@ -577,7 +578,7 @@ const TicketList: React.FC = () => {
                           navigate(`/tickets/${t.id}`);
                         },
                       },
-                      ...(user?.role?.name === RoleName.ADMIN
+                      ...(user?.role?.roleType === ROLE_TYPE.ADMIN
                         ? [
                             {
                               label: "Delete",

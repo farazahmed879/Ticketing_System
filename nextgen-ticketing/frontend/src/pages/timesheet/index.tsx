@@ -25,6 +25,7 @@ import { useAuth } from "../../context/AuthContext";
 import type { TimesheetEntry } from "../../types";
 import CustomSkeleton from "../../components/CustomSkeleton";
 import { CalendarSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
+import { ROLE_TYPE } from "../roles/roleConstants";
 
 // Mock Google Calendar Events
 const MOCK_GOOGLE_EVENTS = [
@@ -199,7 +200,8 @@ const Timesheet: React.FC = () => {
           >
             Monthly Report
           </CustomButton>
-          {user?.role?.name === "Agent" || user?.role?.name === "Admin" ? (
+          {user?.role?.roleType === ROLE_TYPE.AGENT ||
+          user?.role?.roleType === ROLE_TYPE.ADMIN ? (
             <CustomButton
               variant="gradient"
               icon={<CustomIcon name="CheckCircle2" size={18} />}

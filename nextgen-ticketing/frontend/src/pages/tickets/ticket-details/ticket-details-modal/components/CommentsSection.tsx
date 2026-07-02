@@ -6,12 +6,12 @@ import CustomInput from "../../../../../components/CustomInput";
 import CustomButton from "../../../../../components/CustomButton";
 import styles from "../TicketDetailModal.module.css";
 import cs from "../../../shared/commentThread.module.css";
-import { RoleName } from "../../../../../utils/constants";
 import {
   ACCEPT_ATTRIBUTE,
   MAX_ATTACHMENTS,
 } from "../../../../../utils/attachments";
 import CustomImage from "../../../../../components/CustomImage";
+import { ROLE_TYPE } from "../../../../roles/roleConstants";
 
 const CommentSection = ({
   fullTicketData,
@@ -34,7 +34,7 @@ const CommentSection = ({
 
   // Internal (team-only) comments are hidden from clients — they only ever see
   // the public "All" tab (the backend also strips notes for them).
-  const canViewInternal = user?.role?.name !== RoleName.CUSTOMER;
+  const canViewInternal = user?.role?.roleType !== ROLE_TYPE.CUSTOMER;
   // Default to the Internal tab for staff; clients only ever have the public tab.
   const [activeTab, setActiveTab] = useState<"all" | "internal">(
     canViewInternal ? "internal" : "all",
@@ -158,7 +158,7 @@ const CommentSection = ({
                   const isOwnComment = comment.authorId === user?.id;
                   const isClientComment =
                     comment.author?.role?.isCustomer === true ||
-                    comment.author?.role?.name === RoleName.CUSTOMER;
+                    comment.author?.role?.name === ROLE_TYPE.CUSTOMER;
                   return (
                     <div
                       key={comment.id}

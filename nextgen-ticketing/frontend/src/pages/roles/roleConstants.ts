@@ -293,44 +293,53 @@ export const PERMISSION_MODULES = [
   },
 ];
 
+export const ROLE_TYPE = {
+  ADMIN: "isAdmin",
+  AGENT: "isAgent",
+  CUSTOMER: "isCustomer",
+  EMPLOYEE: "isEmployee",
+  HR: "isHR",
+  QA: "isQA",
+} as const;
+
 export const ROLE_TYPES = [
   {
-    id: "isAdmin",
+    id: ROLE_TYPE.ADMIN,
     label: "Administrator",
     icon: "ShieldAlert",
     color: "#f44336",
     activeBg: "rgba(244, 67, 54, 0.05)",
   },
   {
-    id: "isAgent",
+    id: ROLE_TYPE.AGENT,
     label: "Project Manager",
     icon: "ShieldCheck",
     color: "#2196f3",
     activeBg: "rgba(33, 150, 243, 0.05)",
   },
   {
-    id: "isCustomer",
+    id: ROLE_TYPE.CUSTOMER,
     label: "Client",
     icon: "User",
     color: "#4caf50",
     activeBg: "rgba(76, 175, 80, 0.05)",
   },
   {
-    id: "isEmployee",
+    id: ROLE_TYPE.EMPLOYEE,
     label: "Employee",
     icon: "Briefcase",
     color: "#ff9800",
     activeBg: "rgba(255, 152, 0, 0.05)",
   },
   {
-    id: "isHR",
+    id: ROLE_TYPE.HR,
     label: "HR",
     icon: "UserCheck",
     color: "#9c27b0",
     activeBg: "rgba(156, 39, 176, 0.05)",
   },
   {
-    id: "isQA",
+    id: ROLE_TYPE.QA,
     label: "QA",
     icon: "UserCheck",
     color: "#4600c4ff",

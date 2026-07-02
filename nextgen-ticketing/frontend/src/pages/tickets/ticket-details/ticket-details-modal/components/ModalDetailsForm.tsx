@@ -5,11 +5,12 @@ import CustomButton from "../../../../../components/CustomButton";
 import CustomBadge from "../../../../../components/CustomBadge";
 import CustomTextArea from "../../../../../components/CustomTextArea";
 import CustomDatePicker from "../../../../../components/CustomDatePicker";
-import { RoleName, StatusName } from "../../../../../utils/constants";
+import { StatusName } from "../../../../../utils/constants";
 import type { TicketDetail, TicketUpdateFormData } from "../../../../../types";
 import type { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import TicketAssignments from "./TicketAssignments";
 import SelectWithLabel from "../../../../../components/SelectWithLabel";
+import { ROLE_TYPE } from "../../../../roles/roleConstants";
 
 interface ModalDetailsFormProps {
   control: Control<TicketUpdateFormData>;
@@ -59,7 +60,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
       label: s.name,
       icon: <CustomIcon name="Clock" size={14} color={s.color} />,
       disabled: !(
-        user?.role?.name === RoleName.ADMIN ||
+        user?.role?.roleType === ROLE_TYPE.ADMIN ||
         user?.role?.permissions?.boardStatuses?.[s.id] === true ||
         (displayTicket.owner.id === user?.id &&
           (s.name.toLowerCase() === StatusName.OPEN.toLowerCase() ||
@@ -101,7 +102,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
             alignItems: "center",
           }}
         >
-          {user?.role?.name !== RoleName.CUSTOMER ? (
+          {user?.role?.roleType !== ROLE_TYPE.CUSTOMER ? (
             <CustomSelect
               name="priorityId"
               control={control}
@@ -131,9 +132,9 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
               <CustomIcon name="Tag" size={16} /> {displayTicket.priority.name}
             </CustomBadge>
           )}
-          {user?.role?.name !== RoleName.CUSTOMER &&
+          {user?.role?.roleType !== ROLE_TYPE.CUSTOMER &&
           !(
-            user?.role?.name === RoleName.EMPLOYEE &&
+            user?.role?.roleType === ROLE_TYPE.EMPLOYEE &&
             displayTicket?.status?.name === StatusName.APPROVED
           ) ? (
             <CustomSelect

@@ -3,7 +3,7 @@ import Modal from "../../../components/Modal";
 import AnnouncementForm from "./AnnouncementForm.tsx";
 import CustomButton from "../../../components/CustomButton";
 import { useAuth } from "../../../context/AuthContext";
-import { RoleName } from "../../../utils/constants";
+import { ROLE_TYPE } from "../../roles/roleConstants.ts";
 
 interface AnnouncementModalProps {
   isOpen: boolean;
@@ -21,7 +21,7 @@ const AnnouncementModal: React.FC<AnnouncementModalProps> = ({
   isLoading = false,
 }) => {
   const { user } = useAuth();
-  const isCustomer = user?.role?.name === RoleName.CUSTOMER;
+  const isCustomer = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
   const entityName = isCustomer ? "Review" : "Shoutout";
   const formRef = useRef<any>(null);
 

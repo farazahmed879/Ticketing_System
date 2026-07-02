@@ -5,7 +5,7 @@ import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
-import { UIMessages, RoleName } from "../../utils/constants";
+import { UIMessages } from "../../utils/constants";
 import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomInput from "../../components/CustomInput";
@@ -17,6 +17,7 @@ import styles from "./MyTeam.module.css";
 
 import StandardListLayout from "../../components/StandardListLayout";
 import { getTeamColumns } from "./columns";
+import { ROLE_TYPE } from "../roles/roleConstants";
 
 const TeamList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -32,14 +33,14 @@ const TeamList: React.FC = () => {
   const navigate = useNavigate();
 
   const canManageTeams =
-    user?.role?.name === RoleName.ADMIN ||
-    user?.role?.name === RoleName.HR ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.HR ||
     user?.role?.permissions?.teams?.create === true;
 
   const isManagerOrAdmin =
-    user?.role?.name === RoleName.ADMIN ||
-    user?.role?.name === RoleName.HR ||
-    user?.role?.name === RoleName.AGENT;
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.HR ||
+    user?.role?.roleType === ROLE_TYPE.AGENT;
 
   // Debounced server-side search — refetch when the search term settles.
   useEffect(() => {
@@ -72,7 +73,7 @@ const TeamList: React.FC = () => {
       const allUsers = usersRes.data.accounts || [];
       return allUsers.filter(
         (u: any) =>
-          u.role?.name !== RoleName.CUSTOMER &&
+          u.role?.type !== ROLE_TYPE.CUSTOMER &&
           u.role?.roleType !== "isCustomer",
       );
     },

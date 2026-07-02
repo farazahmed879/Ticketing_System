@@ -10,7 +10,6 @@ import CustomButton from "../../../components/CustomButton";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import {
-  RoleName,
   TICKET_STATUSES,
   StatusName,
   UIMessages,
@@ -43,6 +42,7 @@ import {
   canShowCancelBanner,
   canEmployeeEditDueDate,
 } from "../shared/ticketDecisions";
+import { ROLE_TYPE } from "../../roles/roleConstants";
 
 const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   isOpen,
@@ -58,7 +58,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     ticket?.status?.name === StatusName.CLOSED;
 
   const { user } = useAuth();
-  const isClient = user?.role?.name === RoleName.CUSTOMER;
+  const isClient = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
   const { showNotification, setIsLoading } = useNotification();
   const navigate = useNavigate();
   const { control, handleSubmit, reset, watch, setValue, formState } =
@@ -380,44 +380,44 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       JSON.stringify(displayTicket?.attachments || []);
 
   const canAssign =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.tickets?.assign;
 
   const canAssignQA =
-    user?.role?.name === RoleName.ADMIN || user?.role?.name === RoleName.AGENT;
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.AGENT;
 
   const canUpdate =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.tickets?.update ||
     user?.id === displayTicket.owner.id;
 
   const canViewComments =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.comments?.view;
   const canCreateComments =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.comments?.create;
 
   // Mirror TicketDetail's content-edit gate.
   const canEditContent = (() => {
     if (!ticket || !user) return false;
-    const role = user.role?.name;
-    const isAdmin = role === RoleName.ADMIN;
-    const isManager = role === RoleName.AGENT;
-    // const isEmployee = role === RoleName.EMPLOYEE;
-    const isClient = role === RoleName.CUSTOMER;
+    const role = user.role?.type;
+    const isAdmin = role === ROLE_TYPE.ADMIN;
+    const isManager = role === ROLE_TYPE.AGENT;
+    const isClient = role === ROLE_TYPE.CUSTOMER;
     const isOwner = ticket.owner.id === user.id;
     // const isAssignee = ticket.assignee?.id === user.id;
     const ticketIsNew = ticket.status?.name === StatusName.NEW;
     return isAdmin || isManager || (isClient && isOwner && ticketIsNew);
   })();
 
-  const disabledDueDateEdit = user?.role?.name === RoleName.QA;
+  const disabledDueDateEdit = user?.role?.roleType === ROLE_TYPE.QA;
 
   // Employees can only set the due date while the ticket is in the "Assigned"
   // status (i.e. assigned to an employee) — disabled in every other status.
   const disableDueDateForEmployees =
-    user?.role?.name === RoleName.EMPLOYEE &&
+    user?.role?.roleType === ROLE_TYPE.EMPLOYEE &&
     !canEmployeeEditDueDate(displayTicket?.status?.name);
 
   const getStatusOptions = (columns: any[]) => {
@@ -426,7 +426,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       label: s.name,
       icon: <CustomIcon name="Clock" size={14} color={s.color} />,
       disabled: !(
-        user?.role?.name === RoleName.ADMIN ||
+        user?.role?.roleType === ROLE_TYPE.ADMIN ||
         user?.role?.permissions?.boardStatuses?.[s.id] === true ||
         (displayTicket.owner.id === user?.id &&
           (s.name.toLowerCase() === StatusName.OPEN.toLowerCase() ||
@@ -513,7 +513,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   navigate(`/tickets/${displayTicket.id}`);
                 },
               },
-              ...(user?.role?.name === RoleName.ADMIN
+              ...(user?.role?.roleType === ROLE_TYPE.ADMIN
                 ? [
                     {
                       label: "Delete Ticket",
@@ -652,7 +652,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               {/* Left Column: Details */}
               <div className={styles.leftColumn}>
                 {canShowCancelBanner(
-                  user?.role?.name,
+                  user?.role?.roleType,
                   isTicketOwner,
                   displayTicket?.status?.name,
                 ) && (
@@ -810,7 +810,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                       alignItems: "center",
                     }}
                   >
-                    {user?.role?.name !== RoleName.CUSTOMER ? (
+                    {user?.role?.roleType !== ROLE_TYPE.CUSTOMER ? (
                       <CustomSelect
                         name="priorityId"
                         control={control}
@@ -843,9 +843,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                         {displayTicket.priority.name}
                       </CustomBadge>
                     )}
-                    {user?.role?.name !== RoleName.CUSTOMER &&
+                    {user?.role?.roleType !== ROLE_TYPE.CUSTOMER &&
                     !(
-                      user?.role?.name === RoleName.EMPLOYEE &&
+                      user?.role?.roleType === ROLE_TYPE.EMPLOYEE &&
                       displayTicket?.status?.name === StatusName.APPROVED
                     ) ? (
                       <CustomSelect

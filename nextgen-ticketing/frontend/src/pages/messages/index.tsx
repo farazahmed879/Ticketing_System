@@ -16,13 +16,13 @@ import { readAttachmentFiles } from "../../utils/attachments";
 import type { Conversation, Message } from "../../types";
 import { ChatSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import ConfirmationModal from "../../components/ConfirmationModal";
-import { RoleName } from "../../utils/constants";
 import CustomButton from "../../components/CustomButton";
 
 import ConversationSidebar from "./components/ConversationSidebar";
 import ChatHeader from "./components/ChatHeader";
 import MessageList from "./components/MessageList";
 import MessageInput from "./components/MessageInput";
+import { ROLE_TYPE } from "../roles/roleConstants";
 
 const Messages: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -444,14 +444,13 @@ const Messages: React.FC = () => {
   };
 
   const isCustomer =
-    user?.role?.isCustomer ||
-    user?.role?.name?.toLowerCase() === RoleName.CUSTOMER;
+    user?.role?.isCustomer || user?.role?.roleType === ROLE_TYPE.CUSTOMER;
 
   const canManageGroup =
     user?.role?.isAdmin ||
-    user?.role?.name?.toLowerCase() === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.isAgent ||
-    user?.role?.name?.toLowerCase() === RoleName.AGENT ||
+    user?.role?.roleType === ROLE_TYPE.AGENT ||
     user?.isLead;
 
   const selectedConv = conversations.find((c) => c.id === activeConv);

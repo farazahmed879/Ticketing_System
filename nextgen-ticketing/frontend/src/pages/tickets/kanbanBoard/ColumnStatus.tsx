@@ -3,6 +3,7 @@ import { isToday, isTomorrow, isBefore, startOfDay, parseISO } from "date-fns";
 import styles from "./TicketBoard.module.css";
 import TicketCard from "./ticketCard";
 import { RoleName, StatusName } from "../../../utils/constants";
+import { ROLE_TYPE } from "../../roles/roleConstants";
 
 const ColumnStatus = ({
   column,
@@ -34,10 +35,7 @@ const ColumnStatus = ({
   // the ticket's real status so it's correct regardless of how columns are
   // relabelled per role (e.g. Resolved shown as "Done"/"Resolved").
   const handleCheckOverdue = (ticket: any) => {
-    const stopHighlightStatuses = [
-      StatusName.CLOSED,
-      StatusName.TRASH,
-    ];
+    const stopHighlightStatuses = [StatusName.CLOSED, StatusName.TRASH];
     return (
       ticket.dueDate &&
       !stopHighlightStatuses.includes(ticket.status?.name) &&
@@ -82,14 +80,22 @@ const ColumnStatus = ({
         )}
         <div
           className={styles.statusInfo}
-          style={isCollapsed ? { flexDirection: "row", flexWrap: "wrap", justifyContent: "center" } : {}}
+          style={
+            isCollapsed
+              ? {
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                }
+              : {}
+          }
         >
           <div
             className={styles.statusDot}
             style={{ background: column.color }}
           ></div>
           <h3>
-            {user.role.name !== RoleName.CUSTOMER &&
+            {user.role.roleType !== ROLE_TYPE.CUSTOMER &&
             column.name == StatusName.RESOLVED
               ? "Done"
               : column.name}
@@ -138,7 +144,7 @@ const ColumnStatus = ({
                   style={{ background: ticket.priority.color }}
                 ></div>
                 <span className={styles.miniUid}>#{ticket.uid}</span>
-                {user?.role?.name !== RoleName.CUSTOMER && (
+                {user?.role?.roleType !== ROLE_TYPE.CUSTOMER && (
                   <span
                     style={{ marginLeft: "auto", display: "inline-flex" }}
                     title={
@@ -175,8 +181,6 @@ const ColumnStatus = ({
           <div className={styles.emptyColumn}>No tickets</div>
         )}
       </div>
-
-
     </div>
   );
 };

@@ -7,10 +7,14 @@ import { useAuth } from "../../context/AuthContext";
 import styles from "./Sidebar.module.css";
 
 import type { SidebarProps } from "../../types";
-import { RoleName } from "../../utils/constants";
 import CustomImage from "../CustomImage";
+import { ROLE_TYPE } from "../../pages/roles/roleConstants";
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse, unreadMessageCount }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  isCollapsed,
+  onToggleCollapse,
+  unreadMessageCount,
+}) => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -71,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse, unread
   const hasPermission = (permPath: string) => {
     if (!user || !user.role || !user.role.permissions) return false;
     // Admins always have access
-    if (user.role.name === RoleName.ADMIN) return true;
+    if (user.role.roleType === ROLE_TYPE.ADMIN) return true;
 
     const [module, action] = permPath.split(".");
     return user.role.permissions?.[module]?.[action] === true;
@@ -228,11 +232,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse, unread
             >
               {item.icon}
               {!isCollapsed && <span>{item.label}</span>}
-              {item.path === "/messages" && unreadMessageCount !== undefined && unreadMessageCount > 0 && (
-                <span className={`${styles.sidebarBadge} ${isCollapsed ? styles.collapsedBadge : ""}`}>
-                  {unreadMessageCount}
-                </span>
-              )}
+              {item.path === "/messages" &&
+                unreadMessageCount !== undefined &&
+                unreadMessageCount > 0 && (
+                  <span
+                    className={`${styles.sidebarBadge} ${isCollapsed ? styles.collapsedBadge : ""}`}
+                  >
+                    {unreadMessageCount}
+                  </span>
+                )}
               {item.children && !isCollapsed && (
                 <CustomIcon
                   name="ChevronRight"

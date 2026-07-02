@@ -14,7 +14,6 @@ import { useAuth } from "../../../../context/AuthContext";
 import { useNotification } from "../../../../context/NotificationContext";
 import {
   PRIORITIES,
-  RoleName,
   StatusName,
   TICKET_STATUSES,
   UIMessages,
@@ -40,6 +39,7 @@ import TicketDetailHistory from "./components/TicketDetailHistory";
 
 import type { TicketDetail as ITicketDetail } from "../../../../types";
 import CustomImage from "../../../../components/CustomImage";
+import { ROLE_TYPE } from "../../../roles/roleConstants";
 
 interface SidebarDraft {
   statusId: string;
@@ -164,33 +164,33 @@ const TicketDetail: React.FC = () => {
     navigate(`/messages?userId=${userId}`);
   };
 
-  const isClient = user?.role?.name === RoleName.CUSTOMER;
+  const isClient = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
   // Team leads of the ticket's project can assign it to their team members.
   const isLeadOfTicket = !!ticket?.teamLeadIds?.includes(user?.id ?? "");
   const canAssign =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.tickets?.assign ||
     isLeadOfTicket;
   // Admins and managers can (re)assign QA, so they need the members list too.
   const canAssignQA =
-    user?.role?.name === RoleName.ADMIN ||
-    user?.role?.name === RoleName.AGENT;
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.AGENT;
   const isEmployeeOrClient =
-    user?.role?.name === RoleName.EMPLOYEE ||
-    user?.role?.name === RoleName.CUSTOMER;
+    user?.role?.roleType === ROLE_TYPE.EMPLOYEE ||
+    user?.role?.roleType === ROLE_TYPE.CUSTOMER;
 
   const canUpdatePriority =
     !isEmployeeOrClient &&
-    (user?.role?.name === RoleName.ADMIN ||
+    (user?.role?.roleType === ROLE_TYPE.ADMIN ||
       user?.role?.permissions?.tickets?.priority);
 
   const canEditContent = (() => {
     if (!ticket || !user) return false;
-    const role = user.role?.name;
-    const isAdmin = role === RoleName.ADMIN;
-    const isManager = role === RoleName.AGENT;
+    const role = user.role?.type;
+    const isAdmin = role === ROLE_TYPE.ADMIN;
+    const isManager = role === ROLE_TYPE.AGENT;
     // const isEmployee = role === RoleName.EMPLOYEE;
-    const isClient = role === RoleName.CUSTOMER;
+    const isClient = role === ROLE_TYPE.CUSTOMER;
     const isOwner = ticket.owner.id === user.id;
     // const isAssignee = ticket.assignee?.id === user.id;
     const ticketIsNew = ticket.status?.name === StatusName.NEW;
@@ -252,12 +252,12 @@ const TicketDetail: React.FC = () => {
       setAgents(
         members.filter(
           (m: any) =>
-            m.role.name === RoleName.EMPLOYEE ||
-            m.role.name === RoleName.AGENT ||
-            m.role.name === RoleName.ADMIN
-        )
+            m.role.type === ROLE_TYPE.EMPLOYEE ||
+            m.role.type === ROLE_TYPE.AGENT ||
+            m.role.type === ROLE_TYPE.ADMIN,
+        ),
       );
-      setQaList(members.filter((m: any) => m.role.name === RoleName.QA));
+      setQaList(members.filter((m: any) => m.role.type === ROLE_TYPE.QA));
     } catch (err) {
       console.error("Failed to fetch project members", err);
     }
@@ -614,7 +614,7 @@ const TicketDetail: React.FC = () => {
       />
 
       {canShowCancelBanner(
-        user?.role?.name,
+        user?.role?.roleType,
         ticket.owner?.id === user?.id,
         ticket.status?.name,
       ) && (
@@ -659,7 +659,7 @@ const TicketDetail: React.FC = () => {
         </div>
       )}
 
-      {user?.role?.name === RoleName.CUSTOMER &&
+      {user?.role?.roleType === ROLE_TYPE.CUSTOMER &&
         ticket.owner?.id === user?.id &&
         ticket.status.name === StatusName.APPROVED &&
         (() => {
@@ -778,10 +778,9 @@ const TicketDetail: React.FC = () => {
                 setIsNote(false);
               }}
             >
-              Comments (
-              {ticket.comments.filter((c: any) => !c.isNote).length})
+              Comments ({ticket.comments.filter((c: any) => !c.isNote).length})
             </div>
-            {user?.role?.name !== RoleName.CUSTOMER && (
+            {user?.role?.roleType !== ROLE_TYPE.CUSTOMER && (
               <div
                 className={`${styles.tab} ${activeTab === "internal" ? styles.tabActive : ""}`}
                 onClick={() => {
@@ -789,8 +788,7 @@ const TicketDetail: React.FC = () => {
                   setIsNote(true);
                 }}
               >
-                Internal (
-                {ticket.comments.filter((c: any) => c.isNote).length})
+                Internal ({ticket.comments.filter((c: any) => c.isNote).length})
               </div>
             )}
             <div

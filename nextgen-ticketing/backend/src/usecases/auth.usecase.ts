@@ -20,7 +20,7 @@ export const authUsecase = {
     const token = jwt.sign(
       { id: user.id, role: user.role.name },
       process.env.JWT_SECRET as string,
-      { expiresIn: "1d" }
+      { expiresIn: "1d" },
     );
 
     return {
@@ -57,19 +57,26 @@ export const authUsecase = {
       isLead: user.isLead,
       role: {
         name: user.role.name,
+        roleType: user.role.roleType,
         permissions: user.role.permissions,
       },
     };
   },
 
-  async register(email: string, passwordPlain: string, fullname: string, username?: string) {
+  async register(
+    email: string,
+    passwordPlain: string,
+    fullname: string,
+    username?: string,
+  ) {
     const existingEmail = await authRepository.findUserByEmail(email);
     if (existingEmail) {
       throw new Error("Email already exists");
     }
 
     if (username) {
-      const existingUsername = await authRepository.findUserByUsername(username);
+      const existingUsername =
+        await authRepository.findUserByUsername(username);
       if (existingUsername) {
         throw new Error("Username already taken");
       }
@@ -97,7 +104,7 @@ export const authUsecase = {
     const token = jwt.sign(
       { id: user.id, role: user.role.name },
       process.env.JWT_SECRET as string,
-      { expiresIn: "1d" }
+      { expiresIn: "1d" },
     );
 
     return {

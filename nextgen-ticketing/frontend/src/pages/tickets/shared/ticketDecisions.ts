@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { RoleName, StatusName, UIMessages } from "../../../utils/constants";
+import { StatusName, UIMessages } from "../../../utils/constants";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
+import { ROLE_TYPE } from "../../roles/roleConstants";
 
 /**
  * Shared logic for the ticket detail surfaces (modal + full page) so the same
@@ -120,7 +121,8 @@ export const canShowCancelBanner = (
   statusName: string | undefined,
 ): boolean =>
   statusName === StatusName.NEW &&
-  ((roleName === RoleName.CUSTOMER && isOwner) || roleName === RoleName.AGENT);
+  ((roleName === ROLE_TYPE.CUSTOMER && isOwner) ||
+    roleName === ROLE_TYPE.AGENT);
 
 /**
  * Employees may set/change the due date only while the ticket is in the
@@ -171,8 +173,8 @@ export const handleStatusChange = async (
   // enforces the real transition rules.
   const isCancelByStaff =
     body.targetStatusName === StatusName.TRASH &&
-    (user?.role?.name === RoleName.ADMIN ||
-      user?.role?.name === RoleName.AGENT);
+    (user?.role?.roleType === ROLE_TYPE.ADMIN ||
+      user?.role?.roleType === ROLE_TYPE.AGENT);
 
   // A ticket owner may take the basic actions on their own ticket (move it to
   // Open, or Close/Fail/Cancel it — i.e. the client decisions) without an
@@ -189,7 +191,7 @@ export const handleStatusChange = async (
     ].includes(body.targetStatusName);
 
   const isStatusAllowed =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.boardStatuses?.[body?.statusId] === true ||
     isCancelByStaff ||
     isOwnerBasicAction;

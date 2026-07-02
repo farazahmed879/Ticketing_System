@@ -19,6 +19,7 @@ import NewHiresSection from "./components/NewHiresSection";
 import MomentsSection from "./components/MomentsSection";
 import LeaderboardSection from "./components/LeaderboardSection";
 import CustomerDashboard from "./CustomerDashboard";
+import { ROLE_TYPE } from "../roles/roleConstants";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ const Dashboard: React.FC = () => {
 
   const stats = dashboardData?.stats || null;
   const newHires = (dashboardData?.newHires || []).filter(
-    (hire: any) => hire?.role?.name !== RoleName.CUSTOMER,
+    (hire: any) => hire?.role?.type !== ROLE_TYPE.CUSTOMER,
   );
   const announcements = dashboardData?.announcements || [];
   const seenMomentIds = dashboardData?.seenMomentIds || [];
@@ -84,7 +85,7 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  if (user?.role?.name === RoleName.CUSTOMER) {
+  if (user?.role?.roleType === ROLE_TYPE.CUSTOMER) {
     return <CustomerDashboard stats={stats} moments={moments} />;
   }
 
@@ -107,8 +108,8 @@ const Dashboard: React.FC = () => {
       <div className={styles.mainGrid}>
         <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
           {/* Mini Leaderboard Preview */}
-          {(user?.role?.name === RoleName.ADMIN ||
-            user?.role?.name === RoleName.HR) && <LeaderboardSection />}
+          {(user?.role?.roleType === ROLE_TYPE.ADMIN ||
+            user?.role?.roleType === ROLE_TYPE.HR) && <LeaderboardSection />}
         </div>
       </div>
     </div>

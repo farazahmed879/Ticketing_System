@@ -17,17 +17,17 @@ import UserModal from "./components/UserModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import StandardListLayout from "../../components/StandardListLayout";
 import { useAuth } from "../../context/AuthContext";
-import { RoleName } from "../../utils/constants";
 import UserCard from "./components/user-card";
 
 import { getRoleStyle, getUserColumns } from "./columns";
+import { ROLE_TYPE } from "../roles/roleConstants";
 
 const UserList: React.FC = () => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const canEditUsers =
-    currentUser?.role?.name === RoleName.ADMIN ||
-    currentUser?.role?.name === RoleName.HR;
+    currentUser?.role?.roleType === ROLE_TYPE.ADMIN ||
+    currentUser?.role?.roleType === ROLE_TYPE.HR;
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { showNotification, setIsLoading } = useNotification();

@@ -2,13 +2,14 @@ import React from "react";
 import styles from "../TicketDetail.module.css";
 import CustomIcon from "../../../../../components/CustomIcon";
 import CustomDatePicker from "../../../../../components/CustomDatePicker";
-import { RoleName, StatusName } from "../../../../../utils/constants";
+import { StatusName } from "../../../../../utils/constants";
 import { canEmployeeEditDueDate } from "../../../shared/ticketDecisions";
 import { TicketSidebarStatusPriority } from "./TicketSidebarStatusPriority";
 import { TicketSidebarAssignments } from "./TicketSidebarAssignments";
 import { TicketSidebarDetails } from "./TicketSidebarDetails";
 import { TicketSidebarReadOnly } from "./TicketSidebarReadOnly";
 import type { TicketDetailSidebarProps } from "../../../../../types";
+import { ROLE_TYPE } from "../../../../roles/roleConstants";
 
 const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
   ticket,
@@ -24,15 +25,16 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
   // handleStartChat is passed but not read here
 }) => {
   const canAssignQA =
-    user?.role?.name === RoleName.ADMIN || user?.role?.name === RoleName.AGENT;
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.AGENT;
 
   // Clients get a purely read-only detail view — no status/assignee/priority/
   // date editors. They act on a ticket only via the decision banner.
-  const role = user?.role?.name;
-  const isClient = role === RoleName.CUSTOMER;
-  const isAdmin = role === RoleName.ADMIN;
-  const isManager = role === RoleName.AGENT;
-  const isEmployee = role === RoleName.EMPLOYEE;
+  const role = user?.role?.roleType;
+  const isClient = role === ROLE_TYPE.CUSTOMER;
+  const isAdmin = role === ROLE_TYPE.ADMIN;
+  const isManager = role === ROLE_TYPE.AGENT;
+  const isEmployee = role === ROLE_TYPE.EMPLOYEE;
 
   // Per-field editability for staff. Anything not editable is rendered as a
   // one-line row inside the Details section instead of its own editor box.

@@ -9,10 +9,11 @@ import CustomButton from "../../components/CustomButton";
 import CustomBadge from "../../components/CustomBadge";
 import styles from "./Profile.module.css";
 import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
-import { RoleName, UIMessages } from "../../utils/constants";
+import { UIMessages } from "../../utils/constants";
 import UserModal from "../users/components/UserModal";
 import type { Role, UserFormData } from "../../types";
 import CustomImage from "../../components/CustomImage";
+import { ROLE_TYPE } from "../roles/roleConstants";
 
 const Profile: React.FC = () => {
   const { id } = useParams();
@@ -25,8 +26,8 @@ const Profile: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
 
   const canEdit =
-    currentUser?.role?.name === RoleName.ADMIN ||
-    currentUser?.role?.name === RoleName.HR;
+    currentUser?.role?.roleType === ROLE_TYPE.ADMIN ||
+    currentUser?.role?.roleType === ROLE_TYPE.HR;
 
   const fetchUser = async () => {
     try {
@@ -91,7 +92,6 @@ const Profile: React.FC = () => {
       className="animate-fade-in"
       style={{ display: "flex", flexDirection: "column", gap: 24 }}
     >
-
       {/* Header Card */}
       <div
         className="glass-card"
@@ -316,16 +316,18 @@ const Profile: React.FC = () => {
               </div>
               <div className={styles.infoItem}>
                 <label>
-                  {user.role.name === RoleName.CUSTOMER
+                  {user.role.roleType === ROLE_TYPE.CUSTOMER
                     ? "Client ID"
                     : "Employee ID"}
                 </label>
                 <span>#{user.id.toString().slice(-6).toUpperCase()}</span>
               </div>
-              {user.role?.name !== RoleName.CUSTOMER && (
+              {user.role?.type !== ROLE_TYPE.CUSTOMER && (
                 <div className={styles.infoItem}>
                   <label>Leave Balance</label>
-                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  >
                     <CustomIcon
                       name="Calendar"
                       size={16}
@@ -427,7 +429,11 @@ const Profile: React.FC = () => {
               </div>
               {user.companyEmail && (
                 <div style={{ display: "flex", gap: 12 }}>
-                  <CustomIcon name="Mail" size={18} color="var(--accent-primary)" />
+                  <CustomIcon
+                    name="Mail"
+                    size={18}
+                    color="var(--accent-primary)"
+                  />
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span
                       style={{
@@ -438,7 +444,9 @@ const Profile: React.FC = () => {
                     >
                       COMPANY EMAIL
                     </span>
-                    <span style={{ fontSize: "0.95rem" }}>{user.companyEmail}</span>
+                    <span style={{ fontSize: "0.95rem" }}>
+                      {user.companyEmail}
+                    </span>
                   </div>
                 </div>
               )}

@@ -3,8 +3,8 @@ import Modal from "../../../components/Modal";
 import CustomButton from "../../../components/CustomButton";
 import TicketForm from "./TicketForm";
 import ConfirmationModal from "../../../components/ConfirmationModal";
-import { RoleName } from "../../../utils/constants";
 import type { User, TicketFormData } from "../../../types";
+import { ROLE_TYPE } from "../../roles/roleConstants";
 
 interface CreateTicketModalProps {
   isOpen: boolean;
@@ -76,8 +76,8 @@ const CreateTicketModal: React.FC<CreateTicketModalProps> = ({
           agents={agents}
           onSubmit={onSubmit}
           showAssignee={
-            user?.role?.name === RoleName.ADMIN ||
-            user?.role?.name === RoleName.AGENT
+            user?.role?.roleType === ROLE_TYPE.ADMIN ||
+            user?.role?.roleType === ROLE_TYPE.AGENT
           }
           onDirtyChange={setIsDirty}
         />

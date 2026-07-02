@@ -6,7 +6,7 @@ import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
 
 import { API_ROUTES } from "../../utils/apiRoutes";
-import { RoleName, UIMessages, DEFAULT_PAGE_SIZE } from "../../utils/constants";
+import { UIMessages, DEFAULT_PAGE_SIZE } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
 
 import type { Interview } from "../../types";
@@ -19,6 +19,7 @@ import StandardListLayout from "../../components/StandardListLayout";
 import { getInterviewColumns } from "./columns";
 import { InterviewListHeader } from "./components/InterviewListHeader";
 import { InterviewListFilter } from "./components/InterviewListFilter";
+import { ROLE_TYPE } from "../roles/roleConstants";
 
 const InterviewList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -28,17 +29,17 @@ const InterviewList: React.FC = () => {
   const { user } = useAuth();
 
   const canUpdateInterviews =
-    user?.role?.name === RoleName.ADMIN ||
-    user?.role?.name === RoleName.HR ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.HR ||
     user?.role?.permissions?.interviews?.update;
 
   const canDeleteInterviews =
-    user?.role?.name === RoleName.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.interviews?.delete;
 
   const canCreateInterviews =
-    user?.role?.name === RoleName.ADMIN ||
-    user?.role?.name === RoleName.HR ||
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.HR ||
     user?.role?.permissions?.interviews?.create;
 
   const [search, setSearch] = useState("");

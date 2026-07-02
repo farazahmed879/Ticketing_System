@@ -1,7 +1,8 @@
 import CustomSelect from "../../../../../components/CustomSelect";
 import styles from "../TicketDetail.module.css";
-import { RoleName, StatusName } from "../../../../../utils/constants";
+import { StatusName } from "../../../../../utils/constants";
 import type { TicketDetailSidebarProps } from "../../../../../types";
+import { ROLE_TYPE } from "../../../../roles/roleConstants";
 
 /**
  * Renders the Status / Priority editors — but only the ones the current user can
@@ -39,7 +40,7 @@ export const TicketSidebarStatusPriority = ({
               value: s.id,
               label: s.name,
               disabled: !(
-                user?.role?.name === RoleName.ADMIN ||
+                user?.role?.roleType === ROLE_TYPE.ADMIN ||
                 user?.role?.permissions?.boardStatuses?.[s.id] === true ||
                 (ticket.owner.id === user?.id &&
                   ((s.name.toLowerCase() === StatusName.OPEN.toLowerCase() &&

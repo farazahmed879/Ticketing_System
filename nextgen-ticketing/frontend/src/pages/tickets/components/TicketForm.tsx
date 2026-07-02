@@ -11,9 +11,9 @@ import {
   readAttachmentFiles,
 } from "../../../utils/attachments";
 import { useAuth } from "../../../context/AuthContext";
-import { RoleName } from "../../../utils/constants";
 import type { Ticket, TicketFormData } from "../../../types";
 import CustomImage from "../../../components/CustomImage";
+import { ROLE_TYPE } from "../../roles/roleConstants";
 
 interface TicketFormProps {
   initialData?: Ticket | null;
@@ -38,22 +38,28 @@ const TicketForm: React.FC<TicketFormProps> = ({
   onDirtyChange,
 }) => {
   const { user } = useAuth();
-  const isClient = user?.role?.name === RoleName.CUSTOMER;
+  const isClient = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
   // Clients shouldn't set a due date when creating a ticket — they can't
   // gauge SLA. On edit, leave the field visible.
   const showDueDate = !isClient;
-  const { handleSubmit, control, reset, watch, setValue, formState: { isDirty } } =
-    useForm<TicketFormData>({
-      defaultValues: {
-        subject: "",
-        issue: "",
-        priorityId: "",
-        projectId: "",
-        typeId: "",
-        assigneeId: "",
-        dueDate: "",
-      },
-    });
+  const {
+    handleSubmit,
+    control,
+    reset,
+    watch,
+    setValue,
+    formState: { isDirty },
+  } = useForm<TicketFormData>({
+    defaultValues: {
+      subject: "",
+      issue: "",
+      priorityId: "",
+      projectId: "",
+      typeId: "",
+      assigneeId: "",
+      dueDate: "",
+    },
+  });
 
   const selectedPriority = watch("priorityId");
   const subjectValue = watch("subject");

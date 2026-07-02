@@ -5,7 +5,7 @@ import CustomSelect from "../../../components/CustomSelect";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
 import PhoneInput from "../../../components/PhoneInput";
-import { COUNTRY_CODES, RoleName } from "../../../utils/constants";
+import { COUNTRY_CODES } from "../../../utils/constants";
 import {
   ACCEPT_ATTRIBUTE,
   ALLOWED_MIME_RE,
@@ -13,6 +13,7 @@ import {
 } from "../../../utils/attachments";
 import type { User, Role, UserFormData } from "../../../types";
 import CustomImage from "../../../components/CustomImage";
+import { ROLE_TYPE } from "../../roles/roleConstants";
 
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2 MB upload cap
 
@@ -67,8 +68,8 @@ const UserForm: React.FC<UserFormProps> = ({
   // don't accrue leave. Works for both create (watching the role select) and
   // edit (initialData carries the existing role).
   const selectedRoleName =
-    roles.find((r) => r.id === watchedRoleId)?.name || initialData?.role?.name;
-  const isClientRole = selectedRoleName === RoleName.CUSTOMER;
+    roles.find((r) => r.id === watchedRoleId)?.name || initialData?.role?.type;
+  const isClientRole = selectedRoleName === ROLE_TYPE.CUSTOMER;
 
   const [avatar, setAvatar] = useState<string>("");
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -135,7 +136,9 @@ const UserForm: React.FC<UserFormProps> = ({
       reset({
         fullname: initialData.fullname,
         email: initialData.email,
-        companyEmail: initialData.companyEmail ? initialData.companyEmail.replace("@jamipartners.com", "") : "",
+        companyEmail: initialData.companyEmail
+          ? initialData.companyEmail.replace("@jamipartners.com", "")
+          : "",
         username: initialData.username || "",
         password: "",
         title: initialData.title || "",
@@ -294,7 +297,9 @@ const UserForm: React.FC<UserFormProps> = ({
         onSubmit={handleSubmit((data) => {
           const payload = {
             ...data,
-            companyEmail: data.companyEmail ? `${data.companyEmail.trim()}@jamipartners.com` : "",
+            companyEmail: data.companyEmail
+              ? `${data.companyEmail.trim()}@jamipartners.com`
+              : "",
             primaryContact: data.primaryContact
               ? `${data.primaryContactCode} ${data.primaryContact.trim()}`
               : "",
@@ -525,7 +530,13 @@ const UserForm: React.FC<UserFormProps> = ({
                   label="Company Email"
                   placeholder="username"
                   suffix={
-                    <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", paddingRight: "8px" }}>
+                    <span
+                      style={{
+                        color: "var(--text-muted)",
+                        fontSize: "0.85rem",
+                        paddingRight: "8px",
+                      }}
+                    >
                       @jamipartners.com
                     </span>
                   }
@@ -743,7 +754,9 @@ const UserForm: React.FC<UserFormProps> = ({
                   />
                 )}
                 {!isClientRole && (
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  >
                     <input
                       type="checkbox"
                       id="isLead"

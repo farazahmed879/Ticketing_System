@@ -4,7 +4,6 @@ import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { useNotification } from "../../context/NotificationContext";
 import { API_ROUTES } from "../../utils/apiRoutes";
-import { RoleName } from "../../utils/constants";
 import { useAuth } from "../../context/AuthContext";
 import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
@@ -16,10 +15,11 @@ import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from "../../utils/constants";
 
 import StandardListLayout from "../../components/StandardListLayout";
 import { getAnnouncementColumns, type Announcement } from "./columns";
+import { ROLE_TYPE } from "../roles/roleConstants";
 
 const AnnouncementList: React.FC = () => {
   const { user } = useAuth();
-  const isCustomer = user?.role?.name === RoleName.CUSTOMER;
+  const isCustomer = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
   const entityName = isCustomer ? "Review" : "Shoutout";
   const entityNamePlural = isCustomer ? "Reviews" : "Shoutouts";
 
@@ -62,7 +62,10 @@ const AnnouncementList: React.FC = () => {
   const saveMutation = useMutation({
     mutationFn: async (data: any) => {
       if (editingAnnouncement) {
-        return api.put(API_ROUTES.ANNOUNCEMENTS.BY_ID(editingAnnouncement.id), data);
+        return api.put(
+          API_ROUTES.ANNOUNCEMENTS.BY_ID(editingAnnouncement.id),
+          data,
+        );
       } else {
         return api.post(API_ROUTES.ANNOUNCEMENTS.BASE, data);
       }
@@ -79,7 +82,9 @@ const AnnouncementList: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
       showNotification(
         "success",
-        editingAnnouncement ? "Announcement updated successfully" : "Announcement created successfully"
+        editingAnnouncement
+          ? "Announcement updated successfully"
+          : "Announcement created successfully",
       );
       setIsModalOpen(false);
       setEditingAnnouncement(null);

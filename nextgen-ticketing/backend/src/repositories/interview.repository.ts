@@ -17,7 +17,7 @@ export const interviewRepository = {
                 id: true,
                 fullname: true,
                 image: true,
-                role: { select: { name: true } },
+                role: { select: { name: true, roleType: true } },
               },
             },
           },
@@ -93,14 +93,16 @@ export const interviewRepository = {
   async updateInterviewWithPanel(
     id: string,
     data: any,
-    interviewerIds?: string[]
+    interviewerIds?: string[],
   ) {
     return prisma.$transaction(async (tx) => {
       const updated = await tx.interview.update({
         where: { id },
         data: {
           title: data.title,
-          scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
+          scheduledAt: data.scheduledAt
+            ? new Date(data.scheduledAt)
+            : undefined,
           duration: data.duration,
           location: data.location,
           notes: data.notes,

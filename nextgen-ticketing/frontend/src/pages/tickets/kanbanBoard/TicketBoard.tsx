@@ -9,11 +9,11 @@ import styles from "./TicketBoard.module.css";
 import styles1 from "../TicketList.module.css";
 import {
   PRIORITIES,
-  RoleName,
   TICKET_STATUSES,
   StatusName,
   TICKET_TYPES,
   UIMessages,
+  RoleName,
 } from "../../../utils/constants";
 import { useAuth } from "../../../context/AuthContext";
 import { socket } from "../../../services/socket";
@@ -29,6 +29,7 @@ import { useScrollSnap } from "./useScrollSnap";
 import StandardListLayout from "../../../components/StandardListLayout";
 import ListAndKanbanSwitcher from "../components/ListAndKanbanSwitcher";
 import { handleStatusChange } from "../shared/ticketDecisions";
+import { ROLE_TYPE } from "../../roles/roleConstants";
 
 const TicketBoard: React.FC = () => {
   const navigate = useNavigate();
@@ -157,11 +158,11 @@ const TicketBoard: React.FC = () => {
   };
 
   const getStatuses = () => {
-    return user?.role?.name === RoleName.EMPLOYEE && !user.isLead
+    return user?.role?.roleType === ROLE_TYPE.EMPLOYEE && !user.isLead
       ? TICKET_STATUSES.filter(
           (s: any) => s.name !== StatusName.NEW && s.name !== StatusName.TRASH,
         )
-      : user?.role?.name === RoleName.CUSTOMER
+      : user?.role?.roleType === ROLE_TYPE.CUSTOMER
         ? TICKET_STATUSES.filter((s) => s.name !== StatusName.RESOLVED).map(
             (s) => {
               return {
@@ -209,13 +210,15 @@ const TicketBoard: React.FC = () => {
   });
 
   const agents =
-    metadata?.accounts?.filter((u: any) => u.role.name === RoleName.EMPLOYEE) ||
-    [];
+    metadata?.accounts?.filter(
+      (u: any) => u.role.type === ROLE_TYPE.EMPLOYEE,
+    ) || [];
   const qaList =
-    metadata?.accounts?.filter((u: any) => u.role.name === RoleName.QA) || [];
+    metadata?.accounts?.filter((u: any) => u.role.type === ROLE_TYPE.QA) || [];
   const customers =
-    metadata?.accounts?.filter((u: any) => u.role.name === RoleName.CUSTOMER) ||
-    [];
+    metadata?.accounts?.filter(
+      (u: any) => u.role.type === ROLE_TYPE.CUSTOMER,
+    ) || [];
   const projects = metadata?.projects || [];
 
   const { data: boardData, isLoading: loading } = useQuery({
@@ -283,7 +286,8 @@ const TicketBoard: React.FC = () => {
       name: s.name,
       color: s.color,
       tickets:
-        user?.role?.name == RoleName.CUSTOMER && s.name == StatusName.IN_PROCESS
+        user?.role?.roleType == ROLE_TYPE.CUSTOMER &&
+        s.name == StatusName.IN_PROCESS
           ? allTickets.filter(
               (t: Ticket) =>
                 t.status.id === s.id || t.status.name == StatusName.RESOLVED,
@@ -311,8 +315,8 @@ const TicketBoard: React.FC = () => {
     // a ticket to Assigned/Open opens the detail modal so an assignee is picked.
     const isLeadOfTicket = !!ticket?.teamLeadIds?.includes(user?.id ?? "");
     if (
-      (user?.role?.name === RoleName.ADMIN ||
-        user?.role.name === RoleName.AGENT ||
+      (user?.role?.roleType === ROLE_TYPE.ADMIN ||
+        user?.role.roleType === ROLE_TYPE.AGENT ||
         isLeadOfTicket) &&
       targetStatusName === StatusName.OPEN
     ) {
@@ -465,7 +469,7 @@ const TicketBoard: React.FC = () => {
                   Ticketing Board
                 </h1>
               </div>
-              {(user?.role?.name === RoleName.ADMIN ||
+              {(user?.role?.roleType === ROLE_TYPE.ADMIN ||
                 user?.role?.permissions?.tickets?.create) && (
                 <CustomButton
                   variant="gradient"
@@ -572,8 +576,8 @@ const TicketBoard: React.FC = () => {
                       />
                     </div>
 
-                    {user?.role?.name !== RoleName.CUSTOMER &&
-                      user?.role?.name !== RoleName.EMPLOYEE && (
+                    {user?.role?.roleType !== ROLE_TYPE.CUSTOMER &&
+                      user?.role?.roleType !== ROLE_TYPE.EMPLOYEE && (
                         <div className={styles1.filterField}>
                           <span className={styles1.filterLabel}>
                             <CustomIcon name="User" size={12} /> Developers
@@ -635,7 +639,7 @@ const TicketBoard: React.FC = () => {
                       />
                     </div>
 
-                    {user?.role?.name !== RoleName.CUSTOMER && (
+                    {user?.role?.roleType !== ROLE_TYPE.CUSTOMER && (
                       <div className={styles1.filterField}>
                         <span className={styles1.filterLabel}>
                           <CustomIcon name="UserCheck" size={12} /> Client
@@ -736,7 +740,7 @@ const TicketBoard: React.FC = () => {
                 {columns.map((column) => {
                   const isCollapsed = collapsedColumns.includes(column.id);
                   const isStatusAllowed =
-                    user?.role?.name === RoleName.ADMIN ||
+                    user?.role?.roleType === ROLE_TYPE.ADMIN ||
                     user?.role?.permissions?.boardStatuses?.[column.id] ===
                       true;
 

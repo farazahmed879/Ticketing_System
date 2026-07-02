@@ -4,9 +4,10 @@ import CustomInput from "../../../components/CustomInput";
 import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
 import { useAuth } from "../../../context/AuthContext";
-import { RoleName, AnnouncementType } from "../../../utils/constants";
+import { AnnouncementType } from "../../../utils/constants";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
+import { ROLE_TYPE } from "../../roles/roleConstants";
 
 interface AnnouncementFormProps {
   initialData?: any;
@@ -16,8 +17,8 @@ interface AnnouncementFormProps {
 const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
   ({ initialData, onSubmit }, ref) => {
     const { user } = useAuth();
-    const isCustomer = user?.role?.name === RoleName.CUSTOMER;
-    const isEmployee = user?.role?.name === RoleName.EMPLOYEE;
+    const isCustomer = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
+    const isEmployee = user?.role?.roleType === ROLE_TYPE.EMPLOYEE;
     const isRestricted = isCustomer || isEmployee;
 
     const currentDate = new Date().toISOString().split("T")[0];
@@ -26,7 +27,8 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
 
     useEffect(() => {
       if (isCustomer) {
-        api.get(API_ROUTES.PROJECTS.BASE)
+        api
+          .get(API_ROUTES.PROJECTS.BASE)
           .then((res) => {
             setProjects(res.data.projects || []);
           })
@@ -57,7 +59,9 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
           projectId: initialData.projectId || (isCustomer ? "" : undefined),
           date: initialData.date
             ? new Date(initialData.date).toISOString().split("T")[0]
-            : (isCustomer ? currentDate : ""),
+            : isCustomer
+              ? currentDate
+              : "",
           type: isCustomer
             ? AnnouncementType.REVIEW
             : isEmployee
@@ -117,12 +121,16 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
             label="Project (Optional)"
             options={[
               { value: "", label: "Select a project..." },
-              ...projects.map(p => ({ value: p.id, label: p.name }))
+              ...projects.map((p) => ({ value: p.id, label: p.name })),
             ]}
           />
         )}
         <div
-          style={{ display: isCustomer ? "none" : "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}
+          style={{
+            display: isCustomer ? "none" : "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 20,
+          }}
         >
           <CustomInput
             name="date"
@@ -150,7 +158,14 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
           name="shouldPopout"
           control={control}
           render={({ field }) => (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "4px 0",
+              }}
+            >
               <input
                 id="shouldPopout"
                 type="checkbox"
@@ -160,7 +175,7 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
                   width: 18,
                   height: 18,
                   accentColor: "var(--accent-primary)",
-                  cursor: "pointer"
+                  cursor: "pointer",
                 }}
               />
               <label
@@ -170,7 +185,7 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
                   color: "var(--text-primary)",
                   fontWeight: 500,
                   cursor: "pointer",
-                  userSelect: "none"
+                  userSelect: "none",
                 }}
               >
                 Popout/Celebrate automatically on Dashboard

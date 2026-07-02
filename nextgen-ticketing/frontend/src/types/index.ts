@@ -8,6 +8,7 @@ export interface User {
   role: {
     id: string;
     name: string;
+    roleType: string;
     isAdmin?: boolean;
     isAgent?: boolean;
     isCustomer?: boolean;

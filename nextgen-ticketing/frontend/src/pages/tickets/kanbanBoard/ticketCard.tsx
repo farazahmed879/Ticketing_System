@@ -1,7 +1,7 @@
 import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import CustomDropdownMenu from "../../../components/CustomDropdownMenu";
 import CustomIcon from "../../../components/CustomIcon";
-import { RoleName } from "../../../utils/constants";
+import { ROLE_TYPE } from "../../roles/roleConstants";
 
 const TicketCard = ({
   ticket,
@@ -73,7 +73,7 @@ const TicketCard = ({
                   showNotification("success", "Ticket URL copied");
                 },
               },
-              ...(user?.role?.name === RoleName.ADMIN
+              ...(user?.role?.roleType === ROLE_TYPE.ADMIN
                 ? [
                     {
                       label: "Delete Ticket",
@@ -95,7 +95,7 @@ const TicketCard = ({
       <div className={styles.cardSubject}>{ticket.subject}</div>
 
       <div className={styles.cardMeta}>
-        {user?.role?.name !== RoleName.CUSTOMER && (
+        {user?.role?.roleType !== ROLE_TYPE.CUSTOMER && (
           <div
             className={styles.metaItem}
             title={
@@ -130,7 +130,10 @@ const TicketCard = ({
             className={styles.metaItem}
             title="Due Date"
             style={
-              isBefore(startOfDay(parseISO(ticket.dueDate)), startOfDay(new Date()))
+              isBefore(
+                startOfDay(parseISO(ticket.dueDate)),
+                startOfDay(new Date()),
+              )
                 ? { color: "var(--error-color, #ef4444)", fontWeight: "bold" }
                 : {}
             }

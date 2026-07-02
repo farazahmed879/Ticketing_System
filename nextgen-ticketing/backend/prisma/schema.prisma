@@ -102,8 +102,7 @@ model Ticket {
   statusId   String @db.ObjectId
   priorityId String @db.ObjectId
 
-  typeId String @db.ObjectId
-  type   Type   @relation(fields: [typeId], references: [id])
+  typeId String
 
   ownerId String @db.ObjectId
   owner   User   @relation("TicketOwner", fields: [ownerId], references: [id])
@@ -140,12 +139,6 @@ model Ticket {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deleted   Boolean  @default(false)
-}
-
-model Type {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
-  name    String   @unique
-  tickets Ticket[]
 }
 
 model Comment {

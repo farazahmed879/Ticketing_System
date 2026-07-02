@@ -72,7 +72,9 @@ const TicketAssignments: React.FC<TicketAssignmentsProps> = ({
           ...users.map((agent) => ({
             value: agent.id,
             label: agent.fullname,
-            sublabel: agent.teamNames?.length ? agent.teamNames.join(', ') : undefined,
+            sublabel: agent.teamNames?.length
+              ? agent.teamNames.join(", ")
+              : undefined,
             image: agent.image,
           })),
           // Always include the current assignee so it shows even when they are
@@ -91,7 +93,8 @@ const TicketAssignments: React.FC<TicketAssignmentsProps> = ({
         canAssign={canAssign}
         multiple={false}
         dummyLabel={(() => {
-          if (!displayTicket?.assignee?.id) return displayTicket?.assignee?.fullname;
+          if (!displayTicket?.assignee?.id)
+            return displayTicket?.assignee?.fullname;
           const agent = users.find((u) => u.id === displayTicket.assignee.id);
           return agent?.teamNames?.length
             ? `${agent.fullname} (${agent.teamNames.join(", ")})`
@@ -122,7 +125,9 @@ const TicketAssignments: React.FC<TicketAssignmentsProps> = ({
             ...qaList.map((qaUser) => ({
               value: qaUser.id,
               label: qaUser.fullname,
-              sublabel: qaUser.teamNames?.length ? qaUser.teamNames.join(', ') : undefined,
+              sublabel: qaUser.teamNames?.length
+                ? qaUser.teamNames.join(", ")
+                : undefined,
               image: qaUser.image,
             })),
             // Always include the current QA so it shows even when they are not

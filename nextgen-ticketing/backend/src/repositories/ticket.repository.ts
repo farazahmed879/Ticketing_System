@@ -17,7 +17,6 @@ export const ticketRepository = {
       // Attachments and issue are still fetched in findTicketById for the detail page.
       omit: { attachments: true, issue: true },
       include: {
-        type: true,
         owner: {
           select: { id: true, fullname: true, email: true, image: true },
         },
@@ -83,19 +82,11 @@ export const ticketRepository = {
     return prisma.user.findUnique({ where: { id } });
   },
 
-  async findTypeById(id: string) {
-    return prisma.type.findUnique({ where: { id } });
-  },
-
-  async findTypeByName(name: string) {
-    return prisma.type.findUnique({ where: { name } });
-  },
 
   async findTicketById(id: string) {
     const ticket = await prisma.ticket.findUnique({
       where: { id },
       include: {
-        type: true,
         owner: {
           select: { id: true, fullname: true, email: true, image: true },
         },
@@ -135,7 +126,6 @@ export const ticketRepository = {
     const ticket = await prisma.ticket.create({
       data,
       include: {
-        type: true,
         owner: true,
         group: true,
         project: true,
@@ -151,7 +141,6 @@ export const ticketRepository = {
       where: { id },
       data,
       include: {
-        type: true,
         owner: true,
         group: true,
         project: true,

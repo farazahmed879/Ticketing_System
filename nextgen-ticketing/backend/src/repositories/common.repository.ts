@@ -1,5 +1,5 @@
 import prisma from "../prisma";
-import { RoleName, TICKET_STATUSES, PRIORITIES } from "../utils/constants";
+import { RoleName, TICKET_STATUSES, PRIORITIES, TICKET_TYPES } from "../utils/constants";
 
 export const commonRepository = {
   async findStatuses() {
@@ -11,7 +11,7 @@ export const commonRepository = {
   },
 
   async findTypes() {
-    return prisma.type.findMany();
+    return TICKET_TYPES;
   },
 
   async findRoles() {

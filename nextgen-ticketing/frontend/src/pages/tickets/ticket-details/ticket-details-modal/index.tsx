@@ -122,6 +122,10 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const [localUsers, setLocalUsers] = useState(users);
   const [localQaList, setLocalQaList] = useState(qaList);
 
+  console.log("users", users);
+
+  console.log("localUsers", localUsers);
+
   useEffect(() => {
     // If ticket has a project, fetch the assignable users just for that project
     const fetchProjectMembers = async () => {
@@ -140,8 +144,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
             (m: any) =>
               m.role.name === RoleName.EMPLOYEE ||
               m.role.name === RoleName.AGENT ||
-              m.role.name === RoleName.ADMIN
-          )
+              m.role.name === RoleName.ADMIN,
+          ),
         );
         setLocalQaList(members.filter((m: any) => m.role.name === RoleName.QA));
       } catch (err) {
@@ -154,13 +158,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     if (isOpen) {
       fetchProjectMembers();
     }
-  }, [
-    isOpen,
-    ticket?.project?.id,
-    fullTicketData?.project?.id,
-    users,
-    qaList,
-  ]);
+  }, [isOpen, ticket?.project?.id, fullTicketData?.project?.id, users, qaList]);
 
   // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const fetchFullTicketData = useCallback(async () => {
@@ -197,9 +195,11 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     }
 
     const newAssigneeName =
-      localUsers.find((agent: any) => agent.id === data.assigneeId)?.fullname || "";
+      localUsers.find((agent: any) => agent.id === data.assigneeId)?.fullname ||
+      "";
 
-    const newQaName = localQaList.find((qa: any) => qa.id === data.qaId)?.fullname || "";
+    const newQaName =
+      localQaList.find((qa: any) => qa.id === data.qaId)?.fullname || "";
     const body: any = {
       ticketId: ticket.id,
       statusId: data.statusId,

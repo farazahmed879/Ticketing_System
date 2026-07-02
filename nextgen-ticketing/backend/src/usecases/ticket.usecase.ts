@@ -289,7 +289,7 @@ export const ticketUsecase = {
       issue: data.issue,
       statusId: finalStatusId,
       priorityId: data.priorityId,
-      type: { connect: { id: data.typeId } },
+      typeId: data.typeId,
       owner: { connect: { id: user.id } },
       tags: data.tags || [],
       attachments: validatedAttachments,

@@ -10,6 +10,7 @@ import {
   ActionName,
   TICKET_STATUSES,
   PRIORITIES,
+  TICKET_TYPES,
 } from "../utils/constants";
 import { startOfDay, endOfDay } from "date-fns";
 
@@ -70,7 +71,7 @@ export const interviewUsecase = {
 
     if (user.role !== RoleName.ADMIN && user.role !== RoleName.HR) {
       const isPanelMember = interview.panelMembers.some(
-        (pm: any) => pm.userId === user.id
+        (pm: any) => pm.userId === user.id,
       );
       if (!isPanelMember)
         throw new Error("Access denied. You are not a panel member.");
@@ -83,7 +84,7 @@ export const interviewUsecase = {
     const { interviewerIds } = data;
     const interview = await interviewRepository.createInterviewWithPanel(
       { ...data, scheduledById: user.id },
-      interviewerIds
+      interviewerIds,
     );
 
     const fullInterview = await interviewRepository.findById(interview.id);
@@ -118,7 +119,7 @@ export const interviewUsecase = {
       await this.createTicketsForInterview(
         fullInterview,
         interviewerIds,
-        user.id
+        user.id,
       );
     }
 
@@ -133,7 +134,7 @@ export const interviewUsecase = {
     const interview = await interviewRepository.updateInterviewWithPanel(
       id,
       data,
-      interviewerIds
+      interviewerIds,
     );
 
     if (scheduledAt) {
@@ -153,10 +154,10 @@ export const interviewUsecase = {
         .filter(Boolean) as string[];
 
       toAddTickets = interviewerIds.filter(
-        (uid: string) => !currentTicketUserIds.includes(uid)
+        (uid: string) => !currentTicketUserIds.includes(uid),
       );
       const toRemoveTickets = currentTicketUserIds.filter(
-        (uid: string) => !interviewerIds.includes(uid)
+        (uid: string) => !interviewerIds.includes(uid),
       );
 
       if (toRemoveTickets.length > 0) {
@@ -174,7 +175,7 @@ export const interviewUsecase = {
           await this.createTicketsForInterview(
             fullInterview,
             toAddTickets,
-            user.id
+            user.id,
           );
         }
       }
@@ -189,13 +190,15 @@ export const interviewUsecase = {
             where: {
               interviewId: id,
               assigneeId: {
-                in: interviewerIds.filter((uid: string) => !toAddTickets.includes(uid)),
+                in: interviewerIds.filter(
+                  (uid: string) => !toAddTickets.includes(uid),
+                ),
               },
             },
             data: {
               subject,
               issue: `Updated: You are part of the interview panel. Date: ${new Date(
-                fullInterview.scheduledAt
+                fullInterview.scheduledAt,
               ).toLocaleString()}`,
             },
           });
@@ -296,15 +299,15 @@ export const interviewUsecase = {
   async createTicketsForInterview(
     interview: any,
     interviewerIds: string[],
-    creatorId: string
+    creatorId: string,
   ) {
-    const status = TICKET_STATUSES.find(s => s.name === StatusName.NEW);
-    const priority = PRIORITIES.find(p => p.name === PriorityName.NORMAL);
-    const type = await ticketRepository.findTypeByName(TicketType.TASK);
+    const status = TICKET_STATUSES.find((s) => s.name === StatusName.NEW);
+    const priority = PRIORITIES.find((p) => p.name === PriorityName.NORMAL);
+    const type = TICKET_TYPES.find((t) => t.name === TicketType.TASK);
 
     if (!status || !priority || !type) {
       console.error(
-        "Required Ticket configuration (Status/Priority/Type) not found."
+        "Required Ticket configuration (Status/Priority/Type) not found.",
       );
       return;
     }
@@ -322,7 +325,7 @@ export const interviewUsecase = {
           }" with candidate ${
             interview.candidate.name
           }.\n\nScheduled At: ${new Date(
-            interview.scheduledAt
+            interview.scheduledAt,
           ).toLocaleString()}\nDuration: ${
             interview.duration
           } mins\nLocation: ${interview.location || "N/A"}`,

@@ -68,7 +68,8 @@ const UserForm: React.FC<UserFormProps> = ({
   // don't accrue leave. Works for both create (watching the role select) and
   // edit (initialData carries the existing role).
   const selectedRoleName =
-    roles.find((r) => r.id === watchedRoleId)?.name || initialData?.role?.type;
+    roles.find((r) => r.id === watchedRoleId)?.name ||
+    initialData?.role?.roleType;
   const isClientRole = selectedRoleName === ROLE_TYPE.CUSTOMER;
 
   const [avatar, setAvatar] = useState<string>("");

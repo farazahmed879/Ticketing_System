@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import styles from "./Dashboard.module.css";
-import { RoleName, AnnouncementType } from "../../utils/constants";
+import { AnnouncementType } from "../../utils/constants";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";

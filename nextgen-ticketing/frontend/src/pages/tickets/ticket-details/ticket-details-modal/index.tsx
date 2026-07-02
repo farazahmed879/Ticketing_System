@@ -460,7 +460,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   const canEditContent = (() => {
     if (!ticket || !user) return false;
-    const role = user.role?.type;
+    const role = user.role?.roleType;
     const isAdmin = role === ROLE_TYPE.ADMIN;
     const isManager = role === ROLE_TYPE.AGENT;
     const isClientUser = role === ROLE_TYPE.CUSTOMER;

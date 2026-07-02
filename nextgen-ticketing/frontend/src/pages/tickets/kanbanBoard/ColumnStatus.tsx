@@ -2,7 +2,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import { isToday, isTomorrow, isBefore, startOfDay, parseISO } from "date-fns";
 import styles from "./TicketBoard.module.css";
 import TicketCard from "./ticketCard";
-import { RoleName, StatusName } from "../../../utils/constants";
+import { StatusName } from "../../../utils/constants";
 import { ROLE_TYPE } from "../../roles/roleConstants";
 
 const ColumnStatus = ({

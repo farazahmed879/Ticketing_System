@@ -402,7 +402,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   // Mirror TicketDetail's content-edit gate.
   const canEditContent = (() => {
     if (!ticket || !user) return false;
-    const role = user.role?.type;
+    const role = user.role?.roleType;
     const isAdmin = role === ROLE_TYPE.ADMIN;
     const isManager = role === ROLE_TYPE.AGENT;
     const isClient = role === ROLE_TYPE.CUSTOMER;

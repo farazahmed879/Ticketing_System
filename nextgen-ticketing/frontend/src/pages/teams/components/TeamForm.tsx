@@ -60,7 +60,7 @@ const TeamForm: React.FC<TeamFormProps> = ({
 
   // Managers cannot be added to a team (neither as members nor as lead).
   const userOptions = users
-    .filter((u) => u.role?.type !== ROLE_TYPE.AGENT)
+    .filter((u) => u.role?.roleType !== ROLE_TYPE.AGENT)
     .map((u) => ({
       value: u.id,
       label: u.fullname,

@@ -13,6 +13,7 @@ export const RoleType = {
   ADMINS: "admins",
   CUSTOMERS: "clients",
   QA: "qa",
+  HR: "hr",
   EMPLOYEES: "employees",
   ALL: "all",
 } as const;

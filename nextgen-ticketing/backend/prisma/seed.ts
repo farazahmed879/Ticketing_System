@@ -328,12 +328,16 @@ async function main() {
     update: {},
     create: {
       email: "admin@nextgen.com",
+      // Login is only allowed via company email or username, so the admin
+      // needs at least one of those set to be able to sign in.
+      username: "admin",
+      companyEmail: "admin@jamipartners.com",
       password: hashedPassword,
       fullname: "System Admin",
       roleId: adminRole.id,
     },
   });
-  console.log("  ✅ Default admin user seeded (admin@nextgen.com / admin123)");
+  console.log("  ✅ Default admin user seeded (username: admin / admin123)");
 
   console.log("🎉 Seeding complete!");
 }

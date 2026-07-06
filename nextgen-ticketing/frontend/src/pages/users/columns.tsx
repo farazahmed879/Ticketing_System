@@ -67,7 +67,10 @@ export const getUserColumns = (
     key: "contact",
     render: (u) => (
       <div className="flex-col-2">
-        <span className="text-sm-secondary">{u.email}</span>
+        {u.companyEmail && (
+          <span className="text-sm-secondary">{u.companyEmail}</span>
+        )}
+        <span className="text-xs-muted">{u.email}</span>
         <span className="text-xs-muted">
           {u.primaryContact || u.mobileNumber || "—"}
         </span>

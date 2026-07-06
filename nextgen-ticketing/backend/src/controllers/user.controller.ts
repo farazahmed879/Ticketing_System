@@ -76,7 +76,10 @@ export const userController = {
   async updateUser(req: AuthRequest, res: Response) {
     try {
       const callerRole = (req as any).user?.role;
-      if (callerRole?.toUpperCase() !== RoleName.ADMIN && callerRole !== RoleName.HR) {
+      if (
+        callerRole?.toUpperCase() !== RoleName.ADMIN &&
+        callerRole?.toUpperCase() !== RoleName.HR
+      ) {
         return res.status(403).json({
           success: false,
           error: "Only Admins and HR can edit user profiles.",

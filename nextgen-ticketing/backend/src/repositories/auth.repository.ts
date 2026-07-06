@@ -17,10 +17,12 @@ export const authRepository = {
   },
 
   async findUserByEmailOrUsername(identifier: string) {
+    // Login is only allowed via company email or username — never the
+    // personal `email` field.
     return prisma.user.findFirst({
       where: {
         OR: [
-          { email: identifier },
+          { companyEmail: identifier },
           { username: identifier },
         ],
         deleted: false,

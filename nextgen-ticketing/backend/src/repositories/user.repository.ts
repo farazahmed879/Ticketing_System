@@ -7,6 +7,7 @@ export const userRepository = {
       select: {
         id: true,
         email: true,
+        companyEmail: true,
         fullname: true,
         username: true,
         image: true,

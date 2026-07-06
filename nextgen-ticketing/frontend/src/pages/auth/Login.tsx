@@ -118,12 +118,12 @@ const Login: React.FC = () => {
             <CustomInput
               name="identifier"
               control={control}
-              label="Email or Username"
+              label="Company Email or Username"
               type="text"
-              placeholder="name@company.com or username"
+              placeholder="name@jamipartners.com or username"
               icon={<CustomIcon name="User" size={18} />}
               rules={{
-                required: "Email or username is required",
+                required: "Company email or username is required",
               }}
             />
 

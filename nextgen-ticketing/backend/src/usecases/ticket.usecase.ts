@@ -1181,6 +1181,10 @@ export const ticketUsecase = {
       }
     }
 
+    // The comment author should never be notified about their own comment,
+    // regardless of which role (assignee, owner, team lead, etc.) they hold.
+    notifyIds.delete(ctx.authorId);
+
     // Create all notifications in parallel
     const notifications = await Promise.all(
       Array.from(notifyIds).map(async (targetUserId) => {

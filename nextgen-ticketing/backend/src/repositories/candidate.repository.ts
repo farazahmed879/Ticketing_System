@@ -23,6 +23,7 @@ export const candidateRepository = {
       where: { id, deleted: false },
       include: {
         createdBy: { select: { id: true, fullname: true, image: true } },
+        notesLog: { orderBy: { createdAt: "asc" } },
         interviews: {
           where: { deleted: false },
           include: {
@@ -64,6 +65,16 @@ export const candidateRepository = {
       where: { id },
       data: { deleted: true },
     });
+  },
+
+  async createNote(data: {
+    candidateId: string;
+    content: string;
+    authorId?: string | null;
+    authorName: string;
+    authorRole?: string | null;
+  }) {
+    return prisma.candidateNote.create({ data });
   },
 
   async getLeaderboard() {

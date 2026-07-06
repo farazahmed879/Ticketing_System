@@ -26,6 +26,7 @@ const CustomSelect = <T extends FieldValues>({
   showSearch = false,
   onSearch,
   serverSideSearch = false,
+  isClearable = false,
 }: CustomSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownStyles, setDropdownStyles] = useState<React.CSSProperties>({});
@@ -37,15 +38,21 @@ const CustomSelect = <T extends FieldValues>({
       const windowHeight = window.innerHeight;
       const dropdownHeight = 250; // Match max-height in CSS
 
-      let top = rect.bottom + 4;
-      // If no space below, show above
-      if (top + dropdownHeight > windowHeight && rect.top > dropdownHeight) {
-        top = rect.top - dropdownHeight - 4;
-      }
+      const spaceBelow = windowHeight - rect.bottom;
+      // Flip up only when there isn't room below but there is above.
+      const openUp = spaceBelow < dropdownHeight && rect.top > spaceBelow;
 
       setDropdownStyles({
         position: "fixed",
-        top: top,
+        // When opening upward, anchor the menu's BOTTOM to the trigger's top so
+        // it grows upward flush against the select (using a fixed height here
+        // would leave a gap that floats the menu over the field above it).
+        // Explicitly clear the opposite edge — the .dropdown CSS class sets
+        // `top: calc(100% + 4px)`, which would otherwise fight the `bottom`
+        // value and collapse the menu to zero height (making it invisible).
+        ...(openUp
+          ? { top: "auto", bottom: windowHeight - rect.top + 4 }
+          : { top: rect.bottom + 4, bottom: "auto" }),
         left: rect.left,
         width: rect.width,
         zIndex: 999999,
@@ -90,6 +97,17 @@ const CustomSelect = <T extends FieldValues>({
       }
       return value === val;
     };
+
+    const handleClear = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onChange?.(isMulti ? [] : "");
+      setIsOpen(false);
+    };
+
+    const hasValue = isMulti
+      ? Array.isArray(value) && value.length > 0
+      : value !== undefined && value !== null && value !== "";
+    const showClear = isClearable && !disabled && hasValue;
 
     const handleOptionClick = (optionValue: string) => {
       if (isMulti) {
@@ -188,6 +206,17 @@ const CustomSelect = <T extends FieldValues>({
               </div>
             )}
           </div>
+          {showClear && (
+            <span
+              className={styles.clearIcon}
+              onClick={handleClear}
+              title="Clear selection"
+              role="button"
+              aria-label="Clear selection"
+            >
+              <CustomIcon name="X" size={16} />
+            </span>
+          )}
           <CustomIcon
             name="ChevronDown"
             size={18}

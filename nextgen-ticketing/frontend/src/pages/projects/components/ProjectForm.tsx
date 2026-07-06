@@ -49,6 +49,15 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
     }
   }, [initialData, reset]);
 
+  const handleFormSubmit = (data: ProjectFormData) => {
+    // Project Manager is optional — send null (not "") so the backend
+    // clears the relation instead of choking on an invalid ObjectId.
+    return onSubmit({
+      ...data,
+      managerId: data.managerId || null,
+    });
+  };
+
   const clientOptions = clients.map((c) => ({
     value: c.id,
     label: c.fullname,
@@ -67,7 +76,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   return (
     <form
       id="project-form"
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(handleFormSubmit)}
       className={styles.form}
     >
       {/* Section 1: Project Details */}
@@ -124,6 +133,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
           label="Project Manager"
           placeholder="Select Project Manager..."
           options={managerOptions}
+          isClearable
         />
       </div>
 

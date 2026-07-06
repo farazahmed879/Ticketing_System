@@ -69,6 +69,26 @@
   margin-left: 12px;
 }
 
+.clearIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-left: 8px;
+  padding: 2px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.clearIcon:hover {
+  color: var(--accent-danger);
+  background: var(--surface-hover, rgba(255, 255, 255, 0.08));
+}
+
 .arrowRotate {
   transform: rotate(180deg);
   color: var(--accent-primary);

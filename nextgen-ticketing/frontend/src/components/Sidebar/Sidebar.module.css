@@ -255,3 +255,23 @@
 .logoutBtn:hover {
   color: var(--accent-danger);
 }
+
+/*
+ * Narrow the (expanded) sidebar on laptop-sized viewports so it doesn't eat
+ * the screen on 14" displays. `:not(.sidebarCollapsed)` keeps the collapsed
+ * rail at its fixed 80px. The mainContent margin in MainLayout.module.css is
+ * kept in sync at the same breakpoints.
+ */
+@media (max-width: 1440px) {
+  .sidebar:not(.sidebarCollapsed) {
+    width: 220px;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 1280px) {
+  .sidebar:not(.sidebarCollapsed) {
+    width: 200px;
+    padding: 16px;
+  }
+}

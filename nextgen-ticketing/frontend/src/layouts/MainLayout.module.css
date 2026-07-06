@@ -149,3 +149,31 @@
   justify-content: center;
   border: 1px solid var(--border-glass);
 }
+
+/*
+ * Compact the fixed-px chrome on laptop-sized viewports (14" screens, or
+ * larger panels running OS display scaling). The rem-based content scales via
+ * the fluid root font-size in index.css; these dimensions are in px, so they
+ * need explicit breakpoints to shrink with it.
+ */
+@media (max-width: 1440px) {
+  .mainContent {
+    margin-inline-start: 220px;
+  }
+  .topbar {
+    height: 60px;
+    padding: 0 24px;
+  }
+  .pageContainer {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 1280px) {
+  .mainContent {
+    margin-inline-start: 200px;
+  }
+  .pageContainer {
+    padding: 12px;
+  }
+}

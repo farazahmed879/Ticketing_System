@@ -88,3 +88,31 @@
   font-size: 0.75rem;
   margin-top: -4px;
 }
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: -2px;
+}
+
+.suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  transition: all 0.2s ease;
+}
+
+.suggestion:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: rgba(100, 108, 255, 0.08);
+}

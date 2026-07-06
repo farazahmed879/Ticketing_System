@@ -7,7 +7,11 @@ import CustomTextArea from "../../../components/CustomTextArea";
 import CustomButton from "../../../components/CustomButton";
 import CustomChipInput from "../../../components/CustomChipInput";
 import PhoneInput from "../../../components/PhoneInput";
-import { CandidateStatus, COUNTRY_CODES } from "../../../utils/constants";
+import {
+  CandidateStatus,
+  COUNTRY_CODES,
+  CANDIDATE_META_TAGS,
+} from "../../../utils/constants";
 import {
   extractTextFromFile,
   parseResumeData,
@@ -57,6 +61,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         nationality: "",
         city: "",
         observingSkills: "",
+        metaTags: "",
         immediateJoiner: "false",
       },
     });
@@ -96,7 +101,8 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         phone: phoneVal,
         position: initialData.position,
         resumeUrl: initialData.resumeUrl || "",
-        notes: initialData.notes || "",
+        // Notes are an attributed timeline; the box is always a fresh note.
+        notes: "",
         status: initialData.status,
         countryCode: matchedCode,
         cnic: initialData.cnic || "",
@@ -111,6 +117,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         nationality: initialData.nationality || "",
         city: initialData.city || "",
         observingSkills: initialData.observingSkills || "",
+        metaTags: initialData.metaTags || "",
         immediateJoiner: initialData.immediateJoiner ? "true" : "false",
       });
 
@@ -155,6 +162,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         nationality: "",
         city: "",
         observingSkills: "",
+        metaTags: "",
         immediateJoiner: "false",
       });
       setResumeData({
@@ -323,6 +331,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
     const payload = {
       ...data,
       observingSkills: formData.observingSkills || null,
+      metaTags: formData.metaTags || null,
       phone: fullPhone,
       cnic: data.cnic || null,
       address: data.address || null,
@@ -358,6 +367,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
       nationality: "",
       city: "",
       observingSkills: "",
+      metaTags: "",
       immediateJoiner: "false",
     });
     setResumeData({
@@ -440,6 +450,15 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
               }))}
             />
           </div>
+
+          <CustomChipInput
+            name="metaTags"
+            control={control}
+            label="Meta Tags"
+            placeholder="Pick a tag or type your own and press Enter"
+            icon={<CustomIcon name="Tags" size={16} />}
+            suggestions={CANDIDATE_META_TAGS}
+          />
 
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 4, marginBottom: 4 }}>
             <CustomSelect
@@ -558,8 +577,8 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
           <CustomTextArea
             name="notes"
             control={control}
-            label="Notes"
-            placeholder="Additional notes about the candidate..."
+            label={initialData ? "Add a Note" : "Note"}
+            placeholder="Add a note — it will be saved under your name and role..."
             rows={4}
           />
         </div>

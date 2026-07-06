@@ -1,4 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+} from "react";
+import { createPortal } from "react-dom";
 import { Controller, type FieldValues } from "react-hook-form";
 import CustomIcon from "../CustomIcon";
 import styles from "./CustomMultiSelect.module.css";
@@ -22,21 +29,67 @@ const CustomMultiSelect = <T extends FieldValues = any>({
 }: CustomMultiSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [dropdownStyles, setDropdownStyles] = useState<React.CSSProperties>({});
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const updateDropdownPosition = useCallback(() => {
+    if (containerRef.current && isOpen) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      const dropdownHeight = 240; // Match max-height in CSS
+
+      const spaceBelow = windowHeight - rect.bottom;
+      // Flip up only when there isn't room below but there is above.
+      const openUp = spaceBelow < dropdownHeight && rect.top > spaceBelow;
+
+      setDropdownStyles({
+        position: "fixed",
+        // When opening upward, anchor the menu's BOTTOM to the trigger's top.
+        ...(openUp
+          ? { top: "auto", bottom: windowHeight - rect.top + 4 }
+          : { top: rect.bottom + 4, bottom: "auto" }),
+        left: rect.left,
+        width: rect.width,
+        zIndex: 999999,
+      });
+    }
+  }, [isOpen]);
+
+  // Compute position synchronously before paint so the dropdown never renders
+  // with its CSS-default absolute position (which, portaled to <body>, would
+  // stretch to the document bottom and break the modal overlay on first open).
+  useLayoutEffect(() => {
+    if (isOpen) {
+      updateDropdownPosition();
+    } else {
+      setDropdownStyles({});
+    }
+  }, [isOpen, updateDropdownPosition]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
+        !containerRef.current.contains(event.target as Node) &&
+        !(event.target as Element).closest(`.${styles.dropdown}`)
       ) {
         setIsOpen(false);
         setSearch("");
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      window.addEventListener("scroll", updateDropdownPosition, true);
+      window.addEventListener("resize", updateDropdownPosition);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", updateDropdownPosition, true);
+      window.removeEventListener("resize", updateDropdownPosition);
+    };
+  }, [isOpen, updateDropdownPosition]);
 
   const renderMultiSelect = (fieldProps: any = {}) => {
     const value =
@@ -131,16 +184,22 @@ const CustomMultiSelect = <T extends FieldValues = any>({
           </span>
         )}
 
-        {isOpen && (
-          <div className={`${styles.dropdown} glass-card animate-fade-in`}>
-            <input
-              className={styles.searchInput}
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              autoFocus
-            />
+        {isOpen &&
+          dropdownStyles.position &&
+          createPortal(
+            <div
+              className={`${styles.dropdown} glass-card animate-fade-in`}
+              style={dropdownStyles}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <input
+                className={styles.searchInput}
+                placeholder="Search..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+              />
             {filteredOptions.length === 0 ? (
               <div className={styles.noOptions}>No options found</div>
             ) : (
@@ -193,8 +252,9 @@ const CustomMultiSelect = <T extends FieldValues = any>({
                 );
               })
             )}
-          </div>
-        )}
+            </div>,
+            document.body,
+          )}
       </div>
     );
   };

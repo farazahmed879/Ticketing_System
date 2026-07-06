@@ -69,7 +69,11 @@ export const projectController = {
           error: `A project named "${req.body.name}" already exists. Please choose a different name.`,
         });
       }
-      res.status(500).json({ success: false, error: err.message });
+      console.error("Failed to create project:", err);
+      res.status(500).json({
+        success: false,
+        error: "Could not create the project. Please try again.",
+      });
     }
   },
 
@@ -87,7 +91,11 @@ export const projectController = {
           error: `A project named "${req.body.name}" already exists. Please choose a different name.`,
         });
       }
-      res.status(500).json({ success: false, error: err.message });
+      console.error("Failed to update project:", err);
+      res.status(500).json({
+        success: false,
+        error: "Could not update the project. Please try again.",
+      });
     }
   },
 

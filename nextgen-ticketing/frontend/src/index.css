@@ -1,5 +1,16 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700&display=swap");
 
+/*
+ * Fluid root font-size. All rem-based typography/spacing scales with the
+ * viewport width so the UI doesn't look oversized on 14" laptops (which
+ * commonly run Windows display scaling at 125–150%, giving an effective
+ * viewport of ~1280px). Roughly: 16px on wide monitors, ~14px around 1280px,
+ * floored at 13px so text never gets too small.
+ */
+html {
+  font-size: clamp(13px, 0.625vw + 6px, 16px);
+}
+
 :root {
   /* Common Colors (can be overridden by theme management) */
   --accent-primary: #7c3aed;

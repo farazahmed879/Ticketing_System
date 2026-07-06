@@ -189,7 +189,8 @@ const ProjectList: React.FC = () => {
     onError: (err: any) => {
       showNotification(
         "error",
-        err.response?.data?.error || "Operation failed",
+        err.response?.data?.error ||
+          `Could not ${editingProject ? "update" : "create"} the project. Please try again.`,
       );
     },
   });

@@ -253,6 +253,15 @@ export interface TimesheetReport {
   entries: TimesheetEntry[];
 }
 
+export interface CandidateNote {
+  id: string;
+  content: string;
+  authorId?: string | null;
+  authorName: string;
+  authorRole?: string | null;
+  createdAt: string;
+}
+
 export interface Candidate {
   id: string;
   name: string;
@@ -274,6 +283,8 @@ export interface Candidate {
   nationality?: string;
   city?: string;
   observingSkills?: string;
+  metaTags?: string;
+  notesLog?: CandidateNote[];
   status: string;
   isConverted?: boolean;
   immediateJoiner?: boolean;
@@ -386,6 +397,7 @@ export interface CandidateFormData {
   nationality: string;
   city: string;
   observingSkills?: string;
+  metaTags?: string;
   isConverted?: boolean;
   immediateJoiner?: boolean | string;
 }
@@ -455,7 +467,7 @@ export interface ProjectFormData {
   description: string;
   status: string;
   clientIds: string[];
-  managerId?: string;
+  managerId?: string | null;
   teamIds: string[];
 }
 

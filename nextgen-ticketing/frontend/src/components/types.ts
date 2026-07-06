@@ -56,6 +56,7 @@ export interface CustomSelectProps<T extends FieldValues = any> {
   showSearch?: boolean;
   onSearch?: (query: string) => void;
   serverSideSearch?: boolean;
+  isClearable?: boolean;
 }
 
 export interface CustomMultiSelectProps<T extends FieldValues = any> {
@@ -222,6 +223,8 @@ export interface CustomChipInputProps<T extends FieldValues = any> {
   rules?: RegisterOptions<T, Path<T>>;
   value?: string; // Comma separated
   onChange?: (value: string) => void;
+  /** Predefined tags the user can pick from a dropdown (in addition to typing custom ones). */
+  suggestions?: readonly string[];
 }
 
 export interface CustomPaginationProps {

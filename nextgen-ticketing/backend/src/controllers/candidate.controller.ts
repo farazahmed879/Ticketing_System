@@ -44,6 +44,7 @@ export const candidateController = {
       const candidate = await candidateUsecase.updateCandidate(
         req.params.id as string,
         req.body,
+        req.user?.id,
       );
       res.json({ success: true, candidate });
     } catch (error: any) {

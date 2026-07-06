@@ -137,6 +137,13 @@ const CandidateList: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      // Also refresh the single-candidate detail so a newly added note shows
+      // up immediately instead of only after a manual page refresh.
+      if (currentEditingId) {
+        queryClient.invalidateQueries({
+          queryKey: ["candidate", currentEditingId],
+        });
+      }
       showNotification(
         "success",
         `Candidate ${currentEditingId ? "updated" : "created"} successfully`,
@@ -201,8 +208,15 @@ const CandidateList: React.FC = () => {
 
   const handleFormSubmit = async (payload: any) => {
     setIsSubmitting(true);
-    await saveMutation.mutateAsync(payload);
-    setIsSubmitting(false);
+    try {
+      await saveMutation.mutateAsync(payload);
+    } catch {
+      // The error message (e.g. "A candidate with this email already exists")
+      // is surfaced by the mutation's onError handler. Swallow the rejection
+      // here so the finally block always clears the loading state.
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDelete = (id: string) => {

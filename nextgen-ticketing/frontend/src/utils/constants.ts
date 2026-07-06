@@ -204,6 +204,24 @@ export const CandidateStatus = {
 export type CandidateStatus =
   (typeof CandidateStatus)[keyof typeof CandidateStatus];
 
+// Suggested meta tags for candidates. Users can pick from these or type their
+// own custom tags; the final value is stored as a comma-separated string.
+export const CANDIDATE_META_TAGS = [
+  "Referred",
+  "Hot Lead",
+  "Top Talent",
+  "Follow Up",
+  "Shortlisted",
+  "Passive Candidate",
+  "Remote",
+  "Onsite",
+  "Hybrid",
+  "Urgent",
+  "Rehire",
+  "Fresher",
+  "Senior",
+] as const;
+
 export const Recommendation = {
   STRONG_HIRE: "Strong Hire",
   HIRE: "Hire",

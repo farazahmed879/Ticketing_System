@@ -94,6 +94,9 @@ export const projectRepository = {
     // Convert teamIds → a relation connect so both sides of the m2m
     // (Project.teamIds and Team.projectIds) stay in sync.
     const { teamIds, ...rest } = data;
+    // Project Manager is optional: normalize "" → null so Prisma leaves the
+    // relation unset instead of rejecting an invalid ObjectId.
+    if (!rest.managerId) rest.managerId = null;
     return prisma.project.create({
       data: {
         ...rest,
@@ -113,6 +116,8 @@ export const projectRepository = {
   async update(id: string, data: any) {
     // `set` replaces the team list while keeping both sides of the m2m in sync.
     const { teamIds, ...rest } = data;
+    // Allow clearing the (optional) Project Manager by sending "" / null.
+    if (rest.managerId !== undefined && !rest.managerId) rest.managerId = null;
     return prisma.project.update({
       where: { id },
       data: {

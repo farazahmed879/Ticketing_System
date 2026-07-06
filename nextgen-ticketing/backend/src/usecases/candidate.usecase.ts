@@ -10,6 +10,46 @@ import { aiSearchService } from "../services/aiSearchService";
 import { embeddingService } from "../services/embeddingService";
 
 /**
+ * Resolve the display attribution (name + role) for a note author. The values
+ * are snapshotted onto the note so they survive later user/role changes.
+ */
+async function resolveAuthor(userId?: string | null) {
+  if (!userId) {
+    return { authorId: null, authorName: "Unknown User", authorRole: null };
+  }
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { role: { select: { name: true } } },
+  });
+  return {
+    authorId: userId,
+    authorName: user?.fullname || "Unknown User",
+    authorRole: user?.role?.name || null,
+  };
+}
+
+/**
+ * If the candidate form carried note text, persist it as an attributed note
+ * entry. No-op when the text is empty (editing other fields adds no note).
+ */
+async function addNoteIfPresent(
+  candidateId: string,
+  notes: unknown,
+  userId?: string | null,
+) {
+  const content = typeof notes === "string" ? notes.trim() : "";
+  if (!content) return;
+  const author = await resolveAuthor(userId);
+  await candidateRepository.createNote({
+    candidateId,
+    content,
+    authorId: author.authorId,
+    authorName: author.authorName,
+    authorRole: author.authorRole,
+  });
+}
+
+/**
  * Best-effort write-time enrichment + embedding: derive normalized skills +
  * yearsExperience (Claude) and a semantic profile vector (BGE) from the
  * candidate's text. Never blocks the write — on any failure we persist what we
@@ -328,7 +368,7 @@ export const candidateUsecase = {
 
   async createCandidate(data: any, createdById?: string) {
     const enrichment = await safeEnrichAndEmbed(data);
-    return candidateRepository.create({
+    const candidate = await candidateRepository.create({
       ...data,
       createdById: createdById || null,
       skills: enrichment.skills,
@@ -338,7 +378,8 @@ export const candidateUsecase = {
       cnic: data.cnic || null,
       address: data.address || null,
       resumeUrl: data.resumeUrl || null,
-      notes: data.notes || null,
+      // Notes are stored as attributed entries in notesLog, not on the record.
+      notes: null,
       objective: data.objective || null,
       technicalSkills: data.technicalSkills || null,
       workExperience: data.workExperience || null,
@@ -346,17 +387,22 @@ export const candidateUsecase = {
       portfolio: data.portfolio || null,
       github: data.github || null,
       projects: data.projects || null,
+      metaTags: data.metaTags || null,
       status: data.status || "Active",
       dob: data.dob ? new Date(data.dob) : null,
       nationality: data.nationality || null,
       city: data.city || null,
       immediateJoiner: data.immediateJoiner === true || data.immediateJoiner === "true" ? true : false,
     });
+
+    await addNoteIfPresent(candidate.id, data.notes, createdById);
+
+    return candidate;
   },
 
-  async updateCandidate(id: string, data: any) {
+  async updateCandidate(id: string, data: any, editorId?: string) {
     const enrichment = await safeEnrichAndEmbed(data);
-    return candidateRepository.update(id, {
+    const candidate = await candidateRepository.update(id, {
       ...data,
       skills: enrichment.skills,
       yearsExperience: enrichment.yearsExperience,
@@ -365,7 +411,8 @@ export const candidateUsecase = {
       cnic: data.cnic || null,
       address: data.address || null,
       resumeUrl: data.resumeUrl || null,
-      notes: data.notes || null,
+      // Keep the legacy notes column untouched; new notes go to notesLog.
+      notes: undefined,
       objective: data.objective || null,
       technicalSkills: data.technicalSkills || null,
       workExperience: data.workExperience || null,
@@ -373,11 +420,16 @@ export const candidateUsecase = {
       portfolio: data.portfolio || null,
       github: data.github || null,
       projects: data.projects || null,
+      metaTags: data.metaTags || null,
       dob: data.dob ? new Date(data.dob) : null,
       nationality: data.nationality || null,
       city: data.city || null,
       immediateJoiner: data.immediateJoiner === true || data.immediateJoiner === "true" ? true : false,
     });
+
+    await addNoteIfPresent(id, data.notes, editorId);
+
+    return candidate;
   },
 
   async deleteCandidate(id: string) {

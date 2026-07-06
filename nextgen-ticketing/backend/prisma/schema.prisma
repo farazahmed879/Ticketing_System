@@ -393,6 +393,7 @@ model Candidate {
   github          String?
   projects        String?
   observingSkills String?
+  metaTags        String?     // comma-separated tags, e.g. "Referred,Hot Lead,Remote"
   status          String      @default("Active") // Active, Hired, Rejected, On Hold
   dob             DateTime?
   nationality     String?
@@ -403,9 +404,24 @@ model Candidate {
   createdBy       User?       @relation("CandidateCreator", fields: [createdById], references: [id])
 
   interviews      Interview[]
+  notesLog        CandidateNote[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   deleted         Boolean     @default(false)
+}
+
+// A single attributed note on a candidate. authorName/authorRole are snapshots
+// taken at write time so attribution stays correct even if the user or their
+// role later changes or is removed.
+model CandidateNote {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  content     String
+  authorId    String?   @db.ObjectId
+  authorName  String
+  authorRole  String?
+  candidateId String    @db.ObjectId
+  candidate   Candidate @relation(fields: [candidateId], references: [id])
+  createdAt   DateTime  @default(now())
 }
 
 model Interview {

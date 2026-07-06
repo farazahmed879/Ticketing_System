@@ -25,10 +25,16 @@ export const authMiddleware = (
 
 export const checkRole = (roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
-    console.log("requ", req?.user?.role);
-    if (!req.user || !roles.includes(req.user.role)) {
+    // console.log("req", req?.user?.role);
+    if (
+      !req.user ||
+      !roles
+        .map((role) => role.toLowerCase())
+        .includes(req.user.role.toLowerCase())
+    ) {
       return res.status(403).json({ message: "Access denied" });
     }
+
     next();
   };
 };

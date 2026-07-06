@@ -12,7 +12,12 @@ const upload = multer({
 
 const allowedRoles = [RoleName.ADMIN, RoleName.AGENT, RoleName.HR, RoleType.HR];
 
-router.get("/", authMiddleware, candidateController.getAllCandidates);
+router.get(
+  "/",
+  authMiddleware,
+  checkRole(allowedRoles),
+  candidateController.getAllCandidates,
+);
 router.get(
   "/",
   authMiddleware,

@@ -86,6 +86,8 @@ export interface CustomInputProps<
   name?: Path<T>;
   control?: Control<T>;
   rules?: RegisterOptions<T, Path<T>>;
+  /** Sanitize/format the raw input value before it is stored (e.g. digits-only, CNIC dashes). */
+  transform?: (value: string) => string;
 }
 
 export interface CustomTextAreaProps<

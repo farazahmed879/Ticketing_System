@@ -1,3 +1,4 @@
+import type { ChangeEvent } from "react";
 import styles from "./CustomInput.module.css";
 import { Controller, type FieldValues } from "react-hook-form";
 
@@ -13,11 +14,21 @@ const CustomInput = <T extends FieldValues>({
   name,
   control,
   rules,
+  transform,
   ...props
 }: CustomInputProps<T>) => {
   const renderInput = (fieldProps: any = {}) => {
     const error = manualError || fieldProps.error;
-    const hasValue = fieldProps?.field?.value || props.value;
+    const field = fieldProps.field;
+    const hasValue = field?.value || props.value;
+
+    // Base change handler (RHF field or a manually-passed onChange). When a
+    // `transform` is provided, run the raw value through it before storing.
+    const baseOnChange = field?.onChange || (props.onChange as any);
+    const handleChange = transform
+      ? (e: ChangeEvent<HTMLInputElement>) =>
+          baseOnChange?.(transform(e.target.value))
+      : baseOnChange;
 
     return (
       <div className={styles.container} style={containerStyle}>
@@ -29,7 +40,8 @@ const CustomInput = <T extends FieldValues>({
           <input
             className={`${styles.input} ${className || ""} ${hasValue ? styles.hasValue : ""}`}
             {...props}
-            {...fieldProps.field}
+            {...field}
+            onChange={handleChange}
           />
           {suffix && <span className={styles.suffix}>{suffix}</span>}
         </div>

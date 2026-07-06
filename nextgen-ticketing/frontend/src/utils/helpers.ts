@@ -46,3 +46,16 @@ export const formatDate = (date: string | Date): string => {
     year: "numeric",
   });
 };
+
+/**
+ * Format a Pakistani CNIC as the user types: digits only, capped at 13, and
+ * auto-dashed into the XXXXX-XXXXXXX-X pattern (e.g. "42101-1234567-1").
+ */
+export const formatCnic = (value: string): string => {
+  const digits = value.replace(/\D/g, "").slice(0, 13);
+  const parts: string[] = [];
+  if (digits.length > 0) parts.push(digits.slice(0, 5));
+  if (digits.length > 5) parts.push(digits.slice(5, 12));
+  if (digits.length > 12) parts.push(digits.slice(12, 13));
+  return parts.join("-");
+};

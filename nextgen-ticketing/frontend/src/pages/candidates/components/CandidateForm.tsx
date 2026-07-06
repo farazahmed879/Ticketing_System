@@ -12,6 +12,7 @@ import {
   COUNTRY_CODES,
   CANDIDATE_META_TAGS,
 } from "../../../utils/constants";
+import { formatCnic } from "../../../utils/helpers";
 import {
   extractTextFromFile,
   parseResumeData,
@@ -504,6 +505,9 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
               label="CNIC"
               type="text"
               placeholder="12345-1234567-1"
+              transform={formatCnic}
+              maxLength={15}
+              inputMode="numeric"
             />
           </div>
           <div className={styles.twoColGrid}>

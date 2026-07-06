@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { useForm } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
 import CustomSelect from "../../../components/CustomSelect";
@@ -6,6 +12,7 @@ import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
 import PhoneInput from "../../../components/PhoneInput";
 import { COUNTRY_CODES } from "../../../utils/constants";
+import { formatCnic } from "../../../utils/helpers";
 import {
   ACCEPT_ATTRIBUTE,
   ALLOWED_MIME_RE,
@@ -21,16 +28,22 @@ interface UserFormProps {
   initialData?: User | null;
   roles: Role[];
   onSubmit: (data: UserFormData) => Promise<void>;
-  isLoading?: boolean;
+  /** Wizard step controlled by the modal (so the footer can drive navigation). */
+  step: number;
+  onStepChange: (step: number) => void;
+  /** Form id so a submit button in the modal footer can trigger it. */
+  formId?: string;
 }
 
-const UserForm: React.FC<UserFormProps> = ({
-  initialData,
-  roles,
-  onSubmit,
-  isLoading = false,
-}) => {
-  const [step, setStep] = useState(1);
+/** Imperative handle so the modal footer's "Next" can run this form's validation. */
+export interface UserFormHandle {
+  next: () => void;
+}
+
+const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
+  { initialData, roles, onSubmit, step, onStepChange, formId = "user-form" },
+  ref,
+) {
   const [showPassword, setShowPassword] = useState(false);
   const { handleSubmit, control, reset, watch, trigger } =
     useForm<UserFormData>({
@@ -203,8 +216,12 @@ const UserForm: React.FC<UserFormProps> = ({
       "username",
       "cnic",
     ]);
-    if (isStepValid) setStep(2);
+    if (isStepValid) onStepChange(2);
   };
+
+  // Expose "next" so the modal footer's Next button can advance the wizard
+  // (running this form's step-1 validation first).
+  useImperativeHandle(ref, () => ({ next: handleNext }));
 
   return (
     <div
@@ -295,6 +312,7 @@ const UserForm: React.FC<UserFormProps> = ({
       </div>
 
       <form
+        id={formId}
         onSubmit={handleSubmit((data) => {
           const payload = {
             ...data,
@@ -500,6 +518,9 @@ const UserForm: React.FC<UserFormProps> = ({
                   control={control}
                   label="CNIC"
                   placeholder="42101-XXXXXXX-X"
+                  transform={formatCnic}
+                  maxLength={15}
+                  inputMode="numeric"
                 />
               </div>
               <div
@@ -608,16 +629,6 @@ const UserForm: React.FC<UserFormProps> = ({
               </div>
             </div>
 
-            <div style={{ marginTop: 10 }}>
-              <CustomButton
-                type="button"
-                variant="gradient"
-                fullWidth
-                onClick={handleNext}
-              >
-                Next: Professional Details
-              </CustomButton>
-            </div>
           </div>
         )}
 
@@ -833,32 +844,11 @@ const UserForm: React.FC<UserFormProps> = ({
                 )}
               </div>
             </div>
-
-            <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
-              <CustomButton
-                type="button"
-                variant="outline"
-                onClick={() => setStep(1)}
-                style={{ flex: 1 }}
-              >
-                Back
-              </CustomButton>
-              <CustomButton
-                type="submit"
-                variant="gradient"
-                style={{ flex: 2 }}
-                loading={isLoading}
-              >
-                {initialData
-                  ? "Update User Account"
-                  : "Create New User Account"}
-              </CustomButton>
-            </div>
           </div>
         )}
       </form>
     </div>
   );
-};
+});
 
 export default UserForm;

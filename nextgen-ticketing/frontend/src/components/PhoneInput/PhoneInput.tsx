@@ -37,6 +37,22 @@ const PhoneInput = <T extends FieldValues>({
     const error = manualError || phoneFieldProps.error;
     const selectedCountry = COUNTRY_CODES.find((c: any) => c.value === countryCode) || COUNTRY_CODES[0];
 
+    // Limit input to as many digits as the placeholder has slots (digits or X's),
+    // e.g. "3XX XXXXXXX" → 10. Undefined placeholder means no limit.
+    const digitLimit =
+      (placeholder || "").replace(/[^0-9Xx]/g, "").length || undefined;
+
+    const handlePhoneChange = (raw: string) => {
+      // Numbers only, capped at the placeholder length.
+      let digits = raw.replace(/\D/g, "");
+      if (digitLimit) digits = digits.slice(0, digitLimit);
+      if (manualOnPhoneChange) {
+        manualOnPhoneChange(digits);
+      } else if (phoneFieldProps.field?.onChange) {
+        phoneFieldProps.field.onChange(digits);
+      }
+    };
+
     return (
       <div className={styles.container}>
         {label && <label className={styles.label}>{label}</label>}
@@ -88,13 +104,21 @@ const PhoneInput = <T extends FieldValues>({
   
           <input
             type="text"
+            inputMode="numeric"
             className={styles.input}
             value={phone}
-            onChange={(e) => {
-              if (manualOnPhoneChange) {
-                manualOnPhoneChange(e.target.value);
-              } else if (phoneFieldProps.field?.onChange) {
-                phoneFieldProps.field.onChange(e.target.value);
+            maxLength={digitLimit}
+            onChange={(e) => handlePhoneChange(e.target.value)}
+            onKeyDown={(e) => {
+              // Block obvious non-numeric single-char keys (still allow
+              // navigation/editing keys and paste, which onChange sanitizes).
+              if (
+                e.key.length === 1 &&
+                !/[0-9]/.test(e.key) &&
+                !e.ctrlKey &&
+                !e.metaKey
+              ) {
+                e.preventDefault();
               }
             }}
             onBlur={phoneFieldProps.field?.onBlur}

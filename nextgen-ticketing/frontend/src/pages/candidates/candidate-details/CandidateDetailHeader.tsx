@@ -265,6 +265,42 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
               </div>
             </div>
           )}
+
+          {/* Meta Tags */}
+          {candidate.metaTags && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                marginTop: 16,
+                flexWrap: "wrap",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "0.85rem",
+                  color: "var(--text-muted)",
+                  fontWeight: 600,
+                }}
+              >
+                Tags:
+              </span>
+              {candidate.metaTags.split(",").map((tag, i) => (
+                <CustomBadge
+                  key={i}
+                  variant="secondary"
+                  style={{
+                    padding: "4px 10px",
+                    fontSize: "0.8rem",
+                    borderRadius: 6,
+                  }}
+                >
+                  {tag.trim()}
+                </CustomBadge>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <div style={{ display: "flex", gap: 12 }}>

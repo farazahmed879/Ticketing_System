@@ -108,7 +108,7 @@ const CandidateDetail: React.FC = () => {
       >
         <CustomButton
           onClick={() => setActiveTab("profile")}
-          variant={activeTab === "profile" ? "primary" : "ghost"}
+          variant="ghost"
           style={{
             padding: "12px 24px",
             borderBottom:
@@ -125,7 +125,7 @@ const CandidateDetail: React.FC = () => {
         </CustomButton>
         <CustomButton
           onClick={() => setActiveTab("hiring")}
-          variant={activeTab === "hiring" ? "primary" : "ghost"}
+          variant="ghost"
           style={{
             padding: "12px 24px",
             borderBottom:

@@ -60,6 +60,45 @@ export const CandidateProfileTab: React.FC<CandidateProfileTabProps> = ({
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 24 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        {(notes.length > 0 || candidate.notes) && (
+          <div className="glass-card" style={{ padding: 24 }}>
+            <h3
+              style={{
+                margin: 0,
+                fontSize: "1rem",
+                fontWeight: 700,
+                marginBottom: 16,
+              }}
+            >
+              Notes
+            </h3>
+
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: 16 }}
+            >
+              {/* Legacy note recorded before notes were attributed. */}
+              {candidate.notes && (
+                <NoteEntry
+                  authorName="Unknown"
+                  authorRole={null}
+                  createdAt={candidate.createdAt}
+                  content={candidate.notes}
+                />
+              )}
+
+              {notes.map((note) => (
+                <NoteEntry
+                  key={note.id}
+                  authorName={note.authorName}
+                  authorRole={note.authorRole}
+                  createdAt={note.createdAt}
+                  content={note.content}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         <div
           style={{
             display: "grid",
@@ -271,47 +310,7 @@ export const CandidateProfileTab: React.FC<CandidateProfileTabProps> = ({
             )}
           </div>
         </div>
-      </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-        {(notes.length > 0 || candidate.notes) && (
-          <div className="glass-card" style={{ padding: 24 }}>
-            <h3
-              style={{
-                margin: 0,
-                fontSize: "1rem",
-                fontWeight: 700,
-                marginBottom: 16,
-              }}
-            >
-              Notes
-            </h3>
-
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: 16 }}
-            >
-              {/* Legacy note recorded before notes were attributed. */}
-              {candidate.notes && (
-                <NoteEntry
-                  authorName="Unknown"
-                  authorRole={null}
-                  createdAt={candidate.createdAt}
-                  content={candidate.notes}
-                />
-              )}
-
-              {notes.map((note) => (
-                <NoteEntry
-                  key={note.id}
-                  authorName={note.authorName}
-                  authorRole={note.authorRole}
-                  createdAt={note.createdAt}
-                  content={note.content}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -102,6 +102,8 @@ export const API_ROUTES = {
     BASE: "/candidates",
     BY_ID: (id: string) => `/candidates/${id}`,
     UPLOAD_RESUME: "/candidates/upload-resume",
+    BULK_UPLOAD: "/candidates/bulk-upload",
+    JOBS: "/candidates/jobs",
     CONVERT: (id: string) => `/candidates/${id}/convert`,
     LEADERBOARD: "/candidates/leaderboard",
   },

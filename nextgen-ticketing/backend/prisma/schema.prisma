@@ -399,6 +399,10 @@ model Candidate {
   nationality     String?
   city            String?
   immediateJoiner Boolean     @default(false)
+  // Set when created by the async bulk-upload worker. Checked before insert so
+  // a job retry (worker crashed after create, before marking the job done)
+  // can't create a duplicate candidate.
+  resumeJobId     String?     @db.ObjectId
 
   createdById     String?     @db.ObjectId
   createdBy       User?       @relation("CandidateCreator", fields: [createdById], references: [id])
@@ -477,4 +481,29 @@ model InterviewFeedback {
   updatedAt DateTime @updatedAt
 
   @@unique([interviewId, interviewerId])
+}
+
+// Queue for async bulk-resume processing. The web process enqueues (fast
+// intake: file → Drive → job row → 202); the separate worker process leases
+// jobs, runs the heavy pipeline (LlamaParse → parse → enrich → embed →
+// candidate create) and marks them done/failed. Lease semantics: a job is
+// claimable when pending, or when stuck in processing past the lease timeout
+// (worker crashed). attempts caps retries so a poison file can't loop forever.
+model ResumeJob {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  status       String    @default("pending") // pending | processing | done | failed
+  driveFileId  String
+  driveUrl     String
+  originalName String
+  mimetype     String
+  attempts     Int       @default(0)
+  leasedAt     DateTime?
+  error        String?
+  candidateId  String?   @db.ObjectId
+  candidateName String?  // snapshot for the bulk-upload progress UI
+  createdById  String?   @db.ObjectId
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status, createdAt])
 }

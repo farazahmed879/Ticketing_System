@@ -3,7 +3,11 @@ import { candidateRepository } from "../repositories/candidate.repository";
 import { roleRepository } from "../repositories/role.repository";
 import prisma from "../prisma";
 import { RoleName } from "../utils/constants";
-import { uploadToGoogleDrive } from "../services/googleDriveService";
+import {
+  uploadToGoogleDrive,
+  uploadToGoogleDriveFile,
+} from "../services/googleDriveService";
+import { resumeJobRepository } from "../repositories/resumeJob.repository";
 import { resumeParserService } from "../services/resumeParserService";
 import { llamaParseService } from "../services/llamaParseService";
 import { aiSearchService } from "../services/aiSearchService";
@@ -504,6 +508,62 @@ export const candidateUsecase = {
     }
 
     return { driveUrl, parsedData };
+  },
+
+  /**
+   * Async bulk intake: validate → upload to Drive → enqueue a ResumeJob →
+   * return immediately. The heavy pipeline (LlamaParse/enrich/embed/create)
+   * runs in the separate worker process, so bulk uploads can't hold web-server
+   * RAM or connections for the ~90s parse.
+   */
+  async enqueueResumeJob(file: any, createdById?: string) {
+    const allowedTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+    ];
+    if (!allowedTypes.includes(file.mimetype)) {
+      throw new Error("Invalid file type. Only PDF and DOCX files are allowed.");
+    }
+
+    // Backpressure: don't let one user queue unbounded work.
+    if (createdById) {
+      const active = await resumeJobRepository.countActiveByUser(createdById);
+      if (active >= 100) {
+        throw new Error(
+          "Too many resumes already queued. Wait for the current batch to finish.",
+        );
+      }
+    }
+
+    const uploaded = await uploadToGoogleDriveFile(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+    );
+    if (!uploaded) {
+      throw new Error("Google Drive credentials not configured.");
+    }
+
+    const job = await resumeJobRepository.create({
+      driveFileId: uploaded.fileId,
+      driveUrl: uploaded.url,
+      originalName: file.originalname,
+      mimetype: file.mimetype,
+      createdById: createdById || null,
+    });
+
+    return { jobId: job.id };
+  },
+
+  async getResumeJobs(idsCsv: string) {
+    const ids = (idsCsv || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 200);
+    if (ids.length === 0) return [];
+    return resumeJobRepository.findByIds(ids);
   },
 
   async convertToUser(id: string) {

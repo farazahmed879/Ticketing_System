@@ -6,7 +6,9 @@ const StandardListLayout: React.FC<StandardListLayoutProps> = ({
   filters,
   children,
   pagination,
-  height = "calc(100vh - 150px)",
+  // Fill the viewport minus the chrome above/below the page container
+  // (56px topbar + 16px top/bottom page padding ≈ 88px).
+  height = "calc(100vh - 90px)",
 }) => {
   return (
     <div
@@ -18,8 +20,8 @@ const StandardListLayout: React.FC<StandardListLayoutProps> = ({
         overflow: "hidden",
       }}
     >
-      {header && <div style={{ marginBottom: 24 }}>{header}</div>}
-      {filters && <div style={{ marginBottom: 24 }}>{filters}</div>}
+      {header && <div style={{ marginBottom: 14 }}>{header}</div>}
+      {filters && <div style={{ marginBottom: 14 }}>{filters}</div>}
 
       <div
         style={{
@@ -27,7 +29,7 @@ const StandardListLayout: React.FC<StandardListLayoutProps> = ({
           minHeight: 0,
           display: "flex",
           flexDirection: "column",
-          marginBottom: pagination ? "20px" : 0,
+          marginBottom: pagination ? "12px" : 0,
         }}
       >
         {children}

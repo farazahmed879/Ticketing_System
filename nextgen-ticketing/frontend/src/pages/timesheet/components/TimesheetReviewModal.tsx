@@ -25,9 +25,10 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
   onReject,
 }) => {
   if (!entry) return null;
+  const isInvalidHours = entry.totalHours > 24;
 
   return (
-    <Modal
+     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={`Review: ${entry.user?.fullname} - ${format(new Date(entry.date), "MMM dd, yyyy")}`}
@@ -46,8 +47,37 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
             }}
           >
             <span style={{ color: "var(--text-muted)" }}>Total Hours:</span>
-            <strong style={{ fontSize: "1.2rem" }}>{entry.totalHours}h</strong>
+            <strong
+              style={{
+                fontSize: "1.2rem",
+                color: isInvalidHours ? "var(--accent-danger)" : undefined,
+              }}
+            >
+              {entry.totalHours}h
+            </strong>
           </div>
+
+          {isInvalidHours && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: "rgba(255, 77, 79, 0.1)",
+                border: "1px solid var(--accent-danger)",
+                color: "var(--accent-danger)",
+                fontSize: "0.85rem",
+                marginBottom: 12,
+              }}
+            >
+              <CustomIcon name="AlertTriangle" size={16} />
+              Total hours exceed the 24-hour limit for a single day. This
+              entry cannot be approved until corrected.
+            </div>
+          )}
+
           {entry.notes && (
             <div
               style={{
@@ -157,7 +187,13 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
           <CustomButton
             variant="gradient"
             onClick={() => onApprove(entry.id)}
-            style={{ background: "var(--accent-success)", border: "none" }}
+            disabled={isInvalidHours}
+            style={{
+              background: "var(--accent-success)",
+              border: "none",
+              opacity: isInvalidHours ? 0.5 : 1,
+              cursor: isInvalidHours ? "not-allowed" : "pointer",
+            }}
             icon={<CustomIcon name="CheckCircle2" size={18} />}
           >
             Approve

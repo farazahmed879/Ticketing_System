@@ -294,52 +294,55 @@ export const PERMISSION_MODULES = [
 ];
 
 export const ROLE_TYPE = {
-  ADMIN: "isAdmin",
-  AGENT: "isAgent",
-  CUSTOMER: "isCustomer",
-  EMPLOYEE: "isEmployee",
-  HR: "isHR",
-  QA: "isQA",
+  ADMIN: "admin",
+  AGENT: "agent",
+  CUSTOMER: "client",
+  EMPLOYEE: "employee",
+  HR: "hr",
+  QA: "qa",
 } as const;
 
+// NOTE: `id` here is the RoleForm boolean-flag key (isAdmin/isAgent/…), used to
+// toggle RoleFormData and pick default permissions — NOT the roleType value in
+// ROLE_TYPE above (which mirrors the DB: admin/agent/…).
 export const ROLE_TYPES = [
   {
-    id: ROLE_TYPE.ADMIN,
+    id: "isAdmin",
     label: "Administrator",
     icon: "ShieldAlert",
     color: "#f44336",
     activeBg: "rgba(244, 67, 54, 0.05)",
   },
   {
-    id: ROLE_TYPE.AGENT,
+    id: "isAgent",
     label: "Project Manager",
     icon: "ShieldCheck",
     color: "#2196f3",
     activeBg: "rgba(33, 150, 243, 0.05)",
   },
   {
-    id: ROLE_TYPE.CUSTOMER,
+    id: "isCustomer",
     label: "Client",
     icon: "User",
     color: "#4caf50",
     activeBg: "rgba(76, 175, 80, 0.05)",
   },
   {
-    id: ROLE_TYPE.EMPLOYEE,
+    id: "isEmployee",
     label: "Employee",
     icon: "Briefcase",
     color: "#ff9800",
     activeBg: "rgba(255, 152, 0, 0.05)",
   },
   {
-    id: ROLE_TYPE.HR,
+    id: "isHR",
     label: "HR",
     icon: "UserCheck",
     color: "#9c27b0",
     activeBg: "rgba(156, 39, 176, 0.05)",
   },
   {
-    id: ROLE_TYPE.QA,
+    id: "isQA",
     label: "QA",
     icon: "UserCheck",
     color: "#4600c4ff",

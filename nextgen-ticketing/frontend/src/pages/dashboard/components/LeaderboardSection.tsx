@@ -22,7 +22,7 @@ const LeaderboardPreview: React.FC = () => {
     return (
       <>
         <div className={styles.sectionHeader}>
-          <h2 style={{ fontSize: isOverlay ? "1.3rem" : "1.1rem", fontWeight: 700 }}>
+          <h2 style={{ fontSize: isOverlay ? "1.3rem" : "1.05rem", fontWeight: 700 }}>
             Top Recruiters
           </h2>
           <button

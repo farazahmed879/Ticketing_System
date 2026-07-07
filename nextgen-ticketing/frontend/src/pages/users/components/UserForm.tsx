@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, {
   useEffect,
   useRef,
@@ -21,6 +22,7 @@ import {
 import type { User, Role, UserFormData } from "../../../types";
 import CustomImage from "../../../components/CustomImage";
 import { ROLE_TYPE } from "../../roles/roleConstants";
+import { useAuth } from "../../../context/AuthContext";
 
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2 MB upload cap
 
@@ -44,6 +46,14 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
   { initialData, roles, onSubmit, step, onStepChange, formId = "user-form" },
   ref,
 ) {
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role?.roleType === ROLE_TYPE.ADMIN;
+  const isHr = currentUser?.role?.roleType === ROLE_TYPE.HR;
+  const isEdit = !!initialData;
+  // On the edit form the username is required and may only be changed by an
+  // admin; everyone else sees it read-only.
+  const usernameLocked = isEdit && !isAdmin && !isHr;
+
   const [showPassword, setShowPassword] = useState(false);
   const { handleSubmit, control, reset, watch, trigger } =
     useForm<UserFormData>({
@@ -330,7 +340,7 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
                 ? Number(data.leaves)
                 : undefined,
             image: avatar || undefined,
-          };
+            username: data.username?.replace(/\s+/g, '').toLowerCase() || undefined,          };
           // Remove code fields from payload before sending
           delete payload.primaryContactCode;
           delete payload.secondaryContactCode;
@@ -509,9 +519,14 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
                 <CustomInput
                   name="username"
                   control={control}
+                  rules={
+                    isEdit ? { required: "Username is required" } : {}
+                  }
                   label="Username"
                   placeholder="johndoe"
                   autoComplete="username"
+                  required={isEdit}
+                  disabled={usernameLocked}
                 />
                 <CustomInput
                   name="cnic"

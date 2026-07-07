@@ -62,13 +62,14 @@
 }
 
 .topbar {
-  height: 70px;
-  padding: 0 40px;
+  height: 56px;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--border-glass);
   backdrop-filter: var(--blur-md);
+  background: color-mix(in srgb, var(--bg-main) 65%, transparent);
   position: sticky;
   top: 0;
   z-index: 90;
@@ -85,7 +86,7 @@
 }
 
 .pageContainer {
-  padding: 20px;
+  padding: 16px 22px;
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -161,11 +162,11 @@
     margin-inline-start: 220px;
   }
   .topbar {
-    height: 60px;
-    padding: 0 24px;
+    height: 52px;
+    padding: 0 20px;
   }
   .pageContainer {
-    padding: 16px;
+    padding: 14px 18px;
   }
 }
 
@@ -174,6 +175,6 @@
     margin-inline-start: 200px;
   }
   .pageContainer {
-    padding: 12px;
+    padding: 12px 14px;
   }
 }

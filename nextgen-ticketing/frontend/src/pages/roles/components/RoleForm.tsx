@@ -7,7 +7,6 @@ import React, {
 import CustomIcon from "../../../components/CustomIcon";
 import CustomInput from "../../../components/CustomInput";
 import CustomTextArea from "../../../components/CustomTextArea";
-import { RoleName } from "../../../utils/constants";
 import type { RoleFormData } from "../../../types";
 import {
   DEFAULT_PERMISSIONS,
@@ -37,7 +36,7 @@ const RoleForm = forwardRef<any, RoleFormProps>(
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    const isCoreAdmin = initialData?.name === RoleName.ADMIN;
+    const isCoreAdmin = !!initialData?.isAdmin;
 
     const resetToInitial = () => {
       if (initialData) {

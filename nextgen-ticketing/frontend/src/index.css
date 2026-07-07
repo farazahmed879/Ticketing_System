@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cairo:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Cairo:wght@300;400;500;600;700&display=swap");
 
 /*
  * Fluid root font-size. All rem-based typography/spacing scales with the
@@ -91,6 +91,29 @@ body {
   color: var(--text-primary);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Modern, tighter display type for all headings app-wide. */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+/* Page subtitle: the muted <p> right under a page title. */
+h1 + p {
+  font-size: 0.83rem;
+  margin-top: 2px;
+}
+
+/* Visible keyboard-focus ring for every interactive control. */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
 /* Scrollbar Styling */
@@ -116,7 +139,7 @@ body {
   background: var(--bg-card);
   backdrop-filter: var(--blur-md);
   border: 1px solid var(--border-glass);
-  border-radius: 16px 16px 0 0;
+  border-radius: 14px;
   box-shadow: none;
 }
 

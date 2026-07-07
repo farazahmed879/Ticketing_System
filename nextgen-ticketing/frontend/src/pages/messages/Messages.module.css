@@ -1,5 +1,5 @@
 .container {
-  height: calc(100vh - 150px);
+  height: calc(100vh - 90px);
   display: grid;
   grid-template-columns: 320px 1fr;
   gap: 1px;

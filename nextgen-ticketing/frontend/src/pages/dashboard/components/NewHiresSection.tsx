@@ -165,7 +165,7 @@ const NewHiresSection: React.FC<NewHiresSectionProps> = ({ newHires }) => {
           </div>
         </div>
       ) : (
-        <div className={`${styles.welcomeSection} glass-card`} style={{ padding: "24px" }}>
+        <div className={`${styles.welcomeSection} glass-card`} style={{ padding: "18px" }}>
           {renderContent(false)}
         </div>
       )}

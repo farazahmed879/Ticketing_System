@@ -236,7 +236,7 @@ const TicketList: React.FC = () => {
         header={
           <div className={styles.header}>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
+              <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0 }}>
                 Tickets
               </h1>
             </div>

@@ -143,7 +143,7 @@ const AnnouncementList: React.FC = () => {
             }}
           >
             <div>
-              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+              <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>
                 {entityNamePlural}
               </h1>
               <p style={{ color: "var(--text-muted)" }}>

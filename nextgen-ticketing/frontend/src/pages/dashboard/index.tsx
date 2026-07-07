@@ -106,7 +106,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className={styles.mainGrid}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           {/* Mini Leaderboard Preview */}
           {(user?.role?.roleType === ROLE_TYPE.ADMIN ||
             user?.role?.roleType === ROLE_TYPE.HR) && <LeaderboardSection />}

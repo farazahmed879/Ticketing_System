@@ -65,7 +65,7 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: "1.8rem",
+            fontSize: "1.4rem",
             fontWeight: 800,
             color: "white",
             boxShadow: "0 4px 15px rgba(124, 58, 237, 0.3)",

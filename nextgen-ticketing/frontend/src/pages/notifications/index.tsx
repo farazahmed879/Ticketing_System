@@ -145,7 +145,7 @@ const Notifications: React.FC = () => {
   return (
     <div className="animate-fade-in">
       <div className={styles.header}>
-        <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Notifications</h1>
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>Notifications</h1>
         <div className={styles.actions}>
           <button
             className={`${styles.actionBtn} glass-card glass-card-hover`}

@@ -72,9 +72,7 @@ const TeamList: React.FC = () => {
       const usersRes = await api.get(API_ROUTES.USERS.BASE + "?limit=1000");
       const allUsers = usersRes.data.accounts || [];
       return allUsers.filter(
-        (u: any) =>
-          u.role?.roleType !== ROLE_TYPE.CUSTOMER &&
-          u.role?.roleType !== "isCustomer",
+        (u: any) => u.role?.roleType !== ROLE_TYPE.CUSTOMER,
       );
     },
     enabled: isModalOpen,
@@ -167,7 +165,7 @@ const TeamList: React.FC = () => {
         header={
           <div className={styles.header}>
             <div>
-              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Teams</h1>
+              <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>Teams</h1>
               <p style={{ color: "var(--text-muted)" }}>
                 Manage cross-functional teams and projects
               </p>

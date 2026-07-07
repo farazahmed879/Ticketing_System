@@ -191,7 +191,7 @@ const Timesheet: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>My Timesheet</h1>
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>My Timesheet</h1>
         <div style={{ display: "flex", gap: 12 }}>
           <CustomButton
             variant="secondary"
@@ -267,7 +267,7 @@ const Timesheet: React.FC = () => {
 
       <div
         className={`${styles.calendarWrapper} glass-card`}
-        style={{ padding: 24 }}
+        style={{ padding: 16 }}
       >
         {renderHeader()}
         {renderDays()}

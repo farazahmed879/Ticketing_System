@@ -70,8 +70,8 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
 
   return (
     <div className="animate-fade-in">
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: "1.75rem", fontWeight: 700, marginBottom: 8 }}>
+      <div style={{ marginBottom: 18 }}>
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, marginBottom: 4 }}>
           Welcome Back!
         </h1>
         <p style={{ color: "var(--text-muted)" }}>
@@ -106,7 +106,7 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
-              gap: 20,
+              gap: 16,
             }}
           >
             {Array.from({ length: 3 }).map((_, i) => (
@@ -114,7 +114,7 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
                 key={i}
                 className="glass-card"
                 style={{
-                  padding: 24,
+                  padding: 18,
                   display: "flex",
                   flexDirection: "column",
                   gap: 16,
@@ -173,7 +173,7 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
-              gap: 20,
+              gap: 16,
             }}
           >
             {projects.map((project) => (
@@ -190,7 +190,7 @@ const CustomerDashboard: React.FC<CustomerDashboardProps> = ({ stats }) => {
                 }}
                 className="glass-card"
                 style={{
-                  padding: 24,
+                  padding: 18,
                   display: "flex",
                   flexDirection: "column",
                   gap: 16,

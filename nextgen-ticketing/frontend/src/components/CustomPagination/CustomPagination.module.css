@@ -2,14 +2,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
+  padding: 8px 16px;
   background: var(--bg-card);
   backdrop-filter: var(--blur-md);
   border-top: 1px solid var(--border-glass);
   margin-top: -1px;
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
-  gap: 20px;
+  gap: 16px;
   flex-wrap: wrap;
   transition: var(--transition-fast);
 }
@@ -17,14 +17,14 @@
 .leftSection {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 20px;
 }
 
 .pageSize {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.85rem;
+  gap: 10px;
+  font-size: 0.8rem;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -41,13 +41,13 @@
   background: var(--bg-input);
   border: 1px solid var(--border-glass);
   color: var(--text-primary);
-  padding: 6px 12px;
-  border-radius: 10px;
-  font-size: 0.85rem;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 64px;
+  min-width: 58px;
   justify-content: space-between;
 }
 
@@ -102,7 +102,7 @@
 }
 
 .info {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   letter-spacing: 0.2px;
 }
@@ -123,14 +123,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  height: 36px;
-  padding: 0 10px;
-  border-radius: 10px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 8px;
   border: 1px solid var(--border-glass);
   background: var(--bg-input);
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -140,16 +140,15 @@
   border-color: var(--accent-primary);
   color: var(--accent-primary);
   background: var(--bg-card);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
 }
 
 .pageBtn.active {
   background: var(--primary-gradient);
   color: #ffffff;
   border-color: transparent;
-  box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.35);
-  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.35);
 }
 
 .pageBtn:disabled {

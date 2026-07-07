@@ -13,7 +13,6 @@ import {
   StatusName,
   TICKET_TYPES,
   UIMessages,
-  RoleName,
 } from "../../../utils/constants";
 import { useAuth } from "../../../context/AuthContext";
 import { socket } from "../../../services/socket";
@@ -185,11 +184,11 @@ const TicketBoard: React.FC = () => {
         api.get(API_ROUTES.USERS.GET_BY_ROLES, {
           params: {
             roles: [
-              RoleName.AGENT,
-              RoleName.CUSTOMER,
-              RoleName.EMPLOYEE,
-              RoleName.ADMIN,
-              RoleName.QA,
+              ROLE_TYPE.AGENT,
+              ROLE_TYPE.CUSTOMER,
+              ROLE_TYPE.EMPLOYEE,
+              ROLE_TYPE.ADMIN,
+              ROLE_TYPE.QA,
             ],
             limit: -1,
           },
@@ -467,7 +466,7 @@ const TicketBoard: React.FC = () => {
                     border: "1px solid var(--border-glass)",
                   }}
                 />
-                <h1 style={{ fontSize: "1.8rem", fontWeight: 700, margin: 0 }}>
+                <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0 }}>
                   Ticketing Board
                 </h1>
               </div>

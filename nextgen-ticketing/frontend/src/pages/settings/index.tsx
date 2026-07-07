@@ -282,7 +282,7 @@ const Settings: React.FC = () => {
   return (
     <div className="animate-fade-in">
       <div className={styles.header}>
-        <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>
           {t("settings.title")}
         </h1>
         <p style={{ color: "var(--text-muted)" }}>{t("settings.subtitle")}</p>

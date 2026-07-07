@@ -1,8 +1,8 @@
 .boardContainer {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  height: calc(100vh - 110px);
+  gap: 14px;
+  height: calc(100vh - 90px);
   width: 100%;
   min-width: 0;
   flex: 1;

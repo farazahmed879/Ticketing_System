@@ -13,7 +13,7 @@ const AnnouncementSection: React.FC<AnnouncementSectionProps> = ({ announcements
   const renderContent = () => (
     <>
       <div className={styles.sectionHeader}>
-        <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)" }}>
+        <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)" }}>
           {t("dashboard.announcements")}
         </h2>
         <button

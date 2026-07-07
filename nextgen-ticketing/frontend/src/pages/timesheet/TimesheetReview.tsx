@@ -10,7 +10,7 @@ import TimesheetReviewModal from "./components/TimesheetReviewModal";
 import type { TimesheetEntry } from "../../types";
 
 import { useNavigate } from "react-router-dom";
-import { RoleName } from "../../utils/constants";
+import { ROLE_TYPE } from "../roles/roleConstants";
 import CustomBadge from "../../components/CustomBadge";
 import CustomImage from "../../components/CustomImage";
 import StandardListLayout from "../../components/StandardListLayout/StandardListLayout";
@@ -40,10 +40,10 @@ const TimesheetReview: React.FC = () => {
       const res = await api.get(API_ROUTES.USERS.GET_BY_ROLES, {
         params: {
           roles: [
-            RoleName.AGENT,
-            RoleName.EMPLOYEE,
-            RoleName.HR,
-            RoleName.ADMIN,
+            ROLE_TYPE.AGENT,
+            ROLE_TYPE.EMPLOYEE,
+            ROLE_TYPE.HR,
+            ROLE_TYPE.ADMIN,
           ],
           limit: -1,
         },

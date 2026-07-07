@@ -3,7 +3,6 @@ import Modal from "../../../components/Modal";
 import RoleForm from "./RoleForm";
 import type { RoleModalProps } from "../types";
 import CustomButton from "../../../components/CustomButton";
-import { RoleName } from "../../../utils/constants";
 
 const RoleModal: React.FC<RoleModalProps> = ({
   isOpen,
@@ -14,7 +13,7 @@ const RoleModal: React.FC<RoleModalProps> = ({
   isLoading = false,
 }) => {
   const formRef = useRef<any>(null);
-  const isCoreAdmin = role?.name === RoleName.ADMIN;
+  const isCoreAdmin = !!role?.isAdmin;
 
   const handleReset = () => {
     if (formRef.current) {

@@ -133,7 +133,7 @@ const DepartmentList: React.FC = () => {
         header={
           <div className={styles.header}>
             <div>
-              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>
+              <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>
                 Departments
               </h1>
               <p style={{ color: "var(--text-muted)" }}>

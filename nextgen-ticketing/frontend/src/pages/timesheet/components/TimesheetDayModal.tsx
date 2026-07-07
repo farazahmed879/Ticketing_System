@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -12,8 +13,13 @@ import { API_ROUTES } from "../../../utils/apiRoutes";
 import { format } from "date-fns";
 import styles from "../Timesheet.module.css";
 import { UIMessages } from "../../../utils/constants";
+import { useAuth } from "../../../context/AuthContext";
 
 import type { TimesheetEntry } from "../../../types";
+
+// Sentinel for the "Miscellaneous" (no specific project) option. Mapped to an
+// empty projectId on save, which the backend stores as null.
+const MISC_PROJECT = "misc";
 
 interface TimesheetFormData {
   totalHours: string;
@@ -43,8 +49,10 @@ const TimesheetDayModal: React.FC<Props> = ({
 }) => {
   const queryClient = useQueryClient();
   const { showNotification, setIsLoading } = useNotification();
+  const { user } = useAuth();
 
-  const { handleSubmit, control, reset, watch } = useForm<TimesheetFormData>({
+  const { handleSubmit, control, reset, watch, setValue } =
+    useForm<TimesheetFormData>({
     defaultValues: {
       totalHours: "8",
       notes: "",
@@ -63,6 +71,12 @@ const TimesheetDayModal: React.FC<Props> = ({
     0,
   );
   const isApproved = existingEntry?.status === "APPROVED";
+
+  // Total hours for the day is derived from the sum of task hours — keep the
+  // (read-only) field in sync whenever a task's hours change.
+  useEffect(() => {
+    setValue("totalHours", String(taskSum));
+  }, [taskSum, setValue]);
 
   useEffect(() => {
     if (existingEntry) {
@@ -83,18 +97,24 @@ const TimesheetDayModal: React.FC<Props> = ({
   }, [existingEntry, reset]);
 
   const { data: metadata } = useQuery({
-    queryKey: ["timesheet-metadata"],
+    // Keyed by the current user so an employee always sees their own scoped
+    // projects (the backend scopes /projects by the JWT role + user). Fetches
+    // fresh whenever the modal opens, so newly created projects appear without
+    // a page refresh.
+    queryKey: ["timesheet-metadata", user?.id],
     queryFn: async () => {
       const [pRes, tRes] = await Promise.all([
-        api.get(API_ROUTES.COMMON.GROUPS),
+        api.get(API_ROUTES.PROJECTS.BASE, { params: { limit: -1 } }),
         api.get(API_ROUTES.TICKETS.BASE, { params: { limit: -1 } }),
       ]);
       return {
-        projects: pRes.data.groups || [],
+        projects: pRes.data.projects || [],
         tickets: tRes.data.tickets || [],
       };
     },
     enabled: isOpen,
+    refetchOnMount: "always",
+    staleTime: 0,
   });
 
   const projects = metadata?.projects || [];
@@ -106,7 +126,22 @@ const TimesheetDayModal: React.FC<Props> = ({
         date: date.toISOString(),
         totalHours: parseFloat(data.totalHours),
         notes: data.notes,
-        tasks: data.tasks.filter((t) => t.description?.trim() || t.hours > 0),
+        tasks: data.tasks
+          .filter((t) => t.description?.trim() || t.hours > 0)
+          .map((t) => {
+            // "Miscellaneous" means no specific project → store as null, and it
+            // isn't tied to a ticket either.
+            const isMisc = t.projectId === MISC_PROJECT;
+            const projectId = isMisc ? "" : t.projectId;
+            let ticketId = isMisc ? "" : t.ticketId;
+            // Drop a linked ticket that doesn't belong to the chosen project
+            // (e.g. the project was changed after a ticket was picked).
+            if (ticketId && projectId) {
+              const linked = tickets.find((x: any) => x.id === ticketId);
+              if (linked && linked.project?.id !== projectId) ticketId = "";
+            }
+            return { ...t, projectId, ticketId };
+          }),
       });
     },
     onMutate: () => setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES),
@@ -187,7 +222,9 @@ const TimesheetDayModal: React.FC<Props> = ({
               label="Total Hours for the Day"
               type="number"
               step="0.5"
+              max={24}
               required
+              readOnly
               disabled={isApproved}
             />
             <div
@@ -269,6 +306,7 @@ const TimesheetDayModal: React.FC<Props> = ({
                   label="Hours"
                   type="number"
                   step="0.5"
+                  max={24}
                   disabled={isApproved}
                   required
                 />
@@ -277,25 +315,40 @@ const TimesheetDayModal: React.FC<Props> = ({
                   control={control}
                   label="Project"
                   placeholder="Select Project"
-                  options={projects.map((p: any) => ({
-                    value: p.id,
-                    label: p.name,
-                  }))}
+                  options={[
+                    { value: MISC_PROJECT, label: "Miscellaneous" },
+                    ...projects.map((p: any) => ({
+                      value: p.id,
+                      label: p.name,
+                    })),
+                  ]}
                   disabled={isApproved}
                 />
-                <CustomSelect
-                  name={`tasks.${index}.ticketId` as const}
-                  control={control}
-                  label="Ticket"
-                  placeholder="Link Ticket"
-                  options={tickets.map(
-                    (t: { id: any; uid: any; subject: string }) => ({
-                      value: t.id,
-                      label: `#${t.uid} ${t.subject.substring(0, 20)}...`,
-                    }),
-                  )}
-                  disabled={isApproved}
-                />
+                {watchedTasks?.[index]?.projectId === MISC_PROJECT ? (
+                  // Miscellaneous activity isn't tied to a ticket — hide the
+                  // Ticket picker (empty spacer keeps the grid columns aligned).
+                  <div />
+                ) : (
+                  <CustomSelect
+                    name={`tasks.${index}.ticketId` as const}
+                    control={control}
+                    label="Ticket"
+                    placeholder="Link Ticket"
+                    options={tickets
+                      // When a project is selected, only its tickets are
+                      // linkable; otherwise all tickets are shown.
+                      .filter((t: any) =>
+                        watchedTasks?.[index]?.projectId
+                          ? t.project?.id === watchedTasks[index].projectId
+                          : true,
+                      )
+                      .map((t: { id: any; uid: any; subject: string }) => ({
+                        value: t.id,
+                        label: `#${t.uid} ${t.subject.substring(0, 20)}...`,
+                      }))}
+                    disabled={isApproved}
+                  />
+                )}
                 {!isApproved && (
                   <CustomButton
                     type="button"

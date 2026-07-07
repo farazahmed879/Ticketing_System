@@ -193,7 +193,7 @@ const DepartmentDetail: React.FC = () => {
           <div>
             <h1
               style={{
-                fontSize: "1.8rem",
+                fontSize: "1.4rem",
                 fontWeight: 800,
                 margin: 0,
                 color: "var(--text-primary)",

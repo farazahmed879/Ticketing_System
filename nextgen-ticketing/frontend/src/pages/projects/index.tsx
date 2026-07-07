@@ -7,7 +7,6 @@ import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
 import {
-  RoleName,
   PROJECT_STATUS_OPTIONS,
   DEFAULT_PAGE_SIZE,
 } from "../../utils/constants";
@@ -94,7 +93,7 @@ const ProjectList: React.FC = () => {
     queryFn: async () => {
       const [clientsRes, teamsRes] = await Promise.all([
         api.get(API_ROUTES.USERS.GET_BY_ROLES, {
-          params: { roles: [RoleName.CUSTOMER, RoleName.AGENT], limit: -1 },
+          params: { roles: [ROLE_TYPE.CUSTOMER, ROLE_TYPE.AGENT], limit: -1 },
         }),
         api.get(API_ROUTES.TEAMS.BASE, {
           params: { limit: -1 },
@@ -228,7 +227,7 @@ const ProjectList: React.FC = () => {
             }}
           >
             <div>
-              <h1 style={{ fontSize: "1.8rem", fontWeight: 700 }}>Projects</h1>
+              <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>Projects</h1>
               <p style={{ color: "var(--text-muted)" }}>
                 Manage client and internal projects
               </p>

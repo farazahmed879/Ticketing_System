@@ -4,7 +4,7 @@ import {
   StatusName,
   ActionName,
   NotificationMessages,
-  RoleName,
+  RoleType,
   TICKET_STATUSES,
   PRIORITIES,
 } from "../utils/constants";
@@ -60,14 +60,14 @@ export const ticketUsecase = {
 
     // Visibility scoping by role. Kept inside AND so a `search` filter (which
     // also uses OR) can never widen what a restricted user is allowed to see.
-    if (user.role === RoleName.CUSTOMER) {
+    if (user.role === RoleType.CUSTOMER) {
       // Clients see every ticket in their projects (regardless of status),
       // plus any ticket they personally own.
       const projectIds = await ticketRepository.findClientProjectIds(user.id);
       const visibility: any[] = [{ ownerId: user.id }];
       if (projectIds.length) visibility.push({ projectId: { in: projectIds } });
       where.AND = [...(where.AND || []), { OR: visibility }];
-    } else if (user.role === RoleName.QA) {
+    } else if (user.role === RoleType.QA) {
       where.AND = [
         ...(where.AND || []),
         {
@@ -78,7 +78,7 @@ export const ticketUsecase = {
           ],
         },
       ];
-    } else if (user.role === RoleName.AGENT) {
+    } else if (user.role === RoleType.AGENT) {
       // Managers see tickets in the projects they manage, plus any ticket they
       // personally own or are assigned.
       const managedProjectIds = await ticketRepository.findManagedProjectIds(
@@ -92,7 +92,7 @@ export const ticketUsecase = {
         visibility.push({ projectId: { in: managedProjectIds } });
       }
       where.AND = [...(where.AND || []), { OR: visibility }];
-    } else if (user.role !== RoleName.ADMIN) {
+    } else if (user.role !== RoleType.ADMIN) {
       // Regular users see tickets they own or are assigned. Team leads also see
       // every ticket assigned to a member of any team they lead, plus every
       // UNASSIGNED ticket in the project(s) their team is on.
@@ -117,9 +117,9 @@ export const ticketUsecase = {
     }
 
     if (filters.myTickets === "true") {
-      if (user.role === RoleName.CUSTOMER) {
+      if (user.role === RoleType.CUSTOMER) {
         where.AND = [...(where.AND || []), { ownerId: user.id }];
-      } else if (user.role === RoleName.QA) {
+      } else if (user.role === RoleType.QA) {
         where.AND = [
           ...(where.AND || []),
           {
@@ -248,7 +248,7 @@ export const ticketUsecase = {
     const ticket = await ticketRepository.findTicketById(id);
     if (!ticket) throw new Error("Ticket not found");
 
-    if (user && user.role === RoleName.CUSTOMER && ticket.comments) {
+    if (user && user.role === RoleType.CUSTOMER && ticket.comments) {
       ticket.comments = ticket.comments.filter((c: any) => !c.isNote);
     }
 
@@ -331,11 +331,11 @@ export const ticketUsecase = {
     if (!existingTicket) throw new Error("Ticket not found");
 
     const actorId = user.id;
-    const isAdmin = user.role === RoleName.ADMIN;
-    const isManager = user?.role === RoleName.AGENT || data?.isLead;
-    const isEmployee = user.role === RoleName.EMPLOYEE;
-    const isClient = user.role === RoleName.CUSTOMER;
-    const isQA = user.role === RoleName.QA;
+    const isAdmin = user.role === RoleType.ADMIN;
+    const isManager = user?.role === RoleType.AGENT || data?.isLead;
+    const isEmployee = user.role === RoleType.EMPLOYEE;
+    const isClient = user.role === RoleType.CUSTOMER;
+    const isQA = user.role === RoleType.QA;
 
     const isStaff = isAdmin || isManager || isEmployee; // kept for downstream uses
     const isOwner = existingTicket.ownerId === user.id;
@@ -776,9 +776,9 @@ export const ticketUsecase = {
     if (statusId) {
       const targetStatus = await ticketRepository.findStatusById(statusId);
       const isStaff =
-        user.role === RoleName.ADMIN ||
-        user.role === RoleName.AGENT ||
-        user.role === RoleName.EMPLOYEE;
+        user.role === RoleType.ADMIN ||
+        user.role === RoleType.AGENT ||
+        user.role === RoleType.EMPLOYEE;
 
       if (isStaff && targetStatus?.name === StatusName.IN_PROCESS) {
         const tickets = await ticketRepository.findManyByIds(ticketIds);
@@ -869,7 +869,7 @@ export const ticketUsecase = {
     }
 
     // Notify staff when a customer creates a ticket
-    if (ctx.userRole === RoleName.CUSTOMER) {
+    if (ctx.userRole === RoleType.CUSTOMER) {
       const ticket = await ticketRepository.findTicketById(ctx.ticketId);
       const admins = await ticketRepository.findAdmins();
 
@@ -911,9 +911,9 @@ export const ticketUsecase = {
 
     // Auto-create timesheet task
     if (
-      (ctx.userRole === RoleName.ADMIN ||
-        ctx.userRole === RoleName.AGENT ||
-        ctx.userRole === RoleName.EMPLOYEE) &&
+      (ctx.userRole === RoleType.ADMIN ||
+        ctx.userRole === RoleType.AGENT ||
+        ctx.userRole === RoleType.EMPLOYEE) &&
       ctx.statusName === StatusName.IN_PROCESS
     ) {
       // We need the full ticket for handleTimesheetTask
@@ -965,9 +965,9 @@ export const ticketUsecase = {
 
     // Check owner roles
     const ownerIsStaff =
-      owner?.role?.name === RoleName.ADMIN ||
-      owner?.role?.name === RoleName.AGENT;
-    const ownerIsClient = owner?.role?.roleType === "isCustomer";
+      owner?.role?.roleType === RoleType.ADMIN ||
+      owner?.role?.roleType === RoleType.AGENT;
+    const ownerIsClient = owner?.role?.roleType === RoleType.CUSTOMER;
 
     // Collect all user IDs to notify
     const notifyIds = new Set<string>();
@@ -1147,7 +1147,7 @@ export const ticketUsecase = {
       include: { role: true },
     });
 
-    if (author?.role?.name === RoleName.CUSTOMER) {
+    if (author?.role?.roleType === RoleType.CUSTOMER) {
       // 1. Notify Admins
       const admins = await ticketRepository.findAdmins();
       for (const a of admins) {

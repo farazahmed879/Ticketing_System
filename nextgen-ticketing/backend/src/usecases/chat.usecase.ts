@@ -1,5 +1,4 @@
 import { chatRepository } from "../repositories/chat.repository";
-import { RoleName } from "../utils/constants";
 
 export const chatUsecase = {
   async getConversations(userId: string) {
@@ -47,14 +46,10 @@ export const chatUsecase = {
 
     if (!me || !partner) throw new Error("User not found");
 
-    const isMeAdmin =
-      me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN;
-    const isMeAgent =
-      me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT;
-    const isMeCustomer =
-      me.role.isCustomer || me.role.name.toLowerCase() === RoleName.CUSTOMER;
-    const isMeEmployee =
-      me.role.isEmployee || me.role.name.toLowerCase() === RoleName.EMPLOYEE;
+    const isMeAdmin = me.role.isAdmin;
+    const isMeAgent = me.role.isAgent;
+    const isMeCustomer = me.role.isCustomer;
+    const isMeEmployee = me.role.isEmployee;
 
     let allowed = false;
 
@@ -63,9 +58,7 @@ export const chatUsecase = {
     } else if (isMeCustomer) {
       if (
         partner.role.isAdmin ||
-        partner.role.name.toLowerCase() === RoleName.ADMIN ||
-        partner.role.isAgent ||
-        partner.role.name.toLowerCase() === RoleName.AGENT
+        partner.role.isAgent
       ) {
         allowed = true;
       }
@@ -117,14 +110,10 @@ export const chatUsecase = {
     const me = await chatRepository.findUserWithRole(userId);
     if (!me) throw new Error("User not found");
 
-    const isMeAdmin =
-      me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN;
-    const isMeAgent =
-      me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT;
-    const isMeCustomer =
-      me.role.isCustomer || me.role.name.toLowerCase() === RoleName.CUSTOMER;
-    const isMeEmployee =
-      me.role.isEmployee || me.role.name.toLowerCase() === RoleName.EMPLOYEE;
+    const isMeAdmin = me.role.isAdmin;
+    const isMeAgent = me.role.isAgent;
+    const isMeCustomer = me.role.isCustomer;
+    const isMeEmployee = me.role.isEmployee;
 
     if (isMeAdmin) {
       return chatRepository.findAllUsersForChat(userId);
@@ -145,10 +134,8 @@ export const chatUsecase = {
     const me = await chatRepository.findUserWithRole(userId);
     if (!me) throw new Error("User not found");
 
-    const isAdmin =
-      me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN.toLowerCase();
-    const isAgent =
-      me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT.toLowerCase();
+    const isAdmin = me.role.isAdmin;
+    const isAgent = me.role.isAgent;
     const isLead = (me as any).isLead === true;
 
     if (!isAdmin && !isAgent && !isLead) {
@@ -160,10 +147,7 @@ export const chatUsecase = {
         memberIds.map((mid) => chatRepository.findUserWithRole(mid))
       );
       const hasClient = addedUsers.some(
-        (u: any) =>
-          u &&
-          (u.role.isCustomer ||
-            u.role.name.toLowerCase() === RoleName.CUSTOMER.toLowerCase())
+        (u: any) => u && u.role.isCustomer
       );
       if (hasClient) {
         throw new Error("Team Leads cannot add clients to a group chat");
@@ -188,10 +172,8 @@ export const chatUsecase = {
     const me = await chatRepository.findUserWithRole(userId);
     if (!me) throw new Error("User not found");
 
-    const isAdmin =
-      me.role.isAdmin || me.role.name.toLowerCase() === RoleName.ADMIN.toLowerCase();
-    const isAgent =
-      me.role.isAgent || me.role.name.toLowerCase() === RoleName.AGENT.toLowerCase();
+    const isAdmin = me.role.isAdmin;
+    const isAgent = me.role.isAgent;
     const isLead = (me as any).isLead === true;
 
     if (!isAdmin && !isAgent && !isLead) {
@@ -203,10 +185,7 @@ export const chatUsecase = {
         addMemberIds.map((mid) => chatRepository.findUserWithRole(mid))
       );
       const hasClient = addedUsers.some(
-        (u: any) =>
-          u &&
-          (u.role.isCustomer ||
-            u.role.name.toLowerCase() === RoleName.CUSTOMER.toLowerCase())
+        (u: any) => u && u.role.isCustomer
       );
       if (hasClient) {
         throw new Error("Team Leads cannot add clients to a group chat");

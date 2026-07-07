@@ -18,7 +18,7 @@ export const authUsecase = {
     }
 
     const token = jwt.sign(
-      { id: user.id, role: user.role.name },
+      { id: user.id, role: user.role.roleType },
       process.env.JWT_SECRET as string,
       { expiresIn: "1d" },
     );
@@ -103,7 +103,7 @@ export const authUsecase = {
     });
 
     const token = jwt.sign(
-      { id: user.id, role: user.role.name },
+      { id: user.id, role: user.role.roleType },
       process.env.JWT_SECRET as string,
       { expiresIn: "1d" },
     );

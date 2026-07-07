@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { AuthRequest } from "../types";
 import { userUsecase } from "../usecases/user.usecase";
-import { RoleName } from "../utils/constants";
+import { RoleType } from "../utils/constants";
 
 export const userController = {
   async getUsers(req: AuthRequest, res: Response) {
@@ -75,10 +75,11 @@ export const userController = {
 
   async updateUser(req: AuthRequest, res: Response) {
     try {
-      const callerRole = (req as any).user?.role;
+      const callerRole = (req as any).user?.role as string | undefined;
+
       if (
-        callerRole?.toUpperCase() !== RoleName.ADMIN &&
-        callerRole?.toUpperCase() !== RoleName.HR
+        callerRole !== RoleType.ADMIN &&
+        callerRole !== RoleType.HR
       ) {
         return res.status(403).json({
           success: false,

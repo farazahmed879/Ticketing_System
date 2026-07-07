@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../types";
 import { requestUsecase } from "../usecases/request.usecase";
 import { emitNotificationToUser } from "../socketio/events";
+import { RoleType } from "../utils/constants";
 
 export const requestController = {
   async getRequests(req: AuthRequest, res: Response) {
@@ -10,7 +11,7 @@ export const requestController = {
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
       // Admins and Agents see every request.
-      if (user.role === "Admin" || user.role === "Agent") {
+      if (user.role === RoleType.ADMIN || user.role === RoleType.AGENT) {
         const requests = await requestUsecase.getRequests();
         return res.json({ success: true, requests });
       }
@@ -70,8 +71,8 @@ export const requestController = {
       // Authority is derived server-side (the JWT only carries { id, role },
       // never permissions): Admins and Agents may act on any request; everyone
       // else must be the team lead of the request's owner.
-      const isAdmin = user.role === "Admin";
-      const isAgent = user.role === "Agent";
+      const isAdmin = user.role === RoleType.ADMIN;
+      const isAgent = user.role === RoleType.AGENT;
 
       if (!isAdmin) {
         // Prevent approving your own request.
@@ -144,7 +145,7 @@ export const requestController = {
       // Allow owner or Admin to delete
       const isOwner = request.userId === user.id;
       const isAdmin =
-        user.role === "Admin" ||
+        user.role === RoleType.ADMIN ||
         (user.permissions as any)?.requests?.delete === true;
 
       if (!isOwner && !isAdmin) {

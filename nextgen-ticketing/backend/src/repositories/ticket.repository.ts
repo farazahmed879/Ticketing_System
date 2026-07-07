@@ -2,7 +2,7 @@ import prisma from "../prisma";
 import {
   StatusName,
   ActionName,
-  RoleName,
+  RoleType,
   TICKET_STATUSES,
   PRIORITIES,
 } from "../utils/constants";
@@ -182,8 +182,8 @@ export const ticketRepository = {
     return prisma.user.findMany({
       where: {
         OR: [
-          { role: { name: RoleName.ADMIN } },
-          { role: { name: RoleName.AGENT } },
+          { role: { roleType: RoleType.ADMIN } },
+          { role: { roleType: RoleType.AGENT } },
         ],
         deleted: false,
       },
@@ -193,7 +193,7 @@ export const ticketRepository = {
   async findAdmins() {
     return prisma.user.findMany({
       where: {
-        role: { name: RoleName.ADMIN },
+        role: { roleType: RoleType.ADMIN },
         deleted: false,
       },
     });

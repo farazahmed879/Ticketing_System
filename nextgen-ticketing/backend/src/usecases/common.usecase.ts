@@ -1,7 +1,7 @@
 import { commonRepository } from "../repositories/common.repository";
 import { announcementRepository } from "../repositories/announcement.repository";
 import prisma from "../prisma";
-import { RoleName } from "../utils/constants";
+import { RoleType } from "../utils/constants";
 
 export const commonUsecase = {
   async getStatuses() {
@@ -59,7 +59,7 @@ export const commonUsecase = {
     const result = await commonRepository.getDashboardStats(user);
 
     let announcementsWhere: any = {};
-    if (user?.role?.toLowerCase() === RoleName.CUSTOMER.toLowerCase()) {
+    if (user?.role === RoleType.CUSTOMER) {
       announcementsWhere.authorId = user.id;
     }
 

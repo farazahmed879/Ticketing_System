@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { candidateController } from "../controllers/candidate.controller";
 import { authMiddleware, checkRole } from "../middleware/auth";
-import { RoleName, RoleType } from "../utils/constants";
+import { RoleType } from "../utils/constants";
 
 const router = Router();
 const upload = multer({
@@ -10,7 +10,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 }); // 10MB
 
-const allowedRoles = [RoleName.ADMIN, RoleName.AGENT, RoleName.HR, RoleType.HR];
+const allowedRoles = [RoleType.ADMIN, RoleType.AGENT, RoleType.HR];
 
 router.get(
   "/",

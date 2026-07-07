@@ -1,5 +1,5 @@
 import prisma from "../prisma";
-import { RoleName } from "../utils/constants";
+import { RoleType } from "../utils/constants";
 
 export const authRepository = {
   async findUserByEmail(email: string) {
@@ -61,8 +61,8 @@ export const authRepository = {
     return prisma.user.findMany({
       where: {
         OR: [
-          { role: { name: RoleName.ADMIN } },
-          { role: { name: RoleName.AGENT } },
+          { role: { roleType: RoleType.ADMIN } },
+          { role: { roleType: RoleType.AGENT } },
         ],
         deleted: false,
       },

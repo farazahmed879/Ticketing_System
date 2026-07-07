@@ -1,4 +1,5 @@
 import { roleRepository } from "../repositories/role.repository";
+import { RoleType } from "../utils/constants";
 
 export const roleUsecase = {
   async getRoles(limit?: string, page?: string) {
@@ -17,12 +18,12 @@ export const roleUsecase = {
     const roleData = {
       name: data.name,
       description: data.description,
-      roleType: data.isAdmin ? "isAdmin" :
-                data.isAgent ? "isAgent" :
-                data.isCustomer ? "isCustomer" :
-                data.isEmployee ? "isEmployee" :
-                data.isHR ? "isHR" :
-                data.isQA ? "isQA" : "isEmployee",
+      roleType: data.isAdmin ? RoleType.ADMIN :
+                data.isAgent ? RoleType.AGENT :
+                data.isCustomer ? RoleType.CUSTOMER :
+                data.isEmployee ? RoleType.EMPLOYEE :
+                data.isHR ? RoleType.HR :
+                data.isQA ? RoleType.QA : RoleType.EMPLOYEE,
       permissions: data.permissions || {},
     };
     return roleRepository.create(roleData);
@@ -32,12 +33,12 @@ export const roleUsecase = {
     const roleData = {
       name: data.name,
       description: data.description,
-      roleType: data.isAdmin ? "isAdmin" :
-                data.isAgent ? "isAgent" :
-                data.isCustomer ? "isCustomer" :
-                data.isEmployee ? "isEmployee" :
-                data.isHR ? "isHR" :
-                data.isQA ? "isQA" : undefined,
+      roleType: data.isAdmin ? RoleType.ADMIN :
+                data.isAgent ? RoleType.AGENT :
+                data.isCustomer ? RoleType.CUSTOMER :
+                data.isEmployee ? RoleType.EMPLOYEE :
+                data.isHR ? RoleType.HR :
+                data.isQA ? RoleType.QA : undefined,
       permissions: data.permissions || {},
     };
     return roleRepository.update(id, roleData);

@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import {
   RoleName,
+  RoleType,
   StatusName,
   PriorityName,
   TicketType,
@@ -124,7 +125,7 @@ async function main() {
     create: {
       name: RoleName.ADMIN,
       description: "Full system access",
-      roleType: "isAdmin",
+      roleType: RoleType.ADMIN,
       permissions: adminPermissions,
     },
   });
@@ -135,7 +136,7 @@ async function main() {
     create: {
       name: RoleName.AGENT,
       description: "Support agent with ticket management access",
-      roleType: "isAgent",
+      roleType: RoleType.AGENT,
       permissions: agentPermissions,
     },
   });
@@ -146,7 +147,7 @@ async function main() {
     create: {
       name: RoleName.EMPLOYEE,
       description: "Internal employee/developer",
-      roleType: "isEmployee",
+      roleType: RoleType.EMPLOYEE,
       permissions: employeePermissions,
     },
   });
@@ -157,7 +158,7 @@ async function main() {
     create: {
       name: RoleName.CUSTOMER,
       description: "End-user who submits tickets",
-      roleType: "isCustomer",
+      roleType: RoleType.CUSTOMER,
       permissions: customerPermissions,
     },
   });
@@ -168,7 +169,7 @@ async function main() {
     create: {
       name: RoleName.HR,
       description: "Human Resources",
-      roleType: "isHR",
+      roleType: RoleType.HR,
       permissions: hrPermissions,
     },
   });
@@ -179,7 +180,7 @@ async function main() {
     create: {
       name: RoleName.QA,
       description: "Quality Assurance tester",
-      roleType: "isQA",
+      roleType: RoleType.QA,
       permissions: qaPermissions,
     },
   });

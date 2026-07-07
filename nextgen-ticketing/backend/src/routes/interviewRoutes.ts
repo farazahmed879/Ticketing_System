@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { interviewController } from '../controllers/interview.controller';
 import { authMiddleware, checkRole } from '../middleware/auth';
-import { RoleName } from '../utils/constants';
+import { RoleType } from '../utils/constants';
 
 const router = Router();
 
-const allowedRoles = [RoleName.ADMIN, RoleName.AGENT, RoleName.EMPLOYEE, RoleName.HR];
+const allowedRoles = [RoleType.ADMIN, RoleType.AGENT, RoleType.EMPLOYEE, RoleType.HR];
 
 router.get('/', authMiddleware, checkRole(allowedRoles), interviewController.getAllInterviews);
 router.get('/:id', authMiddleware, checkRole(allowedRoles), interviewController.getInterviewById);

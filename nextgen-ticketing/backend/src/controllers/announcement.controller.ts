@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { announcementRepository } from "../repositories/announcement.repository";
-import { RoleName } from "../utils/constants";
+import { RoleType } from "../utils/constants";
 import prisma from "../prisma";
 
 export const announcementController = {
@@ -14,7 +14,7 @@ export const announcementController = {
       const user = (req as any).user;
       let where: any = {};
 
-      if (user.role !== RoleName.ADMIN && user.role !== RoleName.AGENT) {
+      if (user.role !== RoleType.ADMIN && user.role !== RoleType.AGENT) {
         where.authorId = user.id;
       }
 
@@ -54,7 +54,7 @@ export const announcementController = {
       const user = (req as any).user;
       let where: any = {};
 
-      if (user.role === RoleName.CUSTOMER) {
+      if (user.role === RoleType.CUSTOMER) {
         where.authorId = user.id;
       }
 
@@ -138,8 +138,8 @@ export const announcementController = {
       }
 
       if (
-        user.role !== RoleName.ADMIN &&
-        user.role !== RoleName.AGENT &&
+        user.role !== RoleType.ADMIN &&
+        user.role !== RoleType.AGENT &&
         announcement.authorId !== user.id
       ) {
         return res.status(403).json({ message: "Access denied" });
@@ -184,8 +184,8 @@ export const announcementController = {
       }
 
       if (
-        user.role !== RoleName.ADMIN &&
-        user.role !== RoleName.AGENT &&
+        user.role !== RoleType.ADMIN &&
+        user.role !== RoleType.AGENT &&
         existing.authorId !== user.id
       ) {
         return res.status(403).json({ message: "Access denied" });
@@ -217,8 +217,8 @@ export const announcementController = {
       }
 
       if (
-        user.role !== RoleName.ADMIN &&
-        user.role !== RoleName.AGENT &&
+        user.role !== RoleType.ADMIN &&
+        user.role !== RoleType.AGENT &&
         existing.authorId !== user.id
       ) {
         return res.status(403).json({ message: "Access denied" });

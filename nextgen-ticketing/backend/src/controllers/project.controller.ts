@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { projectRepository } from "../repositories/project.repository";
-import { RoleName } from "../utils/constants";
+import { RoleType } from "../utils/constants";
 
 export const projectController = {
   async getAll(req: Request, res: Response) {
@@ -12,17 +12,17 @@ export const projectController = {
       const userId = user?.id || req.query.userId;
 
       // Client: only projects they are assigned to
-      if (role === RoleName.CUSTOMER && userId) {
+      if (role === RoleType.CUSTOMER && userId) {
         query.clientId = userId;
       }
 
       // Manager: only projects they manage
-      if (role === RoleName.AGENT && userId) {
+      if (role === RoleType.AGENT && userId) {
         query.managerId = userId;
       }
 
       // Employee: only projects whose team(s) they belong to.
-      if (role === RoleName.EMPLOYEE && userId) {
+      if (role === RoleType.EMPLOYEE && userId) {
         query.teamMemberId = userId;
       }
 

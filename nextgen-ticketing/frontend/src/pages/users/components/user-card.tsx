@@ -9,7 +9,7 @@ const UserCard = ({
   getRoleStyle,
   handleEdit,
   handleDelete,
-  canEditUsers = false,
+  canEditUsers,
 }: any) => {
   const navigate = useNavigate();
   return (

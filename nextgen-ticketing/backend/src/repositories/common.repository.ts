@@ -1,6 +1,6 @@
 import prisma from "../prisma";
 import {
-  RoleName,
+  RoleType,
   TICKET_STATUSES,
   PRIORITIES,
   TICKET_TYPES,
@@ -91,11 +91,9 @@ export const commonRepository = {
   },
 
   async getDashboardStats(user?: any) {
-    const isCustomer =
-      user?.role.toLowerCase() === RoleName.CUSTOMER.toLowerCase();
+    const isCustomer = user?.role === RoleType.CUSTOMER;
 
-    const isEmployee =
-      user?.role.toLowerCase() === RoleName.EMPLOYEE.toLowerCase();
+    const isEmployee = user?.role === RoleType.EMPLOYEE;
     const userId = user?.id;
     const ticketWhere: any = { deleted: false };
 

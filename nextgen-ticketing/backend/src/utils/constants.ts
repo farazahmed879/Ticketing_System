@@ -9,15 +9,15 @@ export const RoleName = {
 export type RoleName = (typeof RoleName)[keyof typeof RoleName];
 
 export const RoleType = {
-  AGENTS: "agents",
-  ADMINS: "admins",
-  CUSTOMERS: "clients",
+  AGENT: "agent",
+  ADMIN: "admin",
+  CUSTOMER: "client",
   QA: "qa",
   HR: "hr",
-  EMPLOYEES: "employees",
+  EMPLOYEE: "employee",
   ALL: "all",
 } as const;
-export type RoleType = (typeof RoleType)[keyof typeof RoleType];
+export type ROLE_TYPE = (typeof RoleType)[keyof typeof RoleType];
 
 export const TicketType = {
   ISSUE: "Issue",

@@ -3,7 +3,7 @@ import { ticketRepository } from "../repositories/ticket.repository";
 import prisma from "../prisma";
 import {
   InterviewStatus,
-  RoleName,
+  RoleType,
   StatusName,
   PriorityName,
   TicketType,
@@ -23,7 +23,7 @@ export const interviewUsecase = {
     const take = limit ? parseInt(limit as string) : undefined;
     const skip = page && take ? parseInt(page as string) * take : undefined;
 
-    if (user.role !== RoleName.ADMIN && user.role !== RoleName.HR) {
+    if (user.role !== RoleType.ADMIN && user.role !== RoleType.HR) {
       where.panelMembers = { some: { userId: user.id } };
     }
 
@@ -69,7 +69,7 @@ export const interviewUsecase = {
     const interview = (await interviewRepository.findById(id)) as any;
     if (!interview) throw new Error("Interview not found");
 
-    if (user.role !== RoleName.ADMIN && user.role !== RoleName.HR) {
+    if (user.role !== RoleType.ADMIN && user.role !== RoleType.HR) {
       const isPanelMember = interview.panelMembers.some(
         (pm: any) => pm.userId === user.id,
       );

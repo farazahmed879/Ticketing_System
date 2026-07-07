@@ -1,7 +1,7 @@
 import { teamRepository } from "../repositories/team.repository";
 import { userRepository } from "../repositories/user.repository";
 import prisma from "../prisma";
-import { RoleName } from "../utils/constants";
+import { RoleType } from "../utils/constants";
 
 // Managers cannot be team members or the team lead. Throws if any of the given
 // user ids belong to a manager.
@@ -9,7 +9,7 @@ async function assertNoManagers(userIds: (string | undefined | null)[]) {
   const ids = Array.from(new Set(userIds.filter(Boolean) as string[]));
   if (!ids.length) return;
   const managers = await prisma.user.findMany({
-    where: { id: { in: ids }, role: { name: RoleName.AGENT } },
+    where: { id: { in: ids }, role: { roleType: RoleType.AGENT } },
     select: { fullname: true },
   });
   if (managers.length) {

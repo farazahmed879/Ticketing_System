@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { userRepository } from "../repositories/user.repository";
-import { RoleName, RoleType } from "../utils/constants";
+import { RoleType } from "../utils/constants";
 
 export const userUsecase = {
   async getUsers(
@@ -13,17 +13,9 @@ export const userUsecase = {
     const take = parseInt(limit);
     const skip = parseInt(page) * take;
 
+    // The frontend sends either "all" or a specific role id to filter by.
     let roleFilter: any = {};
-    if (type === RoleType.AGENTS)
-      roleFilter = { role: { roleType: { in: ["isAgent", "isEmployee"] } } };
-    else if (type === RoleType.ADMINS) roleFilter = { role: { roleType: "isAdmin" } };
-    else if (type === RoleType.CUSTOMERS)
-      roleFilter = { role: { name: RoleName.CUSTOMER } };
-    else if (type === RoleType.QA)
-      roleFilter = { role: { roleType: "isQA" } };
-    else if (type === RoleType.EMPLOYEES)
-      roleFilter = { role: { roleType: "isEmployee" } };
-    else if (type && type.toLowerCase() !== "all")
+    if (type && type.toLowerCase() !== "all")
       roleFilter = { roleId: type };
 
     const where: any = {
@@ -59,46 +51,41 @@ export const userUsecase = {
 
     let roleConditions: any[] = [];
 
-    if (roles.includes(RoleName.EMPLOYEE)) {
+    if (roles.includes(RoleType.EMPLOYEE)) {
       roleConditions.push({
         role: {
-          roleType: { in: ["isAgent", "isEmployee"] },
+          roleType: { in: [RoleType.AGENT, RoleType.EMPLOYEE] },
         },
       });
     }
 
-    if (roles.includes(RoleName.ADMIN)) {
+    if (roles.includes(RoleType.ADMIN)) {
       roleConditions.push({
-        role: { 
-          OR: [
-            { roleType: "isAdmin" },
-            { name: RoleName.ADMIN }
-          ]
-        },
+        role: { roleType: RoleType.ADMIN },
       });
     }
 
-    if (roles.includes(RoleName.AGENT)) {
+    if (roles.includes(RoleType.AGENT)) {
       roleConditions.push({
-        role: { name: RoleName.AGENT },
+        role: { roleType: RoleType.AGENT },
       });
     }
 
-    if (roles.includes(RoleName.CUSTOMER)) {
+    if (roles.includes(RoleType.CUSTOMER)) {
       roleConditions.push({
-        role: { name: RoleName.CUSTOMER },
+        role: { roleType: RoleType.CUSTOMER },
       });
     }
 
-    if (roles.includes(RoleName.HR)) {
+    if (roles.includes(RoleType.HR)) {
       roleConditions.push({
-        role: { name: RoleName.HR },
+        role: { roleType: RoleType.HR },
       });
     }
 
-    if (roles.includes(RoleName.QA)) {
+    if (roles.includes(RoleType.QA)) {
       roleConditions.push({
-        role: { name: RoleName.QA },
+        role: { roleType: RoleType.QA },
       });
     }
 
@@ -221,7 +208,7 @@ export const userUsecase = {
     const user = await userRepository.findById(id);
     if (!user) throw new Error("User not found");
 
-    if (user.role?.name === RoleName.ADMIN) {
+    if (user.role?.roleType === RoleType.ADMIN) {
       throw new Error("Admin accounts cannot be deleted");
     }
 

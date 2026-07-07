@@ -1,4 +1,5 @@
 import prisma from "../prisma";
+import { RoleType } from "../utils/constants";
 
 export const chatRepository = {
   async findRoomsByUserId(userId: string) {
@@ -104,13 +105,7 @@ export const chatRepository = {
       where: {
         id: { not: userId },
         deleted: false,
-        role: {
-          OR: [
-            { roleType: "isAdmin" },
-            { roleType: "isAgent" },
-            { name: { in: ["Admin", "Agent"], mode: "insensitive" } },
-          ],
-        },
+        role: { roleType: { in: [RoleType.ADMIN, RoleType.AGENT] } },
       },
       select: {
         id: true,
@@ -129,7 +124,7 @@ export const chatRepository = {
       where: {
         id: { not: userId },
         deleted: false,
-        role: { roleType: { not: "isCustomer" } },
+        role: { roleType: { not: RoleType.CUSTOMER } },
       },
       select: {
         id: true,
@@ -145,12 +140,7 @@ export const chatRepository = {
     return prisma.user.findMany({
       where: {
         deleted: false,
-        role: {
-          OR: [
-            { roleType: "isAdmin" },
-            { name: { equals: "Admin", mode: "insensitive" } },
-          ],
-        },
+        role: { roleType: RoleType.ADMIN },
       },
       select: {
         id: true,

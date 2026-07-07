@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { RoleType } from "./utils/constants";
 
 const basePrisma = new PrismaClient({
   datasources: {
@@ -14,12 +15,12 @@ const prisma = basePrisma.$extends({
       async create({ args, query }: any) {
         if (args.data) {
           const { isAdmin, isAgent, isCustomer, isEmployee, isHR, isQA, ...rest } = args.data;
-          const roleType = isAdmin ? "isAdmin" :
-                           isAgent ? "isAgent" :
-                           isCustomer ? "isCustomer" :
-                           isEmployee ? "isEmployee" :
-                           isHR ? "isHR" :
-                           isQA ? "isQA" : "isEmployee";
+          const roleType = isAdmin ? RoleType.ADMIN :
+                           isAgent ? RoleType.AGENT :
+                           isCustomer ? RoleType.CUSTOMER :
+                           isEmployee ? RoleType.EMPLOYEE :
+                           isHR ? RoleType.HR :
+                           isQA ? RoleType.QA : RoleType.EMPLOYEE;
           args.data = { ...rest, roleType };
         }
         return query(args);
@@ -27,12 +28,12 @@ const prisma = basePrisma.$extends({
       async update({ args, query }: any) {
         if (args.data) {
           const { isAdmin, isAgent, isCustomer, isEmployee, isHR, isQA, ...rest } = args.data;
-          const roleType = isAdmin ? "isAdmin" :
-                           isAgent ? "isAgent" :
-                           isCustomer ? "isCustomer" :
-                           isEmployee ? "isEmployee" :
-                           isHR ? "isHR" :
-                           isQA ? "isQA" : undefined;
+          const roleType = isAdmin ? RoleType.ADMIN :
+                           isAgent ? RoleType.AGENT :
+                           isCustomer ? RoleType.CUSTOMER :
+                           isEmployee ? RoleType.EMPLOYEE :
+                           isHR ? RoleType.HR :
+                           isQA ? RoleType.QA : undefined;
           const updateData = roleType ? { ...rest, roleType } : rest;
           args.data = updateData;
         }
@@ -45,37 +46,37 @@ const prisma = basePrisma.$extends({
       isAdmin: {
         needs: { roleType: true },
         compute(role) {
-          return role.roleType === "isAdmin";
+          return role.roleType === RoleType.ADMIN;
         },
       },
       isAgent: {
         needs: { roleType: true },
         compute(role) {
-          return role.roleType === "isAgent";
+          return role.roleType === RoleType.AGENT;
         },
       },
       isCustomer: {
         needs: { roleType: true },
         compute(role) {
-          return role.roleType === "isCustomer";
+          return role.roleType === RoleType.CUSTOMER;
         },
       },
       isEmployee: {
         needs: { roleType: true },
         compute(role) {
-          return role.roleType === "isEmployee";
+          return role.roleType === RoleType.EMPLOYEE;
         },
       },
       isHR: {
         needs: { roleType: true },
         compute(role) {
-          return role.roleType === "isHR";
+          return role.roleType === RoleType.HR;
         },
       },
       isQA: {
         needs: { roleType: true },
         compute(role) {
-          return role.roleType === "isQA";
+          return role.roleType === RoleType.QA;
         },
       },
     },

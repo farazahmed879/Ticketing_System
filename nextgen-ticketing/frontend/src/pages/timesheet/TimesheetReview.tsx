@@ -54,7 +54,12 @@ const TimesheetReview: React.FC = () => {
 
   const users = usersData || [];
 
-  const { data: entriesData, isLoading: loading } = useQuery({
+  const {
+    data: entriesData,
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: [
       "timesheets",
       "pending",
@@ -66,7 +71,8 @@ const TimesheetReview: React.FC = () => {
     queryFn: async () => {
       const res = await api.get(API_ROUTES.TIMESHEETS.PENDING, {
         params: {
-          status: selectedStatus,
+          // "ALL" tab → no status filter, the backend returns every entry.
+          status: selectedStatus === "ALL" ? undefined : selectedStatus,
           userId: selectedUserId || undefined,
           month: month === "all" ? undefined : month,
           year: year === "all" ? undefined : year,
@@ -78,8 +84,10 @@ const TimesheetReview: React.FC = () => {
 
   const entries: TimesheetEntry[] = entriesData || [];
 
+  // Refetch the current view directly (invalidation alone gives no visible
+  // feedback and depends on key-prefix matching).
   const fetchEntries = () => {
-    queryClient.invalidateQueries({ queryKey: ["timesheets", "pending"] });
+    refetch();
   };
 
   const filteredUsers = users.filter(
@@ -119,20 +127,22 @@ const TimesheetReview: React.FC = () => {
     rejectMutation.mutate(id);
   };
 
+  // Values are 0-indexed to match the backend (`new Date(year, month)`) and
+  // the default state (`new Date().getMonth()`).
   const months = [
     { value: "all", label: "All Months" },
-    { value: "1", label: "January" },
-    { value: "2", label: "February" },
-    { value: "3", label: "March" },
-    { value: "4", label: "April" },
-    { value: "5", label: "May" },
-    { value: "6", label: "June" },
-    { value: "7", label: "July" },
-    { value: "8", label: "August" },
-    { value: "9", label: "September" },
-    { value: "10", label: "October" },
-    { value: "11", label: "November" },
-    { value: "12", label: "December" },
+    { value: "0", label: "January" },
+    { value: "1", label: "February" },
+    { value: "2", label: "March" },
+    { value: "3", label: "April" },
+    { value: "4", label: "May" },
+    { value: "5", label: "June" },
+    { value: "6", label: "July" },
+    { value: "7", label: "August" },
+    { value: "8", label: "September" },
+    { value: "9", label: "October" },
+    { value: "10", label: "November" },
+    { value: "11", label: "December" },
   ];
 
   const years = [
@@ -163,6 +173,7 @@ const TimesheetReview: React.FC = () => {
           selectedStatus={selectedStatus}
           setSelectedStatus={setSelectedStatus}
           onRefresh={fetchEntries}
+          refreshing={isFetching}
         />
       }
     >
@@ -305,7 +316,11 @@ const TimesheetReview: React.FC = () => {
               columns={columns}
               data={entries}
               loading={loading}
-              emptyMessage={`No ${selectedStatus.toLowerCase()} timesheets found`}
+              emptyMessage={
+                selectedStatus === "ALL"
+                  ? "No timesheets found"
+                  : `No ${selectedStatus.toLowerCase()} timesheets found`
+              }
             />
           </div>
         </div>

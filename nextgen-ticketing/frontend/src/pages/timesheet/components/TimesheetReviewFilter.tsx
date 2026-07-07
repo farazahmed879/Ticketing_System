@@ -13,6 +13,8 @@ export interface TimesheetReviewFilterProps {
   selectedStatus: string;
   setSelectedStatus: (v: string) => void;
   onRefresh: () => void;
+  /** True while the entries query is refetching — shows a spinner on the button. */
+  refreshing?: boolean;
 }
 
 export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
@@ -25,6 +27,7 @@ export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
   selectedStatus,
   setSelectedStatus,
   onRefresh,
+  refreshing = false,
 }) => {
   return (
     <div
@@ -55,39 +58,34 @@ export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
           className="glass-card"
           style={{ display: "flex", padding: 4, borderRadius: 12 }}
         >
-          <CustomButton
-            variant={selectedStatus === "PENDING" ? "gradient" : "ghost"}
-            onClick={() => setSelectedStatus("PENDING")}
-            style={{
-              borderRadius: 8,
-              height: "auto",
-              padding: "8px 16px",
-              fontWeight: 600,
-              transition: "all 0.2s",
-              border: "none",
-            }}
-          >
-            Pending
-          </CustomButton>
-          <CustomButton
-            variant={selectedStatus === "APPROVED" ? "gradient" : "ghost"}
-            onClick={() => setSelectedStatus("APPROVED")}
-            style={{
-              borderRadius: 8,
-              height: "auto",
-              padding: "8px 16px",
-              fontWeight: 600,
-              transition: "all 0.2s",
-              border: "none",
-            }}
-          >
-            Approved
-          </CustomButton>
+          {[
+            { value: "PENDING", label: "Pending" },
+            { value: "APPROVED", label: "Approved" },
+            { value: "REJECTED", label: "Rejected" },
+            { value: "ALL", label: "All" },
+          ].map((tab) => (
+            <CustomButton
+              key={tab.value}
+              variant={selectedStatus === tab.value ? "gradient" : "ghost"}
+              onClick={() => setSelectedStatus(tab.value)}
+              style={{
+                borderRadius: 8,
+                height: "auto",
+                padding: "8px 16px",
+                fontWeight: 600,
+                transition: "all 0.2s",
+                border: "none",
+              }}
+            >
+              {tab.label}
+            </CustomButton>
+          ))}
         </div>
       </div>
       <CustomButton
         variant="secondary"
         onClick={onRefresh}
+        loading={refreshing}
         icon={<CustomIcon name="RotateCcw" size={18} />}
       >
         Refresh

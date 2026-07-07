@@ -1,5 +1,5 @@
 import prisma from "../prisma";
-import { StatusName } from "../utils/constants";
+import { TimesheetStatus } from "../utils/constants";
 import { startOfDay } from "date-fns";
 
 export const timesheetRepository = {
@@ -57,14 +57,14 @@ export const timesheetRepository = {
         update: {
           totalHours: data.totalHours,
           notes: data.notes,
-          status: StatusName.PENDING,
+          status: TimesheetStatus.PENDING,
         },
         create: {
           userId,
           date,
           totalHours: data.totalHours,
           notes: data.notes,
-          status: StatusName.PENDING,
+          status: TimesheetStatus.PENDING,
         },
       });
 
@@ -108,7 +108,8 @@ export const timesheetRepository = {
 
   async findPendingEntries() {
     return prisma.timesheetEntry.findMany({
-      where: { status: StatusName.PENDING },
+      // Insensitive so legacy rows stored as "Pending" still match.
+      where: { status: { equals: TimesheetStatus.PENDING, mode: "insensitive" } },
       include: {
         user: { select: { id: true, fullname: true, email: true } },
         tasks: {
@@ -136,7 +137,9 @@ export const timesheetRepository = {
   },
   async findReviewEntries(filters: { status?: string; userId?: string; startDate?: Date; endDate?: Date }) {
     const where: any = {};
-    if (filters.status) where.status = filters.status;
+    // Insensitive so legacy rows stored as "Pending"/"Approved" still match.
+    if (filters.status)
+      where.status = { equals: filters.status, mode: "insensitive" };
     if (filters.userId) where.userId = filters.userId;
     if (filters.startDate || filters.endDate) {
       where.date = {};

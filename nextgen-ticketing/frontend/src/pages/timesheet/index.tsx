@@ -201,7 +201,8 @@ const Timesheet: React.FC = () => {
             Monthly Report
           </CustomButton>
           {user?.role?.roleType === ROLE_TYPE.AGENT ||
-          user?.role?.roleType === ROLE_TYPE.ADMIN ? (
+          user?.role?.roleType === ROLE_TYPE.ADMIN ||
+          user?.role?.roleType === ROLE_TYPE.HR ? (
             <CustomButton
               variant="gradient"
               icon={<CustomIcon name="CheckCircle2" size={18} />}

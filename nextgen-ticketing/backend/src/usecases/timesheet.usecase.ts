@@ -1,6 +1,6 @@
 import { timesheetRepository } from "../repositories/timesheet.repository";
-import { StatusName } from "../utils/constants";
-import { startOfMonth, endOfMonth, startOfDay } from "date-fns";
+import { TimesheetStatus } from "../utils/constants";
+import { startOfMonth, endOfMonth, startOfDay, startOfYear, endOfYear } from "date-fns";
 
 export const timesheetUsecase = {
   async getEntries(startDate?: string, endDate?: string, userId?: string) {
@@ -21,7 +21,10 @@ export const timesheetUsecase = {
 
     const existingEntry = await timesheetRepository.findEntryByUserIdAndDate(userId, entryDate);
 
-    if (existingEntry && existingEntry.status === StatusName.APPROVED) {
+    if (
+      existingEntry &&
+      existingEntry.status?.toUpperCase() === TimesheetStatus.APPROVED
+    ) {
       throw new Error("Cannot edit an approved timesheet.");
     }
 
@@ -37,14 +40,14 @@ export const timesheetUsecase = {
 
   async approveEntry(id: string, agentId: string) {
     return timesheetRepository.updateEntryStatus(id, {
-      status: StatusName.APPROVED,
+      status: TimesheetStatus.APPROVED,
       approvedById: agentId,
     });
   },
 
   async rejectEntry(id: string, reason?: string) {
     return timesheetRepository.updateEntryStatus(id, {
-      status: StatusName.REJECTED,
+      status: TimesheetStatus.REJECTED,
       notes: reason ? `REJECTED: ${reason}` : undefined,
     });
   },
@@ -64,7 +67,7 @@ export const timesheetUsecase = {
 
     const totalHours = entries.reduce((sum, e) => sum + e.totalHours, 0);
     const approvedHours = entries
-      .filter((e) => e.status === StatusName.APPROVED)
+      .filter((e) => e.status?.toUpperCase() === TimesheetStatus.APPROVED)
       .reduce((sum, e) => sum + e.totalHours, 0);
 
     const projectBreakdown: Record<string, { name: string; hours: number }> = {};
@@ -91,11 +94,17 @@ export const timesheetUsecase = {
     let startDate: Date | undefined;
     let endDate: Date | undefined;
 
-    if (filters.month !== undefined && filters.year !== undefined) {
-      const m = parseInt(filters.month);
+    if (filters.year !== undefined) {
       const y = parseInt(filters.year);
-      startDate = startOfMonth(new Date(y, m));
-      endDate = endOfMonth(new Date(y, m));
+      if (filters.month !== undefined) {
+        const m = parseInt(filters.month);
+        startDate = startOfMonth(new Date(y, m));
+        endDate = endOfMonth(new Date(y, m));
+      } else {
+        // "All Months" with a specific year → filter the whole year.
+        startDate = startOfYear(new Date(y, 0));
+        endDate = endOfYear(new Date(y, 0));
+      }
     }
 
     return timesheetRepository.findReviewEntries({

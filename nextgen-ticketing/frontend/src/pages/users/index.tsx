@@ -27,7 +27,11 @@ const UserList: React.FC = () => {
   const { user: currentUser } = useAuth();
   const canEditUsers =
     currentUser?.role?.roleType === ROLE_TYPE.ADMIN ||
+    currentUser?.role?.roleType === ROLE_TYPE.AGENT ||
     currentUser?.role?.roleType === ROLE_TYPE.HR;
+
+  console.log("currentUser", currentUser);
+
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { showNotification, setIsLoading } = useNotification();

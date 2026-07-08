@@ -1,22 +1,30 @@
 import { format } from "date-fns";
+import { useMemo } from "react";
 import CustomImage from "../../../components/CustomImage";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomBadge from "../../../components/CustomBadge";
 import CustomButton from "../../../components/CustomButton";
+import { ROLE_TYPE } from "../../roles/roleConstants";
 import type { TimesheetEntry } from "../../../types";
 
 interface UseTimesheetReviewColumnsProps {
-  setSelectedEntry: (entry: TimesheetEntry) => void;
-  setIsModalOpen: (open: boolean) => void;
+  setSelectedEntry: (e: TimesheetEntry) => void;
+  setIsModalOpen: (b: boolean) => void;
   handleApprove: (id: string) => void;
+  userRoleType?: string;
 }
 
 export const useTimesheetReviewColumns = ({
   setSelectedEntry,
   setIsModalOpen,
   handleApprove,
+  userRoleType,
 }: UseTimesheetReviewColumnsProps) => {
-  return [
+  const isHr = userRoleType === ROLE_TYPE.HR;
+  const isManager =
+    userRoleType === ROLE_TYPE.AGENT || userRoleType === ROLE_TYPE.ADMIN;
+
+  return useMemo(() => [
     {
       header: "User",
       key: "user",
@@ -103,19 +111,44 @@ export const useTimesheetReviewColumns = ({
       ),
     },
     {
-      header: "Status",
-      key: "status",
+      header: "Manager Status",
+      key: "managerStatus",
       render: (e: TimesheetEntry) => (
         <CustomBadge
           variant={
-            e.status === "APPROVED"
+            e.managerApproved === "APPROVED"
               ? "success"
-              : e.status === "REJECTED"
+              : e.managerApproved === "REJECTED"
                 ? "danger"
                 : "warning"
           }
         >
-          {e.status}
+          {e.managerApproved === "APPROVED"
+            ? "Approved"
+            : e.managerApproved === "REJECTED"
+              ? "Rejected"
+              : "Pending"}
+        </CustomBadge>
+      ),
+    },
+    {
+      header: "HR Status",
+      key: "hrStatus",
+      render: (e: TimesheetEntry) => (
+        <CustomBadge
+          variant={
+            e.hrApproved === "APPROVED"
+              ? "success"
+              : e.hrApproved === "REJECTED"
+                ? "danger"
+                : "warning"
+          }
+        >
+          {e.hrApproved === "APPROVED"
+            ? "Approved"
+            : e.hrApproved === "REJECTED"
+              ? "Rejected"
+              : "Pending"}
         </CustomBadge>
       ),
     },
@@ -134,7 +167,8 @@ export const useTimesheetReviewColumns = ({
             icon={<CustomIcon name="Eye" size={16} />}
             style={{ padding: "8px" }}
           />
-          {e.status === "PENDING" && (
+          {((isManager && e.managerApproved === "PENDING") ||
+            (isHr && e.hrApproved === "PENDING")) && (
             <CustomButton
               variant="ghost"
               size="sm"
@@ -149,5 +183,5 @@ export const useTimesheetReviewColumns = ({
         </div>
       ),
     },
-  ];
+  ], [isHr, isManager, handleApprove, setIsModalOpen, setSelectedEntry]);
 };

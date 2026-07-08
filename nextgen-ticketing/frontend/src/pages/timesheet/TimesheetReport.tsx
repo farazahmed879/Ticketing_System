@@ -41,8 +41,8 @@ const TimesheetReport: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+      <div className={`${styles.flexBetween} ${styles.mb24}`} style={{ marginTop: 16 }}>
+        <div className={`${styles.flexRow} ${styles.alignCenter} ${styles.gap16}`}>
           <CustomButton
             variant="ghost"
             onClick={() => navigate("/timesheet")}
@@ -56,16 +56,14 @@ const TimesheetReport: React.FC = () => {
               border: '1px solid var(--border-glass)'
             }}
           />
-          <div>
-            <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0 }}>
-              Timesheet Report
-            </h1>
-            <p style={{ color: "var(--text-muted)", margin: "4px 0 0 0", fontSize: '0.9rem' }}>
-              Detailed insights into logged time and project distribution
+          <div style={{ marginLeft: 4 }}>
+            <h1 className={`${styles.fontXl} ${styles.fw700}`} style={{ margin: 0 }}>Timesheet Report</h1>
+            <p className={`${styles.textMuted} ${styles.fontSm}`} style={{ margin: "4px 0 0 0" }}>
+              Detailed breakdown of hours and projects
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div className={`${styles.flexRow} ${styles.gap12}`}>
           <CustomSelect
             value={month.toString()}
             onChange={(val) => setMonth(parseInt(val))}
@@ -93,7 +91,7 @@ const TimesheetReport: React.FC = () => {
         </div>
         <div className={`glass-card ${styles.statCard}`}>
           <div className={styles.statLabel}>Approved Hours</div>
-          <div className={styles.statValue} style={{ color: 'var(--accent-success)' }}>
+          <div className={`${styles.statValue} ${styles.textSuccess}`}>
             {loading ? <CustomSkeleton width="60px" height="2rem" /> : `${report?.approvedHours || 0}h`}
           </div>
         </div>
@@ -105,7 +103,7 @@ const TimesheetReport: React.FC = () => {
         </div>
         <div className={`glass-card ${styles.statCard}`}>
           <div className={styles.statLabel}>Utilization Rate</div>
-          <div className={styles.statValue} style={{ color: 'var(--accent-secondary)' }}>
+          <div className={`${styles.statValue} ${styles.textSecondary}`}>
             {loading ? <CustomSkeleton width="60px" height="2rem" /> : `${report ? Math.round((report.totalHours / 160) * 100) : 0}%`}
           </div>
         </div>
@@ -127,13 +125,44 @@ const TimesheetReport: React.FC = () => {
                 render: (e) => <strong>{e.totalHours}h</strong>
               },
               { 
-                header: "Status", 
-                key: "status", 
+                header: "Manager Status", 
+                key: "managerStatus", 
                 render: (e) => (
                   <CustomBadge 
-                    variant={e.status === 'APPROVED' ? 'success' : e.status === 'REJECTED' ? 'danger' : 'warning'}
+                    variant={
+                      e.managerApproved === "APPROVED"
+                        ? 'success'
+                        : e.managerApproved === 'REJECTED'
+                          ? 'danger'
+                          : 'warning'
+                    }
                   >
-                    {e.status}
+                    {e.managerApproved === "APPROVED"
+                      ? 'Approved'
+                      : e.managerApproved === 'REJECTED'
+                        ? 'Rejected'
+                        : 'Pending'}
+                  </CustomBadge>
+                )
+              },
+              { 
+                header: "HR Status", 
+                key: "hrStatus", 
+                render: (e) => (
+                  <CustomBadge 
+                    variant={
+                      e.hrApproved === "APPROVED"
+                        ? 'success'
+                        : e.hrApproved === 'REJECTED'
+                          ? 'danger'
+                          : 'warning'
+                    }
+                  >
+                    {e.hrApproved === "APPROVED"
+                      ? 'Approved'
+                      : e.hrApproved === 'REJECTED'
+                        ? 'Rejected'
+                        : 'Pending'}
                   </CustomBadge>
                 )
               },

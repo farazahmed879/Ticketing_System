@@ -11,6 +11,9 @@ router.post('/entries', authMiddleware, timesheetController.upsertEntry);
 // Approval routes - Manager/Admin/HR only
 const reviewRoles = [RoleType.AGENT, RoleType.ADMIN, RoleType.HR];
 router.get('/pending', authMiddleware, checkRole(reviewRoles), timesheetController.getPendingEntries);
+
+// Get counts of pending timesheets grouped by user
+router.get('/pending-counts', authMiddleware, checkRole(reviewRoles), timesheetController.getPendingCounts);
 router.post('/approve/:id', authMiddleware, checkRole(reviewRoles), timesheetController.approveEntry);
 router.post('/reject/:id', authMiddleware, checkRole(reviewRoles), timesheetController.rejectEntry);
 

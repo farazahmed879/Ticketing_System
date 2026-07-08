@@ -1,5 +1,4 @@
 import prisma from "../prisma";
-import { TimesheetStatus } from "../utils/constants";
 import { startOfDay } from "date-fns";
 
 export const timesheetRepository = {
@@ -13,7 +12,6 @@ export const timesheetRepository = {
             ticket: { select: { id: true, uid: true, subject: true } },
           },
         },
-        approvedBy: { select: { id: true, fullname: true } },
       },
       orderBy: { date: "asc" },
     });
@@ -51,20 +49,22 @@ export const timesheetRepository = {
         });
       }
 
-      // 3. Upsert the entry
+      // 3. Upsert the entry — reset approval flags on re-submission
       const upsertedEntry = await tx.timesheetEntry.upsert({
         where: { userId_date: { userId, date } },
         update: {
           totalHours: data.totalHours,
           notes: data.notes,
-          status: TimesheetStatus.PENDING,
+          managerApproved: "PENDING",
+          hrApproved: "PENDING",
         },
         create: {
           userId,
           date,
           totalHours: data.totalHours,
           notes: data.notes,
-          status: TimesheetStatus.PENDING,
+          managerApproved: "PENDING",
+          hrApproved: "PENDING",
         },
       });
 
@@ -108,8 +108,10 @@ export const timesheetRepository = {
 
   async findPendingEntries() {
     return prisma.timesheetEntry.findMany({
-      // Insensitive so legacy rows stored as "Pending" still match.
-      where: { status: { equals: TimesheetStatus.PENDING, mode: "insensitive" } },
+      where: {
+        managerApproved: "PENDING",
+        hrApproved: "PENDING",
+      },
       include: {
         user: { select: { id: true, fullname: true, email: true } },
         tasks: {
@@ -135,11 +137,29 @@ export const timesheetRepository = {
       },
     });
   },
-  async findReviewEntries(filters: { status?: string; userId?: string; startDate?: Date; endDate?: Date }) {
+
+  async findReviewEntries(filters: { status?: string; userId?: string; startDate?: Date; endDate?: Date; roleType?: string }) {
     const where: any = {};
-    // Insensitive so legacy rows stored as "Pending"/"Approved" still match.
-    if (filters.status)
-      where.status = { equals: filters.status, mode: "insensitive" };
+
+    // Map the filter status to the boolean fields
+    if (filters.status === "PENDING") {
+      if (filters.roleType === "hr") {
+        where.hrApproved = "PENDING";
+      } else {
+        where.managerApproved = "PENDING";
+      }
+    } else if (filters.status === "MANAGER_APPROVED") {
+      where.managerApproved = "APPROVED";
+    } else if (filters.status === "HR_APPROVED") {
+      where.hrApproved = "APPROVED";
+    } else if (filters.status === "REJECTED") {
+      where.OR = [
+        { managerApproved: "REJECTED" },
+        { hrApproved: "REJECTED" }
+      ];
+    }
+    // "ALL" — no status filter
+
     if (filters.userId) where.userId = filters.userId;
     if (filters.startDate || filters.endDate) {
       where.date = {};
@@ -156,9 +176,29 @@ export const timesheetRepository = {
             project: { select: { name: true } },
           },
         },
-        approvedBy: { select: { id: true, fullname: true } },
       },
       orderBy: { date: "desc" },
+    });
+  },
+  
+  async getPendingCounts(startDate?: Date, endDate?: Date, roleType?: string) {
+    const where: any = {};
+    if (roleType === "hr") {
+      where.hrApproved = "PENDING";
+    } else {
+      where.managerApproved = "PENDING";
+    }
+    
+    if (startDate || endDate) {
+      where.date = {};
+      if (startDate) where.date.gte = startDate;
+      if (endDate) where.date.lte = endDate;
+    }
+
+    return prisma.timesheetEntry.groupBy({
+      by: ["userId"],
+      _count: { id: true },
+      where,
     });
   },
 };

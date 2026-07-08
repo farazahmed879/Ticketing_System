@@ -239,7 +239,8 @@ export interface TimesheetEntry {
   date: string;
   totalHours: number;
   notes?: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  managerApproved: "PENDING" | "APPROVED" | "REJECTED";
+  hrApproved: "PENDING" | "APPROVED" | "REJECTED";
   user?: { fullname: string; email: string; image?: string };
   tasks: TimesheetTask[];
   approvedBy?: { fullname: string };

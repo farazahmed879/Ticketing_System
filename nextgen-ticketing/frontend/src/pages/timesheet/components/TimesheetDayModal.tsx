@@ -15,32 +15,13 @@ import styles from "../Timesheet.module.css";
 import { UIMessages } from "../../../utils/constants";
 import { useAuth } from "../../../context/AuthContext";
 
-import type { TimesheetEntry } from "../../../types";
+import type { TimesheetFormData, TimesheetDayModalProps } from "../types";
 
 // Sentinel for the "Miscellaneous" (no specific project) option. Mapped to an
 // empty projectId on save, which the backend stores as null.
 const MISC_PROJECT = "misc";
 
-interface TimesheetFormData {
-  totalHours: string;
-  notes: string;
-  tasks: {
-    description: string;
-    hours: number;
-    projectId: string;
-    ticketId: string;
-  }[];
-}
-
-interface Props {
-  isOpen: boolean;
-  onClose: () => void;
-  date: Date;
-  existingEntry?: TimesheetEntry;
-  googleEvents: any[];
-}
-
-const TimesheetDayModal: React.FC<Props> = ({
+const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
   isOpen,
   onClose,
   date,
@@ -53,12 +34,12 @@ const TimesheetDayModal: React.FC<Props> = ({
 
   const { handleSubmit, control, reset, watch, setValue } =
     useForm<TimesheetFormData>({
-    defaultValues: {
-      totalHours: "8",
-      notes: "",
-      tasks: [{ description: "", hours: 0, projectId: "", ticketId: "" }],
-    },
-  });
+      defaultValues: {
+        totalHours: "8",
+        notes: "",
+        tasks: [{ description: "", hours: 0, projectId: "", ticketId: "" }],
+      },
+    });
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -70,7 +51,8 @@ const TimesheetDayModal: React.FC<Props> = ({
     (sum, t) => sum + (Number(t.hours) || 0),
     0,
   );
-  const isApproved = existingEntry?.status === "APPROVED";
+  const isApproved =
+    existingEntry?.managerApproved === "APPROVED" || existingEntry?.hrApproved === "APPROVED";
 
   // Total hours for the day is derived from the sum of task hours — keep the
   // (read-only) field in sync whenever a task's hours change.
@@ -83,9 +65,15 @@ const TimesheetDayModal: React.FC<Props> = ({
       reset({
         totalHours: existingEntry.totalHours?.toString() || "8",
         notes: existingEntry.notes || "",
-        tasks: existingEntry.tasks || [
-          { description: "", hours: 0, projectId: "", ticketId: "" },
-        ],
+        tasks:
+          existingEntry.tasks && existingEntry.tasks.length > 0
+            ? existingEntry.tasks.map((t: any) => ({
+                description: t.description || "",
+                hours: t.hours || 0,
+                projectId: t.projectId || MISC_PROJECT,
+                ticketId: t.ticketId || "",
+              }))
+            : [{ description: "", hours: 0, projectId: "", ticketId: "" }],
       });
     } else {
       reset({
@@ -123,7 +111,7 @@ const TimesheetDayModal: React.FC<Props> = ({
   const saveMutation = useMutation({
     mutationFn: async (data: TimesheetFormData) => {
       return api.post(API_ROUTES.TIMESHEETS.ENTRIES, {
-        date: date.toISOString(),
+        date: format(date, "yyyy-MM-dd"),
         totalHours: parseFloat(data.totalHours),
         notes: data.notes,
         tasks: data.tasks
@@ -173,27 +161,11 @@ const TimesheetDayModal: React.FC<Props> = ({
     >
       <form
         onSubmit={handleSubmit(handleSave)}
-        style={{ display: "flex", flexDirection: "column", gap: 24 }}
+        className={`${styles.flexColumn} ${styles.gap24}`}
       >
         {googleEvents.length > 0 && (
-          <div
-            className="glass-card"
-            style={{
-              padding: 16,
-              background: "rgba(66, 133, 244, 0.05)",
-              borderColor: "rgba(66, 133, 244, 0.2)",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                marginBottom: 12,
-                color: "#4285f4",
-                fontWeight: 600,
-              }}
-            >
+          <div className={`glass-card ${styles.googleEventContainer}`}>
+            <div className={styles.googleEventHeader}>
               <CustomIcon name="Calendar" size={18} />
               Google Calendar Events
             </div>
@@ -228,11 +200,7 @@ const TimesheetDayModal: React.FC<Props> = ({
               disabled={isApproved}
             />
             <div
-              style={{
-                fontSize: "0.8rem",
-                color: "var(--text-muted)",
-                marginTop: 4,
-              }}
+              className={`${styles.fontSm} ${styles.textMuted} ${styles.mt12}`}
             >
               Sum of tasks: {taskSum}h
             </div>
@@ -246,18 +214,103 @@ const TimesheetDayModal: React.FC<Props> = ({
           />
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <h3 style={{ fontSize: "1rem", fontWeight: 600 }}>
-              Detailed Tasks
-            </h3>
-            {!isApproved && (
+        <div className={`${styles.flexColumn} ${styles.gap12}`}>
+          {fields.length > 0 ? (
+            <div
+              className={`glass-card ${styles.flexColumn}`}
+              style={{ padding: "8px 0" }}
+            >
+              <div className={styles.taskGridHeader}>
+                <div>Description</div>
+                <div>Hours</div>
+                <div>Project</div>
+                <div>Ticket</div>
+                <div style={{ width: 36 }}></div>
+              </div>
+
+              <div className={styles.flexColumn}>
+                {fields.map((field, index) => (
+                  <div key={field.id} className={styles.taskGridRow}>
+                    <CustomInput
+                      name={`tasks.${index}.description` as const}
+                      control={control}
+                      rules={{ required: "Description is required" }}
+                      placeholder="What did you do?"
+                      disabled={isApproved}
+                      required
+                    />
+                    <CustomInput
+                      name={`tasks.${index}.hours` as const}
+                      control={control}
+                      rules={{ required: "Hours is required" }}
+                      type="number"
+                      step="0.5"
+                      max={24}
+                      disabled={isApproved}
+                      required
+                    />
+                    <CustomSelect
+                      name={`tasks.${index}.projectId` as const}
+                      control={control}
+                      placeholder="Select Project"
+                      options={[
+                        { value: MISC_PROJECT, label: "Miscellaneous" },
+                        ...projects.map((p: any) => ({
+                          value: p.id,
+                          label: p.name,
+                        })),
+                      ]}
+                      disabled={isApproved}
+                    />
+                    {watchedTasks?.[index]?.projectId === MISC_PROJECT ? (
+                      // Miscellaneous activity isn't tied to a ticket — hide the
+                      // Ticket picker (empty spacer keeps the grid columns aligned).
+                      <div />
+                    ) : (
+                      <CustomSelect
+                        name={`tasks.${index}.ticketId` as const}
+                        control={control}
+                        placeholder="Link Ticket"
+                        options={tickets
+                          // When a project is selected, only its tickets are
+                          // linkable; otherwise all tickets are shown.
+                          .filter((t: any) =>
+                            watchedTasks?.[index]?.projectId
+                              ? t.project?.id === watchedTasks[index].projectId
+                              : true,
+                          )
+                          .map((t: { id: any; uid: any; subject: string }) => ({
+                            value: t.id,
+                            label: `#${t.uid} ${t.subject.substring(0, 20)}...`,
+                          }))}
+                        disabled={isApproved}
+                      />
+                    )}
+                    {!isApproved && (
+                      <CustomButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => remove(index)}
+                        icon={<CustomIcon name="Trash2" size={20} />}
+                        style={{ color: "var(--accent-danger)" }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`glass-card ${styles.textCenter} ${styles.textMuted}`}
+              style={{ padding: 32 }}
+            >
+              No task added
+            </div>
+          )}
+
+          {!isApproved && (
+            <div className={styles.flexRow}>
               <CustomButton
                 variant="secondary"
                 size="sm"
@@ -274,107 +327,11 @@ const TimesheetDayModal: React.FC<Props> = ({
               >
                 Add Task
               </CustomButton>
-            )}
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="glass-card"
-                style={{
-                  padding: 16,
-                  display: "grid",
-                  gridTemplateColumns: "2fr .5fr 1.5fr 2fr auto",
-                  gap: 12,
-                  alignItems: "end",
-                }}
-              >
-                <CustomInput
-                  name={`tasks.${index}.description` as const}
-                  control={control}
-                  rules={{ required: "Description is required" }}
-                  label="Description"
-                  placeholder="What did you do?"
-                  disabled={isApproved}
-                  required
-                />
-                <CustomInput
-                  name={`tasks.${index}.hours` as const}
-                  control={control}
-                  rules={{ required: "Hours is required" }}
-                  label="Hours"
-                  type="number"
-                  step="0.5"
-                  max={24}
-                  disabled={isApproved}
-                  required
-                />
-                <CustomSelect
-                  name={`tasks.${index}.projectId` as const}
-                  control={control}
-                  label="Project"
-                  placeholder="Select Project"
-                  options={[
-                    { value: MISC_PROJECT, label: "Miscellaneous" },
-                    ...projects.map((p: any) => ({
-                      value: p.id,
-                      label: p.name,
-                    })),
-                  ]}
-                  disabled={isApproved}
-                />
-                {watchedTasks?.[index]?.projectId === MISC_PROJECT ? (
-                  // Miscellaneous activity isn't tied to a ticket — hide the
-                  // Ticket picker (empty spacer keeps the grid columns aligned).
-                  <div />
-                ) : (
-                  <CustomSelect
-                    name={`tasks.${index}.ticketId` as const}
-                    control={control}
-                    label="Ticket"
-                    placeholder="Link Ticket"
-                    options={tickets
-                      // When a project is selected, only its tickets are
-                      // linkable; otherwise all tickets are shown.
-                      .filter((t: any) =>
-                        watchedTasks?.[index]?.projectId
-                          ? t.project?.id === watchedTasks[index].projectId
-                          : true,
-                      )
-                      .map((t: { id: any; uid: any; subject: string }) => ({
-                        value: t.id,
-                        label: `#${t.uid} ${t.subject.substring(0, 20)}...`,
-                      }))}
-                    disabled={isApproved}
-                  />
-                )}
-                {!isApproved && (
-                  <CustomButton
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => remove(index)}
-                    icon={<CustomIcon name="Trash2" size={20} />}
-                    style={{
-                      color: "var(--accent-danger)",
-                      paddingBottom: 10,
-                    }}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 12,
-            marginTop: 12,
-          }}
-        >
+        <div className={`${styles.flexEnd} ${styles.gap12} ${styles.mt12}`}>
           <CustomButton variant="secondary" type="button" onClick={onClose}>
             Cancel
           </CustomButton>
@@ -385,13 +342,7 @@ const TimesheetDayModal: React.FC<Props> = ({
           )}
           {isApproved && (
             <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                color: "var(--accent-success)",
-                fontWeight: 600,
-              }}
+              className={`${styles.flexRow} ${styles.alignCenter} ${styles.gap8} ${styles.textSuccess} ${styles.fw600}`}
             >
               <CustomIcon name="CheckCircle2" size={20} />
               Approved by {existingEntry?.approvedBy?.fullname}

@@ -14,7 +14,10 @@ import AddGroupMembersModal from "./components/AddGroupMembersModal";
 import ViewGroupMembersModal from "./components/ViewGroupMembersModal";
 import { readAttachmentFiles } from "../../utils/attachments";
 import type { Conversation, Message } from "../../types";
-import { ChatSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
+import {
+  ChatSkeleton,
+  MessageListSkeleton,
+} from "../../components/CustomSkeleton/CustomSkeleton";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import CustomButton from "../../components/CustomButton";
 
@@ -29,6 +32,8 @@ const Messages: React.FC = () => {
 
   const [activeConv, setActiveConv] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -79,12 +84,17 @@ const Messages: React.FC = () => {
       { replace: true },
     );
 
-    // 2. Fetch Messages
+    // 2. Fetch Messages (clear the previous conversation's messages so they
+    // don't linger while the new ones load)
+    setMessages([]);
+    setMessagesLoading(true);
     try {
       const res = await api.get(API_ROUTES.MESSAGES.CONVERSATION_BY_ID(convId));
       setMessages(res.data.conversation.messages);
     } catch (err) {
       console.error("Failed to fetch messages", err);
+    } finally {
+      setMessagesLoading(false);
     }
 
     // 3. Clear Unread Counts locally
@@ -290,11 +300,14 @@ const Messages: React.FC = () => {
   const closeLightbox = () => setLightbox(null);
 
   const fetchUsers = async () => {
+    setUsersLoading(true);
     try {
       const res = await api.get(API_ROUTES.MESSAGES.PARTNERS);
       setUsers(res.data.partners);
     } catch (err) {
       console.error("Failed to fetch users", err);
+    } finally {
+      setUsersLoading(false);
     }
   };
 
@@ -490,20 +503,24 @@ const Messages: React.FC = () => {
               onCloseChat={handleCloseChat}
             />
 
-            <MessageList
-              messages={messages}
-              userId={user?.id}
-              selectedConv={selectedConv}
-              onlineUserIds={onlineUserIds}
-              onReply={setReplyingTo}
-              onDeleteMessage={handleDeleteMessageClick}
-              openLightbox={openLightbox}
-              scrollToBottom={scrollToBottom}
-              showScrollBottom={showScrollBottom}
-              messagesEndRef={messagesEndRef}
-              messagesContainerRef={messagesContainerRef}
-              handleScroll={handleScroll}
-            />
+            {messagesLoading ? (
+              <MessageListSkeleton />
+            ) : (
+              <MessageList
+                messages={messages}
+                userId={user?.id}
+                selectedConv={selectedConv}
+                onlineUserIds={onlineUserIds}
+                onReply={setReplyingTo}
+                onDeleteMessage={handleDeleteMessageClick}
+                openLightbox={openLightbox}
+                scrollToBottom={scrollToBottom}
+                showScrollBottom={showScrollBottom}
+                messagesEndRef={messagesEndRef}
+                messagesContainerRef={messagesContainerRef}
+                handleScroll={handleScroll}
+              />
+            )}
 
             <MessageInput
               newMessage={newMessage}
@@ -581,6 +598,7 @@ const Messages: React.FC = () => {
       <NewChatModal
         isOpen={isUserModalOpen}
         onClose={() => setIsUserModalOpen(false)}
+        isLoading={usersLoading}
         isCustomer={isCustomer || false}
         onlineUserIds={onlineUserIds}
         userSearch={userSearch}
@@ -595,6 +613,7 @@ const Messages: React.FC = () => {
 
       <NewGroupModal
         isOpen={isGroupModalOpen}
+        isLoading={usersLoading}
         onClose={() => {
           setIsGroupModalOpen(false);
           setGroupName("");
@@ -618,6 +637,7 @@ const Messages: React.FC = () => {
       {isAddMembersModalOpen && (
         <AddGroupMembersModal
           isOpen={isAddMembersModalOpen}
+          isLoading={usersLoading}
           onClose={() => setIsAddMembersModalOpen(false)}
           onlineUserIds={onlineUserIds}
           users={users}

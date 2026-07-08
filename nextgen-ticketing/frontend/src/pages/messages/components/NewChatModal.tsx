@@ -4,11 +4,13 @@ import CustomInput from "../../../components/CustomInput";
 import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Messages.module.css";
 import CustomImage from "../../../components/CustomImage";
+import { UserListSkeleton } from "../../../components/CustomSkeleton/CustomSkeleton";
 
 interface NewChatModalProps {
   isOpen: boolean;
   onClose: () => void;
   isCustomer: boolean;
+  isLoading?: boolean;
   userSearch: string;
   onUserSearchChange: (val: string) => void;
   filteredUsers: any[];
@@ -20,6 +22,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
   isOpen,
   onClose,
   isCustomer,
+  isLoading = false,
   userSearch,
   onUserSearchChange,
   filteredUsers,
@@ -51,7 +54,9 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
             gap: 8,
           }}
         >
-          {filteredUsers.length > 0 ? (
+          {isLoading ? (
+            <UserListSkeleton />
+          ) : filteredUsers.length > 0 ? (
             filteredUsers.map((u) => (
               <div
                 key={u.id}

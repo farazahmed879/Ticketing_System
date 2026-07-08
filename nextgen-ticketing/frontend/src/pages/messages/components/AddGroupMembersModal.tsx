@@ -5,10 +5,12 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import styles from "../Messages.module.css";
 import CustomImage from "../../../components/CustomImage";
+import { UserListSkeleton } from "../../../components/CustomSkeleton/CustomSkeleton";
 
 interface AddGroupMembersModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isLoading?: boolean;
   users: any[];
   onlineUserIds: Set<string>;
   onAddMembers: (memberIds: string[]) => Promise<void>;
@@ -18,6 +20,7 @@ interface AddGroupMembersModalProps {
 const AddGroupMembersModal: React.FC<AddGroupMembersModalProps> = ({
   isOpen,
   onClose,
+  isLoading = false,
   users,
   onlineUserIds,
   onAddMembers,
@@ -97,7 +100,9 @@ const AddGroupMembersModal: React.FC<AddGroupMembersModalProps> = ({
             gap: 8,
           }}
         >
-          {filteredUsers.length > 0 ? (
+          {isLoading ? (
+            <UserListSkeleton />
+          ) : filteredUsers.length > 0 ? (
             filteredUsers.map((u) => {
               const isSelected = selectedMembers.includes(u.id);
               return (

@@ -5,10 +5,12 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import styles from "../Messages.module.css";
 import CustomImage from "../../../components/CustomImage";
+import { UserListSkeleton } from "../../../components/CustomSkeleton/CustomSkeleton";
 
 interface NewGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isLoading?: boolean;
   groupName: string;
   onGroupNameChange: (val: string) => void;
   userSearch: string;
@@ -23,6 +25,7 @@ interface NewGroupModalProps {
 const NewGroupModal: React.FC<NewGroupModalProps> = ({
   isOpen,
   onClose,
+  isLoading = false,
   groupName,
   onGroupNameChange,
   userSearch,
@@ -83,7 +86,9 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({
             gap: 8,
           }}
         >
-          {filteredUsers.length > 0 ? (
+          {isLoading ? (
+            <UserListSkeleton />
+          ) : filteredUsers.length > 0 ? (
             filteredUsers.map((u) => {
               const isSelected = selectedGroupMembers.includes(u.id);
               return (

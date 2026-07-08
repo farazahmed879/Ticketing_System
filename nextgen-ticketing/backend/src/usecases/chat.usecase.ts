@@ -55,6 +55,9 @@ export const chatUsecase = {
 
     let allowed = false;
 
+    console.log("me.role", me.role);
+    console.log("partner.role", partner.role);
+
     if (isAdminRole(me.role) || isAgentRole(me.role)) {
       // Admins and Managers can chat with everyone.
       allowed = true;
@@ -106,6 +109,8 @@ export const chatUsecase = {
   async getChatPartners(userId: string) {
     const me = await chatRepository.findUserWithRole(userId);
     if (!me) throw new Error("User not found");
+
+    console.log("chat partners - me.role", me.role);
 
     if (isAdminRole(me.role) || isAgentRole(me.role)) {
       // Admins and Managers can chat with everyone.

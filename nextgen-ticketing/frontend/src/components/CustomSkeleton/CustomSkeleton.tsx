@@ -202,6 +202,45 @@ export const ChatSkeleton: React.FC = () => {
   );
 };
 
+/* Skeleton for just the message pane, shown while switching conversations */
+export const MessageListSkeleton: React.FC = () => {
+  return (
+    <div className={styles.messageList} style={{ flex: 1 }}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className={`${styles.messageWrapper} ${i % 2 === 0 ? styles.msgOther : styles.msgOwn}`}
+        >
+          <div className={styles.msgBubble}>
+            <CustomSkeleton
+              width={["220px", "140px", "260px", "180px", "120px", "240px"][i]}
+              height="20px"
+              borderRadius="12px"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/* Skeleton rows for user-picker lists (new chat / new group modals) */
+export const UserListSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", padding: "8px 4px" }}>
+          <CustomSkeleton type="circle" width={40} height={40} />
+          <div style={{ flex: 1, marginLeft: 12 }}>
+            <CustomSkeleton width="45%" height="12px" style={{ marginBottom: 8 }} />
+            <CustomSkeleton width="65%" height="10px" />
+          </div>
+        </div>
+      ))}
+    </>
+  );
+};
+
 export const BoardSkeleton: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>

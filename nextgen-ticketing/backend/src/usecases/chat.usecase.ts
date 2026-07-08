@@ -121,6 +121,8 @@ export const chatUsecase = {
       return chatRepository.findStaffForChat(userId);
     }
 
+
+    console.log("i am normal user");
     // Internal staff (Employee, HR, QA) can only message other internal staff.
     return chatRepository.findInternalUsersForChat(userId);
   },

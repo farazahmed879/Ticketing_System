@@ -1,10 +1,7 @@
 import React from "react";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
-
-export interface TimesheetReviewHeaderProps {
-  onBack: () => void;
-}
+import type { TimesheetReviewHeaderProps } from "../types";
 
 export const TimesheetReviewHeader: React.FC<TimesheetReviewHeaderProps> = ({
   onBack,

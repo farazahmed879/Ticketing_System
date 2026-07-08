@@ -4,13 +4,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import CustomImage from "../../../components/CustomImage";
 
-export interface TimesheetReviewSidebarProps {
-  userSearch: string;
-  setUserSearch: (v: string) => void;
-  filteredUsers: any[];
-  selectedUserId: string | null;
-  setSelectedUserId: (v: string | null) => void;
-}
+import type { TimesheetReviewSidebarProps } from "../types";
 
 export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
   userSearch,
@@ -18,6 +12,7 @@ export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
   filteredUsers,
   selectedUserId,
   setSelectedUserId,
+  pendingCounts,
 }) => {
   return (
     <>
@@ -170,21 +165,38 @@ export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
                   </span>
                 )}
               </div>
-              <div style={{ flex: 1, overflow: "hidden" }}>
-                <div
-                  style={{
-                    fontWeight: 600,
-                    fontSize: "0.85rem",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {u.fullname}
+              <div style={{ flex: 1, overflow: "hidden", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      fontSize: "0.85rem",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {u.fullname}
+                  </div>
+                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                    {u.role?.name}
+                  </div>
                 </div>
-                <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                  {u.role?.name}
-                </div>
+                {pendingCounts && pendingCounts[u.id] > 0 && (
+                  <div
+                    style={{
+                      background: "var(--accent-warning)",
+                      color: "#fff",
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      padding: "2px 6px",
+                      borderRadius: 10,
+                      marginLeft: 8,
+                    }}
+                  >
+                    {pendingCounts[u.id]}
+                  </div>
+                )}
               </div>
               {selectedUserId === u.id && (
                 <div

@@ -47,11 +47,13 @@ export const timesheetController = {
   async approveEntry(req: AuthRequest, res: Response) {
     try {
       const agentId = req.user?.id;
-      if (!agentId) return res.status(401).json({ message: "Unauthorized" });
+      const roleType = req.user?.role;
+      if (!agentId || !roleType) return res.status(401).json({ message: "Unauthorized" });
 
       const entry = await timesheetUsecase.approveEntry(
         req.params.id as string,
         agentId,
+        roleType
       );
       res.json({ success: true, entry });
     } catch (error: any) {
@@ -65,9 +67,11 @@ export const timesheetController = {
       if (!agentId) return res.status(401).json({ message: "Unauthorized" });
 
       const { reason } = req.body;
+      const roleType = req.user?.role;
       const entry = await timesheetUsecase.rejectEntry(
         req.params.id as string,
         reason,
+        roleType as string
       );
       res.json({ success: true, entry });
     } catch (error: any) {
@@ -78,11 +82,13 @@ export const timesheetController = {
   async getPendingEntries(req: AuthRequest, res: Response) {
     try {
       const { status, userId, month, year } = req.query;
+      const roleType = req.user?.role;
       const entries = await timesheetUsecase.getReviewEntries({
         status: status as string,
         userId: userId as string,
         month: month as string,
         year: year as string,
+        roleType: roleType as string,
       });
       res.json({ success: true, entries });
     } catch (error: any) {
@@ -106,6 +112,21 @@ export const timesheetController = {
       );
 
       res.json({ success: true, report });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  async getPendingCounts(req: AuthRequest, res: Response) {
+    try {
+      const { month, year } = req.query;
+      const roleType = req.user?.role;
+      const counts = await timesheetUsecase.getPendingCounts(
+        month as string,
+        year as string,
+        roleType as string
+      );
+      res.json({ success: true, counts });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }

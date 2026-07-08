@@ -1,5 +1,4 @@
 import { timesheetRepository } from "../repositories/timesheet.repository";
-import { TimesheetStatus } from "../utils/constants";
 import { startOfMonth, endOfMonth, startOfDay, startOfYear, endOfYear } from "date-fns";
 
 export const timesheetUsecase = {
@@ -23,7 +22,7 @@ export const timesheetUsecase = {
 
     if (
       existingEntry &&
-      existingEntry.status?.toUpperCase() === TimesheetStatus.APPROVED
+      (existingEntry.managerApproved === "APPROVED" || existingEntry.hrApproved === "APPROVED")
     ) {
       throw new Error("Cannot edit an approved timesheet.");
     }
@@ -38,18 +37,31 @@ export const timesheetUsecase = {
     return timesheetRepository.findEntryById(entry.id);
   },
 
-  async approveEntry(id: string, agentId: string) {
-    return timesheetRepository.updateEntryStatus(id, {
-      status: TimesheetStatus.APPROVED,
-      approvedById: agentId,
-    });
+  async approveEntry(id: string, agentId: string, roleType: string) {
+    const isHr = roleType === "hr";
+    const data: any = {};
+
+    if (isHr) {
+      data.hrApproved = "APPROVED";
+    } else {
+      data.managerApproved = "APPROVED";
+    }
+
+    return timesheetRepository.updateEntryStatus(id, data);
   },
 
-  async rejectEntry(id: string, reason?: string) {
-    return timesheetRepository.updateEntryStatus(id, {
-      status: TimesheetStatus.REJECTED,
+  async rejectEntry(id: string, reason?: string, roleType?: string) {
+    const isHr = roleType === "hr";
+    const data: any = {
       notes: reason ? `REJECTED: ${reason}` : undefined,
-    });
+    };
+    if (isHr) {
+      data.hrApproved = "REJECTED";
+    } else {
+      data.managerApproved = "REJECTED";
+    }
+
+    return timesheetRepository.updateEntryStatus(id, data);
   },
 
   async getPendingEntries() {
@@ -67,7 +79,7 @@ export const timesheetUsecase = {
 
     const totalHours = entries.reduce((sum, e) => sum + e.totalHours, 0);
     const approvedHours = entries
-      .filter((e) => e.status?.toUpperCase() === TimesheetStatus.APPROVED)
+      .filter((e) => e.hrApproved === "APPROVED")
       .reduce((sum, e) => sum + e.totalHours, 0);
 
     const projectBreakdown: Record<string, { name: string; hours: number }> = {};
@@ -90,7 +102,7 @@ export const timesheetUsecase = {
       entries,
     };
   },
-  async getReviewEntries(filters: { status?: string; userId?: string; month?: string; year?: string }) {
+  async getReviewEntries(filters: { status?: string; userId?: string; month?: string; year?: string; roleType?: string }) {
     let startDate: Date | undefined;
     let endDate: Date | undefined;
 
@@ -112,5 +124,24 @@ export const timesheetUsecase = {
       startDate,
       endDate,
     });
+  },
+  
+  async getPendingCounts(month?: string, year?: string, roleType?: string) {
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+
+    if (year !== undefined) {
+      const y = parseInt(year);
+      if (month !== undefined) {
+        const m = parseInt(month);
+        startDate = startOfMonth(new Date(y, m));
+        endDate = endOfMonth(new Date(y, m));
+      } else {
+        startDate = startOfYear(new Date(y, 0));
+        endDate = endOfYear(new Date(y, 0));
+      }
+    }
+
+    return timesheetRepository.getPendingCounts(startDate, endDate, roleType);
   },
 };

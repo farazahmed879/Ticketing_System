@@ -133,13 +133,13 @@ const Timesheet: React.FC = () => {
               <div className={styles.hoursBadge}>{entry.totalHours}h</div>
               <div
                 className={`${styles.statusIndicator} ${
-                  entry.status === "APPROVED"
+                  entry.hrApproved === "APPROVED" || entry.managerApproved === "APPROVED"
                     ? styles.statusApproved
-                    : entry.status === "REJECTED"
+                    : entry.hrApproved === "REJECTED" || entry.managerApproved === "REJECTED"
                       ? styles.statusRejected
                       : styles.statusPending
                 }`}
-                title={entry.status}
+                title={entry.hrApproved === "APPROVED" || entry.managerApproved === "APPROVED" ? "Approved" : entry.hrApproved === "REJECTED" || entry.managerApproved === "REJECTED" ? "Rejected" : "Pending"}
               />
 
               <div className={styles.taskList}>
@@ -184,15 +184,15 @@ const Timesheet: React.FC = () => {
   const approvedHours = entries
     .filter(
       (e) =>
-        e.status === "APPROVED" && isSameMonth(new Date(e.date), currentMonth),
+        (e.hrApproved === "APPROVED" || e.managerApproved === "APPROVED") && isSameMonth(new Date(e.date), currentMonth),
     )
     .reduce((sum, e) => sum + e.totalHours, 0);
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>My Timesheet</h1>
-        <div style={{ display: "flex", gap: 12 }}>
+        <h1 className={`${styles.fontXl} ${styles.fw700}`}>My Timesheet</h1>
+        <div className={`${styles.flexRow} ${styles.gap12}`}>
           <CustomButton
             variant="secondary"
             icon={<CustomIcon name="FileText" size={18} />}
@@ -228,8 +228,7 @@ const Timesheet: React.FC = () => {
         <div className={`glass-card ${styles.statCard}`}>
           <div className={styles.statLabel}>Approved</div>
           <div
-            className={styles.statValue}
-            style={{ color: "var(--accent-success)" }}
+            className={`${styles.statValue} ${styles.textSuccess}`}
           >
             {loading ? (
               <CustomSkeleton width="60px" height="2rem" />
@@ -241,8 +240,7 @@ const Timesheet: React.FC = () => {
         <div className={`glass-card ${styles.statCard}`}>
           <div className={styles.statLabel}>Pending Approval</div>
           <div
-            className={styles.statValue}
-            style={{ color: "var(--accent-warning)" }}
+            className={`${styles.statValue} ${styles.textWarning}`}
           >
             {loading ? (
               <CustomSkeleton width="60px" height="2rem" />
@@ -254,8 +252,7 @@ const Timesheet: React.FC = () => {
         <div className={`glass-card ${styles.statCard}`}>
           <div className={styles.statLabel}>Target (160h)</div>
           <div
-            className={styles.statValue}
-            style={{ color: "var(--accent-secondary)" }}
+            className={`${styles.statValue} ${styles.textSecondary}`}
           >
             {loading ? (
               <CustomSkeleton width="60px" height="2rem" />
@@ -267,7 +264,7 @@ const Timesheet: React.FC = () => {
       </div>
 
       <div
-        className={`${styles.calendarWrapper} glass-card`}
+        className={`glass-card ${styles.calendarWrapper} ${styles.flexColumn}`}
         style={{ padding: 16 }}
       >
         {renderHeader()}

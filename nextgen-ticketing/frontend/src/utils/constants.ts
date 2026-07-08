@@ -194,6 +194,11 @@ export const InterviewStatus = {
 export type InterviewStatus =
   (typeof InterviewStatus)[keyof typeof InterviewStatus];
 
+export const TimesheetStatus = {
+  PENDING: "PENDING",
+  REJECTED: "REJECTED",
+} as const;
+
 export const CandidateStatus = {
   ACTIVE: "Active",
   HIRED: "Hired",

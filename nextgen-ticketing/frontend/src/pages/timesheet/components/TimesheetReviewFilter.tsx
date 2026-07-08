@@ -2,20 +2,7 @@ import React from "react";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
-
-export interface TimesheetReviewFilterProps {
-  month: string;
-  setMonth: (v: string) => void;
-  months: { value: string; label: string }[];
-  year: string;
-  setYear: (v: string) => void;
-  years: { value: string; label: string }[];
-  selectedStatus: string;
-  setSelectedStatus: (v: string) => void;
-  onRefresh: () => void;
-  /** True while the entries query is refetching — shows a spinner on the button. */
-  refreshing?: boolean;
-}
+import type { TimesheetReviewFilterProps } from "../types";
 
 export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
   month,
@@ -43,14 +30,14 @@ export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
             value={month}
             onChange={setMonth}
             options={months}
-            style={{ width: 150 }}
+            style={{ width: 125 }}
             placeholder="Month"
           />
           <CustomSelect
             value={year}
             onChange={setYear}
             options={years}
-            style={{ width: 100 }}
+            style={{ width: 125 }}
             placeholder="Year"
           />
         </div>
@@ -60,7 +47,8 @@ export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
         >
           {[
             { value: "PENDING", label: "Pending" },
-            { value: "APPROVED", label: "Approved" },
+            { value: "MANAGER_APPROVED", label: "Manager Approved" },
+            { value: "HR_APPROVED", label: "HR Approved" },
             { value: "REJECTED", label: "Rejected" },
             { value: "ALL", label: "All" },
           ].map((tab) => (

@@ -3,17 +3,7 @@ import { format } from "date-fns";
 import Modal from "../../../components/Modal";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
-import type { TimesheetEntry } from "../../../types";
-
-interface TimesheetReviewModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  entry: TimesheetEntry | null;
-  rejectReason: string;
-  onRejectReasonChange: (reason: string) => void;
-  onApprove: (id: string) => Promise<void>;
-  onReject: (id: string) => Promise<void>;
-}
+import type { TimesheetReviewModalProps } from "../types";
 
 const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
   isOpen,
@@ -23,9 +13,15 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
   onRejectReasonChange,
   onApprove,
   onReject,
+  userRoleType,
 }) => {
   if (!entry) return null;
   const isInvalidHours = entry.totalHours > 24;
+  const isHr = userRoleType === "hr";
+  const isManager = userRoleType === "agent" || userRoleType === "admin";
+  const canApprove =
+    (isManager && entry.managerApproved === "PENDING") ||
+    (isHr && entry.hrApproved === "PENDING");
 
   return (
      <Modal
@@ -184,20 +180,22 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
           >
             Reject
           </CustomButton>
-          <CustomButton
-            variant="gradient"
-            onClick={() => onApprove(entry.id)}
-            disabled={isInvalidHours}
-            style={{
-              background: "var(--accent-success)",
-              border: "none",
-              opacity: isInvalidHours ? 0.5 : 1,
-              cursor: isInvalidHours ? "not-allowed" : "pointer",
-            }}
-            icon={<CustomIcon name="CheckCircle2" size={18} />}
-          >
-            Approve
-          </CustomButton>
+          {canApprove && (
+            <CustomButton
+              variant="gradient"
+              onClick={() => onApprove(entry.id)}
+              disabled={isInvalidHours}
+              style={{
+                background: "var(--accent-success)",
+                border: "none",
+                opacity: isInvalidHours ? 0.5 : 1,
+                cursor: isInvalidHours ? "not-allowed" : "pointer",
+              }}
+              icon={<CustomIcon name="CheckCircle2" size={18} />}
+            >
+              Approve
+            </CustomButton>
+          )}
         </div>
       </div>
     </Modal>

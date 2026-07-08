@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
@@ -11,6 +11,7 @@ import type { TimesheetEntry } from "../../types";
 
 import { useNavigate } from "react-router-dom";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import { useAuth } from "../../context/AuthContext";
 import CustomBadge from "../../components/CustomBadge";
 import CustomImage from "../../components/CustomImage";
 import StandardListLayout from "../../components/StandardListLayout/StandardListLayout";
@@ -20,7 +21,8 @@ import { TimesheetReviewFilter } from "./components/TimesheetReviewFilter";
 import { TimesheetReviewSidebar } from "./components/TimesheetReviewSidebar";
 import { useTimesheetReviewColumns } from "./components/TimesheetReviewColumns";
 
-const TimesheetReview: React.FC = () => {
+export default function TimesheetReview() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [selectedEntry, setSelectedEntry] = useState<TimesheetEntry | null>(
@@ -79,6 +81,26 @@ const TimesheetReview: React.FC = () => {
         },
       });
       return res.data.entries;
+    },
+  });
+
+  const { data: pendingCountsData } = useQuery({
+    queryKey: ["timesheets", "pendingCounts", month, year],
+    queryFn: async () => {
+      const res = await api.get(API_ROUTES.TIMESHEETS.PENDING_COUNTS, {
+        params: {
+          month: month === "all" ? undefined : month,
+          year: year === "all" ? undefined : year,
+        },
+      });
+      // Convert [{ userId: "123", _count: { id: 2 } }] into { "123": 2 }
+      const countsMap: Record<string, number> = {};
+      if (res.data.counts) {
+        res.data.counts.forEach((c: any) => {
+          countsMap[c.userId] = c._count.id;
+        });
+      }
+      return countsMap;
     },
   });
 
@@ -157,6 +179,7 @@ const TimesheetReview: React.FC = () => {
     setSelectedEntry,
     setIsModalOpen,
     handleApprove,
+    userRoleType: user?.role?.roleType,
   });
 
   return (
@@ -341,10 +364,10 @@ const TimesheetReview: React.FC = () => {
             filteredUsers={filteredUsers}
             selectedUserId={selectedUserId}
             setSelectedUserId={setSelectedUserId}
+            pendingCounts={pendingCountsData}
           />
         </div>
       </div>
-
       <TimesheetReviewModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -353,9 +376,8 @@ const TimesheetReview: React.FC = () => {
         onRejectReasonChange={setRejectReason}
         onApprove={handleApprove}
         onReject={handleReject}
+        userRoleType={user?.role?.roleType}
       />
     </StandardListLayout>
   );
-};
-
-export default TimesheetReview;
+}

@@ -109,11 +109,10 @@ export const StatusName = {
 } as const;
 export type StatusName = (typeof StatusName)[keyof typeof StatusName];
 
-// Timesheet entry statuses — stored UPPERCASE (matches the schema default and
-// what the frontend sends/compares). Distinct from the ticket StatusName values.
+// Timesheet entry statuses — approved states are now tracked by boolean fields
+// (isManagerApproved, isHrApproved) on the TimesheetEntry model.
 export const TimesheetStatus = {
   PENDING: "PENDING",
-  APPROVED: "APPROVED",
   REJECTED: "REJECTED",
 } as const;
 export type TimesheetStatus =

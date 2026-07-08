@@ -60,7 +60,6 @@ model User {
   requests      UserRequest[]
 
   timesheetEntries   TimesheetEntry[] @relation("UserTimesheets")
-  approvedTimesheets TimesheetEntry[] @relation("TimesheetApprover")
 
   announcements Announcement[]
   createdCandidates Candidate[] @relation("CandidateCreator")
@@ -335,13 +334,11 @@ model TimesheetEntry {
   date       DateTime
   totalHours Float    @default(0) // Manually entered by user
   notes      String?
-  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  managerApproved String? @default("PENDING") 
+  hrApproved      String? @default("PENDING")
 
   userId String @db.ObjectId
   user   User   @relation("UserTimesheets", fields: [userId], references: [id])
-
-  approvedById String? @db.ObjectId
-  approvedBy   User?   @relation("TimesheetApprover", fields: [approvedById], references: [id])
 
   tasks TimesheetTask[]
 

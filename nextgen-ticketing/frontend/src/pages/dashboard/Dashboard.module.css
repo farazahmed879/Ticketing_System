@@ -707,7 +707,8 @@
   inset: 0;
   background: radial-gradient(circle at center, rgba(32, 20, 56, 0.88) 0%, rgba(10, 11, 16, 0.94) 100%);
   backdrop-filter: blur(20px);
-  z-index: 99999;
+  /* Above fullscreenSectionOverlay (999999) so the popup works from the expanded list too */
+  z-index: 1000000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -749,7 +750,11 @@
 
 .highlightedMomentCard {
   width: min(600px, 90vw);
-  background: rgba(30, 31, 42, 0.75);
+  max-height: min(85vh, 85dvh);
+  display: flex;
+  flex-direction: column;
+  /* Near-opaque so floating particles behind the card don't bleed through the text */
+  background: rgba(30, 31, 42, 0.96);
   border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 24px;
   padding: 32px;
@@ -813,6 +818,11 @@
 .highlightBody {
   margin-bottom: 28px;
   text-align: center;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-glass) transparent;
 }
 
 .highlightTitle {
@@ -821,7 +831,9 @@
   color: var(--text-primary);
   margin-bottom: 16px;
   line-height: 1.3;
+  overflow-wrap: break-word;
   background: linear-gradient(135deg, #FFE066 0%, #F59E0B 100%);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -830,6 +842,7 @@
   font-size: 1.05rem;
   color: #f1f5f9;
   line-height: 1.6;
+  overflow-wrap: break-word;
 }
 
 .highlightFooter {
@@ -838,6 +851,7 @@
   align-items: center;
   padding-top: 20px;
   border-top: 1px solid var(--border-glass);
+  flex-shrink: 0;
 }
 
 .highlightAvatar {
@@ -892,6 +906,76 @@
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 40px rgba(124, 58, 237, 0.1);
   position: relative;
   animation: cardZoomIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Full-page variant: fills the viewport (minus overlay padding), scrolls inside */
+.fullscreenSectionFullPage {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+
+/* The overlay is always dark, so force light text regardless of app theme */
+.fullscreenSectionFullPage .momentText {
+  color: #e2e8f0;
+}
+
+.fullscreenSectionFullPage .momentAuthorName {
+  color: #cbd5e1;
+}
+
+.fullscreenSectionFullPage .momentDate {
+  color: #94a3b8;
+}
+
+/* Compact list layout inside the full-page popup: tighter cards, smaller type */
+.fullscreenSectionFullPage .momentsList {
+  gap: 8px;
+}
+
+.fullscreenSectionFullPage .momentCard {
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.fullscreenSectionFullPage .momentCard:hover {
+  transform: none;
+}
+
+.fullscreenSectionFullPage .momentHeader {
+  margin-bottom: 4px;
+}
+
+.fullscreenSectionFullPage .momentAuthor {
+  gap: 6px;
+}
+
+.fullscreenSectionFullPage .momentAvatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
+
+.fullscreenSectionFullPage .momentAuthorName {
+  font-size: 0.72rem;
+}
+
+.fullscreenSectionFullPage .momentDate {
+  font-size: 0.65rem;
+}
+
+.fullscreenSectionFullPage .momentTitle {
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+}
+
+.fullscreenSectionFullPage .momentText {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Custom Scrollbar for expanded content */

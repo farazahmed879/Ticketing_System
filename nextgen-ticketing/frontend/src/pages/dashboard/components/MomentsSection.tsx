@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import { formatDistanceToNow } from "date-fns";
 import CustomIcon from "../../../components/CustomIcon";
 import { useAuth } from "../../../context/AuthContext";
@@ -59,7 +60,9 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
     if (user && moments && moments.length > 0) {
       // Find the latest moment
       const sortedMoments = [...moments].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) =>
+          new Date(b.createdAt || b.date).getTime() -
+          new Date(a.createdAt || a.date).getTime()
       );
       const latestMoment = sortedMoments[0];
       
@@ -76,20 +79,32 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
     }
   }, [user, moments, seenMomentIds, localSeenMoments]);
 
-  const renderSectionContent = () => (
+  useEffect(() => {
+    if (selectedMoment || isSectionExpanded) {
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+  }, [selectedMoment, isSectionExpanded]);
+
+  const renderSectionContent = (isOverlay = false) => (
     <>
       <div className={styles.welcomeHeader}>
         <div className={styles.welcomeTitle} style={{ color: "var(--accent-secondary)" }}>
           <CustomIcon name="Sparkles" size={24} />
           <h2>Moments of Joy</h2>
         </div>
-        <button
-          className={styles.expandSectionBtn}
-          onClick={() => setIsSectionExpanded(!isSectionExpanded)}
-          title={isSectionExpanded ? "Collapse" : "Expand"}
-        >
-          <CustomIcon name={isSectionExpanded ? "Minimize2" : "Maximize2"} size={16} />
-        </button>
+        {!isOverlay && (
+          <button
+            className={styles.expandSectionBtn}
+            onClick={() => setIsSectionExpanded(true)}
+            title="Expand"
+          >
+            <CustomIcon name="Maximize2" size={16} />
+          </button>
+        )}
       </div>
       <div className={styles.momentsList}>
         {moments.length > 0 ? (
@@ -122,7 +137,9 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
                   <span className={styles.momentAuthorName}>{mom.author?.fullname}</span>
                 </div>
                 <span className={styles.momentDate}>
-                  {formatDistanceToNow(new Date(mom.date), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(mom.createdAt || mom.date), {
+                    addSuffix: true,
+                  })}
                 </span>
               </div>
               <h4 className={styles.momentTitle}>{mom.title}</h4>
@@ -141,20 +158,34 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
 
   return (
     <>
-      {isSectionExpanded ? (
-        <div className={styles.fullscreenSectionOverlay} onClick={() => setIsSectionExpanded(false)}>
-          <div className={styles.fullscreenSectionContent} onClick={(e) => e.stopPropagation()}>
-            {renderSectionContent()}
-          </div>
-        </div>
-      ) : (
-        <div className={`${styles.momentsSection} glass-card`}>
-          {renderSectionContent()}
-        </div>
-      )}
+      <div className={`${styles.momentsSection} glass-card`}>
+        {renderSectionContent()}
+      </div>
+
+      {isSectionExpanded &&
+        ReactDOM.createPortal(
+          <div className={styles.fullscreenSectionOverlay} onClick={() => setIsSectionExpanded(false)}>
+            <div
+              className={`${styles.fullscreenSectionContent} ${styles.fullscreenSectionFullPage}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className={styles.closeOverlayBtn}
+                onClick={() => setIsSectionExpanded(false)}
+                title="Close"
+                style={{ zIndex: 10 }}
+              >
+                <CustomIcon name="X" size={20} />
+              </button>
+              {renderSectionContent(true)}
+            </div>
+          </div>,
+          document.body,
+        )}
 
       {/* Fullscreen Animated Overlay for Highlighted Moment of Joy */}
-      {selectedMoment && (
+      {selectedMoment &&
+        ReactDOM.createPortal(
         <div
           className={styles.joyOverlay}
           onClick={() => setSelectedMoment(null)}
@@ -227,28 +258,31 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
                   </div>
                 )}
                 <div style={{ display: "flex", flexDirection: "column" }}>
+                  {/* The popup card is always dark, so use fixed light colors instead of theme vars */}
                   <span
                     style={{
                       fontWeight: 600,
-                      color: "var(--text-primary)",
+                      color: "#f1f5f9",
                       fontSize: "0.95rem",
                     }}
                   >
                     {selectedMoment.author?.fullname}
                   </span>
-                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                  <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
                     {selectedMoment.author?.role?.name || "Team Member"}
                   </span>
                 </div>
               </div>
-              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                {formatDistanceToNow(new Date(selectedMoment.date), {
-                  addSuffix: true,
-                })}
+              <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+                {formatDistanceToNow(
+                  new Date(selectedMoment.createdAt || selectedMoment.date),
+                  { addSuffix: true },
+                )}
               </span>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

@@ -1,4 +1,11 @@
 import { chatRepository } from "../repositories/chat.repository";
+import { RoleType } from "../utils/constants";
+
+// The Role model stores a single roleType string (the legacy isAdmin/isAgent/
+// isCustomer/isEmployee booleans were removed in the role-type refactor).
+const isAdminRole = (role: any) => role?.roleType === RoleType.ADMIN;
+const isAgentRole = (role: any) => role?.roleType === RoleType.AGENT;
+const isCustomerRole = (role: any) => role?.roleType === RoleType.CUSTOMER;
 
 export const chatUsecase = {
   async getConversations(userId: string) {
@@ -46,31 +53,21 @@ export const chatUsecase = {
 
     if (!me || !partner) throw new Error("User not found");
 
-    const isMeAdmin = me.role.isAdmin;
-    const isMeAgent = me.role.isAgent;
-    const isMeCustomer = me.role.isCustomer;
-    const isMeEmployee = me.role.isEmployee;
-
     let allowed = false;
 
-    if (isMeAdmin) {
+    if (isAdminRole(me.role) || isAgentRole(me.role)) {
+      // Admins and Managers can chat with everyone.
       allowed = true;
-    } else if (isMeCustomer) {
-      if (
-        partner.role.isAdmin ||
-        partner.role.isAgent
-      ) {
+    } else if (isCustomerRole(me.role)) {
+      if (isAdminRole(partner.role) || isAgentRole(partner.role)) {
         allowed = true;
       }
-    } else if (isMeEmployee) {
-      // Employees may only chat with internal staff (Admin, Manager,
-      // Employee, HR) — never clients.
-      if (!partner.role.isCustomer) {
+    } else {
+      // Internal staff (Employee, HR, QA) may only chat with other internal
+      // staff — never clients.
+      if (!isCustomerRole(partner.role)) {
         allowed = true;
       }
-    } else if (isMeAgent) {
-      // Managers can chat with everyone.
-      allowed = true;
     }
 
     if (!allowed) {
@@ -110,32 +107,25 @@ export const chatUsecase = {
     const me = await chatRepository.findUserWithRole(userId);
     if (!me) throw new Error("User not found");
 
-    const isMeAdmin = me.role.isAdmin;
-    const isMeAgent = me.role.isAgent;
-    const isMeCustomer = me.role.isCustomer;
-    const isMeEmployee = me.role.isEmployee;
-
-    if (isMeAdmin) {
-      return chatRepository.findAllUsersForChat(userId);
-    } else if (isMeCustomer) {
-      return chatRepository.findStaffForChat(userId);
-    } else if (isMeEmployee) {
-      // Employees can only message internal staff: Admin, Manager, Employee, HR.
-      return chatRepository.findInternalUsersForChat(userId);
-    } else if (isMeAgent) {
-      // Managers can chat with everyone (same as Admin).
+    if (isAdminRole(me.role) || isAgentRole(me.role)) {
+      // Admins and Managers can chat with everyone.
       return chatRepository.findAllUsersForChat(userId);
     }
 
-    return [];
+    if (isCustomerRole(me.role)) {
+      return chatRepository.findStaffForChat(userId);
+    }
+
+    // Internal staff (Employee, HR, QA) can only message other internal staff.
+    return chatRepository.findInternalUsersForChat(userId);
   },
 
   async createGroupChat(userId: string, name: string, memberIds: string[]) {
     const me = await chatRepository.findUserWithRole(userId);
     if (!me) throw new Error("User not found");
 
-    const isAdmin = me.role.isAdmin;
-    const isAgent = me.role.isAgent;
+    const isAdmin = isAdminRole(me.role);
+    const isAgent = isAgentRole(me.role);
     const isLead = (me as any).isLead === true;
 
     if (!isAdmin && !isAgent && !isLead) {
@@ -147,7 +137,7 @@ export const chatUsecase = {
         memberIds.map((mid) => chatRepository.findUserWithRole(mid))
       );
       const hasClient = addedUsers.some(
-        (u: any) => u && u.role.isCustomer
+        (u: any) => u && isCustomerRole(u.role)
       );
       if (hasClient) {
         throw new Error("Team Leads cannot add clients to a group chat");
@@ -172,8 +162,8 @@ export const chatUsecase = {
     const me = await chatRepository.findUserWithRole(userId);
     if (!me) throw new Error("User not found");
 
-    const isAdmin = me.role.isAdmin;
-    const isAgent = me.role.isAgent;
+    const isAdmin = isAdminRole(me.role);
+    const isAgent = isAgentRole(me.role);
     const isLead = (me as any).isLead === true;
 
     if (!isAdmin && !isAgent && !isLead) {
@@ -185,7 +175,7 @@ export const chatUsecase = {
         addMemberIds.map((mid) => chatRepository.findUserWithRole(mid))
       );
       const hasClient = addedUsers.some(
-        (u: any) => u && u.role.isCustomer
+        (u: any) => u && isCustomerRole(u.role)
       );
       if (hasClient) {
         throw new Error("Team Leads cannot add clients to a group chat");

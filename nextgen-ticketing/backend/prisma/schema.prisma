@@ -85,7 +85,7 @@ model Role {
   id          String  @id @default(auto()) @map("_id") @db.ObjectId
   name        String  @unique
   description String?
-  roleType    String  @default("isEmployee")
+  roleType    String  @default("employee")
   permissions Json
   users       User[]
   deleted     Boolean @default(false)

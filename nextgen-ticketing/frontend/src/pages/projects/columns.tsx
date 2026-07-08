@@ -114,6 +114,15 @@ export const getProjectColumns = (
         </CustomBadge>
       ),
     },
+    {
+      header: "Created By",
+      key: "createdBy",
+      render: (p) => (
+        <span className="text-sm">
+          {p.createdBy ? p.createdBy.fullname : "System"}
+        </span>
+      ),
+    },
   ];
 
   if (canUpdate || canDelete) {

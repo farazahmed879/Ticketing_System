@@ -36,6 +36,7 @@ export const projectRepository = {
           department: { select: { id: true, name: true } },
           clients: { select: { id: true, fullname: true, image: true } },
           manager: { select: { id: true, fullname: true, image: true } },
+          createdBy: { select: { id: true, fullname: true, image: true } },
           teams: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: "desc" },
@@ -55,6 +56,7 @@ export const projectRepository = {
         department: { select: { id: true, name: true } },
         clients: { select: { id: true, fullname: true, image: true } },
         manager: { select: { id: true, fullname: true, image: true } },
+        createdBy: { select: { id: true, fullname: true, image: true } },
         teams: {
           select: {
             id: true,

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import Modal from "../../../components/Modal";
@@ -52,7 +52,8 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
     0,
   );
   const isApproved =
-    existingEntry?.managerApproved === "APPROVED" || existingEntry?.hrApproved === "APPROVED";
+    existingEntry?.managerApproved === "APPROVED" ||
+    existingEntry?.hrApproved === "APPROVED";
 
   // Total hours for the day is derived from the sum of task hours — keep the
   // (read-only) field in sync whenever a task's hours change.
@@ -92,7 +93,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
     queryKey: ["timesheet-metadata", user?.id],
     queryFn: async () => {
       const [pRes, tRes] = await Promise.all([
-        api.get(API_ROUTES.PROJECTS.BASE, { params: { limit: -1 } }),
+        api.get(API_ROUTES.PROJECTS.BASE, { params: { limit: -1, all: "true" } }),
         api.get(API_ROUTES.TICKETS.BASE, { params: { limit: -1 } }),
       ]);
       return {
@@ -105,7 +106,12 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
     staleTime: 0,
   });
 
-  const projects = metadata?.projects || [];
+  const projects = useMemo(() => {
+    if (!metadata?.projects) return [];
+    return [...metadata.projects].sort((a: any, b: any) =>
+      a.name.localeCompare(b.name)
+    );
+  }, [metadata?.projects]);
   const tickets = metadata?.tickets || [];
 
   const saveMutation = useMutation({
@@ -221,34 +227,16 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
               style={{ padding: "8px 0" }}
             >
               <div className={styles.taskGridHeader}>
-                <div>Description</div>
-                <div>Hours</div>
                 <div>Project</div>
                 <div>Ticket</div>
+                <div>Hours</div>
+                <div>Description</div>
                 <div style={{ width: 36 }}></div>
               </div>
 
               <div className={styles.flexColumn}>
                 {fields.map((field, index) => (
                   <div key={field.id} className={styles.taskGridRow}>
-                    <CustomInput
-                      name={`tasks.${index}.description` as const}
-                      control={control}
-                      rules={{ required: "Description is required" }}
-                      placeholder="What did you do?"
-                      disabled={isApproved}
-                      required
-                    />
-                    <CustomInput
-                      name={`tasks.${index}.hours` as const}
-                      control={control}
-                      rules={{ required: "Hours is required" }}
-                      type="number"
-                      step="0.5"
-                      max={24}
-                      disabled={isApproved}
-                      required
-                    />
                     <CustomSelect
                       name={`tasks.${index}.projectId` as const}
                       control={control}
@@ -286,6 +274,24 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
                         disabled={isApproved}
                       />
                     )}
+                    <CustomInput
+                      name={`tasks.${index}.hours` as const}
+                      control={control}
+                      rules={{ required: "Hours is required" }}
+                      type="number"
+                      step="0.5"
+                      max={24}
+                      disabled={isApproved}
+                      required
+                    />
+                    <CustomInput
+                      name={`tasks.${index}.description` as const}
+                      control={control}
+                      rules={{ required: "Description is required" }}
+                      placeholder="What did you do?"
+                      disabled={isApproved}
+                      required
+                    />
                     {!isApproved && (
                       <CustomButton
                         type="button"

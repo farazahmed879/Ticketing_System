@@ -193,29 +193,63 @@
   align-items: center;
 }
 
-.gap8 { gap: 8px; }
-.gap12 { gap: 12px; }
-.gap24 { gap: 24px; }
-.mt12 { margin-top: 12px; }
-.mb12 { margin-bottom: 12px; }
+.gap8 {
+  gap: 8px;
+}
+.gap12 {
+  gap: 12px;
+}
+.gap24 {
+  gap: 24px;
+}
+.mt12 {
+  margin-top: 12px;
+}
+.mb12 {
+  margin-bottom: 12px;
+}
 
-.textMuted { color: var(--text-muted); }
-.textSecondary { color: var(--text-secondary); }
-.textSuccess { color: var(--accent-success); }
-.textWarning { color: var(--accent-warning); }
-.textDanger { color: var(--accent-danger); }
-.textCenter { text-align: center; }
+.textMuted {
+  color: var(--text-muted);
+}
+.textSecondary {
+  color: var(--text-secondary);
+}
+.textSuccess {
+  color: var(--accent-success);
+}
+.textWarning {
+  color: var(--accent-warning);
+}
+.textDanger {
+  color: var(--accent-danger);
+}
+.textCenter {
+  text-align: center;
+}
 
-.fw600 { font-weight: 600; }
-.fw700 { font-weight: 700; }
-.fontSm { font-size: 0.8rem; }
-.fontMd { font-size: 1rem; }
-.fontLg { font-size: 1.1rem; }
-.fontXl { font-size: 1.4rem; }
+.fw600 {
+  font-weight: 600;
+}
+.fw700 {
+  font-weight: 700;
+}
+.fontSm {
+  font-size: 0.8rem;
+}
+.fontMd {
+  font-size: 1rem;
+}
+.fontLg {
+  font-size: 1.1rem;
+}
+.fontXl {
+  font-size: 1.4rem;
+}
 
 .taskGridHeader {
   display: grid;
-  grid-template-columns: 2fr .5fr 1.5fr 2fr auto;
+  grid-template-columns: 2fr 2fr 0.5fr 2fr auto;
   gap: 12px;
   padding: 4px 16px 12px 16px;
   font-weight: 600;
@@ -229,7 +263,7 @@
 .taskGridRow {
   padding: 12px 16px 4px 16px;
   display: grid;
-  grid-template-columns: 2fr .5fr 1.5fr 2fr auto;
+  grid-template-columns: 2fr 2fr 0.5fr 2fr auto;
   gap: 12px;
   align-items: center;
 }

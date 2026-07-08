@@ -98,6 +98,7 @@ export interface Project {
     owner?: { id: string; fullname: string; image?: string };
     assignee?: { id: string; fullname: string; image?: string };
   }[];
+  createdBy?: { id: string; fullname: string; image?: string };
   createdAt: string;
 }
 

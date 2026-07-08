@@ -12,18 +12,8 @@ export const projectController = {
       const userId = user?.id || req.query.userId;
 
       // Client: only projects they are assigned to
-      if (role === RoleType.CUSTOMER && userId) {
+      if (role === RoleType.CUSTOMER && userId && req.query.all !== "true") {
         query.clientId = userId;
-      }
-
-      // Manager: only projects they manage
-      if (role === RoleType.AGENT && userId) {
-        query.managerId = userId;
-      }
-
-      // Employee: only projects whose team(s) they belong to.
-      if (role === RoleType.EMPLOYEE && userId) {
-        query.teamMemberId = userId;
       }
 
       // Pagination
@@ -33,9 +23,10 @@ export const projectController = {
       const take = limitVal && limitVal !== -1 ? limitVal : undefined;
       const skip = pageVal !== undefined && take !== undefined ? pageVal * take : undefined;
 
-      // Remove pagination keys from query to prevent filtering on them in repository where clause
+      // Remove pagination and custom keys from query to prevent filtering on them in repository where clause
       delete query.limit;
       delete query.page;
+      delete query.all;
 
       const { projects, total } = await projectRepository.findMany(query, skip, take);
       res.json({ success: true, projects, total });
@@ -58,9 +49,12 @@ export const projectController = {
   },
 
   async create(req: Request, res: Response) {
-    
     try {
-      const project = await projectRepository.create(req.body);
+      const payload = {
+        ...req.body,
+        createdById: (req as any).user?.id,
+      };
+      const project = await projectRepository.create(payload);
       res.status(201).json({ success: true, project });
     } catch (err: any) {
       if (err?.code === "P2002") {

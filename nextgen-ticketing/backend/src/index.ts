@@ -33,6 +33,7 @@ import announcementRoutes from './routes/announcementRoutes';
 import { setupSwagger } from './swagger';
 import { setupSocketEvents } from './socketio/events';
 import { startAutoCloseScheduler } from './services/autoCloseTickets';
+import { startNotificationCleanupScheduler } from './services/cleanupNotifications';
 
 const app = express();
 const server = http.createServer(app);
@@ -85,6 +86,7 @@ setupSocketEvents(io);
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   startAutoCloseScheduler();
+  startNotificationCleanupScheduler();
 });
 
 export { app, io, prisma };

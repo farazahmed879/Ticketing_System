@@ -111,6 +111,12 @@ export const commonUsecase = {
     if (typeof data.autoCloseEnabled === "boolean") {
       updateData.autoCloseEnabled = data.autoCloseEnabled;
     }
+    if (typeof data.notificationRetentionDays === "number") {
+      updateData.notificationRetentionDays = data.notificationRetentionDays;
+    }
+    if (typeof data.notificationRetentionEnabled === "boolean") {
+      updateData.notificationRetentionEnabled = data.notificationRetentionEnabled;
+    }
     return prisma.systemSetting.upsert({
       where: { key: "global" },
       update: updateData,

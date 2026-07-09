@@ -146,22 +146,61 @@ export const CalendarSkeleton: React.FC<CalendarSkeletonProps> = ({
 };
 
 export const ChatSkeleton: React.FC = () => {
+  const nameWidths = ["55%", "70%", "45%", "65%", "50%", "60%", "48%"];
+  const previewWidths = ["85%", "60%", "75%", "90%", "65%", "80%", "70%"];
+  const bubbles = [
+    { own: false, width: "240px", lines: 2 },
+    { own: false, width: "160px", lines: 1 },
+    { own: true, width: "210px", lines: 1 },
+    { own: false, width: "280px", lines: 2 },
+    { own: true, width: "140px", lines: 1 },
+    { own: true, width: "250px", lines: 2 },
+  ];
+
   return (
     <div className={styles.chatSkeleton}>
-      <div className={styles.chatSidebar}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className={styles.convItem}>
-            <CustomSkeleton type="circle" width={44} height={44} />
-            <div style={{ flex: 1, marginLeft: 12 }}>
-              <CustomSkeleton
-                width="60%"
-                height="12px"
-                style={{ marginBottom: 8 }}
-              />
-              <CustomSkeleton width="80%" height="10px" />
-            </div>
+      <div className={styles.chatSidebar} style={{ gap: 14 }}>
+        {/* Sidebar title + action buttons */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 4,
+          }}
+        >
+          <CustomSkeleton width="110px" height="20px" />
+          <div style={{ display: "flex", gap: 8 }}>
+            <CustomSkeleton type="circle" width={30} height={30} />
+            <CustomSkeleton type="circle" width={30} height={30} />
           </div>
-        ))}
+        </div>
+
+        {/* Search bar */}
+        <CustomSkeleton width="100%" height="42px" borderRadius="12px" />
+
+        {/* Conversation rows */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 6 }}>
+          {nameWidths.map((w, i) => (
+            <div key={i} className={styles.convItem}>
+              <CustomSkeleton type="circle" width={44} height={44} />
+              <div style={{ flex: 1, marginLeft: 12 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 8,
+                  }}
+                >
+                  <CustomSkeleton width={w} height="12px" />
+                  <CustomSkeleton width="32px" height="9px" />
+                </div>
+                <CustomSkeleton width={previewWidths[i]} height="10px" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className={styles.chatMain}>
@@ -169,33 +208,45 @@ export const ChatSkeleton: React.FC = () => {
           <CustomSkeleton type="circle" width={40} height={40} />
           <div style={{ flex: 1, marginLeft: 12 }}>
             <CustomSkeleton
-              width="120px"
+              width="140px"
               height="14px"
               style={{ marginBottom: 6 }}
             />
-            <CustomSkeleton width="80px" height="10px" />
+            <CustomSkeleton width="70px" height="10px" />
           </div>
+          <CustomSkeleton type="circle" width={30} height={30} />
         </div>
 
-        <div className={styles.messageList}>
-          {Array.from({ length: 4 }).map((_, i) => (
+        <div className={styles.messageList} style={{ gap: 18 }}>
+          {bubbles.map((b, i) => (
             <div
               key={i}
-              className={`${styles.messageWrapper} ${i % 2 === 0 ? styles.msgOther : styles.msgOwn}`}
+              className={`${styles.messageWrapper} ${b.own ? styles.msgOwn : styles.msgOther}`}
             >
-              <div className={styles.msgBubble}>
+              <div
+                className={styles.msgBubble}
+                style={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: 10,
+                  flexDirection: b.own ? "row-reverse" : "row",
+                }}
+              >
+                <CustomSkeleton type="circle" width={28} height={28} />
                 <CustomSkeleton
-                  width={i === 0 ? "200px" : i === 1 ? "150px" : "250px"}
-                  height="20px"
-                  borderRadius="12px"
+                  width={b.width}
+                  height={b.lines === 2 ? "52px" : "34px"}
+                  borderRadius="14px"
                 />
               </div>
             </div>
           ))}
         </div>
 
-        <div className={styles.chatInput}>
-          <CustomSkeleton width="100%" height="48px" borderRadius="12px" />
+        <div className={styles.chatInput} style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <CustomSkeleton type="circle" width={36} height={36} />
+          <CustomSkeleton width="100%" height="48px" borderRadius="12px" style={{ flex: 1 }} />
+          <CustomSkeleton type="circle" width={42} height={42} />
         </div>
       </div>
     </div>

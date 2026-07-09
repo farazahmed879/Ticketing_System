@@ -147,6 +147,67 @@
   white-space: pre-wrap;
 }
 
+/* Emojis inside mixed text render larger for visibility */
+.emojiChar {
+  font-size: 1.35em;
+  line-height: 1;
+  vertical-align: -0.12em;
+}
+
+/* Emoji-only messages: drop the bubble chrome, show the emoji big */
+.messageBubbleEmojiOnly {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 4px;
+}
+
+/* Shared files panel in the left column */
+.sharedFilesSection {
+  border-bottom: 1px solid var(--border-glass);
+  padding: 10px 24px 14px;
+  flex-shrink: 0;
+}
+
+.sharedFilesHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 4px 0;
+}
+
+.sharedFilesGrid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  max-height: 176px;
+  overflow-y: auto;
+}
+
+.sharedFileThumb {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: zoom-in;
+  border: 1px solid var(--border-glass);
+  background: rgba(0, 0, 0, 0.06);
+  padding: 0;
+}
+
+.sharedFileThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .senderName {
   display: inline-flex;
   align-items: center;

@@ -85,6 +85,32 @@ export const chatUsecase = {
     return chatRepository.createRoom({ memberIds: [userId, partnerId] });
   },
 
+  async deleteConversation(id: string, userId: string) {
+    const room = await chatRepository.findRoomById(id);
+    if (!room) throw new Error("Conversation not found");
+
+    const me = await chatRepository.findUserWithRole(userId);
+    if (!me) throw new Error("User not found");
+
+    const isAdmin = isAdminRole(me.role);
+    const isAgent = isAgentRole(me.role);
+    const isMember = room.memberIds.includes(userId);
+
+    // Direct chats: either participant (or any Admin/Manager) may delete.
+    // Groups: only Admins, Managers, or a Team Lead who is a member.
+    const canDelete = room.isGroup
+      ? isAdmin || isAgent || ((me as any).isLead === true && isMember)
+      : isAdmin || isAgent || isMember;
+
+    if (!canDelete) {
+      throw new Error("You do not have permission to delete this conversation");
+    }
+
+    const memberIds = [...room.memberIds];
+    await chatRepository.deleteRoomWithMessages(id);
+    return { memberIds };
+  },
+
   async hideConversation(id: string, userId: string) {
     const room = await chatRepository.findRoomById(id);
     if (!room) throw new Error("Conversation not found");

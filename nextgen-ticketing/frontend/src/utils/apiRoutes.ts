@@ -60,6 +60,7 @@ export const API_ROUTES = {
     PARTNERS: "/messages/partners",
     UPDATE_MEMBERS: (id: string) => `/messages/groups/${id}/members`,
     HIDE_CONVERSATION: (id: string) => `/messages/conversations/${id}/hide`,
+    DELETE_CONVERSATION: (id: string) => `/messages/conversations/${id}`,
   },
 
   // Departments

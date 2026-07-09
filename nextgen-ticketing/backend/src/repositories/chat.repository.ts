@@ -100,6 +100,23 @@ export const chatRepository = {
     });
   },
 
+  async deleteRoomWithMessages(id: string) {
+    await prisma.chatMessage.deleteMany({ where: { roomId: id } });
+    // Remove the room id from every member's chatRoomIds list (Prisma has no
+    // array-pull for Mongo, so use a raw update), then delete the room.
+    await prisma.$runCommandRaw({
+      update: "User",
+      updates: [
+        {
+          q: { chatRoomIds: { $oid: id } },
+          u: { $pull: { chatRoomIds: { $oid: id } } },
+          multi: true,
+        },
+      ],
+    });
+    return prisma.chatRoom.delete({ where: { id } });
+  },
+
   async findStaffForChat(userId: string) {
     return prisma.user.findMany({
       where: {

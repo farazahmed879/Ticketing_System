@@ -20,6 +20,7 @@ import { TimesheetReviewHeader } from "./components/TimesheetReviewHeader";
 import { TimesheetReviewFilter } from "./components/TimesheetReviewFilter";
 import { TimesheetReviewSidebar } from "./components/TimesheetReviewSidebar";
 import { useTimesheetReviewColumns } from "./components/TimesheetReviewColumns";
+import { TimesheetReviewCard } from "./components/TimesheetReviewCard";
 
 export default function TimesheetReview() {
   const { user } = useAuth();
@@ -35,6 +36,7 @@ export default function TimesheetReview() {
   const [month, setMonth] = useState<string>(new Date().getMonth().toString());
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [userSearch, setUserSearch] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const { data: usersData } = useQuery({
     queryKey: ["users", "timesheet-review"],
@@ -197,6 +199,8 @@ export default function TimesheetReview() {
           setSelectedStatus={setSelectedStatus}
           onRefresh={fetchEntries}
           refreshing={isFetching}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
         />
       }
     >
@@ -335,16 +339,68 @@ export default function TimesheetReview() {
           )}
 
           <div style={{ flex: 1, overflow: "auto", paddingRight: 4 }}>
-            <CustomTable
-              columns={columns}
-              data={entries}
-              loading={loading}
-              emptyMessage={
-                selectedStatus === "ALL"
+            {viewMode === "list" ? (
+              <CustomTable
+                columns={columns}
+                data={entries}
+                loading={loading}
+                emptyMessage={
+                  selectedStatus === "ALL"
+                    ? "No timesheets found"
+                    : `No ${selectedStatus.toLowerCase()} timesheets found`
+                }
+              />
+            ) : loading ? (
+              <div
+                style={{
+                  padding: 40,
+                  textAlign: "center",
+                  color: "var(--text-muted)",
+                }}
+              >
+                Loading timesheets...
+              </div>
+            ) : entries.length === 0 ? (
+              <div
+                style={{
+                  padding: 40,
+                  textAlign: "center",
+                  color: "var(--text-muted)",
+                }}
+              >
+                {selectedStatus === "ALL"
                   ? "No timesheets found"
-                  : `No ${selectedStatus.toLowerCase()} timesheets found`
-              }
-            />
+                  : `No ${selectedStatus.toLowerCase()} timesheets found`}
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                  gap: 16,
+                  padding: "4px 0",
+                }}
+              >
+                {entries.map((entry) => (
+                  <TimesheetReviewCard
+                    key={entry.id}
+                    entry={entry}
+                    canApprove={
+                      ((user?.role?.roleType === ROLE_TYPE.AGENT ||
+                        user?.role?.roleType === ROLE_TYPE.ADMIN) &&
+                        entry.managerApproved === "PENDING") ||
+                      (user?.role?.roleType === ROLE_TYPE.HR &&
+                        entry.hrApproved === "PENDING")
+                    }
+                    onView={(e) => {
+                      setSelectedEntry(e);
+                      setIsModalOpen(true);
+                    }}
+                    onApprove={handleApprove}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

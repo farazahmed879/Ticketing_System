@@ -15,6 +15,8 @@ export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
   setSelectedStatus,
   onRefresh,
   refreshing = false,
+  viewMode,
+  setViewMode,
 }) => {
   return (
     <div
@@ -70,14 +72,43 @@ export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
           ))}
         </div>
       </div>
-      <CustomButton
-        variant="secondary"
-        onClick={onRefresh}
-        loading={refreshing}
-        icon={<CustomIcon name="RotateCcw" size={18} />}
-      >
-        Refresh
-      </CustomButton>
+      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 4,
+            padding: 4,
+            borderRadius: 10,
+            border: "1px solid var(--border-glass)",
+            background: "rgba(255,255,255,0.03)",
+          }}
+        >
+          <CustomButton
+            variant={viewMode === "list" ? "primary" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("list")}
+            icon={<CustomIcon name="List" size={16} />}
+            title="List view"
+            style={{ padding: "6px 10px" }}
+          />
+          <CustomButton
+            variant={viewMode === "grid" ? "primary" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("grid")}
+            icon={<CustomIcon name="LayoutGrid" size={16} />}
+            title="Grid view"
+            style={{ padding: "6px 10px" }}
+          />
+        </div>
+        <CustomButton
+          variant="secondary"
+          onClick={onRefresh}
+          loading={refreshing}
+          icon={<CustomIcon name="RotateCcw" size={18} />}
+        >
+          Refresh
+        </CustomButton>
+      </div>
     </div>
   );
 };

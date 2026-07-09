@@ -55,6 +55,8 @@ export interface TimesheetReviewFilterProps {
   onRefresh: () => void;
   /** True while the entries query is refetching — shows a spinner on the button. */
   refreshing?: boolean;
+  viewMode: "list" | "grid";
+  setViewMode: (v: "list" | "grid") => void;
 }
 
 export interface UseTimesheetReviewColumnsProps {

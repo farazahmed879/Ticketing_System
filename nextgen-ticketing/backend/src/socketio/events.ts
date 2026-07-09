@@ -252,6 +252,22 @@ function broadcastOnlineUsers(io: Server) {
 }
 
 // Helper: send notification to a specific user via socket
+// Emit an event to every active socket of the given users. Lets REST
+// controllers push chat updates through the same online-users registry.
+export function emitToUsers(
+  io: Server,
+  userIds: string[],
+  event: string,
+  payload: any,
+) {
+  for (const userId of userIds) {
+    const online = onlineUsers.get(userId);
+    if (online) {
+      online.socketIds.forEach((sid) => io.to(sid).emit(event, payload));
+    }
+  }
+}
+
 export function emitNotificationToUser(io: Server, userId: string, notification: any) {
   const user = onlineUsers.get(userId);
   if (user) {

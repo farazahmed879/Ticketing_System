@@ -10,6 +10,8 @@ interface ChatHeaderProps {
   onlineUserIds: Set<string>;
   onViewMembers: () => void;
   onDeleteChat: () => void;
+  onDeleteConversation: () => void;
+  canDeleteConversation: boolean;
   onCloseChat: () => void;
 }
 
@@ -18,6 +20,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onlineUserIds,
   onViewMembers,
   onDeleteChat,
+  onDeleteConversation,
+  canDeleteConversation,
   onCloseChat,
 }) => {
   const partnerOnline =
@@ -156,15 +160,34 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               onClick={handleDelete}
               style={{
                 padding: "8px 12px",
-                background: "rgba(239, 68, 68, 0.1)",
-                color: "#ef4444",
                 justifyContent: "flex-start",
                 width: "100%",
+                color: "var(--text-primary)",
               }}
-              icon={<CustomIcon name="Trash2" size={16} />}
+              icon={<CustomIcon name="EyeOff" size={16} />}
             >
-              Delete Chat
+              Delete for me
             </CustomButton>
+            {canDeleteConversation && (
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowMoreOptions(false);
+                  onDeleteConversation();
+                }}
+                style={{
+                  padding: "8px 12px",
+                  background: "rgba(239, 68, 68, 0.1)",
+                  color: "#ef4444",
+                  justifyContent: "flex-start",
+                  width: "100%",
+                }}
+                icon={<CustomIcon name="Trash2" size={16} />}
+              >
+                Delete Conversation
+              </CustomButton>
+            )}
           </div>
         )}
         <CustomButton

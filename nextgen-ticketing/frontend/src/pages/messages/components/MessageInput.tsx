@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Messages.module.css";
 import { MAX_ATTACHMENTS } from "../../../utils/attachments";
 import type { Message } from "../../../types";
 import CustomImage from "../../../components/CustomImage";
+import EmojiPicker from "./EmojiPicker";
 
 interface MessageInputProps {
   newMessage: string;
@@ -31,6 +32,42 @@ const MessageInput: React.FC<MessageInputProps> = ({
   removeAttachment,
   fileInputRef,
 }) => {
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiAreaRef = useRef<HTMLDivElement>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiAreaRef.current &&
+        !emojiAreaRef.current.contains(event.target as Node)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
+
+  const insertEmoji = (emoji: string) => {
+    const input = textInputRef.current;
+    const start = input?.selectionStart ?? newMessage.length;
+    const end = input?.selectionEnd ?? newMessage.length;
+    setNewMessage(newMessage.slice(0, start) + emoji + newMessage.slice(end));
+    // Restore focus and put the caret right after the inserted emoji.
+    requestAnimationFrame(() => {
+      if (input) {
+        input.focus();
+        const caret = start + emoji.length;
+        input.setSelectionRange(caret, caret);
+      }
+    });
+  };
+
   return (
     <div className={styles.chatInput}>
       {attachmentError && (
@@ -122,8 +159,28 @@ const MessageInput: React.FC<MessageInputProps> = ({
           className={styles.attachButton}
           icon={<CustomIcon name="Paperclip" size={18} />}
         />
+        <div ref={emojiAreaRef} style={{ position: "relative" }}>
+          <CustomButton
+            type="button"
+            variant="ghost"
+            onClick={() => setShowEmojiPicker((prev) => !prev)}
+            title="Add emoji"
+            className={styles.attachButton}
+            icon={
+              <CustomIcon
+                name="Smile"
+                size={18}
+                color={
+                  showEmojiPicker ? "var(--accent-primary)" : undefined
+                }
+              />
+            }
+          />
+          {showEmojiPicker && <EmojiPicker onSelect={insertEmoji} />}
+        </div>
         <input
           type="text"
+          ref={textInputRef}
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
@@ -135,6 +192,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
             padding: "0 16px",
             color: "var(--text-primary)",
             outline: "none",
+            fontSize: "1rem",
           }}
         />
         <CustomButton

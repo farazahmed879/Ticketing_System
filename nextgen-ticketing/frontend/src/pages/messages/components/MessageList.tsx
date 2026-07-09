@@ -6,6 +6,33 @@ import styles from "../Messages.module.css";
 import type { Message, Conversation } from "../../../types";
 import CustomImage from "../../../components/CustomImage";
 
+// Matches one emoji cluster, including skin tones, variation selectors and
+// ZWJ sequences (e.g. 👍🏽, ❤️, 👨‍👩‍👧).
+const EMOJI_SEGMENT =
+  /(\p{Extended_Pictographic}(?:[\u{FE0F}\u{1F3FB}-\u{1F3FF}])*(?:\u{200D}\p{Extended_Pictographic}(?:[\u{FE0F}\u{1F3FB}-\u{1F3FF}])*)*)/gu;
+
+const analyzeEmojis = (body?: string) => {
+  if (!body) return { emojiOnly: false, count: 0 };
+  const matches = body.match(EMOJI_SEGMENT) || [];
+  if (matches.length === 0) return { emojiOnly: false, count: 0 };
+  const stripped = body.replace(EMOJI_SEGMENT, "").replace(/\s/g, "");
+  return { emojiOnly: stripped.length === 0, count: matches.length };
+};
+
+// Wrap emojis in a span so they render larger than the surrounding text.
+const renderBodyWithEmojis = (body: string) => {
+  const parts = body.split(EMOJI_SEGMENT);
+  return parts.map((part, i) =>
+    i % 2 === 1 ? (
+      <span key={i} className={styles.emojiChar}>
+        {part}
+      </span>
+    ) : (
+      <React.Fragment key={i}>{part}</React.Fragment>
+    ),
+  );
+};
+
 interface MessageListProps {
   messages: Message[];
   userId: string | undefined;
@@ -48,6 +75,8 @@ const MessageList: React.FC<MessageListProps> = ({
           const canDelete =
             isOwn &&
             Date.now() - new Date(msg.createdAt).getTime() < 5 * 60 * 1000;
+          const { emojiOnly, count: emojiCount } = analyzeEmojis(msg.body);
+          const isEmojiOnlyMsg = emojiOnly && !hasAttachments && !msg.replyTo;
           return (
             <div
               key={msg.id}
@@ -73,7 +102,7 @@ const MessageList: React.FC<MessageListProps> = ({
               <div
                 className={`${styles.messageBubble} ${
                   hasAttachments && !msg.body ? styles.messageBubbleMedia : ""
-                }`}
+                } ${isEmojiOnlyMsg ? styles.messageBubbleEmojiOnly : ""}`}
               >
                 {msg.replyTo && (
                   <div
@@ -130,9 +159,22 @@ const MessageList: React.FC<MessageListProps> = ({
                       ))}
                     </div>
                   ))}
-                {msg.body && (
-                  <span className={styles.messageText}>{msg.body}</span>
-                )}
+                {msg.body &&
+                  (isEmojiOnlyMsg ? (
+                    <span
+                      className={styles.messageText}
+                      style={{
+                        fontSize: emojiCount <= 3 ? "2.4rem" : "1.7rem",
+                        lineHeight: 1.25,
+                      }}
+                    >
+                      {msg.body}
+                    </span>
+                  ) : (
+                    <span className={styles.messageText}>
+                      {renderBodyWithEmojis(msg.body)}
+                    </span>
+                  ))}
               </div>
               <div className={styles.messageMeta}>
                 <span className={styles.messageTime}>

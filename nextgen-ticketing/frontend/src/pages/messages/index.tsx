@@ -41,6 +41,8 @@ const Messages: React.FC = () => {
   const [isAddMembersModalOpen, setIsAddMembersModalOpen] = useState(false);
   const [isViewMembersModalOpen, setIsViewMembersModalOpen] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [convToDelete, setConvToDelete] = useState<string | null>(null);
+  const [isDeletingConv, setIsDeletingConv] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [userSearch, setUserSearch] = useState("");
@@ -119,37 +121,30 @@ const Messages: React.FC = () => {
   };
 
   const queryClient = useQueryClient();
+  // Conversations and notifications load in parallel; the page renders as
+  // soon as conversations arrive and unread badges fill in when the
+  // notifications query resolves.
   const { data: convData, isLoading: loading } = useQuery({
     queryKey: ["conversations"],
     queryFn: async () => {
       const res = await api.get(API_ROUTES.MESSAGES.CONVERSATIONS);
-      const notifRes = await api.get(API_ROUTES.NOTIFICATIONS.BASE, {
+      return res.data.conversations as Conversation[];
+    },
+  });
+
+  const { data: notifData } = useQuery({
+    queryKey: ["message-notifications"],
+    queryFn: async () => {
+      const res = await api.get(API_ROUTES.NOTIFICATIONS.BASE, {
         params: { limit: 100 },
       });
-      return {
-        conversations: res.data.conversations as Conversation[],
-        notifications: notifRes.data.items as any[],
-      };
+      return res.data.items as any[];
     },
   });
 
   useEffect(() => {
     if (convData) {
-      setConversations(convData.conversations);
-
-      const unreadMessageNotifs = convData.notifications.filter(
-        (n: any) => n.unread && n.type === "message",
-      );
-
-      const counts: Record<string, number> = {};
-      unreadMessageNotifs.forEach((n: any) => {
-        const rId = n.data?.roomId;
-        if (rId) {
-          counts[rId] = (counts[rId] || 0) + 1;
-        }
-      });
-      setUnreadCounts(counts);
-      setUnreadMessageNotifications(unreadMessageNotifs);
+      setConversations(convData);
 
       const userIdFromParam = searchParams.get("userId");
       const roomIdFromParam = searchParams.get("roomId");
@@ -160,6 +155,29 @@ const Messages: React.FC = () => {
       }
     }
   }, [convData]);
+
+  useEffect(() => {
+    if (notifData) {
+      const unreadMessageNotifs = notifData.filter(
+        (n: any) => n.unread && n.type === "message",
+      );
+
+      const counts: Record<string, number> = {};
+      unreadMessageNotifs.forEach((n: any) => {
+        const rId = n.data?.roomId;
+        if (rId) {
+          counts[rId] = (counts[rId] || 0) + 1;
+        }
+      });
+      // Notifications can resolve after a conversation was already opened
+      // (e.g. via ?roomId=) — never show a badge for the room being viewed.
+      if (activeConvRef.current) {
+        counts[activeConvRef.current] = 0;
+      }
+      setUnreadCounts(counts);
+      setUnreadMessageNotifications(unreadMessageNotifs);
+    }
+  }, [notifData]);
 
   useEffect(() => {
     socket.on("chat:receive", (data: { roomId: string; message: Message }) => {
@@ -219,10 +237,24 @@ const Messages: React.FC = () => {
       },
     );
 
+    socket.on("chat:conversation_deleted", (data: { roomId: string }) => {
+      setConversations((prev) => prev.filter((c) => c.id !== data.roomId));
+      setUnreadCounts((prev) => {
+        const next = { ...prev };
+        delete next[data.roomId];
+        return next;
+      });
+      if (activeConvRef.current === data.roomId) {
+        setActiveConv(null);
+        setMessages([]);
+      }
+    });
+
     return () => {
       socket.off("chat:receive");
       socket.off("notifications:new");
       socket.off("chat:message_deleted");
+      socket.off("chat:conversation_deleted");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
@@ -424,6 +456,21 @@ const Messages: React.FC = () => {
     }
   };
 
+  const confirmDeleteConversation = async () => {
+    if (!convToDelete) return;
+    setIsDeletingConv(true);
+    try {
+      await api.delete(API_ROUTES.MESSAGES.DELETE_CONVERSATION(convToDelete));
+      setConversations((prev) => prev.filter((c) => c.id !== convToDelete));
+      if (activeConv === convToDelete) handleCloseChat();
+    } catch (err: any) {
+      alert(err?.response?.data?.error || "Could not delete conversation");
+    } finally {
+      setIsDeletingConv(false);
+      setConvToDelete(null);
+    }
+  };
+
   const handleCloseChat = () => {
     setActiveConv(null);
     setSearchParams(
@@ -468,10 +515,17 @@ const Messages: React.FC = () => {
 
   const selectedConv = conversations.find((c) => c.id === activeConv);
 
+  // Every image shared in the active conversation, in chronological order —
+  // shown in the sidebar's "Shared Files" panel.
+  const sharedFiles = messages.flatMap((m) => m.attachments || []);
+
   if (loading) {
     return (
       <div className={`${styles.container} animate-fade-in`}>
-        <ChatSkeleton />
+        {/* .container is a 320px/1fr grid — span both columns */}
+        <div style={{ gridColumn: "1 / -1", minHeight: 0, height: "100%" }}>
+          <ChatSkeleton />
+        </div>
       </div>
     );
   }
@@ -490,6 +544,8 @@ const Messages: React.FC = () => {
         isCustomer={isCustomer || false}
         onNewGroupClick={handleOpenGroupModal}
         onNewChatClick={handleOpenUserModal}
+        sharedFiles={sharedFiles}
+        onFileClick={(idx) => openLightbox(sharedFiles, idx)}
       />
 
       <div className={styles.chatArea}>
@@ -500,6 +556,10 @@ const Messages: React.FC = () => {
               onlineUserIds={onlineUserIds}
               onViewMembers={() => setIsViewMembersModalOpen(true)}
               onDeleteChat={handleDeleteChat}
+              onDeleteConversation={() => setConvToDelete(activeConv)}
+              canDeleteConversation={
+                (canManageGroup || !selectedConv.isGroup) ?? false
+              }
               onCloseChat={handleCloseChat}
             />
 
@@ -672,6 +732,17 @@ const Messages: React.FC = () => {
         title="Delete Message"
         message="Are you sure you want to delete this message? This action cannot be undone."
         confirmText="Delete"
+        type="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={!!convToDelete}
+        onClose={() => setConvToDelete(null)}
+        onConfirm={confirmDeleteConversation}
+        title="Delete Conversation"
+        message="This will permanently delete this conversation and all its messages for everyone. This action cannot be undone."
+        confirmText="Delete Conversation"
+        loading={isDeletingConv}
         type="danger"
       />
     </div>

@@ -30,6 +30,13 @@ router.get(
   checkRole(allowedRoles),
   candidateController.getLeaderboard,
 );
+// Job-status polling for async bulk upload. Must be registered before /:id.
+router.get(
+  "/jobs",
+  authMiddleware,
+  checkRole(allowedRoles),
+  candidateController.getResumeJobs,
+);
 router.get(
   "/:id",
   authMiddleware,
@@ -48,6 +55,15 @@ router.post(
   checkRole(allowedRoles),
   upload.single("resume"),
   candidateController.uploadResume,
+);
+// Async bulk intake: file -> Drive -> ResumeJob -> 202 {jobId}. Heavy work
+// happens in the worker process, not here.
+router.post(
+  "/bulk-upload",
+  authMiddleware,
+  checkRole(allowedRoles),
+  upload.single("resume"),
+  candidateController.bulkUploadResume,
 );
 router.post(
   "/:id/convert",

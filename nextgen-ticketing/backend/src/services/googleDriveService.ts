@@ -22,11 +22,15 @@ function getAuthClient() {
   return oauth2Client;
 }
 
-export async function uploadToGoogleDrive(
+/**
+ * Upload and return both the Drive file id and the shareable URL. The id is
+ * what the async resume worker needs to download the file back for processing.
+ */
+export async function uploadToGoogleDriveFile(
   buffer: Buffer,
   filename: string,
   mimetype: string
-): Promise<string | null> {
+): Promise<{ fileId: string; url: string } | null> {
   const auth = getAuthClient();
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
@@ -62,5 +66,34 @@ export async function uploadToGoogleDrive(
     },
   });
 
-  return response.data.webViewLink || `https://drive.google.com/file/d/${response.data.id}/view`;
+  return {
+    fileId: response.data.id!,
+    url:
+      response.data.webViewLink ||
+      `https://drive.google.com/file/d/${response.data.id}/view`,
+  };
+}
+
+// Back-compat wrapper: existing callers only need the URL.
+export async function uploadToGoogleDrive(
+  buffer: Buffer,
+  filename: string,
+  mimetype: string
+): Promise<string | null> {
+  const result = await uploadToGoogleDriveFile(buffer, filename, mimetype);
+  return result ? result.url : null;
+}
+
+/** Download a Drive file's bytes (used by the resume worker). */
+export async function downloadFromGoogleDrive(fileId: string): Promise<Buffer> {
+  const auth = getAuthClient();
+  if (!auth) {
+    throw new Error("Google Drive credentials not configured");
+  }
+  const drive = google.drive({ version: "v3", auth });
+  const res = await drive.files.get(
+    { fileId, alt: "media" },
+    { responseType: "arraybuffer" }
+  );
+  return Buffer.from(res.data as ArrayBuffer);
 }

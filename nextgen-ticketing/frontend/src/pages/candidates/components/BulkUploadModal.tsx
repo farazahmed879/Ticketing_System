@@ -5,11 +5,6 @@ import CustomIcon from "../../../components/CustomIcon";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import { useNotification } from "../../../context/NotificationContext";
-import {
-  extractTextFromFile,
-  parseResumeData,
-  deriveNameFromFilename,
-} from "../../../utils/resumeParser";
 import { CandidateStatus, COUNTRY_CODES } from "../../../utils/constants";
 
 interface BulkUploadModalProps {
@@ -26,6 +21,7 @@ interface FileEntry {
   status: FileStatus;
   message?: string;
   candidateName?: string;
+  jobId?: string; // server-side ResumeJob id (async processing)
 }
 
 interface CsvCandidateRow {
@@ -135,128 +131,47 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
     setFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
+  // Async bulk upload: each file is sent to the fast intake endpoint, which
+  // stores it on Drive, queues a ResumeJob and returns 202 {jobId} instantly.
+  // The heavy pipeline (LlamaParse → parse → enrich → create) runs in the
+  // separate background worker process, so a bulk batch can't hold web-server
+  // RAM or connections. This modal then polls job status to drive the UI.
   const processFiles = async () => {
     if (files.length === 0) return;
     setIsProcessing(true);
 
-    let anySuccess = false;
-
-    for (let i = 0; i < files.length; i++) {
-      const entry = files[i];
+    // Phase 1 — enqueue every file.
+    const jobToEntry = new Map<string, string>(); // jobId -> file entry id
+    for (const entry of files) {
       if (entry.status === "success") continue;
 
       setFiles((prev) =>
         prev.map((f) =>
           f.id === entry.id
-            ? { ...f, status: "processing", message: "Extracting text..." }
+            ? { ...f, status: "processing", message: "Uploading..." }
             : f,
         ),
       );
 
       try {
-        const text = await extractTextFromFile(entry.file);
-        let parsed = parseResumeData(text);
-
-        if (!parsed.name) {
-          const derived = deriveNameFromFilename(entry.file.name);
-          if (derived) parsed.name = derived;
-        }
-
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === entry.id
-              ? {
-                  ...f,
-                  message: "Uploading to Drive...",
-                  candidateName: parsed.name,
-                }
-              : f,
-          ),
-        );
-
         const formData = new FormData();
         formData.append("resume", entry.file);
-        let resumeUrl = "";
-        try {
-          const uploadRes = await api.post(
-            API_ROUTES.CANDIDATES.UPLOAD_RESUME,
-            formData,
-            {
-              headers: { "Content-Type": "multipart/form-data" },
-            },
-          );
-          if (uploadRes.data.driveUrl) {
-            resumeUrl = uploadRes.data.driveUrl;
-          }
-          if (uploadRes.data.parsedData) {
-            const serverParsed = uploadRes.data.parsedData;
-            parsed = { ...parsed };
-            for (const key in serverParsed) {
-              if (serverParsed[key] && !parsed[key as keyof typeof parsed]) {
-                (parsed as any)[key] = serverParsed[key];
-              }
-            }
-          }
-        } catch (uploadErr) {
-          console.warn(`Drive upload failed for ${entry.file.name}`, uploadErr);
-        }
-
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === entry.id ? { ...f, message: "Creating candidate..." } : f,
-          ),
+        const res = await api.post(
+          API_ROUTES.CANDIDATES.BULK_UPLOAD,
+          formData,
+          { headers: { "Content-Type": "multipart/form-data" } },
         );
-
-        let phoneVal = parsed.phone || "";
-        let countryCode = "+92";
-        const matched = COUNTRY_CODES.find((code) =>
-          phoneVal.startsWith(code.value),
-        );
-        if (matched) {
-          countryCode = matched.value;
-          phoneVal = phoneVal.replace(matched.value, "").trim();
-        }
-
-        const payload = {
-          name: parsed.name || "Unknown Candidate",
-          email:
-            parsed.email ||
-            `${Math.random().toString(36).substring(7)}@example.com`,
-          phone: phoneVal ? `${countryCode} ${phoneVal}` : "",
-          position: parsed.position || "Applicant",
-          resumeUrl: resumeUrl,
-          notes: parsed.rawText
-            ? "Automatically created from bulk upload."
-            : "",
-          status: CandidateStatus.ACTIVE,
-          cnic: parsed.cnic || null,
-          address: parsed.address || null,
-          linkedin: parsed.linkedin || null,
-          portfolio: parsed.portfolio || null,
-          github: parsed.github || null,
-          projects: parsed.projects || null,
-          objective: parsed.objective || null,
-          technicalSkills: parsed.technicalSkills || null,
-          workExperience: parsed.workExperience || null,
-          dob: parsed.dob
-            ? new Date(parsed.dob).toISOString().split("T")[0]
-            : null,
-          nationality: parsed.nationality || null,
-          city: parsed.city || null,
-        };
-
-        await api.post(API_ROUTES.CANDIDATES.BASE, payload);
-
+        const jobId: string = res.data.jobId;
+        jobToEntry.set(jobId, entry.id);
         setFiles((prev) =>
           prev.map((f) =>
             f.id === entry.id
-              ? { ...f, status: "success", message: "Created successfully" }
+              ? { ...f, jobId, message: "Queued for processing..." }
               : f,
           ),
         );
-        anySuccess = true;
       } catch (err: any) {
-        console.error(`Failed to process ${entry.file.name}:`, err);
+        console.error(`Failed to enqueue ${entry.file.name}:`, err);
         setFiles((prev) =>
           prev.map((f) =>
             f.id === entry.id
@@ -266,12 +181,91 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                   message:
                     err.response?.data?.error ||
                     err.message ||
-                    "Failed to process",
+                    "Failed to upload",
                 }
               : f,
           ),
         );
       }
+    }
+
+    if (jobToEntry.size === 0) {
+      setIsProcessing(false);
+      return;
+    }
+
+    // Phase 2 — poll job status until every queued job reaches done/failed.
+    let anySuccess = false;
+    const pendingIds = new Set(jobToEntry.keys());
+    const POLL_MS = 3000;
+    const deadline = Date.now() + 15 * 60 * 1000; // safety cap
+
+    while (pendingIds.size > 0 && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, POLL_MS));
+      try {
+        const res = await api.get(API_ROUTES.CANDIDATES.JOBS, {
+          params: { ids: Array.from(pendingIds).join(",") },
+        });
+        const jobs: any[] = res.data.jobs || [];
+        for (const job of jobs) {
+          const entryId = jobToEntry.get(job.id);
+          if (!entryId) continue;
+
+          if (job.status === "done") {
+            pendingIds.delete(job.id);
+            anySuccess = true;
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === entryId
+                  ? {
+                      ...f,
+                      status: "success",
+                      message: "Created successfully",
+                      candidateName: job.candidateName || f.candidateName,
+                    }
+                  : f,
+              ),
+            );
+          } else if (job.status === "failed") {
+            pendingIds.delete(job.id);
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === entryId
+                  ? {
+                      ...f,
+                      status: "error",
+                      message: job.error || "Processing failed",
+                    }
+                  : f,
+              ),
+            );
+          } else if (job.status === "processing") {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === entryId ? { ...f, message: "Parsing resume..." } : f,
+              ),
+            );
+          }
+        }
+      } catch (pollErr) {
+        console.warn("Job status poll failed, will retry:", pollErr);
+      }
+    }
+
+    // Anything still unfinished keeps processing server-side; the candidates
+    // will appear in the list when done.
+    if (pendingIds.size > 0) {
+      setFiles((prev) =>
+        prev.map((f) =>
+          f.jobId && pendingIds.has(f.jobId)
+            ? {
+                ...f,
+                message:
+                  "Still processing in background — candidate will appear when done.",
+              }
+            : f,
+        ),
+      );
     }
 
     setIsProcessing(false);

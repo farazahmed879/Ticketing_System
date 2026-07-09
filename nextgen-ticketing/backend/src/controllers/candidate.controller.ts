@@ -89,6 +89,44 @@ export const candidateController = {
     }
   },
 
+  // Async bulk intake: upload to Drive, enqueue a ResumeJob, return 202
+  // immediately. The separate worker process does the heavy parsing/creation.
+  async bulkUploadResume(req: AuthRequest, res: Response) {
+    try {
+      const file = (req as any).file;
+      if (!file) {
+        return res
+          .status(400)
+          .json({ success: false, error: "No file uploaded" });
+      }
+      const { jobId } = await candidateUsecase.enqueueResumeJob(
+        file,
+        req.user?.id,
+      );
+      res.status(202).json({ success: true, jobId });
+    } catch (error: any) {
+      const status = error.message.includes("Invalid file type")
+        ? 400
+        : error.message.includes("Too many resumes")
+          ? 429
+          : error.message.includes("credentials not configured")
+            ? 400
+            : 500;
+      res.status(status).json({ success: false, error: error.message });
+    }
+  },
+
+  async getResumeJobs(req: AuthRequest, res: Response) {
+    try {
+      const jobs = await candidateUsecase.getResumeJobs(
+        (req.query.ids as string) || "",
+      );
+      res.json({ success: true, jobs });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
   async convertToUser(req: AuthRequest, res: Response) {
     try {
       const result = await candidateUsecase.convertToUser(

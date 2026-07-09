@@ -96,6 +96,7 @@ export const API_ROUTES = {
     GROUPS: "/common/groups",
     TYPES: "/common/types",
     STATUSES: "/common/statuses",
+    SETTINGS: "/common/settings",
   },
 
   // Candidates

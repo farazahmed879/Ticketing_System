@@ -92,4 +92,22 @@ export const commonController = {
       res.status(500).json({ success: false, error: error.message });
     }
   },
+
+  async getSystemSettings(req: AuthRequest, res: Response) {
+    try {
+      const settings = await commonUsecase.getSystemSettings();
+      res.json({ success: true, settings });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  async updateSystemSettings(req: AuthRequest, res: Response) {
+    try {
+      const settings = await commonUsecase.updateSystemSettings(req.body);
+      res.json({ success: true, settings });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
 };

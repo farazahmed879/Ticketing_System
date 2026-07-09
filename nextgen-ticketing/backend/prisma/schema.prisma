@@ -269,6 +269,15 @@ model Notice {
   deleted   Boolean  @default(false)
 }
 
+// Singleton settings document – only one row with key "global".
+model SystemSetting {
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  key                  String   @unique @default("global")
+  autoCloseDays        Int      @default(7)   // Days before resolved/approved tickets auto-close
+  autoCloseEnabled     Boolean  @default(true)
+  updatedAt            DateTime @updatedAt
+}
+
 model Announcement {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   title        String

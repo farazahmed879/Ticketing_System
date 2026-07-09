@@ -1,8 +1,8 @@
 .boardContainer {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  height: calc(100vh - 90px);
+  gap: 8px;
+  height: calc(100vh - 80px);
   width: 100%;
   min-width: 0;
   flex: 1;
@@ -15,20 +15,20 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 12px;
 }
 
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .titleInfo h1 {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .titleInfo p {
@@ -38,7 +38,7 @@
 
 .filterGroup {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
 }
 
@@ -132,7 +132,7 @@
 
 .kanbanBoard {
   display: flex;
-  gap: 20px;
+  gap: 12px;
   overflow-x: auto;
   overflow-y: hidden;
   flex: 1 1 0;
@@ -140,7 +140,7 @@
   width: 100%;
   min-width: 0;
   scroll-snap-type: x mandatory;
-  scroll-padding-inline: 16px;
+  scroll-padding-inline: 8px;
   scrollbar-width: none;
   user-select: none;
   -webkit-user-select: none;

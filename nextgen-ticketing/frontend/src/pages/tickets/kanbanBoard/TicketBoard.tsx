@@ -453,19 +453,6 @@ const TicketBoard: React.FC = () => {
           header={
             <div className={styles.header}>
               <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
-                <CustomButton
-                  variant="ghost"
-                  onClick={() => navigate("/tickets")}
-                  icon={<CustomIcon name="ArrowLeft" size={20} />}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    padding: 0,
-                    borderRadius: "12px",
-                    background: "rgba(255, 255, 255, 0.05)",
-                    border: "1px solid var(--border-glass)",
-                  }}
-                />
                 <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0 }}>
                   Ticketing Board
                 </h1>
@@ -474,10 +461,8 @@ const TicketBoard: React.FC = () => {
                 user?.role?.permissions?.tickets?.create) && (
                 <CustomButton
                   variant="gradient"
-                  size="sm"
-                  icon={<CustomIcon name="Plus" size={18} />}
+                  icon={<CustomIcon name="Plus" size={20} />}
                   onClick={() => setIsCreateModalOpen(true)}
-                  style={{ minHeight: 48, borderRadius: 12 }}
                 >
                   Create Ticket
                 </CustomButton>
@@ -509,7 +494,6 @@ const TicketBoard: React.FC = () => {
                     size={18}
                   />
                 }
-                style={{ minHeight: 48, borderRadius: 12 }}
               />
 
               <CustomButton
@@ -517,7 +501,6 @@ const TicketBoard: React.FC = () => {
                 size="sm"
                 onClick={() => setMyTicketsOnly((prev) => !prev)}
                 icon={<CustomIcon name="User" size={18} />}
-                style={{ minHeight: 48, borderRadius: 12 }}
               >
                 My Tickets
               </CustomButton>
@@ -531,7 +514,6 @@ const TicketBoard: React.FC = () => {
                   }
                   onClick={toggleMoreFilters}
                   icon={<CustomIcon name="SlidersHorizontal" size={18} />}
-                  style={{ minHeight: 48, borderRadius: 12 }}
                 >
                   Filters
                   {activeMoreFilters > 0 && (

@@ -17,18 +17,29 @@ export const projectController = {
       }
 
       // Pagination
-      const limitVal = req.query.limit ? parseInt(req.query.limit as string) : undefined;
-      const pageVal = req.query.page ? parseInt(req.query.page as string) : undefined;
+      const limitVal = req.query.limit
+        ? parseInt(req.query.limit as string)
+        : undefined;
+      const pageVal = req.query.page
+        ? parseInt(req.query.page as string)
+        : undefined;
 
       const take = limitVal && limitVal !== -1 ? limitVal : undefined;
-      const skip = pageVal !== undefined && take !== undefined ? pageVal * take : undefined;
+      const skip =
+        pageVal !== undefined && take !== undefined
+          ? pageVal * take
+          : undefined;
 
       // Remove pagination and custom keys from query to prevent filtering on them in repository where clause
       delete query.limit;
       delete query.page;
       delete query.all;
 
-      const { projects, total } = await projectRepository.findMany(query, skip, take);
+      const { projects, total } = await projectRepository.findMany(
+        query,
+        skip,
+        take,
+      );
       res.json({ success: true, projects, total });
     } catch (err: any) {
       res.status(500).json({ success: false, error: err.message });
@@ -104,8 +115,13 @@ export const projectController = {
 
   async getMembers(req: Request, res: Response) {
     try {
-      const project = await projectRepository.findByIdWithMembers(req.params.id as string);
-      if (!project) return res.status(404).json({ success: false, error: "Project not found" });
+      const project = await projectRepository.findByIdWithMembers(
+        req.params.id as string,
+      );
+      if (!project)
+        return res
+          .status(404)
+          .json({ success: false, error: "Project not found" });
       const membersMap = new Map<string, any>();
       project.teams.forEach((team: any) => {
         team.members.forEach((member: any) => {
@@ -132,7 +148,7 @@ export const projectController = {
           }
         });
       });
-      
+
       const members = Array.from(membersMap.values());
       res.json({ success: true, members });
     } catch (err: any) {

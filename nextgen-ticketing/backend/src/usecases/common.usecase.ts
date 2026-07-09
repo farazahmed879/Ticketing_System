@@ -1,6 +1,6 @@
 import { commonRepository } from "../repositories/common.repository";
 import { announcementRepository } from "../repositories/announcement.repository";
-import prisma from "../prisma";
+import { basePrisma as prisma } from "../prisma";
 import { RoleType } from "../utils/constants";
 
 export const commonUsecase = {
@@ -92,5 +92,29 @@ export const commonUsecase = {
       announcements,
       seenMomentIds,
     };
+  },
+
+  async getSystemSettings() {
+    // Upsert so there's always a settings row
+    return prisma.systemSetting.upsert({
+      where: { key: "global" },
+      update: {},
+      create: { key: "global" },
+    });
+  },
+
+  async updateSystemSettings(data: any) {
+    const updateData: any = {};
+    if (typeof data.autoCloseDays === "number") {
+      updateData.autoCloseDays = data.autoCloseDays;
+    }
+    if (typeof data.autoCloseEnabled === "boolean") {
+      updateData.autoCloseEnabled = data.autoCloseEnabled;
+    }
+    return prisma.systemSetting.upsert({
+      where: { key: "global" },
+      update: updateData,
+      create: { key: "global", ...updateData },
+    });
   },
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import CustomIcon from "../../../components/CustomIcon";
+import Modal from "../../../components/Modal";
 import styles from "../Dashboard.module.css";
 
 const LeaderboardPreview: React.FC = () => {
@@ -17,26 +18,11 @@ const LeaderboardPreview: React.FC = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const renderContent = (isOverlay = false) => {
+  const renderList = (isOverlay = false) => {
     const listToRender = isOverlay ? data : data.slice(0, 5);
+    if (loading) return <p>Loading...</p>;
     return (
-      <>
-        <div className={styles.sectionHeader}>
-          <h2 style={{ fontSize: isOverlay ? "1.3rem" : "1.05rem", fontWeight: 700 }}>
-            Top Recruiters
-          </h2>
-          <button
-            className={styles.expandSectionBtn}
-            onClick={() => setIsExpanded(!isExpanded)}
-            title={isExpanded ? "Collapse" : "Expand"}
-          >
-            <CustomIcon name={isExpanded ? "Minimize2" : "Maximize2"} size={16} />
-          </button>
-        </div>
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {listToRender.map((item, index) => (
               <div
                 key={index}
@@ -69,46 +55,51 @@ const LeaderboardPreview: React.FC = () => {
                     {index + 1}
                   </div>
                   <span style={{ fontSize: "0.95rem", color: "var(--text-primary)" }}>
-                    {item.fullname}
+                    {item.name}
                   </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                   <CustomIcon
-                    name="Award"
+                    name="Star"
                     size={14}
-                    color="var(--accent-primary)"
+                    color="var(--accent-warning)"
                   />
-                  <span style={{ fontWeight: 600 }}>{item.points} pts</span>
+                  <span style={{ fontWeight: 600 }}>{item.averageRating} pts</span>
                 </div>
               </div>
             ))}
           </div>
-        )}
-      </>
     );
   };
 
   return (
     <>
-      {isExpanded ? (
-        <div className={styles.fullscreenSectionOverlay} onClick={() => setIsExpanded(false)}>
-          <div className={styles.fullscreenSectionContent} onClick={(e) => e.stopPropagation()}>
-            <button
-              className={styles.closeOverlayBtn}
-              onClick={() => setIsExpanded(false)}
-              title="Close"
-              style={{ zIndex: 10 }}
-            >
-              <CustomIcon name="X" size={20} />
-            </button>
-            {renderContent(true)}
-          </div>
+      <div className={`${styles.recentTickets} glass-card`}>
+        <div className={styles.sectionHeader}>
+          <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)" }}>
+            Top Recruiters
+          </h2>
+          <button
+            className={styles.expandSectionBtn}
+            onClick={() => setIsExpanded(true)}
+            title="Expand"
+          >
+            <CustomIcon name="Maximize2" size={16} />
+          </button>
         </div>
-      ) : (
-        <div className={`${styles.recentTickets} glass-card`}>
-          {renderContent(false)}
+        {renderList(false)}
+      </div>
+
+      <Modal
+        isOpen={isExpanded}
+        onClose={() => setIsExpanded(false)}
+        title="Top Recruiters"
+        maxWidth="720px"
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 16 }}>
+          {renderList(true)}
         </div>
-      )}
+      </Modal>
     </>
   );
 };

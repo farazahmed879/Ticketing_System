@@ -83,4 +83,5 @@ const prisma = basePrisma.$extends({
   },
 });
 
+export { basePrisma };
 export default prisma;

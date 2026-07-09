@@ -310,17 +310,6 @@ async function main() {
 
   console.log("  ✅ Role permissions updated with board transitions");
 
-  // ========== TYPES ==========
-  // Create each type with its fixed ObjectId (the frontend sends these exact
-  // ids on ticket creation). Upsert by id so the canonical id always exists.
-  for (const t of TICKET_TYPES) {
-    await prisma.type.upsert({
-      where: { id: t.id },
-      update: { name: t.name },
-      create: { id: t.id, name: t.name },
-    });
-  }
-  console.log("  ✅ Types seeded");
 
   // ========== DEFAULT ADMIN USER ==========
   const hashedPassword = await bcrypt.hash("admin123", 10);

@@ -163,4 +163,8 @@ router.put('/groups/:id', authMiddleware, commonController.updateGroup);
  */
 router.delete('/groups/:id', authMiddleware, commonController.deleteGroup);
 
+// System Settings (admin-only)
+router.get('/settings', authMiddleware, commonController.getSystemSettings);
+router.put('/settings', authMiddleware, commonController.updateSystemSettings);
+
 export default router;

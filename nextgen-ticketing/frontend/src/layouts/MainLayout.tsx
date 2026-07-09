@@ -96,11 +96,30 @@ const MainLayout: React.FC = () => {
           notification.title + ": " + notification.message,
         );
 
-        // Play notification sound
-        const audio = new Audio(
-          "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3",
-        );
-        audio.play().catch((e) => console.log("Audio play failed:", e));
+        // Play notification sound if enabled
+        const soundEnabled = localStorage.getItem("pref_sound_alerts") !== "false";
+        if (soundEnabled) {
+          const audio = new Audio(
+            "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3",
+          );
+          audio.play().catch((e) => console.log("Audio play failed:", e));
+        }
+
+        // Show desktop notification if enabled and permission granted
+        const desktopEnabled = localStorage.getItem("pref_desktop_alerts") !== "false";
+        if (desktopEnabled && "Notification" in window && Notification.permission === "granted") {
+          try {
+            const n = new Notification(notification.title || "New Notification", {
+              body: notification.message || "",
+              icon: "/favicon.ico",
+            });
+            n.onclick = () => {
+              window.focus();
+            };
+          } catch (e) {
+            console.error("Error creating desktop notification:", e);
+          }
+        }
       }
 
       setNotifications((prev) => [notification, ...prev].slice(0, 20));

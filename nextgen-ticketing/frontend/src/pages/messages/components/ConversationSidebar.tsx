@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { format } from "date-fns";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
@@ -19,9 +19,6 @@ interface ConversationSidebarProps {
   isCustomer: boolean;
   onNewGroupClick: () => void;
   onNewChatClick: () => void;
-  /** All image attachments shared in the active conversation. */
-  sharedFiles?: string[];
-  onFileClick?: (index: number) => void;
 }
 
 const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
@@ -36,11 +33,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   isCustomer,
   onNewGroupClick,
   onNewChatClick,
-  sharedFiles = [],
-  onFileClick,
 }) => {
-  const [filesExpanded, setFilesExpanded] = useState(true);
-
   const filteredConversations = conversations.filter((c) => {
     const name = c.isGroup ? c.name || "Group" : c.partner?.fullname || "";
     return (
@@ -97,41 +90,6 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
           icon={<CustomIcon name="Search" size={16} />}
         />
       </div>
-
-      {activeConv && sharedFiles.length > 0 && (
-        <div className={styles.sharedFilesSection}>
-          <button
-            type="button"
-            className={styles.sharedFilesHeader}
-            onClick={() => setFilesExpanded((prev) => !prev)}
-          >
-            <CustomIcon name="Image" size={15} color="var(--accent-primary)" />
-            <span style={{ flex: 1, textAlign: "left" }}>
-              Shared Files ({sharedFiles.length})
-            </span>
-            <CustomIcon
-              name={filesExpanded ? "ChevronUp" : "ChevronDown"}
-              size={15}
-              color="var(--text-muted)"
-            />
-          </button>
-          {filesExpanded && (
-            <div className={styles.sharedFilesGrid}>
-              {sharedFiles.map((src, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  className={styles.sharedFileThumb}
-                  onClick={() => onFileClick?.(idx)}
-                  title="View file"
-                >
-                  <CustomImage src={src} alt={`shared-file-${idx}`} />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       <div className={styles.scrollArea}>
         {filteredConversations.length > 0 ? (

@@ -2,7 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Messages.module.css";
-import { MAX_ATTACHMENTS } from "../../../utils/attachments";
+import {
+  MAX_ATTACHMENTS,
+  CHAT_ACCEPT_ATTRIBUTE,
+  parseChatAttachment,
+} from "../../../utils/attachments";
 import type { Message } from "../../../types";
 import CustomImage from "../../../components/CustomImage";
 import EmojiPicker from "./EmojiPicker";
@@ -122,25 +126,47 @@ const MessageInput: React.FC<MessageInputProps> = ({
       )}
       {attachments.length > 0 && (
         <div className={styles.attachmentPreviewContainer}>
-          {attachments.map((src, idx) => (
-            <div key={idx} className={styles.attachmentPreview}>
-              <CustomImage src={src} alt={`preview-${idx}`} />
-              <CustomButton
-                variant="ghost"
-                size="sm"
-                onClick={() => removeAttachment(idx)}
-                title="Remove"
-                className={styles.attachmentRemove}
-                icon={<CustomIcon name="X" size={12} />}
-              />
-            </div>
-          ))}
+          {attachments.map((src, idx) => {
+            const { isImage, name } = parseChatAttachment(src);
+            return isImage ? (
+              <div key={idx} className={styles.attachmentPreview}>
+                <CustomImage src={src} alt={`preview-${idx}`} />
+                <CustomButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeAttachment(idx)}
+                  title="Remove"
+                  className={styles.attachmentRemove}
+                  icon={<CustomIcon name="X" size={12} />}
+                />
+              </div>
+            ) : (
+              <div key={idx} className={styles.filePreviewChip}>
+                <CustomIcon
+                  name="FileText"
+                  size={16}
+                  color="var(--accent-primary)"
+                />
+                <span className={styles.filePreviewName}>
+                  {name || "File"}
+                </span>
+                <CustomButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeAttachment(idx)}
+                  title="Remove"
+                  style={{ padding: 2 }}
+                  icon={<CustomIcon name="X" size={12} />}
+                />
+              </div>
+            );
+          })}
         </div>
       )}
       <form onSubmit={onSendMessage} style={{ display: "flex", gap: 12 }}>
         <input
           type="file"
-          accept="image/*"
+          accept={CHAT_ACCEPT_ATTRIBUTE}
           multiple
           ref={fileInputRef}
           onChange={onAttachmentsChange}
@@ -153,8 +179,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
           disabled={attachments.length >= MAX_ATTACHMENTS}
           title={
             attachments.length >= MAX_ATTACHMENTS
-              ? `Maximum ${MAX_ATTACHMENTS} images`
-              : "Attach image"
+              ? `Maximum ${MAX_ATTACHMENTS} attachments`
+              : "Attach image or file"
           }
           className={styles.attachButton}
           icon={<CustomIcon name="Paperclip" size={18} />}

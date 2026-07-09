@@ -5,6 +5,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Messages.module.css";
 import type { Message, Conversation } from "../../../types";
 import CustomImage from "../../../components/CustomImage";
+import { parseChatAttachment } from "../../../utils/attachments";
 
 // Matches one emoji cluster, including skin tones, variation selectors and
 // ZWJ sequences (e.g. 👍🏽, ❤️, 👨‍👩‍👧).
@@ -71,6 +72,12 @@ const MessageList: React.FC<MessageListProps> = ({
       <div className={styles.messagesWrapper}>
         {messages.map((msg) => {
           const isOwn = msg.senderId === userId;
+          const imageAttachments = (msg.attachments || []).filter(
+            (a) => parseChatAttachment(a).isImage,
+          );
+          const fileAttachments = (msg.attachments || []).filter(
+            (a) => !parseChatAttachment(a).isImage,
+          );
           const hasAttachments = msg.attachments && msg.attachments.length > 0;
           const canDelete =
             isOwn &&
@@ -124,41 +131,58 @@ const MessageList: React.FC<MessageListProps> = ({
                     {msg.replyTo.body?.substring(0, 50) || "Attachment"}
                   </div>
                 )}
-                {hasAttachments &&
-                  (msg.attachments!.length === 1 ? (
-                    <CustomButton
-                      variant="ghost"
-                      className={styles.attachmentSingle}
-                      style={{ padding: 0, height: "auto" }}
-                      onClick={() => openLightbox(msg.attachments!, 0)}
-                      title="View image"
+                {imageAttachments.length === 1 ? (
+                  <CustomButton
+                    variant="ghost"
+                    className={styles.attachmentSingle}
+                    style={{ padding: 0, height: "auto" }}
+                    onClick={() => openLightbox(imageAttachments, 0)}
+                    title="View image"
+                  >
+                    <CustomImage
+                      src={imageAttachments[0]}
+                      alt="attachment"
+                      style={{ borderRadius: "inherit" }}
+                    />
+                  </CustomButton>
+                ) : imageAttachments.length > 1 ? (
+                  <div className={styles.attachmentGrid}>
+                    {imageAttachments.map((src, i) => (
+                      <CustomButton
+                        key={i}
+                        variant="ghost"
+                        className={styles.attachmentThumb}
+                        style={{ padding: 0, height: "auto" }}
+                        onClick={() => openLightbox(imageAttachments, i)}
+                        title="View image"
+                      >
+                        <CustomImage
+                          src={src}
+                          alt={`attachment-${i}`}
+                          style={{ borderRadius: "inherit" }}
+                        />
+                      </CustomButton>
+                    ))}
+                  </div>
+                ) : null}
+                {fileAttachments.map((src, i) => {
+                  const { name } = parseChatAttachment(src);
+                  return (
+                    <a
+                      key={i}
+                      href={src}
+                      download={name || "file"}
+                      className={styles.fileCard}
+                      title={`Download ${name || "file"}`}
                     >
-                      <CustomImage
-                        src={msg.attachments![0]}
-                        alt="attachment"
-                        style={{ borderRadius: "inherit" }}
-                      />
-                    </CustomButton>
-                  ) : (
-                    <div className={styles.attachmentGrid}>
-                      {msg.attachments!.map((src, i) => (
-                        <CustomButton
-                          key={i}
-                          variant="ghost"
-                          className={styles.attachmentThumb}
-                          style={{ padding: 0, height: "auto" }}
-                          onClick={() => openLightbox(msg.attachments!, i)}
-                          title="View image"
-                        >
-                          <CustomImage
-                            src={src}
-                            alt={`attachment-${i}`}
-                            style={{ borderRadius: "inherit" }}
-                          />
-                        </CustomButton>
-                      ))}
-                    </div>
-                  ))}
+                      <CustomIcon name="FileText" size={20} />
+                      <span className={styles.fileCardName}>
+                        {name || "File"}
+                      </span>
+                      <CustomIcon name="Download" size={16} />
+                    </a>
+                  );
+                })}
                 {msg.body &&
                   (isEmojiOnlyMsg ? (
                     <span

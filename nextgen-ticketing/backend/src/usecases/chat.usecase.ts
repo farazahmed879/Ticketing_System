@@ -7,31 +7,71 @@ const isAdminRole = (role: any) => role?.roleType === RoleType.ADMIN;
 const isAgentRole = (role: any) => role?.roleType === RoleType.AGENT;
 const isCustomerRole = (role: any) => role?.roleType === RoleType.CUSTOMER;
 
+// Preview label for attachment-only messages: the embedded filename for
+// documents (`data:<mime>;name=<encoded>;base64,...`), a photo label for
+// plain images.
+function attachmentPreviewLabel(attachments?: string[]): string {
+  if (!attachments || attachments.length === 0) return "";
+  const m = /^data:([^;,]+)(?:;name=([^;,]*))?;base64,/i.exec(attachments[0]);
+  const mime = m?.[1] || "";
+  if (m?.[2]) {
+    try {
+      return decodeURIComponent(m[2]);
+    } catch {
+      return m[2];
+    }
+  }
+  if (/^image\//i.test(mime)) {
+    return attachments.length > 1 ? `📷 ${attachments.length} Photos` : "📷 Photo";
+  }
+  return "📎 File";
+}
+
 export const chatUsecase = {
   async getConversations(userId: string) {
     const rooms = await chatRepository.findRoomsByUserId(userId);
     const visibleRooms = rooms.filter((r: any) => !(r.hiddenByIds || []).includes(userId));
 
-    return visibleRooms.map((room: any) => {
-      const partner = room.isGroup
-        ? null
-        : room.members.find((m: any) => m.id !== userId);
-      const lastMsg = room.messages[0];
-      const senderName = lastMsg?.sender?.fullname || "Someone";
-      return {
-        id: room.id,
-        isGroup: room.isGroup,
-        name: room.isGroup ? room.name : null,
-        members: room.members,
-        partner,
-        recentMessage: lastMsg
-          ? lastMsg.senderId === userId
-            ? `You: ${lastMsg.body}`
-            : `${senderName}: ${lastMsg.body}`
-          : "New Conversation",
-        updatedAt: room.updatedAt,
-      };
-    });
+    return visibleRooms
+      .map((room: any) => {
+        const partner = room.isGroup
+          ? null
+          : room.members.find((m: any) => m.id !== userId);
+        // Ignore messages from before this user's history cutoff (set when
+        // they deleted the conversation).
+        const clearedAt = (
+          (room as any).clearedAtByUser as Record<string, string> | undefined
+        )?.[userId];
+        const latest = room.messages[0];
+        const lastMsg =
+          latest &&
+          clearedAt &&
+          new Date(latest.createdAt) <= new Date(clearedAt)
+            ? null
+            : latest;
+        const senderName = lastMsg?.sender?.fullname || "Someone";
+        const preview = lastMsg
+          ? lastMsg.body || attachmentPreviewLabel((lastMsg as any).attachments)
+          : "";
+        return {
+          id: room.id,
+          isGroup: room.isGroup,
+          name: room.isGroup ? room.name : null,
+          members: room.members,
+          partner,
+          recentMessage: lastMsg
+            ? lastMsg.senderId === userId
+              ? `You: ${preview}`
+              : `${senderName}: ${preview}`
+            : "New Conversation",
+          updatedAt: room.updatedAt,
+          // Direct chats only appear once they hold at least one message the
+          // user can still see; groups stay visible even when empty.
+          hasVisibleMessages: room.isGroup || !!lastMsg,
+        };
+      })
+      .filter((c: any) => c.hasVisibleMessages)
+      .map(({ hasVisibleMessages: _omit, ...conv }: any) => conv);
   },
 
   async getConversation(id: string, userId: string) {
@@ -39,8 +79,19 @@ export const chatUsecase = {
     if (!room) throw new Error("Conversation not found");
     if (!room.memberIds.includes(userId)) throw new Error("Access denied");
 
+    // Respect this user's history cutoff: messages from before they deleted
+    // the conversation stay hidden for them.
+    const clearedAt = (
+      (room as any).clearedAtByUser as Record<string, string> | undefined
+    )?.[userId];
+    const messages = clearedAt
+      ? room.messages.filter(
+          (m: any) => new Date(m.createdAt) > new Date(clearedAt),
+        )
+      : room.messages;
+
     const partner = room.members.find((m: any) => m.id !== userId);
-    return { ...room, partner };
+    return { ...room, messages, partner };
   },
 
   async startConversation(userId: string, partnerId: string) {
@@ -85,30 +136,23 @@ export const chatUsecase = {
     return chatRepository.createRoom({ memberIds: [userId, partnerId] });
   },
 
+  // Deleting a conversation only removes it for the caller (via hiddenByIds);
+  // the other members keep the conversation and its history. If the chat
+  // resumes later, the caller only sees messages sent after their delete
+  // (clearedAtByUser cutoff).
   async deleteConversation(id: string, userId: string) {
     const room = await chatRepository.findRoomById(id);
     if (!room) throw new Error("Conversation not found");
+    if (!room.memberIds.includes(userId)) throw new Error("Access denied");
 
-    const me = await chatRepository.findUserWithRole(userId);
-    if (!me) throw new Error("User not found");
-
-    const isAdmin = isAdminRole(me.role);
-    const isAgent = isAgentRole(me.role);
-    const isMember = room.memberIds.includes(userId);
-
-    // Direct chats: either participant (or any Admin/Manager) may delete.
-    // Groups: only Admins, Managers, or a Team Lead who is a member.
-    const canDelete = room.isGroup
-      ? isAdmin || isAgent || ((me as any).isLead === true && isMember)
-      : isAdmin || isAgent || isMember;
-
-    if (!canDelete) {
-      throw new Error("You do not have permission to delete this conversation");
-    }
-
-    const memberIds = [...room.memberIds];
-    await chatRepository.deleteRoomWithMessages(id);
-    return { memberIds };
+    const hiddenByIds = Array.from(
+      new Set([...((room as any).hiddenByIds || []), userId]),
+    );
+    const clearedAtByUser = {
+      ...(((room as any).clearedAtByUser as Record<string, string>) || {}),
+      [userId]: new Date().toISOString(),
+    };
+    return chatRepository.updateRoom(id, { hiddenByIds, clearedAtByUser });
   },
 
   async hideConversation(id: string, userId: string) {

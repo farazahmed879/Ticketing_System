@@ -12,14 +12,20 @@ const onlineUsers: Map<string, OnlineUser> = new Map();
 const MAX_CHAT_ATTACHMENTS = 5;
 const MAX_CHAT_ATTACHMENT_BYTES = 2 * 1024 * 1024; // 2 MB
 
-// Keep only valid image data URLs, capped in count and size, so a malicious
-// client can't flood the DB through the socket.
+// Images plus common document types. Document data URLs may carry the
+// original filename as a `;name=` parameter (percent-encoded). Kept in sync
+// with the frontend allow-list in utils/attachments.ts.
+const ALLOWED_CHAT_ATTACHMENT_RE =
+  /^data:(?:image\/(?:png|jpe?g|webp|gif)|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.(?:wordprocessingml\.document|spreadsheetml\.sheet|presentationml\.presentation)|application\/vnd\.ms-excel|application\/vnd\.ms-powerpoint|text\/(?:plain|csv)|application\/(?:zip|x-zip-compressed))(?:;name=[A-Za-z0-9%!'()*._~-]*)?;base64,/i;
+
+// Keep only valid image/document data URLs, capped in count and size, so a
+// malicious client can't flood the DB through the socket.
 function sanitizeChatAttachments(attachments?: string[]): string[] {
   if (!Array.isArray(attachments)) return [];
   const valid: string[] = [];
   for (const a of attachments) {
     if (typeof a !== 'string') continue;
-    if (!/^data:image\/(png|jpe?g|webp|gif);base64,/i.test(a)) continue;
+    if (!ALLOWED_CHAT_ATTACHMENT_RE.test(a)) continue;
     const base64 = a.split(',')[1] || '';
     const padding = (base64.match(/=+$/) || [''])[0].length;
     const bytes = (base64.length * 3) / 4 - padding;
@@ -80,7 +86,10 @@ export function setupSocketEvents(io: Server) {
             replyTo: { select: { id: true, body: true, sender: { select: { fullname: true } } } }
           },
         });
-        await prisma.chatRoom.update({ where: { id: data.roomId }, data: { updatedAt: new Date() } });
+        // A new message un-hides the room for everyone who had deleted it
+        // (same as the REST send path) — their clearedAtByUser cutoff still
+        // hides the older history.
+        await prisma.chatRoom.update({ where: { id: data.roomId }, data: { updatedAt: new Date(), hiddenByIds: [] } });
 
         // Get room members and emit to them
         const room = await prisma.chatRoom.findUnique({ where: { id: data.roomId } });
@@ -252,22 +261,6 @@ function broadcastOnlineUsers(io: Server) {
 }
 
 // Helper: send notification to a specific user via socket
-// Emit an event to every active socket of the given users. Lets REST
-// controllers push chat updates through the same online-users registry.
-export function emitToUsers(
-  io: Server,
-  userIds: string[],
-  event: string,
-  payload: any,
-) {
-  for (const userId of userIds) {
-    const online = onlineUsers.get(userId);
-    if (online) {
-      online.socketIds.forEach((sid) => io.to(sid).emit(event, payload));
-    }
-  }
-}
-
 export function emitNotificationToUser(io: Server, userId: string, notification: any) {
   const user = onlineUsers.get(userId);
   if (user) {

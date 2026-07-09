@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styles from "./CustomImage.module.css";
 
 import type { CustomImageProps } from "../types";
@@ -16,11 +16,20 @@ const CustomImage: React.FC<CustomImageProps> = ({
 }) => {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     if (src) {
-      setLoading(true);
       setError(false);
+      // Data URLs and cached images can finish loading before React attaches
+      // the onLoad handler — if the browser already has the image, don't wait
+      // for a load event that will never fire.
+      const img = imgRef.current;
+      if (img && img.complete && img.naturalWidth > 0) {
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
     }
   }, [src]);
 
@@ -43,6 +52,7 @@ const CustomImage: React.FC<CustomImageProps> = ({
     >
       {loading && showSkeleton && <div className={styles.skeleton} />}
       <img
+        ref={imgRef}
         src={error || !src ? fallback : src}
         alt={alt || "Image"}
         onLoad={handleLoad}

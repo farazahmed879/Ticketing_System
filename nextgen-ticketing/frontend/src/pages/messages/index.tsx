@@ -12,7 +12,11 @@ import NewChatModal from "./components/NewChatModal";
 import NewGroupModal from "./components/NewGroupModal";
 import AddGroupMembersModal from "./components/AddGroupMembersModal";
 import ViewGroupMembersModal from "./components/ViewGroupMembersModal";
-import { readAttachmentFiles } from "../../utils/attachments";
+import {
+  readAttachmentFiles,
+  parseChatAttachment,
+  chatMessagePreview,
+} from "../../utils/attachments";
 import type { Conversation, Message } from "../../types";
 import {
   ChatSkeleton,
@@ -198,10 +202,17 @@ const Messages: React.FC = () => {
           queryClient.invalidateQueries({ queryKey: ["conversations"] });
           return prev;
         }
+        const preview = chatMessagePreview(
+          data.message.body,
+          data.message.attachments,
+        );
         const updated = [...prev];
         updated[index] = {
           ...updated[index],
-          recentMessage: data.message.body,
+          recentMessage:
+            data.message.senderId === user?.id
+              ? `You: ${preview}`
+              : `${data.message.sender?.fullname || "Someone"}: ${preview}`,
           updatedAt: new Date().toISOString(),
         };
         return updated.sort(
@@ -237,24 +248,10 @@ const Messages: React.FC = () => {
       },
     );
 
-    socket.on("chat:conversation_deleted", (data: { roomId: string }) => {
-      setConversations((prev) => prev.filter((c) => c.id !== data.roomId));
-      setUnreadCounts((prev) => {
-        const next = { ...prev };
-        delete next[data.roomId];
-        return next;
-      });
-      if (activeConvRef.current === data.roomId) {
-        setActiveConv(null);
-        setMessages([]);
-      }
-    });
-
     return () => {
       socket.off("chat:receive");
       socket.off("notifications:new");
       socket.off("chat:message_deleted");
-      socket.off("chat:conversation_deleted");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
@@ -316,6 +313,7 @@ const Messages: React.FC = () => {
     const { accepted, errors } = await readAttachmentFiles(
       e.target.files,
       attachments.length,
+      { allowDocuments: true },
     );
     if (accepted.length) setAttachments((prev) => [...prev, ...accepted]);
     if (errors.length) setAttachmentError(errors.join(" "));
@@ -440,22 +438,6 @@ const Messages: React.FC = () => {
     }
   };
 
-  const handleDeleteChat = async () => {
-    if (!activeConv) return;
-    if (
-      !window.confirm("Are you sure you want to delete this chat for yourself?")
-    )
-      return;
-
-    try {
-      await api.delete(API_ROUTES.MESSAGES.HIDE_CONVERSATION(activeConv));
-      setConversations((prev) => prev.filter((c) => c.id !== activeConv));
-      handleCloseChat();
-    } catch (err) {
-      console.error("Failed to delete chat", err);
-    }
-  };
-
   const confirmDeleteConversation = async () => {
     if (!convToDelete) return;
     setIsDeletingConv(true);
@@ -515,9 +497,13 @@ const Messages: React.FC = () => {
 
   const selectedConv = conversations.find((c) => c.id === activeConv);
 
-  // Every image shared in the active conversation, in chronological order —
-  // shown in the sidebar's "Shared Files" panel.
+  // Every attachment shared in the active conversation, in chronological
+  // order — shown in the sidebar's "Shared Files" panel. The lightbox only
+  // receives the images (documents download directly from the panel).
   const sharedFiles = messages.flatMap((m) => m.attachments || []);
+  const sharedImages = sharedFiles.filter(
+    (a) => parseChatAttachment(a).isImage,
+  );
 
   if (loading) {
     return (
@@ -544,8 +530,6 @@ const Messages: React.FC = () => {
         isCustomer={isCustomer || false}
         onNewGroupClick={handleOpenGroupModal}
         onNewChatClick={handleOpenUserModal}
-        sharedFiles={sharedFiles}
-        onFileClick={(idx) => openLightbox(sharedFiles, idx)}
       />
 
       <div className={styles.chatArea}>
@@ -555,12 +539,10 @@ const Messages: React.FC = () => {
               selectedConv={selectedConv}
               onlineUserIds={onlineUserIds}
               onViewMembers={() => setIsViewMembersModalOpen(true)}
-              onDeleteChat={handleDeleteChat}
               onDeleteConversation={() => setConvToDelete(activeConv)}
-              canDeleteConversation={
-                (canManageGroup || !selectedConv.isGroup) ?? false
-              }
               onCloseChat={handleCloseChat}
+              sharedFiles={sharedFiles}
+              onSharedImageClick={(idx) => openLightbox(sharedImages, idx)}
             />
 
             {messagesLoading ? (
@@ -740,7 +722,7 @@ const Messages: React.FC = () => {
         onClose={() => setConvToDelete(null)}
         onConfirm={confirmDeleteConversation}
         title="Delete Conversation"
-        message="This will permanently delete this conversation and all its messages for everyone. This action cannot be undone."
+        message="This will remove the conversation from your chat list only — the other participants will still see it. It will reappear if someone sends a new message."
         confirmText="Delete Conversation"
         loading={isDeletingConv}
         type="danger"

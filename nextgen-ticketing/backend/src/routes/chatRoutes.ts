@@ -77,7 +77,7 @@ router.delete('/conversations/:id/hide', authMiddleware, chatController.hideConv
  * @swagger
  * /api/messages/conversations/{id}:
  *   delete:
- *     summary: Permanently delete a conversation and all its messages
+ *     summary: Delete a conversation for the calling user only (other members keep it)
  *     tags: [Chat]
  *     security:
  *       - bearerAuth: []
@@ -89,9 +89,9 @@ router.delete('/conversations/:id/hide', authMiddleware, chatController.hideConv
  *           type: string
  *     responses:
  *       200:
- *         description: Conversation deleted
+ *         description: Conversation removed from the caller's list
  *       403:
- *         description: Not allowed to delete this conversation
+ *         description: Caller is not a member of this conversation
  *       404:
  *         description: Conversation not found
  */

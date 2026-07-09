@@ -4,25 +4,26 @@ import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Messages.module.css";
 import type { Conversation } from "../../../types";
 import CustomImage from "../../../components/CustomImage";
+import SharedFilesPanel from "./SharedFilesPanel";
 
 interface ChatHeaderProps {
   selectedConv: Conversation;
   onlineUserIds: Set<string>;
   onViewMembers: () => void;
-  onDeleteChat: () => void;
   onDeleteConversation: () => void;
-  canDeleteConversation: boolean;
   onCloseChat: () => void;
+  sharedFiles: string[];
+  onSharedImageClick: (index: number) => void;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
   selectedConv,
   onlineUserIds,
   onViewMembers,
-  onDeleteChat,
   onDeleteConversation,
-  canDeleteConversation,
   onCloseChat,
+  sharedFiles,
+  onSharedImageClick,
 }) => {
   const partnerOnline =
     !selectedConv.isGroup &&
@@ -34,6 +35,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         .length
     : 0;
   const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [showFilesPanel, setShowFilesPanel] = useState(false);
   const moreOptionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,19 +45,25 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         !moreOptionsRef.current.contains(event.target as Node)
       ) {
         setShowMoreOptions(false);
+        setShowFilesPanel(false);
       }
     };
-    if (showMoreOptions) {
+    if (showMoreOptions || showFilesPanel) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showMoreOptions]);
+  }, [showMoreOptions, showFilesPanel]);
+
+  // Reset the panel when switching conversations
+  useEffect(() => {
+    setShowFilesPanel(false);
+  }, [selectedConv.id]);
 
   const handleDelete = () => {
     setShowMoreOptions(false);
-    onDeleteChat();
+    onDeleteConversation();
   };
 
   return (
@@ -125,8 +133,54 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <CustomButton
           variant="ghost"
           size="sm"
+          style={{ padding: 8, position: "relative" }}
+          onClick={() => {
+            setShowFilesPanel((prev) => !prev);
+            setShowMoreOptions(false);
+          }}
+          title="Shared files"
+          icon={
+            <CustomIcon
+              name="FolderOpen"
+              size={20}
+              color={
+                showFilesPanel ? "var(--accent-primary)" : "var(--text-muted)"
+              }
+            />
+          }
+        >
+          {sharedFiles.length > 0 && (
+            <span className={styles.filesCountBadge}>
+              {sharedFiles.length}
+            </span>
+          )}
+        </CustomButton>
+
+        {showFilesPanel && (
+          <div className={`${styles.filesPanel} glass-card`}>
+            <div className={styles.filesPanelTitle}>
+              <CustomIcon
+                name="FolderOpen"
+                size={15}
+                color="var(--accent-primary)"
+              />
+              Shared Files ({sharedFiles.length})
+            </div>
+            <SharedFilesPanel
+              sharedFiles={sharedFiles}
+              onImageClick={onSharedImageClick}
+            />
+          </div>
+        )}
+
+        <CustomButton
+          variant="ghost"
+          size="sm"
           style={{ padding: 8 }}
-          onClick={() => setShowMoreOptions((prev) => !prev)}
+          onClick={() => {
+            setShowMoreOptions((prev) => !prev);
+            setShowFilesPanel(false);
+          }}
           icon={
             <CustomIcon
               name="MoreVertical"
@@ -160,34 +214,15 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               onClick={handleDelete}
               style={{
                 padding: "8px 12px",
+                background: "rgba(239, 68, 68, 0.1)",
+                color: "#ef4444",
                 justifyContent: "flex-start",
                 width: "100%",
-                color: "var(--text-primary)",
               }}
-              icon={<CustomIcon name="EyeOff" size={16} />}
+              icon={<CustomIcon name="Trash2" size={16} />}
             >
-              Delete for me
+              Delete Conversation
             </CustomButton>
-            {canDeleteConversation && (
-              <CustomButton
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowMoreOptions(false);
-                  onDeleteConversation();
-                }}
-                style={{
-                  padding: "8px 12px",
-                  background: "rgba(239, 68, 68, 0.1)",
-                  color: "#ef4444",
-                  justifyContent: "flex-start",
-                  width: "100%",
-                }}
-                icon={<CustomIcon name="Trash2" size={16} />}
-              >
-                Delete Conversation
-              </CustomButton>
-            )}
           </div>
         )}
         <CustomButton

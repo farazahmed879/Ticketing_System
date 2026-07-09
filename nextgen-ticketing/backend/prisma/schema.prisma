@@ -306,6 +306,9 @@ model ChatRoom {
   isGroup     Boolean       @default(false)
   memberIds   String[]      @db.ObjectId
   hiddenByIds String[]      @db.ObjectId
+  // Per-user history cutoff: userId -> ISO timestamp of when that user
+  // deleted the conversation. They only see messages sent after it.
+  clearedAtByUser Json?
   members     User[]        @relation(fields: [memberIds], references: [id])
   messages    ChatMessage[]
   createdAt   DateTime      @default(now())

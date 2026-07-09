@@ -1,7 +1,6 @@
 import { Response } from "express";
 import { AuthRequest } from "../types";
 import { chatUsecase } from "../usecases/chat.usecase";
-import { emitToUsers } from "../socketio/events";
 
 export const chatController = {
   async getConversations(req: AuthRequest, res: Response) {
@@ -43,29 +42,18 @@ export const chatController = {
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
       const { id } = req.params;
-      const { memberIds } = await chatUsecase.deleteConversation(
-        id as string,
-        userId,
-      );
-
-      // Tell the other members so their conversation lists update live.
-      const io = req.app.get("io");
-      if (io) {
-        emitToUsers(
-          io,
-          memberIds.filter((m: string) => m !== userId),
-          "chat:conversation_deleted",
-          { roomId: id },
-        );
-      }
+      // Per-user delete: hides the conversation for the caller only, so no
+      // socket broadcast — other members are unaffected.
+      await chatUsecase.deleteConversation(id as string, userId);
 
       res.json({ success: true, id });
     } catch (error: any) {
-      const status = error.message.includes("permission")
-        ? 403
-        : error.message.includes("not found")
-          ? 404
-          : 500;
+      const status =
+        error.message === "Access denied"
+          ? 403
+          : error.message.includes("not found")
+            ? 404
+            : 500;
       res.status(status).json({ success: false, error: error.message });
     }
   },

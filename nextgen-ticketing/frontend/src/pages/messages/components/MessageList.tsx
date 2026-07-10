@@ -84,6 +84,19 @@ const MessageList: React.FC<MessageListProps> = ({
             Date.now() - new Date(msg.createdAt).getTime() < 5 * 60 * 1000;
           const { emojiOnly, count: emojiCount } = analyzeEmojis(msg.body);
           const isEmojiOnlyMsg = emojiOnly && !hasAttachments && !msg.replyTo;
+          // Read receipt: "seen" once every other participant has viewed it.
+          const recipientIds = selectedConv.isGroup
+            ? (selectedConv.members || [])
+                .filter((m: any) => m.id !== msg.senderId)
+                .map((m: any) => m.id)
+            : selectedConv.partner
+              ? [selectedConv.partner.id]
+              : [];
+          const isSeen =
+            recipientIds.length > 0 &&
+            recipientIds.every((id: string) =>
+              (msg.seenByIds || []).includes(id),
+            );
           return (
             <div
               key={msg.id}
@@ -204,6 +217,18 @@ const MessageList: React.FC<MessageListProps> = ({
                 <span className={styles.messageTime}>
                   {format(new Date(msg.createdAt), "MMM d, yyyy, h:mm a")}
                 </span>
+                {isOwn && (
+                  <span
+                    title={isSeen ? "Seen" : "Delivered"}
+                    style={{ display: "inline-flex", alignItems: "center" }}
+                  >
+                    <CustomIcon
+                      name={isSeen ? "CheckCheck" : "Check"}
+                      size={15}
+                      color={isSeen ? "#34b7f1" : "var(--text-muted)"}
+                    />
+                  </span>
+                )}
                 <div className={styles.messageActions}>
                   <CustomButton
                     variant="ghost"

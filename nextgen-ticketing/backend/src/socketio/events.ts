@@ -125,6 +125,44 @@ export function setupSocketEvents(io: Server) {
       }
     });
 
+    // Read receipts: the viewer marks everything in the room as seen, and the
+    // other members are told so their ticks flip to "seen" live.
+    socket.on('chat:seen', async (data: { roomId: string }) => {
+      try {
+        const room = await prisma.chatRoom.findUnique({ where: { id: data.roomId } });
+        if (!room || !room.memberIds.includes(user.id)) return;
+
+        // Raw $addToSet: Prisma list filters can't negate `has` on Mongo, and
+        // $addToSet also handles docs where seenByIds doesn't exist yet.
+        await prisma.$runCommandRaw({
+          update: 'ChatMessage',
+          updates: [
+            {
+              q: {
+                roomId: { $oid: data.roomId },
+                senderId: { $ne: { $oid: user.id } },
+                seenByIds: { $ne: { $oid: user.id } },
+              },
+              u: { $addToSet: { seenByIds: { $oid: user.id } } },
+              multi: true,
+            },
+          ],
+        });
+
+        for (const memberId of room.memberIds) {
+          if (memberId === user.id) continue;
+          const memberOnline = onlineUsers.get(memberId);
+          if (memberOnline) {
+            memberOnline.socketIds.forEach((sid) => {
+              io.to(sid).emit('chat:seen', { roomId: data.roomId, seenByUserId: user.id });
+            });
+          }
+        }
+      } catch (err) {
+        socket.emit('chat:error', { message: 'Failed to mark messages as seen' });
+      }
+    });
+
     socket.on('chat:delete_message', async (data: { messageId: string; roomId: string }) => {
       try {
         const message = await prisma.chatMessage.findUnique({ where: { id: data.messageId } });

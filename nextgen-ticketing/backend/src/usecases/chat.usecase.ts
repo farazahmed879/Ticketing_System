@@ -32,8 +32,8 @@ export const chatUsecase = {
     const rooms = await chatRepository.findRoomsByUserId(userId);
     const visibleRooms = rooms.filter((r: any) => !(r.hiddenByIds || []).includes(userId));
 
-    return visibleRooms
-      .map((room: any) => {
+    const conversations = await Promise.all(
+      visibleRooms.map(async (room: any) => {
         const partner = room.isGroup
           ? null
           : room.members.find((m: any) => m.id !== userId);
@@ -53,6 +53,13 @@ export const chatUsecase = {
         const preview = lastMsg
           ? lastMsg.body || attachmentPreviewLabel((lastMsg as any).attachments)
           : "";
+        // Unread badge comes from real read receipts, not the notification
+        // center.
+        const unseenCount = await chatRepository.countUnseenMessages(
+          room.id,
+          userId,
+          clearedAt ? new Date(clearedAt) : undefined,
+        );
         return {
           id: room.id,
           isGroup: room.isGroup,
@@ -65,11 +72,14 @@ export const chatUsecase = {
               : `${senderName}: ${preview}`
             : "New Conversation",
           updatedAt: room.updatedAt,
+          unseenCount,
           // Direct chats only appear once they hold at least one message the
           // user can still see; groups stay visible even when empty.
           hasVisibleMessages: room.isGroup || !!lastMsg,
         };
-      })
+      }),
+    );
+    return conversations
       .filter((c: any) => c.hasVisibleMessages)
       .map(({ hasVisibleMessages: _omit, ...conv }: any) => conv);
   },

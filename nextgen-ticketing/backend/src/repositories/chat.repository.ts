@@ -84,6 +84,41 @@ export const chatRepository = {
     });
   },
 
+  // Messages the user hasn't seen in a room (optionally only after their
+  // history cutoff). Raw command because Prisma's list-negation filters
+  // (NOT+has / isEmpty) don't match Mongo docs where the array field is
+  // missing (messages created before read receipts existed).
+  async countUnseenMessages(roomId: string, userId: string, after?: Date) {
+    const res: any = await prisma.$runCommandRaw({
+      count: "ChatMessage",
+      query: {
+        roomId: { $oid: roomId },
+        senderId: { $ne: { $oid: userId } },
+        seenByIds: { $ne: { $oid: userId } },
+        ...(after ? { createdAt: { $gt: { $date: after.toISOString() } } } : {}),
+      },
+    });
+    return (res?.n as number) || 0;
+  },
+
+  // Mark every message in the room (not sent by the user) as seen by them.
+  async markRoomSeen(roomId: string, userId: string) {
+    return prisma.$runCommandRaw({
+      update: "ChatMessage",
+      updates: [
+        {
+          q: {
+            roomId: { $oid: roomId },
+            senderId: { $ne: { $oid: userId } },
+            seenByIds: { $ne: { $oid: userId } },
+          },
+          u: { $addToSet: { seenByIds: { $oid: userId } } },
+          multi: true,
+        },
+      ],
+    });
+  },
+
   async createMessage(data: any) {
     return prisma.chatMessage.create({
       data,

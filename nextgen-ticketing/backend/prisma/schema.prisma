@@ -319,6 +319,8 @@ model ChatMessage {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   body        String   @default("")
   attachments String[]
+  // Read receipts: ids of recipients who have seen this message.
+  seenByIds   String[] @db.ObjectId
   senderId    String   @db.ObjectId
   sender      User     @relation(fields: [senderId], references: [id])
   roomId      String   @db.ObjectId

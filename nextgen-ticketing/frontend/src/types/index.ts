@@ -158,12 +158,16 @@ export interface Conversation {
   } | null;
   recentMessage: string;
   updatedAt: string;
+  /** Messages the current user hasn't seen yet (from the API). */
+  unseenCount?: number;
 }
 
 export interface Message {
   id: string;
   body: string;
   attachments?: string[];
+  /** Recipient ids who have seen this message (read receipts). */
+  seenByIds?: string[];
   senderId: string;
   createdAt: string;
   sender?: { id: string; fullname: string; image?: string };

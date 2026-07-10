@@ -97,6 +97,8 @@ const Messages: React.FC = () => {
     try {
       const res = await api.get(API_ROUTES.MESSAGES.CONVERSATION_BY_ID(convId));
       setMessages(res.data.conversation.messages);
+      // Viewing the conversation marks it as seen (drives the read receipts).
+      socket.emit("chat:seen", { roomId: convId });
     } catch (err) {
       console.error("Failed to fetch messages", err);
     } finally {
@@ -150,6 +152,17 @@ const Messages: React.FC = () => {
     if (convData) {
       setConversations(convData);
 
+      // Unread badges come from real read receipts (unseenCount), not the
+      // notification center.
+      const counts: Record<string, number> = {};
+      convData.forEach((c: Conversation) => {
+        if (c.unseenCount) counts[c.id] = c.unseenCount;
+      });
+      if (activeConvRef.current) {
+        counts[activeConvRef.current] = 0;
+      }
+      setUnreadCounts(counts);
+
       const userIdFromParam = searchParams.get("userId");
       const roomIdFromParam = searchParams.get("roomId");
       if (roomIdFromParam) {
@@ -162,23 +175,11 @@ const Messages: React.FC = () => {
 
   useEffect(() => {
     if (notifData) {
+      // Kept only so opening a conversation can mark the matching
+      // notification-center entries as read; badges no longer come from here.
       const unreadMessageNotifs = notifData.filter(
         (n: any) => n.unread && n.type === "message",
       );
-
-      const counts: Record<string, number> = {};
-      unreadMessageNotifs.forEach((n: any) => {
-        const rId = n.data?.roomId;
-        if (rId) {
-          counts[rId] = (counts[rId] || 0) + 1;
-        }
-      });
-      // Notifications can resolve after a conversation was already opened
-      // (e.g. via ?roomId=) — never show a badge for the room being viewed.
-      if (activeConvRef.current) {
-        counts[activeConvRef.current] = 0;
-      }
-      setUnreadCounts(counts);
       setUnreadMessageNotifications(unreadMessageNotifs);
     }
   }, [notifData]);
@@ -187,6 +188,10 @@ const Messages: React.FC = () => {
     socket.on("chat:receive", (data: { roomId: string; message: Message }) => {
       if (activeConvRef.current === data.roomId) {
         setMessages((prev) => [...prev, data.message]);
+        // The conversation is on screen, so the new message is seen right away.
+        if (data.message.senderId !== user?.id) {
+          socket.emit("chat:seen", { roomId: data.roomId });
+        }
       }
 
       if (data.message.senderId !== user?.id) {
@@ -248,10 +253,27 @@ const Messages: React.FC = () => {
       },
     );
 
+    // A recipient viewed the room — flip the ticks on our sent messages.
+    socket.on(
+      "chat:seen",
+      (data: { roomId: string; seenByUserId: string }) => {
+        if (data.roomId !== activeConvRef.current) return;
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.senderId !== data.seenByUserId &&
+            !(m.seenByIds || []).includes(data.seenByUserId)
+              ? { ...m, seenByIds: [...(m.seenByIds || []), data.seenByUserId] }
+              : m,
+          ),
+        );
+      },
+    );
+
     return () => {
       socket.off("chat:receive");
       socket.off("notifications:new");
       socket.off("chat:message_deleted");
+      socket.off("chat:seen");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);

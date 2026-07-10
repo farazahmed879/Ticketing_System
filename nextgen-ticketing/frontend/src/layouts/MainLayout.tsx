@@ -9,6 +9,11 @@ import CustomIcon from "../components/CustomIcon";
 import styles from "./MainLayout.module.css";
 import Sidebar from "../components/Sidebar";
 import ConfirmationModal from "../components/ConfirmationModal";
+import {
+  ensureNotificationPermission,
+  showDesktopNotification,
+  playNotificationSound,
+} from "../utils/desktopNotifications";
 
 const MainLayout: React.FC = () => {
   const { user } = useAuth();
@@ -53,6 +58,12 @@ const MainLayout: React.FC = () => {
     };
   }, [isNotificationOpen]);
 
+  // Ask for the browser notification permission once after login (no-op if
+  // already granted/denied or if the user turned desktop alerts off).
+  React.useEffect(() => {
+    if (user) ensureNotificationPermission();
+  }, [user]);
+
   React.useEffect(() => {
     if (!user) return;
 
@@ -96,31 +107,27 @@ const MainLayout: React.FC = () => {
           notification.title + ": " + notification.message,
         );
 
-        // Play notification sound if enabled
-        const soundEnabled = localStorage.getItem("pref_sound_alerts") !== "false";
-        if (soundEnabled) {
-          const audio = new Audio(
-            "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3",
-          );
-          audio.play().catch((e) => console.log("Audio play failed:", e));
-        }
-
-        // Show desktop notification if enabled and permission granted
-        const desktopEnabled = localStorage.getItem("pref_desktop_alerts") !== "false";
-        if (desktopEnabled && "Notification" in window && Notification.permission === "granted") {
-          try {
-            const n = new Notification(notification.title || "New Notification", {
-              body: notification.message || "",
-              icon: "/favicon.ico",
-            });
-            n.onclick = () => {
-              window.focus();
-            };
-          } catch (e) {
-            console.error("Error creating desktop notification:", e);
-          }
+        // In-app sound only while the window is focused — in the background
+        // the desktop notification below brings its own sound.
+        if (document.hasFocus()) {
+          playNotificationSound();
         }
       }
+
+      // Desktop notification: fires for every notification when the app
+      // window is in the background (regardless of which page is open);
+      // the util skips it while the window is focused.
+      showDesktopNotification(
+        notification.title || "New Notification",
+        notification.message || "",
+        () => {
+          if (isChatNotification && notification.data?.roomId) {
+            navigate(`/messages?roomId=${notification.data.roomId}`);
+          } else {
+            navigate("/notifications");
+          }
+        },
+      );
 
       setNotifications((prev) => [notification, ...prev].slice(0, 20));
       setUnreadCount((prev) => prev + 1);

@@ -17,6 +17,7 @@ import {
   parseChatAttachment,
   chatMessagePreview,
 } from "../../utils/attachments";
+import { playNotificationSound } from "../../utils/desktopNotifications";
 import type { Conversation, Message } from "../../types";
 import {
   ChatSkeleton,
@@ -194,11 +195,10 @@ const Messages: React.FC = () => {
         }
       }
 
-      if (data.message.senderId !== user?.id) {
-        const audio = new Audio(
-          "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3",
-        );
-        audio.play().catch((e) => console.log("Audio play failed:", e));
+      // In-app sound only while focused — in the background the desktop
+      // notification (MainLayout) brings its own sound.
+      if (data.message.senderId !== user?.id && document.hasFocus()) {
+        playNotificationSound();
       }
 
       setConversations((prev) => {

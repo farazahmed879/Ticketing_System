@@ -198,7 +198,6 @@ const Profile: React.FC = () => {
                     case "employee":
                       return "success";
                     case "client":
-                    case "customer":
                       return "info";
                     default:
                       return "neutral";

@@ -53,10 +53,6 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   priorities,
   onTicketUpdate,
 }) => {
-  console.log("users", users);
-  console.log("qaList", qaList);
-  console.log("priorities", priorities);
-
   const isDisbaledMode =
     ticket?.status?.name === StatusName.TRASH ||
     ticket?.status?.name === StatusName.CLOSED;

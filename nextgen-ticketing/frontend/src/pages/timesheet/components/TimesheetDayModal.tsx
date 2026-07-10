@@ -249,6 +249,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
                         })),
                       ]}
                       disabled={isApproved}
+                      showSearch
                     />
                     {watchedTasks?.[index]?.projectId === MISC_PROJECT ? (
                       // Miscellaneous activity isn't tied to a ticket — hide the
@@ -272,6 +273,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
                             label: `#${t.uid} ${t.subject.substring(0, 20)}...`,
                           }))}
                         disabled={isApproved}
+                        showSearch
                       />
                     )}
                     <CustomInput

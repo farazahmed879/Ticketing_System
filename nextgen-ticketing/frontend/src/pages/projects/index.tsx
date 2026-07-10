@@ -23,6 +23,7 @@ import CustomPagination from "../../components/CustomPagination";
 
 import StandardListLayout from "../../components/StandardListLayout";
 import { getProjectColumns } from "./columns";
+import ProjectCard from "./components/ProjectCard";
 import { ROLE_TYPE } from "../roles/roleConstants";
 
 const ProjectList: React.FC = () => {
@@ -43,6 +44,7 @@ const ProjectList: React.FC = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [debouncedStatus, setDebouncedStatus] = useState("");
@@ -265,6 +267,34 @@ const ProjectList: React.FC = () => {
               icon={<CustomIcon name="Activity" size={18} />}
               style={{ minWidth: 200 }}
             />
+            <div
+              style={{
+                display: "flex",
+                gap: 4,
+                padding: 4,
+                borderRadius: 10,
+                border: "1px solid var(--border-glass)",
+                background: "rgba(255,255,255,0.03)",
+                marginLeft: "auto",
+              }}
+            >
+              <CustomButton
+                variant={viewMode === "list" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                icon={<CustomIcon name="List" size={16} />}
+                title="List view"
+                style={{ padding: "6px 10px" }}
+              />
+              <CustomButton
+                variant={viewMode === "grid" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                icon={<CustomIcon name="LayoutGrid" size={16} />}
+                title="Grid view"
+                style={{ padding: "6px 10px" }}
+              />
+            </div>
           </div>
         }
         pagination={
@@ -281,15 +311,62 @@ const ProjectList: React.FC = () => {
           />
         }
       >
-        <CustomTable
-          style={{ flex: 1, overflowY: "auto" }}
-          columns={columns}
-          data={projects}
-          loading={loading}
-          loadingMessage="Loading projects..."
-          emptyMessage="No projects found"
-          onRowClick={(p) => navigate(`/projects/${p.id}`)}
-        />
+        {viewMode === "list" ? (
+          <CustomTable
+            style={{ flex: 1, overflowY: "auto" }}
+            columns={columns}
+            data={projects}
+            loading={loading}
+            loadingMessage="Loading projects..."
+            emptyMessage="No projects found"
+            onRowClick={(p) => navigate(`/projects/${p.id}`)}
+          />
+        ) : loading ? (
+          <div
+            style={{
+              padding: 40,
+              textAlign: "center",
+              color: "var(--text-muted)",
+            }}
+          >
+            Loading projects...
+          </div>
+        ) : projects.length === 0 ? (
+          <div
+            style={{
+              padding: 40,
+              textAlign: "center",
+              color: "var(--text-muted)",
+            }}
+          >
+            No projects found
+          </div>
+        ) : (
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+              gap: 16,
+              padding: "4px 0",
+              alignContent: "start",
+            }}
+          >
+            {projects.map((p: Project) => (
+              <ProjectCard
+                key={p.id}
+                project={p}
+                search={search}
+                canUpdate={canUpdate}
+                canDelete={canDelete}
+                onOpen={(proj) => navigate(`/projects/${proj.id}`)}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+              />
+            ))}
+          </div>
+        )}
       </StandardListLayout>
 
       <ProjectModal

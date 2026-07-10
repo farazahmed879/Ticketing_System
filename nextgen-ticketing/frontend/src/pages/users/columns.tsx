@@ -22,7 +22,6 @@ export const getRoleStyle = (
     case "employee":
       return { variant: "success", color: "#4caf50" };
     case "client":
-    case "customer":
       return { variant: "info", color: "#2196f3" };
     default:
       return { variant: "neutral", color: "var(--text-muted)" };

@@ -22,7 +22,9 @@ function attachmentPreviewLabel(attachments?: string[]): string {
     }
   }
   if (/^image\//i.test(mime)) {
-    return attachments.length > 1 ? `📷 ${attachments.length} Photos` : "📷 Photo";
+    return attachments.length > 1
+      ? `📷 ${attachments.length} Photos`
+      : "📷 Photo";
   }
   return "📎 File";
 }
@@ -30,7 +32,9 @@ function attachmentPreviewLabel(attachments?: string[]): string {
 export const chatUsecase = {
   async getConversations(userId: string) {
     const rooms = await chatRepository.findRoomsByUserId(userId);
-    const visibleRooms = rooms.filter((r: any) => !(r.hiddenByIds || []).includes(userId));
+    const visibleRooms = rooms.filter(
+      (r: any) => !(r.hiddenByIds || []).includes(userId),
+    );
 
     return visibleRooms
       .map((room: any) => {
@@ -160,7 +164,9 @@ export const chatUsecase = {
     if (!room) throw new Error("Conversation not found");
     if (!room.memberIds.includes(userId)) throw new Error("Access denied");
 
-    const hiddenByIds = Array.from(new Set([...((room as any).hiddenByIds || []), userId]));
+    const hiddenByIds = Array.from(
+      new Set([...((room as any).hiddenByIds || []), userId]),
+    );
     return chatRepository.updateRoom(id, { hiddenByIds });
   },
 
@@ -171,7 +177,10 @@ export const chatUsecase = {
       roomId: id,
     });
 
-    await chatRepository.updateRoom(id, { updatedAt: new Date(), hiddenByIds: [] });
+    await chatRepository.updateRoom(id, {
+      updatedAt: new Date(),
+      hiddenByIds: [],
+    });
 
     return message;
   },
@@ -180,17 +189,18 @@ export const chatUsecase = {
     const me = await chatRepository.findUserWithRole(userId);
     if (!me) throw new Error("User not found");
 
-    console.log("chat partners - me.role", me.role);
+    console.log("chat partners - me.role", me.role.roleType);
 
     if (isAdminRole(me.role) || isAgentRole(me.role)) {
       // Admins and Managers can chat with everyone.
+      console.log("Admin or Agent");
       return chatRepository.findAllUsersForChat(userId);
     }
 
     if (isCustomerRole(me.role)) {
+      console.log("Client");
       return chatRepository.findStaffForChat(userId);
     }
-
 
     console.log("i am normal user");
     // Internal staff (Employee, HR, QA) can only message other internal staff.
@@ -206,15 +216,17 @@ export const chatUsecase = {
     const isLead = (me as any).isLead === true;
 
     if (!isAdmin && !isAgent && !isLead) {
-      throw new Error("Only Admins, Managers, and Team Leads can create group chats");
+      throw new Error(
+        "Only Admins, Managers, and Team Leads can create group chats",
+      );
     }
 
     if (isLead && !isAdmin && !isAgent && memberIds?.length) {
       const addedUsers = await Promise.all(
-        memberIds.map((mid) => chatRepository.findUserWithRole(mid))
+        memberIds.map((mid) => chatRepository.findUserWithRole(mid)),
       );
       const hasClient = addedUsers.some(
-        (u: any) => u && isCustomerRole(u.role)
+        (u: any) => u && isCustomerRole(u.role),
       );
       if (hasClient) {
         throw new Error("Team Leads cannot add clients to a group chat");
@@ -244,15 +256,17 @@ export const chatUsecase = {
     const isLead = (me as any).isLead === true;
 
     if (!isAdmin && !isAgent && !isLead) {
-      throw new Error("Only Admins, Managers, and Team Leads can manage group members");
+      throw new Error(
+        "Only Admins, Managers, and Team Leads can manage group members",
+      );
     }
 
     if (isLead && !isAdmin && !isAgent && addMemberIds?.length) {
       const addedUsers = await Promise.all(
-        addMemberIds.map((mid) => chatRepository.findUserWithRole(mid))
+        addMemberIds.map((mid) => chatRepository.findUserWithRole(mid)),
       );
       const hasClient = addedUsers.some(
-        (u: any) => u && isCustomerRole(u.role)
+        (u: any) => u && isCustomerRole(u.role),
       );
       if (hasClient) {
         throw new Error("Team Leads cannot add clients to a group chat");

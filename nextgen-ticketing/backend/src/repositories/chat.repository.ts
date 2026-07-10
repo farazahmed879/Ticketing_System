@@ -42,7 +42,13 @@ export const chatRepository = {
           orderBy: { createdAt: "asc" },
           include: {
             sender: { select: { id: true, fullname: true, image: true } },
-            replyTo: { select: { id: true, body: true, sender: { select: { fullname: true } } } },
+            replyTo: {
+              select: {
+                id: true,
+                body: true,
+                sender: { select: { fullname: true } },
+              },
+            },
           },
         },
       },
@@ -59,7 +65,9 @@ export const chatRepository = {
         ],
       },
       include: {
-        members: { select: { id: true, fullname: true, email: true, image: true } },
+        members: {
+          select: { id: true, fullname: true, email: true, image: true },
+        },
         messages: { orderBy: { createdAt: "desc" }, take: 1 },
       },
     });
@@ -69,7 +77,9 @@ export const chatRepository = {
     return prisma.chatRoom.create({
       data,
       include: {
-        members: { select: { id: true, fullname: true, email: true, image: true } },
+        members: {
+          select: { id: true, fullname: true, email: true, image: true },
+        },
       },
     });
   },
@@ -79,7 +89,9 @@ export const chatRepository = {
       where: { id },
       data,
       include: {
-        members: { select: { id: true, fullname: true, email: true, image: true } },
+        members: {
+          select: { id: true, fullname: true, email: true, image: true },
+        },
       },
     });
   },
@@ -99,7 +111,6 @@ export const chatRepository = {
       include: { role: true },
     });
   },
-
 
   async findStaffForChat(userId: string) {
     return prisma.user.findMany({
@@ -121,6 +132,7 @@ export const chatRepository = {
   // Internal users only: Admin, Manager, Employee, HR (anyone who is not a
   // client). Used for the Employee chat partner list.
   async findInternalUsersForChat(userId: string) {
+    console.log("findInternalUsersForChat");
     return prisma.user.findMany({
       where: {
         id: { not: userId },

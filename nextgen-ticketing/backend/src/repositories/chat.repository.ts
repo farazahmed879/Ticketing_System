@@ -73,6 +73,21 @@ export const chatRepository = {
     });
   },
 
+  // Self-chat ("message yourself") room: a direct room whose only member is
+  // the user. findDirectRoom can't be used for this — with partnerId ===
+  // userId its two `has` conditions both match any room containing the user.
+  async findSelfRoom(userId: string) {
+    return prisma.chatRoom.findFirst({
+      where: { isGroup: false, memberIds: { equals: [userId] } },
+      include: {
+        members: {
+          select: { id: true, fullname: true, email: true, image: true },
+        },
+        messages: { orderBy: { createdAt: "desc" }, take: 1 },
+      },
+    });
+  },
+
   async createRoom(data: any) {
     return prisma.chatRoom.create({
       data,
@@ -150,9 +165,12 @@ export const chatRepository = {
   async findStaffForChat(userId: string) {
     return prisma.user.findMany({
       where: {
-        id: { not: userId },
         deleted: false,
-        role: { roleType: { in: [RoleType.ADMIN, RoleType.AGENT] } },
+        OR: [
+          { role: { roleType: { in: [RoleType.ADMIN, RoleType.AGENT] } } },
+          // Everyone can message themselves.
+          { id: userId },
+        ],
       },
       select: {
         id: true,
@@ -167,10 +185,8 @@ export const chatRepository = {
   // Internal users only: Admin, Manager, Employee, HR (anyone who is not a
   // client). Used for the Employee chat partner list.
   async findInternalUsersForChat(userId: string) {
-    console.log("findInternalUsersForChat");
     return prisma.user.findMany({
       where: {
-        id: { not: userId },
         deleted: false,
         role: { roleType: { not: RoleType.CUSTOMER } },
       },
@@ -219,9 +235,10 @@ export const chatRepository = {
     });
   },
 
-  async findAllUsersForChat(userId: string) {
+  async findAllUsersForChat(_userId: string) {
+    // Includes the caller — everyone can message themselves.
     return prisma.user.findMany({
-      where: { id: { not: userId }, deleted: false },
+      where: { deleted: false },
       select: {
         id: true,
         fullname: true,

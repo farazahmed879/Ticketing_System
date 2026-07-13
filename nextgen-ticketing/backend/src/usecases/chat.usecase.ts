@@ -38,9 +38,13 @@ export const chatUsecase = {
 
     const conversations = await Promise.all(
       visibleRooms.map(async (room: any) => {
+        // Self-chat rooms have only the user as member — they are their own
+        // "partner".
         const partner = room.isGroup
           ? null
-          : room.members.find((m: any) => m.id !== userId);
+          : (room.members.find((m: any) => m.id !== userId) ??
+            room.members[0] ??
+            null);
         // Ignore messages from before this user's history cutoff (set when
         // they deleted the conversation).
         const clearedAt = (
@@ -104,12 +108,19 @@ export const chatUsecase = {
         )
       : room.messages;
 
-    const partner = room.members.find((m: any) => m.id !== userId);
+    const partner =
+      room.members.find((m: any) => m.id !== userId) ?? room.members[0] ?? null;
     return { ...room, messages, partner };
   },
 
   async startConversation(userId: string, partnerId: string) {
-    if (userId === partnerId) throw new Error("Cannot chat with yourself");
+    // Self-chat ("message yourself") is always allowed and uses a dedicated
+    // single-member room.
+    if (userId === partnerId) {
+      const existingSelf = await chatRepository.findSelfRoom(userId);
+      if (existingSelf) return existingSelf;
+      return chatRepository.createRoom({ memberIds: [userId] });
+    }
 
     const [me, partner] = await Promise.all([
       chatRepository.findUserWithRole(userId),
@@ -119,9 +130,6 @@ export const chatUsecase = {
     if (!me || !partner) throw new Error("User not found");
 
     let allowed = false;
-
-    console.log("me.role", me.role);
-    console.log("partner.role", partner.role);
 
     if (isAdminRole(me.role) || isAgentRole(me.role)) {
       // Admins and Managers can chat with everyone.
@@ -196,26 +204,24 @@ export const chatUsecase = {
   },
 
   async getChatPartners(userId: string) {
-    const me = await chatRepository.findUserWithRole(userId);
-    if (!me) throw new Error("User not found");
+  const me = await chatRepository.findUserWithRole(userId);
+  if (!me) throw new Error("User not found");
 
-    console.log("chat partners - me.role", me.role.roleType);
+  let partners;
 
-    if (isAdminRole(me.role) || isAgentRole(me.role)) {
-      // Admins and Managers can chat with everyone.
-      console.log("Admin or Agent");
-      return chatRepository.findAllUsersForChat(userId);
-    }
-
-    if (isCustomerRole(me.role)) {
-      console.log("Client");
-      return chatRepository.findStaffForChat(userId);
-    }
-
-    console.log("i am normal user");
+  if (isAdminRole(me.role) || isAgentRole(me.role)) {
+    partners = await chatRepository.findAllUsersForChat(me.id);
+  } else if (isCustomerRole(me.role)) {
+    partners = await chatRepository.findStaffForChat(me.id);
+  } else {
     // Internal staff (Employee, HR, QA) can only message other internal staff.
-    return chatRepository.findInternalUsersForChat(userId);
-  },
+    partners = await chatRepository.findInternalUsersForChat(me.id);
+  }
+
+  // Safety net: guarantee self is never in the list.
+
+  return partners;
+},
 
   async createGroupChat(userId: string, name: string, memberIds: string[]) {
     const me = await chatRepository.findUserWithRole(userId);

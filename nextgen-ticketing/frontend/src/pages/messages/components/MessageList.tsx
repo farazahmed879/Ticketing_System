@@ -85,6 +85,9 @@ const MessageList: React.FC<MessageListProps> = ({
           const { emojiOnly, count: emojiCount } = analyzeEmojis(msg.body);
           const isEmojiOnlyMsg = emojiOnly && !hasAttachments && !msg.replyTo;
           // Read receipt: "seen" once every other participant has viewed it.
+          // Self-chats have no other recipient — always seen.
+          const isSelfChat =
+            !selectedConv.isGroup && selectedConv.partner?.id === userId;
           const recipientIds = selectedConv.isGroup
             ? (selectedConv.members || [])
                 .filter((m: any) => m.id !== msg.senderId)
@@ -93,10 +96,11 @@ const MessageList: React.FC<MessageListProps> = ({
               ? [selectedConv.partner.id]
               : [];
           const isSeen =
-            recipientIds.length > 0 &&
-            recipientIds.every((id: string) =>
-              (msg.seenByIds || []).includes(id),
-            );
+            isSelfChat ||
+            (recipientIds.length > 0 &&
+              recipientIds.every((id: string) =>
+                (msg.seenByIds || []).includes(id),
+              ));
           return (
             <div
               key={msg.id}

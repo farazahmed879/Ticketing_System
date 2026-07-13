@@ -355,7 +355,15 @@ const Messages: React.FC = () => {
     setUsersLoading(true);
     try {
       const res = await api.get(API_ROUTES.MESSAGES.PARTNERS);
-      setUsers(res.data.partners);
+      // Label the caller and pin them to the top ("message yourself").
+      const partners = (res.data.partners || [])
+        .map((p: any) =>
+          p.id === user?.id ? { ...p, fullname: `${p.fullname} (You)` } : p,
+        )
+        .sort((a: any, b: any) =>
+          a.id === user?.id ? -1 : b.id === user?.id ? 1 : 0,
+        );
+      setUsers(partners);
     } catch (err) {
       console.error("Failed to fetch users", err);
     } finally {
@@ -386,7 +394,10 @@ const Messages: React.FC = () => {
       const newRoom = res.data.conversation;
       setConversations((prev) => {
         if (prev.find((c) => c.id === newRoom.id)) return prev;
-        const partner = newRoom.members?.find((m: any) => m.id !== user?.id);
+        // Self-chat rooms have a single member — you are your own partner.
+        const partner =
+          newRoom.members?.find((m: any) => m.id !== user?.id) ??
+          newRoom.members?.[0];
         const conv: Conversation = {
           id: newRoom.id,
           isGroup: false,
@@ -690,8 +701,9 @@ const Messages: React.FC = () => {
         onUserSearchChange={setUserSearch}
         filteredUsers={users.filter(
           (u) =>
-            u.fullname.toLowerCase().includes(userSearch.toLowerCase()) ||
-            u.email.toLowerCase().includes(userSearch.toLowerCase()),
+            u.id !== user?.id && // the creator is added to groups automatically
+            (u.fullname.toLowerCase().includes(userSearch.toLowerCase()) ||
+              u.email.toLowerCase().includes(userSearch.toLowerCase())),
         )}
         selectedGroupMembers={selectedGroupMembers}
         onToggleMember={toggleGroupMember}

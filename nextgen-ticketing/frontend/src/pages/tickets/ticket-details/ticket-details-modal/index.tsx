@@ -122,9 +122,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
   const [localUsers, setLocalUsers] = useState(users);
   const [localQaList, setLocalQaList] = useState(qaList);
 
-  console.log("users", users);
 
-  console.log("localUsers", localUsers);
 
   useEffect(() => {
     // If ticket has a project, fetch the assignable users just for that project

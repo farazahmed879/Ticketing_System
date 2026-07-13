@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -271,6 +272,8 @@ const TicketBoard: React.FC = () => {
     const allTickets = boardData;
     const allStatuses = getStatuses();
 
+    console.log("allStatuses:", allStatuses);
+
     const coveredIds = new Set(allStatuses.map((s: any) => s.id));
     const extraStatuses = TICKET_STATUSES.filter(
       (s: any) =>
@@ -281,6 +284,8 @@ const TicketBoard: React.FC = () => {
     const orderedStatuses = [...allStatuses, ...extraStatuses].sort(
       (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0),
     );
+
+    console.log("Ordered Statuses:", orderedStatuses);
 
     const boardColumns: Column[] = orderedStatuses.map((s: any) => ({
       id: s.id,
@@ -295,7 +300,7 @@ const TicketBoard: React.FC = () => {
             )
           : allTickets.filter((t: Ticket) => t.status.id === s.id),
     }));
-
+    console.log("boardColumns:", boardColumns);
     setColumns(boardColumns);
   }, [boardData, user]);
 

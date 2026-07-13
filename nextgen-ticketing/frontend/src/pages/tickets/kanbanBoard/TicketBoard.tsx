@@ -274,14 +274,15 @@ const TicketBoard: React.FC = () => {
 
     console.log("allStatuses:", allStatuses);
 
-    const coveredIds = new Set(allStatuses.map((s: any) => s.id));
-    const extraStatuses = TICKET_STATUSES.filter(
-      (s: any) =>
-        !coveredIds.has(s.id) &&
-        s.name !== StatusName.TRASH &&
-        allTickets.some((t: Ticket) => t.status.id === s.id),
-    );
-    const orderedStatuses = [...allStatuses, ...extraStatuses].sort(
+    // const coveredIds = new Set(allStatuses.map((s: any) => s.id));
+    // const extraStatuses = TICKET_STATUSES.filter(
+    //   (s: any) =>
+    //     !coveredIds.has(s.id) &&
+    //     s.name !== StatusName.TRASH &&
+    //     allTickets.some((t: Ticket) => t.status.id === s.id),
+    // );
+
+    const orderedStatuses = [...allStatuses].sort(
       (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0),
     );
 

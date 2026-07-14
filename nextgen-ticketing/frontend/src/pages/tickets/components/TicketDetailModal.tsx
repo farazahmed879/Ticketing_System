@@ -8,6 +8,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomButton from "../../../components/CustomButton";
 import api from "../../../services/api";
+import { copyToClipboard } from "../../../utils/helpers";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import {
   TICKET_STATUSES,
@@ -492,18 +493,24 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               {
                 label: "Copy Ticket ID",
                 icon: "Hash",
-                onClick: () => {
-                  navigator.clipboard.writeText(String(displayTicket.uid));
-                  showNotification("success", "Ticket ID copied");
+                onClick: async () => {
+                  const ok = await copyToClipboard(String(displayTicket.uid));
+                  showNotification(
+                    ok ? "success" : "error",
+                    ok ? "Ticket ID copied" : "Failed to copy ticket ID",
+                  );
                 },
               },
               {
                 label: "Copy Ticket URL",
                 icon: "Link",
-                onClick: () => {
+                onClick: async () => {
                   const url = `${window.location.origin}/tickets/${displayTicket.id}`;
-                  navigator.clipboard.writeText(url);
-                  showNotification("success", "Ticket URL copied");
+                  const ok = await copyToClipboard(url);
+                  showNotification(
+                    ok ? "success" : "error",
+                    ok ? "Ticket URL copied" : "Failed to copy ticket URL",
+                  );
                 },
               },
               {

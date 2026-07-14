@@ -24,7 +24,7 @@ import StandardListLayout from "../../components/StandardListLayout";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import ListAndKanbanSwitcher from "./components/ListAndKanbanSwitcher";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
-import { truncateString } from "../../utils/helpers";
+import { truncateString, copyToClipboard } from "../../utils/helpers";
 import { ROLE_TYPE } from "../roles/roleConstants";
 
 const TicketList: React.FC = () => {
@@ -557,18 +557,26 @@ const TicketList: React.FC = () => {
                       {
                         label: "Copy Ticket ID",
                         icon: "Hash",
-                        onClick: () => {
-                          navigator.clipboard.writeText(String(t.uid));
-                          showNotification("success", "Ticket ID copied");
+                        onClick: async () => {
+                          const ok = await copyToClipboard(String(t.uid));
+                          showNotification(
+                            ok ? "success" : "error",
+                            ok ? "Ticket ID copied" : "Failed to copy ticket ID",
+                          );
                         },
                       },
                       {
                         label: "Copy Ticket URL",
                         icon: "Link",
-                        onClick: () => {
+                        onClick: async () => {
                           const url = `${window.location.origin}/tickets/${t.id}`;
-                          navigator.clipboard.writeText(url);
-                          showNotification("success", "Ticket URL copied");
+                          const ok = await copyToClipboard(url);
+                          showNotification(
+                            ok ? "success" : "error",
+                            ok
+                              ? "Ticket URL copied"
+                              : "Failed to copy ticket URL",
+                          );
                         },
                       },
                       {

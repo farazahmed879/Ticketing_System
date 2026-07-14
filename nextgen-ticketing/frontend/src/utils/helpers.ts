@@ -33,6 +33,40 @@ export const formatCurrency = (amount: number, currency: string = "USD"): string
 };
 
 /**
+ * Copies text to the clipboard. Uses the async Clipboard API when available
+ * (requires a secure context: HTTPS or localhost) and falls back to a hidden
+ * textarea with document.execCommand("copy") otherwise.
+ * @param text The text to copy
+ * @returns Whether the copy succeeded
+ */
+export const copyToClipboard = async (text: string): Promise<boolean> => {
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // fall through to the legacy path (e.g. document not focused / permission denied)
+    }
+  }
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.top = "-9999px";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    textarea.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return ok;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Formats a date string or object into a custom format showing short month names (e.g., "Jan 12, 2024").
  * @param date The date to format
  * @returns The formatted date string

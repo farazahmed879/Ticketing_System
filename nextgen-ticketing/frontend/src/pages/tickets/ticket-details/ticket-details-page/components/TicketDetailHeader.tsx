@@ -4,6 +4,7 @@ import CustomIcon from "../../../../../components/CustomIcon";
 import CustomButton from "../../../../../components/CustomButton";
 import CustomDropdownMenu from "../../../../../components/CustomDropdownMenu";
 import { useNotification } from "../../../../../context/NotificationContext";
+import { copyToClipboard } from "../../../../../utils/helpers";
 import styles from "../TicketDetail.module.css";
 import type { TicketDetail as ITicketDetail } from "../../../../../types";
 
@@ -94,17 +95,27 @@ const TicketDetailHeader: React.FC<TicketDetailHeaderProps> = ({
             {
               label: "Copy Ticket ID",
               icon: "Hash",
-              onClick: () => {
-                navigator.clipboard.writeText(String(ticket.uid));
-                showNotification("success", "Ticket ID copied to clipboard");
+              onClick: async () => {
+                const ok = await copyToClipboard(String(ticket.uid));
+                showNotification(
+                  ok ? "success" : "error",
+                  ok
+                    ? "Ticket ID copied to clipboard"
+                    : "Failed to copy ticket ID",
+                );
               },
             },
             {
               label: "Copy Ticket URL",
               icon: "Link",
-              onClick: () => {
-                navigator.clipboard.writeText(window.location.href);
-                showNotification("success", "Ticket URL copied to clipboard");
+              onClick: async () => {
+                const ok = await copyToClipboard(window.location.href);
+                showNotification(
+                  ok ? "success" : "error",
+                  ok
+                    ? "Ticket URL copied to clipboard"
+                    : "Failed to copy ticket URL",
+                );
               },
             },
           ]}

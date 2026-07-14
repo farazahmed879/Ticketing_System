@@ -2,6 +2,7 @@ import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import CustomDropdownMenu from "../../../components/CustomDropdownMenu";
 import CustomIcon from "../../../components/CustomIcon";
 import { ROLE_TYPE } from "../../roles/roleConstants";
+import { copyToClipboard } from "../../../utils/helpers";
 
 const TicketCard = ({
   ticket,
@@ -59,18 +60,24 @@ const TicketCard = ({
               {
                 label: "Copy Ticket ID",
                 icon: "Hash",
-                onClick: () => {
-                  navigator.clipboard.writeText(String(ticket.uid));
-                  showNotification("success", "Ticket ID copied");
+                onClick: async () => {
+                  const ok = await copyToClipboard(String(ticket.uid));
+                  showNotification(
+                    ok ? "success" : "error",
+                    ok ? "Ticket ID copied" : "Failed to copy ticket ID",
+                  );
                 },
               },
               {
                 label: "Copy Ticket URL",
                 icon: "Link",
-                onClick: () => {
+                onClick: async () => {
                   const url = `${window.location.origin}/tickets/${ticket.id}`;
-                  navigator.clipboard.writeText(url);
-                  showNotification("success", "Ticket URL copied");
+                  const ok = await copyToClipboard(url);
+                  showNotification(
+                    ok ? "success" : "error",
+                    ok ? "Ticket URL copied" : "Failed to copy ticket URL",
+                  );
                 },
               },
               ...(user?.role?.roleType === ROLE_TYPE.ADMIN

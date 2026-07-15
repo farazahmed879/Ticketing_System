@@ -30,6 +30,7 @@ const ProjectList: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -44,10 +45,9 @@ const ProjectList: React.FC = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [debouncedStatus, setDebouncedStatus] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "grid">(
+    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
+  );
 
   const canCreate =
     user?.role?.roleType === ROLE_TYPE.ADMIN ||
@@ -62,8 +62,8 @@ const ProjectList: React.FC = () => {
   const { data: projectsData, isLoading: loading } = useQuery({
     queryKey: [
       "projects",
-      debouncedSearch,
-      debouncedStatus,
+      search,
+      statusFilter,
       currentPage,
       itemsPerPage,
       user?.id,
@@ -73,8 +73,8 @@ const ProjectList: React.FC = () => {
         params: {
           role: user?.role?.name,
           userId: user?.id,
-          search: debouncedSearch || undefined,
-          status: debouncedStatus || undefined,
+          search: search || undefined,
+          status: statusFilter || undefined,
           page: currentPage,
           limit: itemsPerPage,
         },
@@ -119,15 +119,10 @@ const ProjectList: React.FC = () => {
   const managers = modalData?.managers || [];
   const teams = modalData?.teams || [];
 
-  // Debounce search/filter inputs and reset page to 0 when they change
+  // Reset page to 0 when status filter changes
   useEffect(() => {
-    const handle = setTimeout(() => {
-      setDebouncedSearch(search);
-      setDebouncedStatus(statusFilter);
-      setCurrentPage(0);
-    }, 300);
-    return () => clearTimeout(handle);
-  }, [search, statusFilter]);
+    setCurrentPage(0);
+  }, [statusFilter]);
 
   const handleEdit = (project: Project) => {
     setEditingProject(project);
@@ -249,12 +244,23 @@ const ProjectList: React.FC = () => {
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
             <CustomInput
               placeholder="Search projects..."
-              value={search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setSearch(e.target.value)
-              }
+              value={searchInput}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                const val = e.target.value;
+                setSearchInput(val);
+                if (val === "") {
+                  setSearch("");
+                  setCurrentPage(0);
+                }
+              }}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === "Enter") {
+                  setSearch(searchInput);
+                  setCurrentPage(0);
+                }
+              }}
               icon={<CustomIcon name="Search" size={18} />}
-              containerStyle={{ maxWidth: "350px" }}
+              containerStyle={{ width: "350px" }}
             />
             <CustomSelect
               value={statusFilter}

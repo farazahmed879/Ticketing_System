@@ -221,6 +221,12 @@ export const canEditDueDate = (user: any, ticket: any): boolean => {
   );
 };
 
+/**
+ * Whether an employee may edit the due date (only allowed while ticket is in Assigned status).
+ */
+export const canEmployeeEditDueDate = (statusName: string | undefined): boolean =>
+  statusName === StatusName.OPEN;
+
 /** Notification kinds (mirrors NotificationContext's NotificationType). */
 type NotificationType = "success" | "error" | "info" | "warning";
 

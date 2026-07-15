@@ -13,10 +13,23 @@ export const userUsecase = {
     const take = parseInt(limit);
     const skip = parseInt(page) * take;
 
-    // The frontend sends either "all" or a specific role id to filter by.
+    // The frontend sends either "all", a role type ("employees", "clients", etc.), or a specific role id to filter by.
     let roleFilter: any = {};
-    if (type && type.toLowerCase() !== "all")
-      roleFilter = { roleId: type };
+    if (type && type.toLowerCase() !== "all") {
+      const lowerType = type.toLowerCase();
+      if (/^[0-9a-fA-F]{24}$/.test(type)) {
+        roleFilter = { roleId: type };
+      } else if (lowerType === "employees") {
+        roleFilter = { role: { roleType: { not: RoleType.CUSTOMER } } };
+      } else if (lowerType === "clients") {
+        roleFilter = { role: { roleType: RoleType.CUSTOMER } };
+      } else {
+        const validRoleTypes = Object.values(RoleType) as string[];
+        if (validRoleTypes.includes(lowerType)) {
+          roleFilter = { role: { roleType: lowerType } };
+        }
+      }
+    }
 
     const where: any = {
       deleted: showDeleted === "true" ? undefined : false,

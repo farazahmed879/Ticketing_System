@@ -118,7 +118,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: <CustomIcon name="ShieldCheck" size={20} />,
       label: t("sidebar.teams"),
       path: "/teams",
-      permission: "dashboard.view",
+      permission: "teams.view",
     },
     {
       icon: <CustomIcon name="Users2" size={20} />,

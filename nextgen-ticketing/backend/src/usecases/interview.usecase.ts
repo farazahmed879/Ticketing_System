@@ -16,7 +16,7 @@ import { startOfDay, endOfDay } from "date-fns";
 
 export const interviewUsecase = {
   async getAllInterviews(filters: any, user: any) {
-    const { filter, startDate, endDate, candidateId, limit, page } = filters;
+    const { filter, startDate, endDate, candidateId, limit, page, search } = filters;
     const where: any = {};
     const now = new Date();
 
@@ -55,6 +55,32 @@ export const interviewUsecase = {
 
     if (candidateId) {
       where.candidateId = candidateId as string;
+    }
+
+    if (search) {
+      where.AND = [
+        ...(where.AND || []),
+        {
+          OR: [
+            { title: { contains: search as string, mode: "insensitive" } },
+            {
+              candidate: {
+                name: { contains: search as string, mode: "insensitive" },
+              },
+            },
+            {
+              candidate: {
+                email: { contains: search as string, mode: "insensitive" },
+              },
+            },
+            {
+              candidate: {
+                position: { contains: search as string, mode: "insensitive" },
+              },
+            },
+          ],
+        },
+      ];
     }
 
     const [interviews, total] = await Promise.all([

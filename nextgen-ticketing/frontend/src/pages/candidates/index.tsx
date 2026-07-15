@@ -21,7 +21,10 @@ import CustomPagination from "../../components/CustomPagination";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
 import StandardListLayout from "../../components/StandardListLayout";
-import { getCandidateColumns } from "./columns";
+import { getCandidateColumns, statusBadgeVariant } from "./columns";
+import { formatDate } from "../../utils/helpers";
+import CustomBadge from "../../components/CustomBadge";
+import CustomImage from "../../components/CustomImage";
 import styles from "./CandidateList.module.css";
 
 const CandidateList: React.FC = () => {
@@ -54,6 +57,9 @@ const CandidateList: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
+  const [viewMode, setViewMode] = useState<"list" | "grid">(
+    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
+  );
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [candidateToDelete, setCandidateToDelete] = useState<string | null>(
@@ -325,7 +331,7 @@ const CandidateList: React.FC = () => {
             </CustomButton>
 
             {/* Search Bar */}
-            <div style={{ flex: 1, minWidth: 160 }}>
+            <div style={{ flex: "none" }}>
               <CustomInput
                 placeholder={
                   isAiMode
@@ -342,6 +348,7 @@ const CandidateList: React.FC = () => {
                   e.key === "Enter" && handleSearch()
                 }
                 icon={<CustomIcon name="Search" size={18} />}
+                containerStyle={{ width: "350px" }}
               />
             </div>
 
@@ -556,6 +563,34 @@ const CandidateList: React.FC = () => {
                 </div>
               )}
             </div>
+            <div
+              style={{
+                display: "flex",
+                gap: 4,
+                padding: 4,
+                borderRadius: 10,
+                border: "1px solid var(--border-glass)",
+                background: "rgba(255,255,255,0.03)",
+                marginLeft: "auto",
+              }}
+            >
+              <CustomButton
+                variant={viewMode === "list" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                icon={<CustomIcon name="List" size={16} />}
+                title="List view"
+                style={{ padding: "6px 10px" }}
+              />
+              <CustomButton
+                variant={viewMode === "grid" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                icon={<CustomIcon name="LayoutGrid" size={16} />}
+                title="Grid view"
+                style={{ padding: "6px 10px" }}
+              />
+            </div>
           </div>
         }
         pagination={
@@ -572,15 +607,227 @@ const CandidateList: React.FC = () => {
           />
         }
       >
-        <CustomTable
-          style={{ flex: 1, overflowY: "auto" }}
-          columns={columns}
-          data={candidates}
-          loading={loading}
-          loadingMessage="Loading candidates..."
-          emptyMessage="No candidates found"
-          onRowClick={(c) => navigate(`/candidates/${c.id}`)}
-        />
+        {viewMode === "list" ? (
+          <CustomTable
+            style={{ flex: 1, overflowY: "auto" }}
+            columns={columns}
+            data={candidates}
+            loading={loading}
+            loadingMessage="Loading candidates..."
+            emptyMessage="No candidates found"
+            onRowClick={(c) => navigate(`/candidates/${c.id}`)}
+          />
+        ) : loading ? (
+          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", flex: 1 }}>
+            Loading candidates...
+          </div>
+        ) : candidates.length === 0 ? (
+          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", flex: 1 }}>
+            No candidates found
+          </div>
+        ) : (
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+              gap: 16,
+              padding: "4px 0",
+              alignContent: "start",
+            }}
+          >
+            {candidates.map((c: any) => (
+              <div
+                key={c.id}
+                onClick={() => navigate(`/candidates/${c.id}`)}
+                className="glass-card"
+                style={{
+                  padding: 20,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  gap: 16,
+                  cursor: "pointer",
+                  transition: "var(--transition-normal)",
+                  position: "relative",
+                  border: "1px solid var(--border-glass)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <div
+                      style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: "50%",
+                        background: "rgba(124, 58, 237, 0.1)",
+                        color: "var(--accent-primary)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                        fontSize: "1.1rem",
+                      }}
+                    >
+                      {c.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: "1.05rem", fontWeight: 600, margin: 0 }}>
+                        {c.name}
+                      </h3>
+                      <span className="text-xs-muted" style={{ display: "block", marginTop: 2 }}>
+                        {c.position}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                    <CustomBadge variant={statusBadgeVariant(c.status)}>
+                      {c.status}
+                    </CustomBadge>
+                    <div
+                      style={{ display: "flex", gap: 2, marginLeft: 6 }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {!c.isConverted && (
+                        <CustomButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setCandidateToConvert(c.id);
+                            setIsConvertModalOpen(true);
+                          }}
+                          icon={<CustomIcon name="UserPlus" size={14} />}
+                          style={{ padding: 6, minHeight: "auto", color: "var(--accent-success)" }}
+                        />
+                      )}
+                      <CustomButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setCurrentEditingId(c.id);
+                          setIsModalOpen(true);
+                        }}
+                        icon={<CustomIcon name="Edit2" size={14} />}
+                        style={{ padding: 6, minHeight: "auto" }}
+                      />
+                      <CustomButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setCandidateToDelete(c.id);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        icon={<CustomIcon name="Trash2" size={14} />}
+                        style={{ padding: 6, minHeight: "auto", color: "var(--accent-danger)" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {isAiMode && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span className="text-xs-muted" style={{ fontWeight: 600 }}>AI Match Score</span>
+                      <span className="text-xs" style={{ fontWeight: 700, color: "var(--accent-primary)" }}>{c.matchScore || 0}%</span>
+                    </div>
+                    <div style={{ width: "100%", height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 3, overflow: "hidden" }}>
+                      <div
+                        style={{
+                          height: "100%",
+                          width: `${c.matchScore || 0}%`,
+                          background: "var(--accent-primary)",
+                          borderRadius: 3,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <CustomIcon name="Mail" size={14} color="var(--text-muted)" />
+                    <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                      {c.email}
+                    </span>
+                  </div>
+                  {c.phone && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <CustomIcon name="Phone" size={14} color="var(--text-muted)" />
+                      <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                        {c.phone}
+                      </span>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <CustomIcon name="MapPin" size={14} color="var(--text-muted)" />
+                    <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                      {c.city
+                        ? c.nationality
+                          ? `${c.city}, ${c.nationality}`
+                          : c.city
+                        : c.nationality || c.address || "No location provided"}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-glass)", paddingTop: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {c.createdBy?.image ? (
+                      <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden" }}>
+                        <CustomImage src={c.createdBy.image} alt={c.createdBy.fullname} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </div>
+                    ) : c.createdBy ? (
+                      <div
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: "50%",
+                          background: "var(--bg-glass)",
+                          color: "var(--text-primary)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {c.createdBy.fullname.charAt(0)}
+                      </div>
+                    ) : (
+                      <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", color: "var(--text-muted)" }}>—</div>
+                    )}
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                        {c.createdBy?.fullname || "System"}
+                      </span>
+                      <span className="text-xs-muted" style={{ fontSize: "0.65rem" }}>
+                        {formatDate(c.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div onClick={(e) => e.stopPropagation()}>
+                    {c.resumeUrl ? (
+                      <CustomButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(c.resumeUrl, "_blank")}
+                        icon={<CustomIcon name="FileText" size={15} />}
+                        style={{ padding: "4px 8px", minHeight: "auto", fontSize: "0.8rem", color: "var(--accent-primary)" }}
+                      >
+                        Resume
+                      </CustomButton>
+                    ) : (
+                      <span className="text-xs-muted">No Resume</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </StandardListLayout>
 
       <CandidateModal

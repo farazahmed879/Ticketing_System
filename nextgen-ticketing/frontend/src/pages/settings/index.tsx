@@ -806,6 +806,9 @@ const Settings: React.FC = () => {
     localStorage.getItem("--accent-secondary") || "#06b6d4",
   );
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+  const [defaultListView, setDefaultListView] = useState(
+    localStorage.getItem("defaultListView") || "list",
+  );
   const [currentLang, setCurrentLang] = useState(
     i18n.language?.split("-")[0] || "en",
   );
@@ -838,12 +841,14 @@ const Settings: React.FC = () => {
     localStorage.setItem("--accent-primary", primaryColor);
     localStorage.setItem("--accent-secondary", secondaryColor);
     localStorage.setItem("theme", theme);
-  }, [primaryColor, secondaryColor, theme]);
+    localStorage.setItem("defaultListView", defaultListView);
+  }, [primaryColor, secondaryColor, theme, defaultListView]);
 
   const handleReset = () => {
     setPrimaryColor("#7c3aed");
     setSecondaryColor("#06b6d4");
     setTheme("light");
+    setDefaultListView("list");
     i18n.changeLanguage("en");
     setCurrentLang("en");
   };
@@ -1034,41 +1039,41 @@ const Settings: React.FC = () => {
               </div>
 
               <div className={styles.settingGroup}>
-                <label>{t("settings.primaryColor")}</label>
-                <div className={styles.colorPickerWrapper}>
-                  <CustomColorPicker
-                    value={primaryColor}
-                    onChange={setPrimaryColor}
-                  />
-                  <CustomInput
-                    type="text"
-                    value={primaryColor}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setPrimaryColor(e.target.value)
-                    }
-                    className={styles.colorInput}
-                    containerStyle={{ flex: 1, maxWidth: 120 }}
-                  />
+                <label>Default List View Page Layout</label>
+                <div className={styles.themeToggleGrid}>
+                  <CustomButton
+                    variant={defaultListView === "list" ? "secondary" : "ghost"}
+                    className={`${styles.themeOption} ${defaultListView === "list" ? styles.themeOptionActive : ""}`}
+                    onClick={() => setDefaultListView("list")}
+                    icon={<CustomIcon name="List" size={20} />}
+                  >
+                    List View
+                  </CustomButton>
+                  <CustomButton
+                    variant={defaultListView === "grid" ? "secondary" : "ghost"}
+                    className={`${styles.themeOption} ${defaultListView === "grid" ? styles.themeOptionActive : ""}`}
+                    onClick={() => setDefaultListView("grid")}
+                    icon={<CustomIcon name="LayoutGrid" size={20} />}
+                  >
+                    Grid View
+                  </CustomButton>
                 </div>
               </div>
 
               <div className={styles.settingGroup}>
+                <label>{t("settings.primaryColor")}</label>
+                <CustomColorPicker
+                  value={primaryColor}
+                  onChange={setPrimaryColor}
+                />
+              </div>
+
+              <div className={styles.settingGroup}>
                 <label>{t("settings.secondaryColor")}</label>
-                <div className={styles.colorPickerWrapper}>
-                  <CustomColorPicker
-                    value={secondaryColor}
-                    onChange={setSecondaryColor}
-                  />
-                  <CustomInput
-                    type="text"
-                    value={secondaryColor}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setSecondaryColor(e.target.value)
-                    }
-                    className={styles.colorInput}
-                    containerStyle={{ flex: 1, maxWidth: 120 }}
-                  />
-                </div>
+                <CustomColorPicker
+                  value={secondaryColor}
+                  onChange={setSecondaryColor}
+                />
               </div>
 
               <div className={styles.settingGroup}>

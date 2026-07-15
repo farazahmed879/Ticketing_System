@@ -36,7 +36,9 @@ export default function TimesheetReview() {
   const [month, setMonth] = useState<string>(new Date().getMonth().toString());
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [userSearch, setUserSearch] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid">(
+    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
+  );
 
   const { data: usersData } = useQuery({
     queryKey: ["users", "timesheet-review"],

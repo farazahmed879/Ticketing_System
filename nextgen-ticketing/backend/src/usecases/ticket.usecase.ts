@@ -179,13 +179,24 @@ export const ticketUsecase = {
     }
 
     if (search) {
+      const orConditions: any[] = [
+        { subject: { contains: search as string, mode: "insensitive" } },
+        { issue: { contains: search as string, mode: "insensitive" } },
+      ];
+
+      // Clean search string for ID matching (e.g., strip '#')
+      const cleanSearch = (search as string).trim().replace(/^#/, "");
+      const searchNum = parseInt(cleanSearch, 10);
+      if (!isNaN(searchNum) && /^\d+$/.test(cleanSearch)) {
+        orConditions.push({ uid: searchNum });
+      } else if (/^[0-9a-fA-F]{24}$/.test(cleanSearch)) {
+        orConditions.push({ id: cleanSearch });
+      }
+
       where.AND = [
         ...(where.AND || []),
         {
-          OR: [
-            { subject: { contains: search as string, mode: "insensitive" } },
-            { issue: { contains: search as string, mode: "insensitive" } },
-          ],
+          OR: orConditions,
         },
       ];
     }

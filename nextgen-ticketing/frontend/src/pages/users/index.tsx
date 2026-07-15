@@ -30,18 +30,19 @@ const UserList: React.FC = () => {
     currentUser?.role?.roleType === ROLE_TYPE.AGENT ||
     currentUser?.role?.roleType === ROLE_TYPE.HR;
 
-  console.log("currentUser", currentUser);
-
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { showNotification, setIsLoading } = useNotification();
 
   // Pagination & Filter state
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid">(
+    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
+  );
 
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -207,13 +208,23 @@ const UserList: React.FC = () => {
           <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
             <CustomInput
               placeholder="Search users..."
-              value={searchTerm}
+              value={searchInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(0);
+                const val = e.target.value;
+                setSearchInput(val);
+                if (val === "") {
+                  setSearchTerm("");
+                  setCurrentPage(0);
+                }
+              }}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === "Enter") {
+                  setSearchTerm(searchInput);
+                  setCurrentPage(0);
+                }
               }}
               icon={<CustomIcon name="Search" size={18} />}
-              containerStyle={{ flex: 1 }}
+              containerStyle={{ width: "350px" }}
             />
             <CustomSelect
               value={roleFilter}

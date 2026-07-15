@@ -199,6 +199,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
           rules={{ required: "Project is required" }}
           label="Project"
           placeholder="No Project"
+          showSearch
           options={[
             { value: "", label: "No Project" },
             ...projects.map((g) => ({ value: g.id, label: g.name })),

@@ -49,6 +49,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   const { user } = useAuth();
   const isClient = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
+  const isQA = user?.role?.roleType === ROLE_TYPE.QA;
   const { showNotification, setIsLoading } = useNotification();
   const navigate = useNavigate();
 
@@ -647,6 +648,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                   canAssign={canAssign}
                   canAssignQA={canAssignQA}
                   isClient={isClient}
+                  isQA={isQA}
                   isTicketOwner={isTicketOwner}
                   user={user}
                   handleStartChat={handleStartChat}

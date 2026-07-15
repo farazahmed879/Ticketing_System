@@ -11,6 +11,7 @@ import type { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import TicketAssignments from "./TicketAssignments";
 import SelectWithLabel from "../../../../../components/SelectWithLabel";
 import { ROLE_TYPE } from "../../../../roles/roleConstants";
+import { canEditDueDate } from "../../../shared/ticketDecisions";
 
 interface ModalDetailsFormProps {
   control: Control<TicketUpdateFormData>;
@@ -28,6 +29,7 @@ interface ModalDetailsFormProps {
   canAssign: boolean;
   canAssignQA: boolean;
   isClient: boolean;
+  isQA: boolean;
   isTicketOwner: boolean;
   user: any;
   handleStartChat: (userId: string) => void;
@@ -257,7 +259,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
               </div>
             }
             min={new Date().toISOString().split("T")[0]}
-            disabled={!canUpdate || isDisbaledMode || isClient}
+            disabled={!canEditDueDate(user, displayTicket)}
           />
 
           <TicketAssignments

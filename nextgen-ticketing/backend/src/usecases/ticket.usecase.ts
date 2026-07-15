@@ -84,10 +84,7 @@ export const ticketUsecase = {
       const managedProjectIds = await ticketRepository.findManagedProjectIds(
         user.id,
       );
-      const visibility: any[] = [
-        { ownerId: user.id },
-        { assigneeId: user.id },
-      ];
+      const visibility: any[] = [{ ownerId: user.id }, { assigneeId: user.id }];
       if (managedProjectIds.length) {
         visibility.push({ projectId: { in: managedProjectIds } });
       }
@@ -507,6 +504,16 @@ export const ticketUsecase = {
       if (isQA) {
         const rules: Array<[string[], string, string]> = [
           [
+            [StatusName.NEW],
+            StatusName.FAILED,
+            "QA cannot move Unassigned tickets to Returned.",
+          ],
+          [
+            [StatusName.OPEN],
+            StatusName.FAILED,
+            "QA cannot move Assigned tickets to Returned.",
+          ],
+          [
             [StatusName.RESOLVED],
             StatusName.IN_PROCESS,
             "Only Done tickets can be moved to In-Process",
@@ -519,17 +526,30 @@ export const ticketUsecase = {
         ];
 
         for (const [requiredStatuses, ruleTarget, message] of rules) {
-          // 1. Lowercase the rule's target status
           const isTargetMatch = target === ruleTarget.toLowerCase();
 
-          // 2. Map required statuses to lowercase to ensure a fair comparison
           const lowercaseRequiredStatuses = requiredStatuses.map((status) =>
             status.toLowerCase(),
           );
+
           const isCurrentValid = lowercaseRequiredStatuses.includes(current);
 
-          if (isTargetMatch && !isCurrentValid) {
-            throw new Error(message);
+          if (isTargetMatch && isCurrentValid) {
+            // ❗ Note: first rule logic is inverse (block if current IS in list)
+            if (
+              ruleTarget === StatusName.FAILED &&
+              lowercaseRequiredStatuses.includes(current)
+            ) {
+              throw new Error(message);
+            }
+
+            // Normal rules (block if current is NOT valid)
+            if (
+              ruleTarget !== StatusName.FAILED &&
+              !lowercaseRequiredStatuses.includes(current)
+            ) {
+              throw new Error(message);
+            }
           }
         }
       }
@@ -582,6 +602,12 @@ export const ticketUsecase = {
       : null;
 
     if (data.dueDate !== undefined && data.dueDate !== dueDate) {
+      // Once a ticket is Approved the due date is locked for everyone.
+      if (existingTicket.status?.name === StatusName.APPROVED) {
+        throw new Error(
+          "Due date cannot be changed after a ticket is Approved.",
+        );
+      }
       const canEditDueDate =
         isAdmin ||
         isManager ||

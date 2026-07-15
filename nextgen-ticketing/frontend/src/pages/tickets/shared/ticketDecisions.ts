@@ -125,12 +125,34 @@ export const canShowCancelBanner = (
     roleName === ROLE_TYPE.AGENT);
 
 /**
- * Employees may set/change the due date only while the ticket is in the
- * "Assigned" status (i.e. assigned to an employee) — read-only otherwise.
+ * Whether this user may edit the ticket's due date. Single source of truth for
+ * the detail modal AND the detail page so the two surfaces can never disagree.
+ *
+ * Mirrors the backend rule (admins/managers/employees-with-rights may edit,
+ * QA and clients may not) and blocks edits on terminal (Cancelled/Closed)
+ * tickets and on Approved tickets — once QA has approved the work, the due
+ * date is locked for everyone.
  */
-export const canEmployeeEditDueDate = (
-  statusName: string | undefined,
-): boolean => statusName === StatusName.OPEN;
+export const canEditDueDate = (user: any, ticket: any): boolean => {
+  const role = user?.role?.roleType;
+  if (role === ROLE_TYPE.CUSTOMER || role === ROLE_TYPE.QA) return false;
+
+  const statusName = ticket?.status?.name;
+  if (
+    statusName === StatusName.TRASH ||
+    statusName === StatusName.CLOSED ||
+    statusName === StatusName.APPROVED
+  ) {
+    return false;
+  }
+
+  return (
+    role === ROLE_TYPE.ADMIN ||
+    role === ROLE_TYPE.AGENT ||
+    user?.role?.permissions?.tickets?.update === true ||
+    (!!ticket?.owner?.id && ticket.owner.id === user?.id)
+  );
+};
 
 /** Notification kinds (mirrors NotificationContext's NotificationType). */
 type NotificationType = "success" | "error" | "info" | "warning";
@@ -200,6 +222,21 @@ export const handleStatusChange = async (
     showNotification(
       "error",
       UIMessages.BOARD.ACCESS_DENIED(body.targetStatusName || "this status"),
+    );
+    return;
+  }
+
+  // QA reviews finished work — they may not return a ticket that hasn't been
+  // worked on yet (Unassigned/Assigned). Mirrors the backend rule.
+  if (
+    isStatusChanging &&
+    user?.role?.roleType === ROLE_TYPE.QA &&
+    body.targetStatusName === StatusName.FAILED &&
+    [StatusName.NEW, StatusName.OPEN].includes(body.currentStatusName)
+  ) {
+    showNotification(
+      "error",
+      UIMessages.BOARD.ACCESS_DENIED(body.targetStatusName),
     );
     return;
   }

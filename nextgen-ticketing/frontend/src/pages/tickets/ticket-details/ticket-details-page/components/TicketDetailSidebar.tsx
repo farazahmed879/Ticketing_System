@@ -3,7 +3,7 @@ import styles from "../TicketDetail.module.css";
 import CustomIcon from "../../../../../components/CustomIcon";
 import CustomDatePicker from "../../../../../components/CustomDatePicker";
 import { StatusName } from "../../../../../utils/constants";
-import { canEmployeeEditDueDate } from "../../../shared/ticketDecisions";
+import { canEditDueDate } from "../../../shared/ticketDecisions";
 import { TicketSidebarStatusPriority } from "./TicketSidebarStatusPriority";
 import { TicketSidebarAssignments } from "./TicketSidebarAssignments";
 import { TicketSidebarDetails } from "./TicketSidebarDetails";
@@ -46,10 +46,7 @@ const TicketDetailSidebar: React.FC<TicketDetailSidebarProps> = ({
   const qaEditable = canAssignQA;
   const labelsEditable =
     isAdmin || isManager || ticket.assignee?.id === user?.id;
-  const dueDateEditable =
-    isAdmin ||
-    isManager ||
-    (isEmployee && canEmployeeEditDueDate(ticket.status?.name));
+  const dueDateEditable = canEditDueDate(user, ticket);
 
   return (
     <div className={styles.rightColumn}>

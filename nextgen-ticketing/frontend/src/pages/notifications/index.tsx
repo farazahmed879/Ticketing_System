@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
-import { formatDistanceToNow } from "date-fns";
+import { timeAgo } from "../../utils/helpers";
 import api from "../../services/api";
 import { socket } from "../../services/socket";
 import { API_ROUTES } from "../../utils/apiRoutes";
@@ -199,9 +199,7 @@ const Notifications: React.FC = () => {
                 <div className={styles.itemHeader}>
                   <span className={styles.title}>{n.title}</span>
                   <span className={styles.time}>
-                    {formatDistanceToNow(new Date(n.createdAt), {
-                      addSuffix: true,
-                    })}
+                    {timeAgo(n.createdAt)}
                   </span>
                 </div>
                 <p className={styles.message}>{n.message}</p>

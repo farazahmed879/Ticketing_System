@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
-import { formatDistanceToNow } from "date-fns";
+import { timeAgo } from "../../../utils/helpers";
 import CustomIcon from "../../../components/CustomIcon";
 import { useAuth } from "../../../context/AuthContext";
 import styles from "../Dashboard.module.css";
@@ -137,9 +137,7 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
                   <span className={styles.momentAuthorName}>{mom.author?.fullname}</span>
                 </div>
                 <span className={styles.momentDate}>
-                  {formatDistanceToNow(new Date(mom.createdAt || mom.date), {
-                    addSuffix: true,
-                  })}
+                  {timeAgo(mom.createdAt || mom.date)}
                 </span>
               </div>
               <h4 className={styles.momentTitle}>{mom.title}</h4>
@@ -274,10 +272,7 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
                 </div>
               </div>
               <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
-                {formatDistanceToNow(
-                  new Date(selectedMoment.createdAt || selectedMoment.date),
-                  { addSuffix: true },
-                )}
+                {timeAgo(selectedMoment.createdAt || selectedMoment.date)}
               </span>
             </div>
           </div>

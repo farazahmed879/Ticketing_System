@@ -1,7 +1,7 @@
 import React from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { formatDistanceToNow } from "date-fns";
+import { timeAgo } from "../utils/helpers";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
 import { socket } from "../services/socket";
@@ -457,9 +457,7 @@ const MainLayout: React.FC = () => {
                                     color: "var(--text-muted)",
                                   }}
                                 >
-                                  {formatDistanceToNow(new Date(n.createdAt), {
-                                    addSuffix: true,
-                                  })}
+                                  {timeAgo(n.createdAt)}
                                 </div>
                               </div>
                               {n.unread && (

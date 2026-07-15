@@ -4,7 +4,7 @@ import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
 import CustomTooltip from "../../components/CustomTooltip";
-import { formatDistanceToNow } from "date-fns";
+import { timeAgo } from "../../utils/helpers";
 import styles from "./Requests.module.css";
 import type { User } from "../../types";
 
@@ -42,7 +42,7 @@ export const getRequestColumns = (
     header: "Requested",
     key: "createdAt",
     render: (r) =>
-      formatDistanceToNow(new Date(r.createdAt), { addSuffix: true }),
+      timeAgo(r.createdAt),
   },
   {
     header: "Status",

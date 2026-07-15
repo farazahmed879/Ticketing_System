@@ -1,5 +1,5 @@
 import React from "react";
-import { formatDistanceToNow } from "date-fns";
+import { timeAgo } from "../../../../../utils/helpers";
 import styles from "../TicketDetail.module.css";
 import cs from "../../../shared/commentThread.module.css";
 import type { TicketDetail as ITicketDetail } from "../../../../../types";
@@ -46,9 +46,7 @@ const TicketDetailHistory: React.FC<TicketDetailHistoryProps> = ({
               }}
             >
               By {item.actor.fullname} •{" "}
-              {formatDistanceToNow(new Date(item.createdAt), {
-                addSuffix: true,
-              })}{" "}
+              {timeAgo(item.createdAt)}{" "}
               •{" "}
               {new Date(item.createdAt).toLocaleDateString("en-US", {
                 month: "short",

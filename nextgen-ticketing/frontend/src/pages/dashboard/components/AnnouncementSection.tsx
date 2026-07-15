@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { timeAgo } from "../../../utils/helpers";
 import CustomIcon from "../../../components/CustomIcon";
 import Modal from "../../../components/Modal";
 import { AnnouncementType } from "../../../utils/constants";
@@ -41,7 +41,7 @@ const AnnouncementSection: React.FC<AnnouncementSectionProps> = ({ announcements
         </div>
         <div className={styles.announcementDate}>
           <CustomIcon name="Clock" size={14} />
-          {formatDistanceToNow(new Date(ann.date), { addSuffix: true })}
+          {timeAgo(ann.date)}
         </div>
       </div>
     </div>

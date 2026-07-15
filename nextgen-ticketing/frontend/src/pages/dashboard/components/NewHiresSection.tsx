@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { formatDistanceToNow, isToday, isYesterday } from "date-fns";
+import { isToday, isYesterday } from "date-fns";
+import { timeAgo } from "../../../utils/helpers";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../../components/CustomIcon";
 import Modal from "../../../components/Modal";
@@ -72,7 +73,7 @@ const NewHiresSection: React.FC<NewHiresSectionProps> = ({ newHires }) => {
         <p className={styles.hireTitle}>{hire.title || 'Team Member'}</p>
         <div className={styles.hireMeta}>
           <CustomIcon name="Clock" size={10} />
-          <span>{formatDistanceToNow(new Date(hire.createdAt), { addSuffix: true })}</span>
+          <span>{timeAgo(hire.createdAt)}</span>
         </div>
       </div>
 

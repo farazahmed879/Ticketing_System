@@ -1,3 +1,5 @@
+import { formatDistanceToNow } from "date-fns";
+
 /**
  * Truncates a string to a specified length and appends "..." if it exceeds the limit.
  * @param str The string to truncate
@@ -17,6 +19,18 @@ export const truncateString = (str: string, limit: number): string => {
 export const capitalizeFirstLetter = (str: string): string => {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+/**
+ * Formats a date as a relative "x minutes ago" string.
+ * Clamps the date to now so clock skew between the server and the user's
+ * machine can never render a future time like "in 2 minutes".
+ * @param date The date (or date string) to format
+ * @returns The relative time string
+ */
+export const timeAgo = (date: Date | string | number): string => {
+  const ts = new Date(date).getTime();
+  return formatDistanceToNow(Math.min(ts, Date.now()), { addSuffix: true });
 };
 
 /**

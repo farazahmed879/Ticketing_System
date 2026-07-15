@@ -343,6 +343,15 @@ const TicketBoard: React.FC = () => {
 
     if (currentStatusName == targetStatusName) return;
 
+    // For QA the board is locked except the Approved column.
+    if (
+      user?.role?.roleType === ROLE_TYPE.QA &&
+      targetStatusName !== StatusName.APPROVED
+    ) {
+      showNotification("error", UIMessages.BOARD.PERMISSION_DENIED);
+      return;
+    }
+
     if (!isAllowedToUpdatedTheTicketStatus(ticket, targetStatusName)) return;
 
     handleUpdateStatus({
@@ -714,11 +723,16 @@ const TicketBoard: React.FC = () => {
                   const isCollapsed = collapsedColumns.includes(column.id);
                   // Team leads may approve their team's tickets, so don't
                   // render the Approved column as locked for them.
+                  // QA only approves finished work — for them every column
+                  // is locked except Approved.
                   const isStatusAllowed =
-                    user?.role?.roleType === ROLE_TYPE.ADMIN ||
-                    user?.role?.permissions?.boardStatuses?.[column.id] ===
-                      true ||
-                    (!!user?.isLead && column.name === StatusName.APPROVED);
+                    user?.role?.roleType === ROLE_TYPE.QA
+                      ? column.name === StatusName.APPROVED
+                      : user?.role?.roleType === ROLE_TYPE.ADMIN ||
+                        user?.role?.permissions?.boardStatuses?.[column.id] ===
+                          true ||
+                        (!!user?.isLead &&
+                          column.name === StatusName.APPROVED);
 
                   return (
                     <ColumnStatus

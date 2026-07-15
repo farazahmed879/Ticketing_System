@@ -279,11 +279,19 @@ export const handleStatusChange = async (
       StatusName.FAILED,
     ].includes(body.targetStatusName);
 
+  // QA approves finished work without needing an explicit board-status
+  // permission. The backend still enforces the real transition rules
+  // (only Done tickets can be approved).
+  const isQaApprove =
+    user?.role?.roleType === ROLE_TYPE.QA &&
+    body.targetStatusName === StatusName.APPROVED;
+
   const isStatusAllowed =
     user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.boardStatuses?.[body?.statusId] === true ||
     isCancelByStaff ||
-    isOwnerBasicAction;
+    isOwnerBasicAction ||
+    isQaApprove;
 
   if (isStatusChanging && !isStatusAllowed && !teamLeadIds.includes(user?.id)) {
     showNotification(

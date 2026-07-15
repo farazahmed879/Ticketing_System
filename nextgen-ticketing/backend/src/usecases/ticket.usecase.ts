@@ -709,11 +709,13 @@ export const ticketUsecase = {
     }
 
     if (data.tags) updateData.tags = data.tags;
-    if (
-      data.dueDate !== undefined &&
-      data.dueDate !==
-        (existingTicket.dueDate ? existingTicket.dueDate.toISOString() : null)
-    ) {
+    // Compare date-only to date-only: the client sends "YYYY-MM-DD", so
+    // comparing against the full ISO timestamp would flag every update that
+    // merely includes the (unchanged) due date as a "due date change".
+    const newDueDate = data.dueDate
+      ? new Date(data.dueDate).toISOString().split("T")[0]
+      : null;
+    if (data.dueDate !== undefined && newDueDate !== dueDate) {
       updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
       historyEntries.push({
         action: ActionName.DUE_DATE_CHANGED,

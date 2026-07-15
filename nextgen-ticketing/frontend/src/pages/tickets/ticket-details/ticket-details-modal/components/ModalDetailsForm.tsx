@@ -68,8 +68,9 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
       disabled: !(
         user?.role?.roleType === ROLE_TYPE.ADMIN ||
         user?.role?.permissions?.boardStatuses?.[s.id] === true ||
-        // The ticket's team lead may approve it.
-        (displayTicket?.teamLeadIds?.includes(user?.id) &&
+        // The ticket's team lead may approve it; QA may approve too.
+        ((displayTicket?.teamLeadIds?.includes(user?.id) ||
+          user?.role?.roleType === ROLE_TYPE.QA) &&
           s.name === StatusName.APPROVED) ||
         (displayTicket.owner.id === user?.id &&
           (s.name.toLowerCase() === StatusName.OPEN.toLowerCase() ||

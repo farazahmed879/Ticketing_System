@@ -1,6 +1,7 @@
 import CustomIcon from "../../../../../components/CustomIcon";
 import styles from "../TicketDetail.module.css";
 import type { TicketDetailSidebarProps } from "../../../../../types";
+import { statusDisplayName } from "../../../shared/ticketDecisions";
 
 const fmtDate = (d?: string | null) =>
   d
@@ -55,6 +56,7 @@ const Row = ({
  */
 export const TicketSidebarDetails = ({
   ticket,
+  user,
   statusEditable,
   priorityEditable,
   assigneeEditable,
@@ -82,7 +84,10 @@ export const TicketSidebarDetails = ({
       >
         {/* Non-editable attributes shown as one-line rows. */}
         {!statusEditable && (
-          <Row dot={ticket.status?.color} text={`Status: ${ticket.status?.name}`} />
+          <Row
+            dot={ticket.status?.color}
+            text={`Status: ${statusDisplayName(ticket.status?.name, user)}`}
+          />
         )}
         {!priorityEditable && (
           <Row

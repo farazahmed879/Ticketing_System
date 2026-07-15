@@ -11,7 +11,11 @@ import type { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import TicketAssignments from "./TicketAssignments";
 import SelectWithLabel from "../../../../../components/SelectWithLabel";
 import { ROLE_TYPE } from "../../../../roles/roleConstants";
-import { canEditDueDate } from "../../../shared/ticketDecisions";
+import {
+  canEditDueDate,
+  statusDisplayName,
+  statusOptionsForUser,
+} from "../../../shared/ticketDecisions";
 
 interface ModalDetailsFormProps {
   control: Control<TicketUpdateFormData>;
@@ -59,11 +63,14 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
   const getStatusOptions = (columns: any[]) => {
     return columns.map((s: any) => ({
       value: s.id,
-      label: s.name,
+      label: statusDisplayName(s.name, user),
       icon: <CustomIcon name="Clock" size={14} color={s.color} />,
       disabled: !(
         user?.role?.roleType === ROLE_TYPE.ADMIN ||
         user?.role?.permissions?.boardStatuses?.[s.id] === true ||
+        // The ticket's team lead may approve it.
+        (displayTicket?.teamLeadIds?.includes(user?.id) &&
+          s.name === StatusName.APPROVED) ||
         (displayTicket.owner.id === user?.id &&
           (s.name.toLowerCase() === StatusName.OPEN.toLowerCase() ||
             s.name.toLowerCase() === StatusName.TRASH.toLowerCase() ||
@@ -142,7 +149,9 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
             <CustomSelect
               name="statusId"
               control={control}
-              options={getStatusOptions(statuses)}
+              options={getStatusOptions(
+                statusOptionsForUser(user, displayTicket?.status),
+              )}
               style={{
                 minWidth: 180,
                 fontSize: "0.8rem",
@@ -161,7 +170,8 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
                 fontSize: "0.8rem",
               }}
             >
-              <CustomIcon name="Status" size={16} /> {displayTicket.status.name}
+              <CustomIcon name="Status" size={16} />{" "}
+              {statusDisplayName(displayTicket.status.name, user)}
             </CustomBadge>
           )}
         </div>

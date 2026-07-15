@@ -28,7 +28,10 @@ import ColumnStatus from "./ColumnStatus";
 import { useScrollSnap } from "./useScrollSnap";
 import StandardListLayout from "../../../components/StandardListLayout";
 import ListAndKanbanSwitcher from "../components/ListAndKanbanSwitcher";
-import { handleStatusChange } from "../shared/ticketDecisions";
+import {
+  handleStatusChange,
+  visibleStatusesForUser,
+} from "../shared/ticketDecisions";
 import { ROLE_TYPE } from "../../roles/roleConstants";
 
 const TicketBoard: React.FC = () => {
@@ -157,26 +160,7 @@ const TicketBoard: React.FC = () => {
     setShowMoreFilters(false);
   };
 
-  const getStatuses = () => {
-    return user?.role?.roleType === ROLE_TYPE.EMPLOYEE && !user.isLead
-      ? TICKET_STATUSES.filter(
-          (s: any) => s.name !== StatusName.NEW && s.name !== StatusName.TRASH,
-        )
-      : user?.role?.roleType === ROLE_TYPE.CUSTOMER
-        ? TICKET_STATUSES.filter((s) => s.name !== StatusName.RESOLVED).map(
-            (s) => {
-              return {
-                id: s.id,
-                name:
-                  s.name == StatusName.APPROVED ? StatusName.RESOLVED : s.name,
-                color: s.color,
-                order: s.order,
-                isResolved: s.isResolved,
-              };
-            },
-          )
-        : TICKET_STATUSES.filter((s: any) => s.name !== StatusName.TRASH);
-  };
+  const getStatuses = () => visibleStatusesForUser(user);
 
   const { data: metadata } = useQuery({
     queryKey: ["ticket-board-metadata", user?.id],
@@ -728,10 +712,13 @@ const TicketBoard: React.FC = () => {
               >
                 {columns.map((column) => {
                   const isCollapsed = collapsedColumns.includes(column.id);
+                  // Team leads may approve their team's tickets, so don't
+                  // render the Approved column as locked for them.
                   const isStatusAllowed =
                     user?.role?.roleType === ROLE_TYPE.ADMIN ||
                     user?.role?.permissions?.boardStatuses?.[column.id] ===
-                      true;
+                      true ||
+                    (!!user?.isLead && column.name === StatusName.APPROVED);
 
                   return (
                     <ColumnStatus

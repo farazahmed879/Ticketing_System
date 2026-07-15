@@ -3,6 +3,10 @@ import styles from "../TicketDetail.module.css";
 import { StatusName } from "../../../../../utils/constants";
 import type { TicketDetailSidebarProps } from "../../../../../types";
 import { ROLE_TYPE } from "../../../../roles/roleConstants";
+import {
+  statusDisplayName,
+  statusOptionsForUser,
+} from "../../../shared/ticketDecisions";
 
 /**
  * Renders the Status / Priority editors — but only the ones the current user can
@@ -12,7 +16,6 @@ import { ROLE_TYPE } from "../../../../roles/roleConstants";
 export const TicketSidebarStatusPriority = ({
   ticket,
   user,
-  statuses,
   priorities,
   canAssign,
   sidebarDraft,
@@ -36,12 +39,15 @@ export const TicketSidebarStatusPriority = ({
         <div className={styles.sidebarItem}>
           <span className={styles.sidebarLabel}>Status</span>
           <CustomSelect
-            options={statuses.map((s) => ({
+            options={statusOptionsForUser(user, ticket?.status).map((s) => ({
               value: s.id,
-              label: s.name,
+              label: statusDisplayName(s.name, user),
               disabled: !(
                 user?.role?.roleType === ROLE_TYPE.ADMIN ||
                 user?.role?.permissions?.boardStatuses?.[s.id] === true ||
+                // The ticket's team lead may approve it.
+                (ticket?.teamLeadIds?.includes(user?.id) &&
+                  s.name === StatusName.APPROVED) ||
                 (ticket.owner.id === user?.id &&
                   ((s.name.toLowerCase() === StatusName.OPEN.toLowerCase() &&
                     canAssign) ||

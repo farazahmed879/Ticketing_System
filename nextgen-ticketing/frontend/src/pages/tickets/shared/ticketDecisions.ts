@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { StatusName, UIMessages } from "../../../utils/constants";
+import {
+  StatusName,
+  TICKET_STATUSES,
+  UIMessages,
+} from "../../../utils/constants";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import { ROLE_TYPE } from "../../roles/roleConstants";
@@ -15,6 +19,69 @@ import { ROLE_TYPE } from "../../roles/roleConstants";
  */
 
 export type ClientDecision = "satisfied" | "unsatisfied" | "cancel";
+
+/**
+ * The status label the given user sees on the kanban board. Staff roles see
+ * the "Resolved" column as "Done"; clients see "Resolved". Any user-facing
+ * message that names a status must go through this so it always matches the
+ * column heading for that user's role.
+ */
+export const statusDisplayName = (
+  statusName: string | undefined,
+  user: any,
+): string => {
+  if (!statusName) return "";
+  const isClient = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
+  // Staff see the "Resolved" column as "Done".
+  if (!isClient && statusName === StatusName.RESOLVED) return "Done";
+  // Clients see the "Approved" column as "Resolved".
+  if (isClient && statusName === StatusName.APPROVED) {
+    return StatusName.RESOLVED;
+  }
+  return statusName;
+};
+
+/**
+ * The status columns the given user sees on the kanban board — the single
+ * source of truth for which statuses a role may see anywhere (board columns,
+ * detail-surface status dropdowns). Employees (non-lead) don't see
+ * Unassigned/Cancelled; clients don't see Resolved and see Approved labelled
+ * "Resolved"; everyone else sees everything but Cancelled.
+ */
+export const visibleStatusesForUser = (user: any): any[] => {
+  const roleType = user?.role?.roleType;
+  if (roleType === ROLE_TYPE.EMPLOYEE && !user?.isLead) {
+    return TICKET_STATUSES.filter(
+      (s: any) => s.name !== StatusName.NEW && s.name !== StatusName.TRASH,
+    );
+  }
+  if (roleType === ROLE_TYPE.CUSTOMER) {
+    return TICKET_STATUSES.filter(
+      (s: any) => s.name !== StatusName.RESOLVED,
+    ).map((s: any) => ({
+      ...s,
+      name: s.name === StatusName.APPROVED ? StatusName.RESOLVED : s.name,
+    }));
+  }
+  return TICKET_STATUSES.filter((s: any) => s.name !== StatusName.TRASH);
+};
+
+/**
+ * The options for a status dropdown on the detail surfaces: the statuses this
+ * user sees on the board, plus the ticket's current status when it isn't one
+ * of them (e.g. an employee viewing an Unassigned ticket) — otherwise the
+ * select couldn't render the current value.
+ */
+export const statusOptionsForUser = (user: any, currentStatus: any): any[] => {
+  const visible = visibleStatusesForUser(user);
+  if (
+    currentStatus?.id &&
+    !visible.some((s: any) => s.id === currentStatus.id)
+  ) {
+    return [currentStatus, ...visible];
+  }
+  return visible;
+};
 
 /** The status a client decision moves the ticket to. */
 export const decisionTargetStatusName = (decision: ClientDecision): string => {
@@ -221,22 +288,41 @@ export const handleStatusChange = async (
   if (isStatusChanging && !isStatusAllowed && !teamLeadIds.includes(user?.id)) {
     showNotification(
       "error",
-      UIMessages.BOARD.ACCESS_DENIED(body.targetStatusName || "this status"),
+      UIMessages.BOARD.ACCESS_DENIED(
+        statusDisplayName(body.targetStatusName, user) || "this status",
+      ),
     );
     return;
   }
 
-  // QA reviews finished work — they may not return a ticket that hasn't been
-  // worked on yet (Unassigned/Assigned). Mirrors the backend rule.
+  // A Returned ticket must go back through In Process — it can never be moved
+  // directly to Done, by any role. Mirrors the backend rule.
   if (
     isStatusChanging &&
-    user?.role?.roleType === ROLE_TYPE.QA &&
-    body.targetStatusName === StatusName.FAILED &&
-    [StatusName.NEW, StatusName.OPEN].includes(body.currentStatusName)
+    body.currentStatusName === StatusName.FAILED &&
+    body.targetStatusName === StatusName.RESOLVED
   ) {
     showNotification(
       "error",
-      UIMessages.BOARD.ACCESS_DENIED(body.targetStatusName),
+      `Returned tickets cannot be moved directly to ${statusDisplayName(
+        StatusName.RESOLVED,
+        user,
+      )}. Move the ticket to In Progress first.`,
+    );
+    return;
+  }
+
+  // Tickets reach Returned only through the client's "unsatisfied" decision
+  // on an Approved ticket — staff roles may never move a ticket there.
+  // Mirrors the backend rule.
+  if (
+    isStatusChanging &&
+    body.targetStatusName === StatusName.FAILED &&
+    user?.role?.roleType !== ROLE_TYPE.CUSTOMER
+  ) {
+    showNotification(
+      "error",
+      "Tickets can only be moved to Returned by the client when they are unsatisfied with the work.",
     );
     return;
   }
@@ -253,7 +339,9 @@ export const handleStatusChange = async (
     ) {
       showNotification(
         "error",
-        UIMessages.BOARD.ACCESS_DENIED(body.targetStatusName || "this status"),
+        UIMessages.BOARD.ACCESS_DENIED(
+          statusDisplayName(body.targetStatusName, user) || "this status",
+        ),
       );
       return;
     }

@@ -363,6 +363,26 @@ export const ticketUsecase = {
       const current = currentStatus.toLowerCase();
       const target = targetStatus.toLowerCase();
 
+      // A Returned ticket must go back through In Process — it can never be
+      // moved directly to Done, by any role.
+      if (
+        current === StatusName.FAILED.toLowerCase() &&
+        target === StatusName.RESOLVED.toLowerCase()
+      ) {
+        throw new Error(
+          "Returned tickets cannot be moved directly to Done. Move the ticket to In Progress first.",
+        );
+      }
+
+      // Tickets reach Returned only through the client's "unsatisfied"
+      // decision on an Approved ticket — staff roles may never move a
+      // ticket there.
+      if (target === StatusName.FAILED.toLowerCase() && !isClient) {
+        throw new Error(
+          "Tickets can only be moved to Returned by the client when they are unsatisfied with the work.",
+        );
+      }
+
       if (isClient) {
         // Clients can act only on tickets they created, even though they can
         // now view every ticket in their projects.
@@ -421,12 +441,12 @@ export const ticketUsecase = {
           [
             [StatusName.NEW, StatusName.FAILED, StatusName.RESOLVED],
             StatusName.OPEN,
-            "Only unassigned, failed, or resolved tickets can be assigned to an employee.",
+            "Only Unassigned, Returned, or Done tickets can be assigned to an employee.",
           ],
           [
             [StatusName.RESOLVED],
             StatusName.APPROVED,
-            "Only resolved tickets can be approved.",
+            "Only Done tickets can be approved.",
           ],
           [
             [
@@ -442,7 +462,7 @@ export const ticketUsecase = {
           [
             [StatusName.IN_PROCESS],
             StatusName.RESOLVED,
-            "Only tickets in progress can be marked as resolved.",
+            "Only tickets in progress can be marked as Done.",
           ],
         ];
 
@@ -492,38 +512,29 @@ export const ticketUsecase = {
 
         const rules: Array<[string[], string, string]> = [
           [
-            [StatusName.OPEN],
+            [StatusName.OPEN, StatusName.FAILED, StatusName.RESOLVED],
             StatusName.IN_PROCESS,
-            "Only assigned tickets can be moved to In Progress.",
+            "Only Assigned, Returned, or Done tickets can be moved to In Progress.",
           ],
           [
             [StatusName.IN_PROCESS],
             StatusName.RESOLVED,
-            "Only in-progress tickets can be moved to Resolved.",
+            "Only in-progress tickets can be moved to Done.",
           ],
         ];
 
         for (const [requiredStatuses, ruleTarget, message] of rules) {
           if (
-            targetStatus === ruleTarget &&
-            !requiredStatuses.includes(currentStatus)
+            target === ruleTarget.toLowerCase() &&
+            !requiredStatuses.some((s) => s.toLowerCase() === current)
           ) {
             throw new Error(message);
           }
         }
       }
       if (isQA) {
+        // (Moves to Returned are already blocked for all staff above.)
         const rules: Array<[string[], string, string]> = [
-          [
-            [StatusName.NEW],
-            StatusName.FAILED,
-            "QA cannot move Unassigned tickets to Returned.",
-          ],
-          [
-            [StatusName.OPEN],
-            StatusName.FAILED,
-            "QA cannot move Assigned tickets to Returned.",
-          ],
           [
             [StatusName.RESOLVED],
             StatusName.IN_PROCESS,
@@ -537,30 +548,11 @@ export const ticketUsecase = {
         ];
 
         for (const [requiredStatuses, ruleTarget, message] of rules) {
-          const isTargetMatch = target === ruleTarget.toLowerCase();
-
-          const lowercaseRequiredStatuses = requiredStatuses.map((status) =>
-            status.toLowerCase(),
-          );
-
-          const isCurrentValid = lowercaseRequiredStatuses.includes(current);
-
-          if (isTargetMatch && isCurrentValid) {
-            // ❗ Note: first rule logic is inverse (block if current IS in list)
-            if (
-              ruleTarget === StatusName.FAILED &&
-              lowercaseRequiredStatuses.includes(current)
-            ) {
-              throw new Error(message);
-            }
-
-            // Normal rules (block if current is NOT valid)
-            if (
-              ruleTarget !== StatusName.FAILED &&
-              !lowercaseRequiredStatuses.includes(current)
-            ) {
-              throw new Error(message);
-            }
+          if (
+            target === ruleTarget.toLowerCase() &&
+            !requiredStatuses.some((s) => s.toLowerCase() === current)
+          ) {
+            throw new Error(message);
           }
         }
       }

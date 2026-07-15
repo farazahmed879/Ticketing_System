@@ -4,6 +4,7 @@ import styles from "./TicketBoard.module.css";
 import TicketCard from "./ticketCard";
 import { StatusName } from "../../../utils/constants";
 import { ROLE_TYPE } from "../../roles/roleConstants";
+import { statusDisplayName } from "../shared/ticketDecisions";
 
 const ColumnStatus = ({
   column,
@@ -94,12 +95,7 @@ const ColumnStatus = ({
             className={styles.statusDot}
             style={{ background: column.color }}
           ></div>
-          <h3>
-            {user.role.roleType !== ROLE_TYPE.CUSTOMER &&
-            column.name == StatusName.RESOLVED
-              ? "Done"
-              : column.name}
-          </h3>
+          <h3>{statusDisplayName(column.name, user)}</h3>
           {!isStatusAllowed && (
             <CustomIcon
               name="Lock"

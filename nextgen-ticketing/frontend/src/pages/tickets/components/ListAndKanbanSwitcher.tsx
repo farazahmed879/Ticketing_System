@@ -50,19 +50,25 @@ const ListAndKanbanSwitcher: React.FC<ListAndKanbanSwitcherProps> = ({
         }}
       >
         <button
-          onClick={() => selectedValue !== "list" && navigate("/tickets?view=list")}
+          onClick={() =>
+            selectedValue !== "list" && navigate("/tickets?view=list")
+          }
           style={selectedValue === "list" ? activeStyle : inactiveStyle}
         >
           <CustomIcon name="List" size={16} /> List
         </button>
         <button
-          onClick={() => selectedValue !== "grid" && navigate("/tickets?view=grid")}
+          onClick={() =>
+            selectedValue !== "grid" && navigate("/tickets?view=grid")
+          }
           style={selectedValue === "grid" ? activeStyle : inactiveStyle}
         >
           <CustomIcon name="LayoutGrid" size={16} /> Grid
         </button>
         <button
-          onClick={() => selectedValue !== "board" && navigate("/tickets/board")}
+          onClick={() =>
+            selectedValue !== "board" && navigate("/tickets/board")
+          }
           style={selectedValue === "board" ? activeStyle : inactiveStyle}
         >
           <CustomIcon name="Kanban" size={16} /> Board

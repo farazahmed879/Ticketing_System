@@ -21,6 +21,8 @@ export interface InterviewListFilterProps {
   setDraftEndDate: (val: string) => void;
   clearMoreFilters: () => void;
   applyMoreFilters: () => void;
+  viewMode: "list" | "grid";
+  setViewMode: (mode: "list" | "grid") => void;
 }
 
 export interface Props {

@@ -30,9 +30,12 @@ import { ROLE_TYPE } from "../roles/roleConstants";
 const TicketList: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const defaultMode = (localStorage.getItem("defaultListView") as "list" | "grid") || "list";
-  const viewMode = (searchParams.get("view") as "list" | "grid" | "board") || defaultMode;
+  const defaultMode =
+    (localStorage.getItem("defaultListView") as "list" | "grid") || "list";
+  const viewMode =
+    (searchParams.get("view") as "list" | "grid" | "board") || defaultMode;
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -258,23 +261,38 @@ const TicketList: React.FC = () => {
         filters={
           <div className={styles.filterBar}>
             <div className={styles.filters}>
-              <ListAndKanbanSwitcher navigate={navigate} selectedValue={viewMode} />
+              <ListAndKanbanSwitcher
+                navigate={navigate}
+                selectedValue={viewMode}
+              />
               <div
                 className={styles.search}
                 style={{
                   border: "none",
                   background: "transparent",
                   padding: 0,
+                  flex: "none",
                 }}
               >
                 <CustomInput
                   placeholder="Search by subject or ID..."
-                  value={search}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setSearch(e.target.value)
-                  }
+                  value={searchInput}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const val = e.target.value;
+                    setSearchInput(val);
+                    if (val === "") {
+                      setSearch("");
+                      setPage(0);
+                    }
+                  }}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                    if (e.key === "Enter") {
+                      setSearch(searchInput);
+                      setPage(0);
+                    }
+                  }}
                   icon={<CustomIcon name="Search" size={18} />}
-                  containerStyle={{ width: "100%", paddingLeft: "0px" }}
+                  containerStyle={{ width: "350px", paddingLeft: "0px" }}
                 />
               </div>
               <div className={styles.filterAnchor}>
@@ -565,7 +583,9 @@ const TicketList: React.FC = () => {
                             const ok = await copyToClipboard(String(t.uid));
                             showNotification(
                               ok ? "success" : "error",
-                              ok ? "Ticket ID copied" : "Failed to copy ticket ID",
+                              ok
+                                ? "Ticket ID copied"
+                                : "Failed to copy ticket ID",
                             );
                           },
                         },
@@ -618,11 +638,25 @@ const TicketList: React.FC = () => {
             className="glass-card-hover"
           />
         ) : loading ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", flex: 1 }}>
+          <div
+            style={{
+              padding: 40,
+              textAlign: "center",
+              color: "var(--text-muted)",
+              flex: 1,
+            }}
+          >
             Loading tickets...
           </div>
         ) : tickets.length === 0 ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", flex: 1 }}>
+          <div
+            style={{
+              padding: 40,
+              textAlign: "center",
+              color: "var(--text-muted)",
+              flex: 1,
+            }}
+          >
             No tickets found
           </div>
         ) : (
@@ -640,7 +674,10 @@ const TicketList: React.FC = () => {
             {tickets.map((t: Ticket) => {
               const createdDate = format(new Date(t.createdAt), "MMM dd, yyyy");
               const isPassed = t.dueDate
-                ? isBefore(startOfDay(new Date(t.dueDate)), startOfDay(new Date()))
+                ? isBefore(
+                    startOfDay(new Date(t.dueDate)),
+                    startOfDay(new Date()),
+                  )
                 : false;
               const dueDateText = t.dueDate
                 ? format(new Date(t.dueDate), "MMM dd, yyyy")
@@ -663,9 +700,23 @@ const TicketList: React.FC = () => {
                     border: "1px solid var(--border-glass)",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                      <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "start",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div
+                      style={{ display: "flex", gap: 10, alignItems: "center" }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "0.85rem",
+                          color: "var(--text-muted)",
+                          fontWeight: 700,
+                        }}
+                      >
                         #{t.uid}
                       </span>
                       <CustomBadge color={t.priority.color}>
@@ -673,7 +724,9 @@ const TicketList: React.FC = () => {
                       </CustomBadge>
                     </div>
 
-                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                    <div
+                      style={{ display: "flex", gap: 4, alignItems: "center" }}
+                    >
                       <CustomBadge color={t.status.color}>
                         {t.status.name}
                       </CustomBadge>
@@ -690,7 +743,9 @@ const TicketList: React.FC = () => {
                                 const ok = await copyToClipboard(String(t.uid));
                                 showNotification(
                                   ok ? "success" : "error",
-                                  ok ? "Ticket ID copied" : "Failed to copy ticket ID",
+                                  ok
+                                    ? "Ticket ID copied"
+                                    : "Failed to copy ticket ID",
                                 );
                               },
                             },
@@ -736,30 +791,69 @@ const TicketList: React.FC = () => {
                   </div>
 
                   <div>
-                    <h3 style={{ fontSize: "1.05rem", fontWeight: 600, margin: "0 0 6px 0", color: "var(--text-primary)" }}>
+                    <h3
+                      style={{
+                        fontSize: "1.05rem",
+                        fontWeight: 600,
+                        margin: "0 0 6px 0",
+                        color: "var(--text-primary)",
+                      }}
+                    >
                       {t.subject}
                     </h3>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <CustomIcon name="FolderKanban" size={14} color="var(--text-muted)" />
-                      <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    >
+                      <CustomIcon
+                        name="FolderKanban"
+                        size={14}
+                        color="var(--text-muted)"
+                      />
+                      <span
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "var(--text-muted)",
+                        }}
+                      >
                         {t.project?.name || "No Project"}
                       </span>
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <CustomIcon name="Calendar" size={14} color="var(--text-muted)" />
-                      <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                        Created: {createdDate}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <CustomIcon name="Clock" size={14} color="var(--text-muted)" />
+                  <div
+                    style={{ display: "flex", flexDirection: "column", gap: 6 }}
+                  >
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 8 }}
+                    >
+                      <CustomIcon
+                        name="Calendar"
+                        size={14}
+                        color="var(--text-muted)"
+                      />
                       <span
                         style={{
                           fontSize: "0.8rem",
-                          color: isPassed ? "var(--error-color, #ef4444)" : "var(--text-secondary)",
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        Created: {createdDate}
+                      </span>
+                    </div>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 8 }}
+                    >
+                      <CustomIcon
+                        name="Clock"
+                        size={14}
+                        color="var(--text-muted)"
+                      />
+                      <span
+                        style={{
+                          fontSize: "0.8rem",
+                          color: isPassed
+                            ? "var(--error-color, #ef4444)"
+                            : "var(--text-secondary)",
                           fontWeight: isPassed ? 600 : 400,
                         }}
                       >
@@ -768,13 +862,34 @@ const TicketList: React.FC = () => {
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-glass)", paddingTop: 12 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      borderTop: "1px solid var(--border-glass)",
+                      paddingTop: 12,
+                    }}
+                  >
                     <div>
-                      <span className="text-xs-muted" style={{ display: "block", marginBottom: 4, fontWeight: 600 }}>
+                      <span
+                        className="text-xs-muted"
+                        style={{
+                          display: "block",
+                          marginBottom: 4,
+                          fontWeight: 600,
+                        }}
+                      >
                         Assignee
                       </span>
                       {t.assignee ? (
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                          }}
+                        >
                           <CustomAvatarStack
                             items={[
                               {
@@ -786,12 +901,24 @@ const TicketList: React.FC = () => {
                             limit={1}
                             size={24}
                           />
-                          <span style={{ fontSize: "0.8rem", color: "var(--text-primary)" }}>
+                          <span
+                            style={{
+                              fontSize: "0.8rem",
+                              color: "var(--text-primary)",
+                            }}
+                          >
                             {t.assignee.fullname}
                           </span>
                         </div>
                       ) : (
-                        <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Unassigned</span>
+                        <span
+                          style={{
+                            fontSize: "0.8rem",
+                            color: "var(--text-muted)",
+                          }}
+                        >
+                          Unassigned
+                        </span>
                       )}
                     </div>
                   </div>

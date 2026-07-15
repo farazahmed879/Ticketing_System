@@ -24,7 +24,15 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
   setDraftEndDate,
   clearMoreFilters,
   applyMoreFilters,
+  viewMode,
+  setViewMode,
 }) => {
+  const [searchInput, setSearchInput] = React.useState(search);
+
+  React.useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
   return (
     <div className={styles.filterBar}>
       <div className={styles.filters}>
@@ -34,16 +42,26 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
             border: "none",
             background: "transparent",
             padding: 0,
+            flex: "none",
           }}
         >
           <CustomInput
             placeholder="Search interviews..."
-            value={search}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setSearch(e.target.value)
-            }
+            value={searchInput}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const val = e.target.value;
+              setSearchInput(val);
+              if (val === "") {
+                setSearch("");
+              }
+            }}
+            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+              if (e.key === "Enter") {
+                setSearch(searchInput);
+              }
+            }}
             icon={<CustomIcon name="Search" size={18} />}
-            containerStyle={{ width: "100%", paddingLeft: "0px" }}
+            containerStyle={{ width: "350px", paddingLeft: "0px" }}
           />
         </div>
         <div className={styles.filterAnchor}>
@@ -133,6 +151,34 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
               </div>
             </div>
           )}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            gap: 4,
+            padding: 4,
+            borderRadius: 10,
+            border: "1px solid var(--border-glass)",
+            background: "rgba(255,255,255,0.03)",
+            marginLeft: "auto",
+          }}
+        >
+          <CustomButton
+            variant={viewMode === "list" ? "primary" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("list")}
+            icon={<CustomIcon name="List" size={16} />}
+            title="List view"
+            style={{ padding: "6px 10px" }}
+          />
+          <CustomButton
+            variant={viewMode === "grid" ? "primary" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("grid")}
+            icon={<CustomIcon name="LayoutGrid" size={16} />}
+            title="Grid view"
+            style={{ padding: "6px 10px" }}
+          />
         </div>
       </div>
     </div>

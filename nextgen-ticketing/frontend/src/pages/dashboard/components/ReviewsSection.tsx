@@ -76,15 +76,17 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
     </div>
   );
 
-  const renderList = () =>
-    reviews.length > 0 ? (
-      reviews.map(renderReviewCard)
+  const renderList = (limit?: number) => {
+    const list = limit ? reviews.slice(0, limit) : reviews;
+    return list.length > 0 ? (
+      list.map(renderReviewCard)
     ) : (
       <div className={styles.emptyReviews}>
         <CustomIcon name="MessageSquare" size={32} opacity={0.3} />
         <p>No reviews yet. Your great work will be recognized soon!</p>
       </div>
     );
+  };
 
   return (
     <>
@@ -106,7 +108,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
             <CustomIcon name="Maximize2" size={16} />
           </button>
         </div>
-        <div className={styles.reviewsList}>{renderList()}</div>
+        <div className={styles.reviewsList}>{renderList(3)}</div>
       </div>
 
       <Modal

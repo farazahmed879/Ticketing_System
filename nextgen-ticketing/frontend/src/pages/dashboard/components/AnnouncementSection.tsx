@@ -47,9 +47,10 @@ const AnnouncementSection: React.FC<AnnouncementSectionProps> = ({ announcements
     </div>
   );
 
-  const renderList = () =>
-    announcements.length > 0 ? (
-      announcements.map(renderAnnouncementCard)
+  const renderList = (limit?: number) => {
+    const list = limit ? announcements.slice(0, limit) : announcements;
+    return list.length > 0 ? (
+      list.map(renderAnnouncementCard)
     ) : (
       <div className={styles.emptyAnnouncements}>
         <div className={styles.emptyIcon}>
@@ -65,6 +66,7 @@ const AnnouncementSection: React.FC<AnnouncementSectionProps> = ({ announcements
         </div>
       </div>
     );
+  };
 
   return (
     <>
@@ -82,7 +84,7 @@ const AnnouncementSection: React.FC<AnnouncementSectionProps> = ({ announcements
             <CustomIcon name="Maximize2" size={16} />
           </button>
         </div>
-        {renderList()}
+        {renderList(3)}
       </div>
 
       <Modal

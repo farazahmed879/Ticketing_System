@@ -806,7 +806,9 @@ const Settings: React.FC = () => {
     localStorage.getItem("--accent-secondary") || "#06b6d4",
   );
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-  const [defaultListView, setDefaultListView] = useState(localStorage.getItem("defaultListView") || "list");
+  const [defaultListView, setDefaultListView] = useState(
+    localStorage.getItem("defaultListView") || "list",
+  );
   const [currentLang, setCurrentLang] = useState(
     i18n.language?.split("-")[0] || "en",
   );

@@ -2,7 +2,7 @@ import CustomIcon from "../../../components/CustomIcon";
 
 interface ListAndKanbanSwitcherProps {
   navigate: (path: string) => void;
-  selectedValue: "list" | "board";
+  selectedValue: "list" | "grid" | "board";
 }
 
 const ListAndKanbanSwitcher: React.FC<ListAndKanbanSwitcherProps> = ({
@@ -50,10 +50,16 @@ const ListAndKanbanSwitcher: React.FC<ListAndKanbanSwitcherProps> = ({
         }}
       >
         <button
-          onClick={() => selectedValue !== "list" && navigate("/tickets")}
+          onClick={() => selectedValue !== "list" && navigate("/tickets?view=list")}
           style={selectedValue === "list" ? activeStyle : inactiveStyle}
         >
           <CustomIcon name="List" size={16} /> List
+        </button>
+        <button
+          onClick={() => selectedValue !== "grid" && navigate("/tickets?view=grid")}
+          style={selectedValue === "grid" ? activeStyle : inactiveStyle}
+        >
+          <CustomIcon name="LayoutGrid" size={16} /> Grid
         </button>
         <button
           onClick={() => selectedValue !== "board" && navigate("/tickets/board")}

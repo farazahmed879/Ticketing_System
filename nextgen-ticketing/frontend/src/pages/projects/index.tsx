@@ -44,7 +44,9 @@ const ProjectList: React.FC = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid">(
+    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
+  );
 
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [debouncedStatus, setDebouncedStatus] = useState("");

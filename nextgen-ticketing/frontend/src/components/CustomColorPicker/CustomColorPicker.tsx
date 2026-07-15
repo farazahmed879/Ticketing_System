@@ -1,5 +1,5 @@
 import { Controller, type FieldValues } from "react-hook-form";
-import styles from "../CustomInput/CustomInput.module.css";
+import styles from "./CustomColorPicker.module.css";
 import type { CustomColorPickerProps } from "../types";
 
 const CustomColorPicker = <T extends FieldValues>({
@@ -35,9 +35,20 @@ const CustomColorPicker = <T extends FieldValues>({
               {...props}
             />
           </div>
-          <span className={styles.colorValue}>
-            {currentValue.toUpperCase()}
-          </span>
+          <input
+            type="text"
+            className={styles.colorValueInput}
+            value={currentValue.toUpperCase()}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === "" || val.startsWith("#")) {
+                currentOnChange?.(val);
+              } else {
+                currentOnChange?.("#" + val);
+              }
+            }}
+            maxLength={7}
+          />
         </div>
         {error && <span className={styles.errorText}>{error}</span>}
       </div>

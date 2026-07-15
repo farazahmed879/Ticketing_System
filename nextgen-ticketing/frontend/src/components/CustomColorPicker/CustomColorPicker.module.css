@@ -45,14 +45,23 @@
   opacity: 0;
 }
 
-.colorValue {
+.colorValueInput {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.9rem;
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.05);
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
   border: 1px solid var(--border-glass);
+  width: 100px;
+  outline: none;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.colorValueInput:focus {
+  border-color: var(--accent-primary);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .errorText {

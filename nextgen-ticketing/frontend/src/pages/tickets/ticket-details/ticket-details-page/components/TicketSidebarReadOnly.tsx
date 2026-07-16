@@ -45,7 +45,9 @@ export const TicketSidebarReadOnly = ({
   const statusName =
     isClient && ticket.status?.name === StatusName.APPROVED
       ? StatusName.RESOLVED
-      : ticket.status?.name;
+      : isClient && ticket.status?.name === StatusName.RESOLVED
+        ? StatusName.IN_PROCESS
+        : ticket.status?.name;
 
   return (
     <>

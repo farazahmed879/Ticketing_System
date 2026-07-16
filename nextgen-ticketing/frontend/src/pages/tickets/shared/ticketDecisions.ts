@@ -42,6 +42,26 @@ export const statusDisplayName = (
 };
 
 /**
+ * The status badge (name + color) the given user sees for a ticket outside the
+ * board — matches the column the ticket appears under on the kanban board.
+ * Clients see Resolved tickets under "In Process" on the board, so their badge
+ * shows In Process; everything else is the role-mapped display name.
+ */
+export const displayStatusForUser = (status: any, user: any): any => {
+  if (!status) return status;
+  if (
+    user?.role?.roleType === ROLE_TYPE.CUSTOMER &&
+    status.name === StatusName.RESOLVED
+  ) {
+    const inProcess = TICKET_STATUSES.find(
+      (s: any) => s.name === StatusName.IN_PROCESS,
+    );
+    if (inProcess) return inProcess;
+  }
+  return { ...status, name: statusDisplayName(status.name, user) };
+};
+
+/**
  * The status columns the given user sees on the kanban board — the single
  * source of truth for which statuses a role may see anywhere (board columns,
  * detail-surface status dropdowns). Employees (non-lead) don't see

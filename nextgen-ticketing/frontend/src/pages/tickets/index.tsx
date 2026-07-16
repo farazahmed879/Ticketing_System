@@ -26,6 +26,7 @@ import ListAndKanbanSwitcher from "./components/ListAndKanbanSwitcher";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
 import { truncateString, copyToClipboard } from "../../utils/helpers";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import { displayStatusForUser } from "./shared/ticketDecisions";
 
 const TicketList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -140,6 +141,9 @@ const TicketList: React.FC = () => {
       });
       return res.data;
     },
+    // Always fetch fresh tickets whenever the list is opened
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const tickets: Ticket[] = ticketData?.tickets || [];
@@ -503,11 +507,14 @@ const TicketList: React.FC = () => {
               {
                 header: "Status",
                 key: "status",
-                render: (t) => (
-                  <CustomBadge color={t.status.color}>
-                    {t.status.name}
-                  </CustomBadge>
-                ),
+                render: (t) => {
+                  const status = displayStatusForUser(t.status, user);
+                  return (
+                    <CustomBadge color={status.color}>
+                      {status.name}
+                    </CustomBadge>
+                  );
+                },
               },
               {
                 header: "Priority",
@@ -682,6 +689,7 @@ const TicketList: React.FC = () => {
               const dueDateText = t.dueDate
                 ? format(new Date(t.dueDate), "MMM dd, yyyy")
                 : "No due date";
+              const displayStatus = displayStatusForUser(t.status, user);
 
               return (
                 <div
@@ -727,8 +735,8 @@ const TicketList: React.FC = () => {
                     <div
                       style={{ display: "flex", gap: 4, alignItems: "center" }}
                     >
-                      <CustomBadge color={t.status.color}>
-                        {t.status.name}
+                      <CustomBadge color={displayStatus.color}>
+                        {displayStatus.name}
                       </CustomBadge>
                       <div
                         style={{ display: "flex", gap: 2, marginLeft: 6 }}

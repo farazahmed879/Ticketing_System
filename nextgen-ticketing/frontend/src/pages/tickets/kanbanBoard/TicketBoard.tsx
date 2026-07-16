@@ -249,6 +249,11 @@ const TicketBoard: React.FC = () => {
       });
       return ticketsRes.data.tickets;
     },
+    // Always fetch fresh tickets when the board is opened so changes made
+    // elsewhere show up without a manual page refresh (the global 5-minute
+    // staleTime would otherwise serve cached data on navigation).
+    refetchOnMount: "always",
+    staleTime: 0,
   });
 
   useEffect(() => {

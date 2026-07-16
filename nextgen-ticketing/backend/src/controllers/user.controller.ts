@@ -69,6 +69,12 @@ export const userController = {
       const account = await userUsecase.createUser(req.body);
       res.status(201).json({ success: true, account });
     } catch (error: any) {
+      if (error?.code === "P2002") {
+        return res.status(409).json({
+          success: false,
+          error: `A user with the email "${req.body.email}" already exists.`,
+        });
+      }
       res.status(500).json({ success: false, error: error.message });
     }
   },
@@ -92,6 +98,12 @@ export const userController = {
       );
       res.json({ success: true, user });
     } catch (error: any) {
+      if (error?.code === "P2002") {
+        return res.status(409).json({
+          success: false,
+          error: `A user with the email "${req.body.email}" already exists.`,
+        });
+      }
       res.status(500).json({ success: false, error: error.message });
     }
   },

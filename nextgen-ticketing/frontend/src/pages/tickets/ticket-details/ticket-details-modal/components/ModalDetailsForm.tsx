@@ -172,7 +172,9 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
               }}
             >
               <CustomIcon name="Status" size={16} />{" "}
-              {statusDisplayName(displayTicket.status.name, user)}
+              {isClient && displayTicket.status.name === StatusName.RESOLVED
+                ? StatusName.IN_PROCESS
+                : statusDisplayName(displayTicket.status.name, user)}
             </CustomBadge>
           )}
         </div>

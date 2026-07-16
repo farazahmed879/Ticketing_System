@@ -46,7 +46,7 @@ export const TicketSidebarStatusPriority = ({
                 user?.role?.roleType === ROLE_TYPE.ADMIN ||
                 user?.role?.permissions?.boardStatuses?.[s.id] === true ||
                 // The ticket's team lead may approve it; QA may approve too.
-                ((ticket?.teamLeadIds?.includes(user?.id) ||
+                ((ticket?.teamLeadIds?.includes(user?.id || "") ||
                   user?.role?.roleType === ROLE_TYPE.QA) &&
                   s.name === StatusName.APPROVED) ||
                 (ticket.owner.id === user?.id &&

@@ -41,7 +41,7 @@ const AnnouncementSection: React.FC<AnnouncementSectionProps> = ({ announcements
         </div>
         <div className={styles.announcementDate}>
           <CustomIcon name="Clock" size={14} />
-          {timeAgo(ann.date)}
+          {timeAgo(ann.createdAt || ann.date)}
         </div>
       </div>
     </div>

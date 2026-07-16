@@ -188,6 +188,9 @@
   border: 1px solid var(--border-active);
   position: relative;
   overflow: hidden;
+  /* Don't let the scrollable flex container squeeze cards — overflow: hidden
+     would clip their bottom instead of letting the container scroll. */
+  flex-shrink: 0;
 }
 
 .announcementCard::before {

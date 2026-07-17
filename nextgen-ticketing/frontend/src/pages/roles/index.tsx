@@ -14,6 +14,7 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 
 import StandardListLayout from "../../components/StandardListLayout";
 import { getRoleColumns } from "./columns";
+import RoleCard from "./components/RoleCard";
 
 const RoleList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -29,6 +30,9 @@ const RoleList: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [viewMode, setViewMode] = useState<"list" | "grid">(
+    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
+  );
 
   const { data: rolesData, isLoading: loading } = useQuery({
     queryKey: ["roles", currentPage, itemsPerPage],
@@ -155,6 +159,37 @@ const RoleList: React.FC = () => {
             </CustomButton>
           </div>
         }
+        filters={
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 4,
+                padding: 4,
+                borderRadius: 10,
+                border: "1px solid var(--border-glass)",
+                background: "rgba(255,255,255,0.03)",
+              }}
+            >
+              <CustomButton
+                variant={viewMode === "list" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                icon={<CustomIcon name="List" size={16} />}
+                title="List view"
+                style={{ padding: "6px 10px" }}
+              />
+              <CustomButton
+                variant={viewMode === "grid" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                icon={<CustomIcon name="LayoutGrid" size={16} />}
+                title="Grid view"
+                style={{ padding: "6px 10px" }}
+              />
+            </div>
+          </div>
+        }
         pagination={
           <CustomPagination
             currentPage={currentPage}
@@ -169,14 +204,57 @@ const RoleList: React.FC = () => {
           />
         }
       >
-        <CustomTable
-          style={{ flex: 1, overflowY: "auto" }}
-          columns={columns}
-          data={roles}
-          loading={loading}
-          loadingMessage="Loading roles..."
-          emptyMessage="No roles found"
-        />
+        {viewMode === "list" ? (
+          <CustomTable
+            style={{ flex: 1, overflowY: "auto" }}
+            columns={columns}
+            data={roles}
+            loading={loading}
+            loadingMessage="Loading roles..."
+            emptyMessage="No roles found"
+          />
+        ) : loading ? (
+          <div
+            style={{
+              padding: 40,
+              textAlign: "center",
+              color: "var(--text-muted)",
+            }}
+          >
+            Loading roles...
+          </div>
+        ) : roles.length === 0 ? (
+          <div
+            style={{
+              padding: 40,
+              textAlign: "center",
+              color: "var(--text-muted)",
+            }}
+          >
+            No roles found
+          </div>
+        ) : (
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              gap: 16,
+              padding: "4px 0",
+              alignContent: "start",
+            }}
+          >
+            {roles.map((role: Role) => (
+              <RoleCard
+                key={role.id}
+                data={role}
+                handleEdit={handleEdit}
+                handleDelete={handleDelete}
+              />
+            ))}
+          </div>
+        )}
       </StandardListLayout>
 
       <RoleModal

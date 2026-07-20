@@ -129,8 +129,8 @@ const ColumnStatus = ({
                   ? "due-tomorrow-card"
                   : ""
             }`}
-            draggable={!isCollapsed}
-            onDragStart={(e) => !isCollapsed && handleDragStart(e, ticket.id)}
+            draggable
+            onDragStart={(e) => handleDragStart(e, ticket.id)}
             onClick={() => openTicketDetail(ticket)}
           >
             {isCollapsed ? (

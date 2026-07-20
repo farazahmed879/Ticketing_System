@@ -552,11 +552,15 @@
   border-radius: 8px;
   background: var(--bg-input);
   border: 1px solid var(--border-glass);
-  cursor: pointer;
+  cursor: grab;
   transition: var(--transition-fast);
   min-height: 28px;
   display: flex;
   align-items: center;
+}
+
+.miniCard:active {
+  cursor: grabbing;
 }
 
 .miniCard:hover {

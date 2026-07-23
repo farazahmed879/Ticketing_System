@@ -357,7 +357,7 @@ export const interviewUsecase = {
           } mins\nLocation: ${interview.location || "N/A"}`,
           statusId: status.id,
           priorityId: priority.id,
-          type: { connect: { id: type.id } },
+          typeId: type.id,
           owner: { connect: { id: creatorId } },
           assignee: { connect: { id: interviewerId } },
           dueDate: new Date(interview.scheduledAt),

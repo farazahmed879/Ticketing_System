@@ -1,5 +1,28 @@
 import { timesheetRepository } from "../repositories/timesheet.repository";
 import { startOfMonth, endOfMonth, startOfDay, startOfYear, endOfYear } from "date-fns";
+import prisma from "../prisma";
+
+const ENTRY_TYPES = new Set([
+  "WORK",
+  "ONSITE_OFFICE",
+  "ONSITE_CLIENT",
+  "WORK_FROM_HOME",
+  "WEEKEND",
+  "PUBLIC_HOLIDAY",
+  "HALF_DAY_LEAVE",
+  "FULL_DAY_LEAVE",
+]);
+
+// Entry types that carry no work hours/tasks — enforced to zero server-side.
+// HALF_DAY_LEAVE is intentionally excluded: it still requires the worked
+// half-day's hours/tasks to be logged.
+const ZERO_HOUR_ENTRY_TYPES = new Set(["WEEKEND", "PUBLIC_HOLIDAY", "FULL_DAY_LEAVE"]);
+
+// Entry types that consume days from the employee's leave balance, and how many.
+const LEAVE_DAYS_BY_ENTRY_TYPE: Record<string, number> = {
+  HALF_DAY_LEAVE: 0.5,
+  FULL_DAY_LEAVE: 1,
+};
 
 export const timesheetUsecase = {
   async getEntries(startDate?: string, endDate?: string, userId?: string) {
@@ -15,7 +38,18 @@ export const timesheetUsecase = {
     return timesheetRepository.findEntries(where);
   },
 
-  async upsertEntry(userId: string, date: string, totalHours: string, notes: string, tasks: any[]) {
+  async upsertEntry(
+    userId: string,
+    date: string,
+    totalHours: string,
+    notes: string,
+    tasks: any[],
+    entryType: string = "WORK",
+  ) {
+    if (!ENTRY_TYPES.has(entryType)) {
+      throw new Error("Invalid entry type.");
+    }
+
     const entryDate = startOfDay(new Date(date));
 
     const existingEntry = await timesheetRepository.findEntryByUserIdAndDate(userId, entryDate);
@@ -27,11 +61,17 @@ export const timesheetUsecase = {
       throw new Error("Cannot edit an approved timesheet.");
     }
 
+    // Weekend / Public Holiday / Full Day Leave days have no work hours or
+    // tasks — enforce this server-side regardless of what the client sends.
+    const isZeroHourDay = ZERO_HOUR_ENTRY_TYPES.has(entryType);
+    const finalTasks = isZeroHourDay ? [] : tasks;
+    const finalHours = isZeroHourDay ? 0 : parseFloat(totalHours);
+
     const entry = await timesheetRepository.upsertEntryWithTasks(
       userId,
       entryDate,
-      { totalHours: parseFloat(totalHours), notes },
-      tasks
+      { totalHours: finalHours, notes, entryType },
+      finalTasks
     );
 
     return timesheetRepository.findEntryById(entry.id);
@@ -47,6 +87,27 @@ export const timesheetUsecase = {
       data.managerApproved = "APPROVED";
     }
 
+    if (isHr) {
+      const existing = await timesheetRepository.findEntryById(id);
+      const days = existing ? LEAVE_DAYS_BY_ENTRY_TYPE[existing.entryType || ""] : undefined;
+      if (existing && days && existing.hrApproved !== "APPROVED") {
+        const user = await prisma.user.findUnique({
+          where: { id: existing.userId },
+          select: { leaves: true },
+        });
+        const currentBalance = user?.leaves ?? 0;
+        if (currentBalance < days) {
+          throw new Error(
+            `Insufficient leave balance. Requested ${days} day(s), available ${currentBalance}.`,
+          );
+        }
+        await prisma.user.update({
+          where: { id: existing.userId },
+          data: { leaves: { decrement: days } },
+        });
+      }
+    }
+
     return timesheetRepository.updateEntryStatus(id, data);
   },
 
@@ -59,6 +120,17 @@ export const timesheetUsecase = {
       data.hrApproved = "REJECTED";
     } else {
       data.managerApproved = "REJECTED";
+    }
+
+    if (isHr) {
+      const existing = await timesheetRepository.findEntryById(id);
+      const days = existing ? LEAVE_DAYS_BY_ENTRY_TYPE[existing.entryType || ""] : undefined;
+      if (existing && days && existing.hrApproved === "APPROVED") {
+        await prisma.user.update({
+          where: { id: existing.userId },
+          data: { leaves: { increment: days } },
+        });
+      }
     }
 
     return timesheetRepository.updateEntryStatus(id, data);

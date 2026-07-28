@@ -16,6 +16,7 @@ import { UIMessages } from "../../../utils/constants";
 import { useAuth } from "../../../context/AuthContext";
 
 import type { TimesheetFormData, TimesheetDayModalProps } from "../types";
+import { ENTRY_TYPE_OPTIONS, isZeroHourEntryType, normalizeEntryType } from "../entryTypes";
 
 // Sentinel for the "Miscellaneous" (no specific project) option. Mapped to an
 // empty projectId on save, which the backend stores as null.
@@ -37,6 +38,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
       defaultValues: {
         totalHours: "8",
         notes: "",
+        entryType: "ONSITE_OFFICE",
         tasks: [{ description: "", hours: 0, projectId: "", ticketId: "" }],
       },
     });
@@ -47,6 +49,8 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
   });
 
   const watchedTasks = watch("tasks");
+  const watchedEntryType = watch("entryType");
+  const isZeroHourDay = isZeroHourEntryType(watchedEntryType);
   const taskSum = watchedTasks.reduce(
     (sum, t) => sum + (Number(t.hours) || 0),
     0,
@@ -56,16 +60,19 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
     existingEntry?.hrApproved === "APPROVED";
 
   // Total hours for the day is derived from the sum of task hours — keep the
-  // (read-only) field in sync whenever a task's hours change.
+  // (read-only) field in sync whenever a task's hours change. Weekend /
+  // Public Holiday / Full Day Leave days have no tasks, so the total is
+  // always 0.
   useEffect(() => {
-    setValue("totalHours", String(taskSum));
-  }, [taskSum, setValue]);
+    setValue("totalHours", isZeroHourDay ? "0" : String(taskSum));
+  }, [taskSum, isZeroHourDay, setValue]);
 
   useEffect(() => {
     if (existingEntry) {
       reset({
         totalHours: existingEntry.totalHours?.toString() || "8",
         notes: existingEntry.notes || "",
+        entryType: normalizeEntryType(existingEntry.entryType),
         tasks:
           existingEntry.tasks && existingEntry.tasks.length > 0
             ? existingEntry.tasks.map((t: any) => ({
@@ -80,6 +87,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
       reset({
         totalHours: "8",
         notes: "",
+        entryType: "ONSITE_OFFICE",
         tasks: [{ description: "", hours: 0, projectId: "", ticketId: "" }],
       });
     }
@@ -116,26 +124,30 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
 
   const saveMutation = useMutation({
     mutationFn: async (data: TimesheetFormData) => {
+      const isZeroHour = isZeroHourEntryType(data.entryType);
       return api.post(API_ROUTES.TIMESHEETS.ENTRIES, {
         date: format(date, "yyyy-MM-dd"),
-        totalHours: parseFloat(data.totalHours),
+        entryType: data.entryType,
+        totalHours: isZeroHour ? 0 : parseFloat(data.totalHours),
         notes: data.notes,
-        tasks: data.tasks
-          .filter((t) => t.description?.trim() || t.hours > 0)
-          .map((t) => {
-            // "Miscellaneous" means no specific project → store as null, and it
-            // isn't tied to a ticket either.
-            const isMisc = t.projectId === MISC_PROJECT;
-            const projectId = isMisc ? "" : t.projectId;
-            let ticketId = isMisc ? "" : t.ticketId;
-            // Drop a linked ticket that doesn't belong to the chosen project
-            // (e.g. the project was changed after a ticket was picked).
-            if (ticketId && projectId) {
-              const linked = tickets.find((x: any) => x.id === ticketId);
-              if (linked && linked.project?.id !== projectId) ticketId = "";
-            }
-            return { ...t, projectId, ticketId };
-          }),
+        tasks: isZeroHour
+          ? []
+          : data.tasks
+              .filter((t) => t.description?.trim() || t.hours > 0)
+              .map((t) => {
+                // "Miscellaneous" means no specific project → store as null, and it
+                // isn't tied to a ticket either.
+                const isMisc = t.projectId === MISC_PROJECT;
+                const projectId = isMisc ? "" : t.projectId;
+                let ticketId = isMisc ? "" : t.ticketId;
+                // Drop a linked ticket that doesn't belong to the chosen project
+                // (e.g. the project was changed after a ticket was picked).
+                if (ticketId && projectId) {
+                  const linked = tickets.find((x: any) => x.id === ticketId);
+                  if (linked && linked.project?.id !== projectId) ticketId = "";
+                }
+                return { ...t, projectId, ticketId };
+              }),
       });
     },
     onMutate: () => setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES),
@@ -189,28 +201,61 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
           </div>
         )}
 
+        <CustomSelect
+          name="entryType"
+          control={control}
+          label="Day Type"
+          options={ENTRY_TYPE_OPTIONS}
+          disabled={isApproved}
+        />
+
+        {watchedEntryType === "HALF_DAY_LEAVE" && (
+          <div
+            className="glass-card"
+            style={{ padding: 12, fontSize: "0.85rem", color: "var(--text-secondary)" }}
+          >
+            Log the hours worked for the working half of the day below.
+            Approving this entry will deduct 0.5 day from your leave balance.
+          </div>
+        )}
+
+        {isZeroHourDay && (
+          <div
+            className="glass-card"
+            style={{ padding: 12, fontSize: "0.85rem", color: "var(--text-secondary)" }}
+          >
+            {watchedEntryType === "FULL_DAY_LEAVE"
+              ? "No hours or tasks are needed for a Full Day Leave. Approving this entry will deduct 1 day from your leave balance."
+              : watchedEntryType === "PUBLIC_HOLIDAY"
+                ? "No hours or tasks are needed for a Public Holiday. This does not affect your leave balance."
+                : "No hours or tasks are needed for a Weekend entry."}
+          </div>
+        )}
+
         <div
           style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 24 }}
         >
-          <div>
-            <CustomInput
-              name="totalHours"
-              control={control}
-              rules={{ required: "Total hours is required" }}
-              label="Total Hours for the Day"
-              type="number"
-              step="0.5"
-              max={24}
-              required
-              readOnly
-              disabled={isApproved}
-            />
-            <div
-              className={`${styles.fontSm} ${styles.textMuted} ${styles.mt12}`}
-            >
-              Sum of tasks: {taskSum}h
+          {!isZeroHourDay && (
+            <div>
+              <CustomInput
+                name="totalHours"
+                control={control}
+                rules={{ required: "Total hours is required" }}
+                label="Total Hours for the Day"
+                type="number"
+                step="0.5"
+                max={24}
+                required
+                readOnly
+                disabled={isApproved}
+              />
+              <div
+                className={`${styles.fontSm} ${styles.textMuted} ${styles.mt12}`}
+              >
+                Sum of tasks: {taskSum}h
+              </div>
             </div>
-          </div>
+          )}
           <CustomInput
             name="notes"
             control={control}
@@ -220,6 +265,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
           />
         </div>
 
+        {!isZeroHourDay && (
         <div className={`${styles.flexColumn} ${styles.gap12}`}>
           {fields.length > 0 ? (
             <div
@@ -338,6 +384,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
             </div>
           )}
         </div>
+        )}
 
         <div className={`${styles.flexEnd} ${styles.gap12} ${styles.mt12}`}>
           <CustomButton variant="secondary" type="button" onClick={onClose}>

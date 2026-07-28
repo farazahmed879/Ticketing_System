@@ -12,6 +12,7 @@ import { API_ROUTES } from '../../utils/apiRoutes';
 import styles from './Timesheet.module.css';
 
 import type { TimesheetReport as ITimesheetReport } from '../../types';
+import { getEntryTypeLabel, isZeroHourEntryType } from './entryTypes';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -119,10 +120,21 @@ const TimesheetReport: React.FC = () => {
                 key: "date", 
                 render: (e) => format(new Date(e.date), "MMM dd, yyyy") 
               },
-              { 
-                header: "Hours", 
-                key: "totalHours", 
-                render: (e) => <strong>{e.totalHours}h</strong>
+              {
+                header: "Hours",
+                key: "totalHours",
+                render: (e) => (
+                  <strong>
+                    {isZeroHourEntryType(e.entryType)
+                      ? getEntryTypeLabel(e.entryType)
+                      : `${e.totalHours}h`}
+                  </strong>
+                )
+              },
+              {
+                header: "Day Type",
+                key: "entryType",
+                render: (e) => getEntryTypeLabel(e.entryType)
               },
               { 
                 header: "Manager Status", 

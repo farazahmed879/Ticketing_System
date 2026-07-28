@@ -5,6 +5,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomBadge from "../../../components/CustomBadge";
 import CustomButton from "../../../components/CustomButton";
 import type { TimesheetEntry } from "../../../types";
+import { getEntryTypeLabel, isZeroHourEntryType } from "../entryTypes";
 
 interface TimesheetReviewCardProps {
   entry: TimesheetEntry;
@@ -95,9 +96,12 @@ export const TimesheetReviewCard: React.FC<TimesheetReviewCardProps> = ({
             color: "var(--accent-primary)",
             fontWeight: 700,
             flexShrink: 0,
+            whiteSpace: "nowrap",
           }}
         >
-          {entry.totalHours}h
+          {isZeroHourEntryType(entry.entryType)
+            ? getEntryTypeLabel(entry.entryType)
+            : `${entry.totalHours}h`}
         </div>
       </div>
 
@@ -117,6 +121,11 @@ export const TimesheetReviewCard: React.FC<TimesheetReviewCardProps> = ({
         <span style={{ color: "var(--text-muted)" }}>
           · {format(new Date(entry.date), "EEEE")}
         </span>
+        {!isZeroHourEntryType(entry.entryType) && (
+          <span style={{ color: "var(--text-muted)" }}>
+            · {getEntryTypeLabel(entry.entryType)}
+          </span>
+        )}
       </div>
 
       <div

@@ -26,6 +26,7 @@ import type { TimesheetEntry } from "../../types";
 import CustomSkeleton from "../../components/CustomSkeleton";
 import { CalendarSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import { getEntryTypeLabel, isZeroHourEntryType } from "./entryTypes";
 
 // Mock Google Calendar Events
 const MOCK_GOOGLE_EVENTS = [
@@ -130,7 +131,11 @@ const Timesheet: React.FC = () => {
 
           {entry && (
             <>
-              <div className={styles.hoursBadge}>{entry.totalHours}h</div>
+              <div className={styles.hoursBadge} title={getEntryTypeLabel(entry.entryType)}>
+                {isZeroHourEntryType(entry.entryType)
+                  ? getEntryTypeLabel(entry.entryType)
+                  : `${entry.totalHours}h`}
+              </div>
               <div
                 className={`${styles.statusIndicator} ${
                   entry.hrApproved === "APPROVED" || entry.managerApproved === "APPROVED"
@@ -142,21 +147,23 @@ const Timesheet: React.FC = () => {
                 title={entry.hrApproved === "APPROVED" || entry.managerApproved === "APPROVED" ? "Approved" : entry.hrApproved === "REJECTED" || entry.managerApproved === "REJECTED" ? "Rejected" : "Pending"}
               />
 
-              <div className={styles.taskList}>
-                {entry.tasks.slice(0, 2).map((task, idx) => (
-                  <div key={idx} className={styles.taskItem}>
-                    {task.description}
-                  </div>
-                ))}
-                {entry.tasks.length > 2 && (
-                  <div
-                    className={styles.taskItem}
-                    style={{ border: "none", fontStyle: "italic" }}
-                  >
-                    + {entry.tasks.length - 2} more
-                  </div>
-                )}
-              </div>
+              {!isZeroHourEntryType(entry.entryType) && (
+                <div className={styles.taskList}>
+                  {entry.tasks.slice(0, 2).map((task, idx) => (
+                    <div key={idx} className={styles.taskItem}>
+                      {task.description}
+                    </div>
+                  ))}
+                  {entry.tasks.length > 2 && (
+                    <div
+                      className={styles.taskItem}
+                      style={{ border: "none", fontStyle: "italic" }}
+                    >
+                      + {entry.tasks.length - 2} more
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
 

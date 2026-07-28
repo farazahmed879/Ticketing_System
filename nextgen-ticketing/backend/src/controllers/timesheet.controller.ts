@@ -25,7 +25,7 @@ export const timesheetController = {
 
   async upsertEntry(req: AuthRequest, res: Response) {
     try {
-      const { date, totalHours, notes, tasks } = req.body;
+      const { date, totalHours, notes, tasks, entryType } = req.body;
       const userId = req.user?.id;
 
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
@@ -36,10 +36,15 @@ export const timesheetController = {
         totalHours,
         notes,
         tasks,
+        entryType,
       );
       res.json({ success: true, entry });
     } catch (error: any) {
-      const status = error.message.includes("Cannot edit") ? 403 : 500;
+      const status = error.message.includes("Cannot edit")
+        ? 403
+        : error.message.includes("Invalid entry type")
+          ? 400
+          : 500;
       res.status(status).json({ success: false, error: error.message });
     }
   },
@@ -57,7 +62,8 @@ export const timesheetController = {
       );
       res.json({ success: true, entry });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      const status = error.message.includes("Insufficient leave balance") ? 400 : 500;
+      res.status(status).json({ success: false, error: error.message });
     }
   },
 

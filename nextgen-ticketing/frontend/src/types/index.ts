@@ -239,11 +239,22 @@ export interface TimesheetTask {
   ticket?: { uid: number; subject: string };
 }
 
+export type TimesheetEntryType =
+  | "WORK"
+  | "ONSITE_OFFICE"
+  | "ONSITE_CLIENT"
+  | "WORK_FROM_HOME"
+  | "WEEKEND"
+  | "PUBLIC_HOLIDAY"
+  | "HALF_DAY_LEAVE"
+  | "FULL_DAY_LEAVE";
+
 export interface TimesheetEntry {
   id: string;
   date: string;
   totalHours: number;
   notes?: string;
+  entryType?: TimesheetEntryType;
   managerApproved: "PENDING" | "APPROVED" | "REJECTED";
   hrApproved: "PENDING" | "APPROVED" | "REJECTED";
   user?: { fullname: string; email: string; image?: string };

@@ -354,7 +354,8 @@ model TimesheetEntry {
   date       DateTime
   totalHours Float    @default(0) // Manually entered by user
   notes      String?
-  managerApproved String? @default("PENDING") 
+  entryType  String?  @default("WORK") // WORK, WEEKEND, FULL_DAY_LEAVE
+  managerApproved String? @default("PENDING")
   hrApproved      String? @default("PENDING")
 
   userId String @db.ObjectId

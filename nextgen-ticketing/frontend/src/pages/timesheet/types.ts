@@ -1,8 +1,9 @@
-import type { TimesheetEntry } from "../../types";
+import type { TimesheetEntry, TimesheetEntryType } from "../../types";
 
 export interface TimesheetFormData {
   totalHours: string;
   notes: string;
+  entryType: TimesheetEntryType;
   tasks: {
     description: string;
     hours: number;

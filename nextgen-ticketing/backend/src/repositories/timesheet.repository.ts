@@ -55,6 +55,7 @@ export const timesheetRepository = {
         update: {
           totalHours: data.totalHours,
           notes: data.notes,
+          entryType: data.entryType,
           managerApproved: "PENDING",
           hrApproved: "PENDING",
         },
@@ -63,6 +64,7 @@ export const timesheetRepository = {
           date,
           totalHours: data.totalHours,
           notes: data.notes,
+          entryType: data.entryType,
           managerApproved: "PENDING",
           hrApproved: "PENDING",
         },

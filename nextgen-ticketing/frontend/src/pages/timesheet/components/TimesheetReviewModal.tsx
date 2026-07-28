@@ -4,6 +4,7 @@ import Modal from "../../../components/Modal";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import type { TimesheetReviewModalProps } from "../types";
+import { getEntryTypeLabel, getLeaveDaysForEntryType, isZeroHourEntryType } from "../entryTypes";
 
 const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
   isOpen,
@@ -16,7 +17,9 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
   userRoleType,
 }) => {
   if (!entry) return null;
-  const isInvalidHours = entry.totalHours > 24;
+  const isZeroHourDay = isZeroHourEntryType(entry.entryType);
+  const leaveDays = getLeaveDaysForEntryType(entry.entryType);
+  const isInvalidHours = !isZeroHourDay && entry.totalHours > 24;
   const isHr = userRoleType === "hr";
   const isManager = userRoleType === "agent" || userRoleType === "admin";
   const canApprove =
@@ -39,19 +42,54 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
             style={{
               display: "flex",
               justifyContent: "space-between",
-              marginBottom: 12,
+              marginBottom: isZeroHourDay ? 12 : 8,
             }}
           >
-            <span style={{ color: "var(--text-muted)" }}>Total Hours:</span>
-            <strong
-              style={{
-                fontSize: "1.2rem",
-                color: isInvalidHours ? "var(--accent-danger)" : undefined,
-              }}
-            >
-              {entry.totalHours}h
+            <span style={{ color: "var(--text-muted)" }}>Day Type:</span>
+            <strong style={{ fontSize: "1.2rem" }}>
+              {getEntryTypeLabel(entry.entryType)}
             </strong>
           </div>
+
+          {!isZeroHourDay && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 12,
+              }}
+            >
+              <span style={{ color: "var(--text-muted)" }}>Total Hours:</span>
+              <strong
+                style={{
+                  fontSize: "1.2rem",
+                  color: isInvalidHours ? "var(--accent-danger)" : undefined,
+                }}
+              >
+                {entry.totalHours}h
+              </strong>
+            </div>
+          )}
+
+          {leaveDays > 0 && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 12px",
+                borderRadius: 8,
+                background: "rgba(124, 58, 237, 0.1)",
+                border: "1px solid var(--accent-primary)",
+                color: "var(--accent-primary)",
+                fontSize: "0.85rem",
+                marginBottom: 12,
+              }}
+            >
+              <CustomIcon name="AlertTriangle" size={16} />
+              Approving this entry will deduct {leaveDays} day{leaveDays === 1 ? "" : "s"} from the employee's leave balance.
+            </div>
+          )}
 
           {isInvalidHours && (
             <div
@@ -87,6 +125,7 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
           )}
         </div>
 
+        {!isZeroHourDay && (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <h4 style={{ fontWeight: 600 }}>Tasks</h4>
           {entry.tasks.map((t, i) => (
@@ -135,6 +174,7 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
             </div>
           ))}
         </div>
+        )}
 
         <div style={{ marginTop: 10 }}>
           <label

@@ -1247,7 +1247,6 @@ export const ticketUsecase = {
           userId,
           date: today,
           totalHours: 0,
-          status: StatusName.PENDING,
         },
       });
 

@@ -12,10 +12,11 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Set build-time variables (can be overridden during build)
-# ENV VITE_API_URL=$VITE_API_URL
+# Accept build-time argument and pass it to Vite environment
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 
-# Build the application
+# Build the application (Vite reads VITE_API_URL during this step)
 RUN npm run build
 
 # Production stage

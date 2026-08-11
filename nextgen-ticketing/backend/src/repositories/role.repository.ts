@@ -3,6 +3,7 @@ import prisma from "../prisma";
 export const roleRepository = {
   async findMany(skip?: number, take?: number) {
     return prisma.role.findMany({
+      where: { deleted: false } as any,
       orderBy: { name: "asc" },
       include: { _count: { select: { users: true } } },
       skip,

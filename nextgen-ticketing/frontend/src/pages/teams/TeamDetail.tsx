@@ -51,7 +51,6 @@ const TeamDetail: React.FC = () => {
       className="animate-fade-in"
       style={{ display: "flex", flexDirection: "column", gap: 24 }}
     >
-
       {/* Header card */}
       <div
         className="glass-card"
@@ -115,11 +114,11 @@ const TeamDetail: React.FC = () => {
           >
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <CustomIcon name="Users" size={14} />
-              {team.members?.length || 0} members
+              {team.members?.length || 0} Members
             </span>
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <CustomIcon name="FolderKanban" size={14} />
-              {team.projects?.length || 0} projects
+              {team.projects?.length || 0} Projects
             </span>
             {team.department?.name && (
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -198,7 +197,11 @@ const TeamDetail: React.FC = () => {
                       <CustomImage
                         src={m.image}
                         alt={m.fullname}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
                       />
                     ) : (
                       getInitials(m.fullname)
@@ -281,7 +284,11 @@ const TeamDetail: React.FC = () => {
                     <CustomImage
                       src={team.teamLead.image}
                       alt={team.teamLead.fullname}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
                     />
                   ) : (
                     getInitials(team.teamLead.fullname)

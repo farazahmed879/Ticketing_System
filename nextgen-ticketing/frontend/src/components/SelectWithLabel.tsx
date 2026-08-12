@@ -14,6 +14,7 @@ const SelectWithLabel = ({
   name = "",
   canAssign = false,
   dummyLabel = "",
+  showSearch = false,
 }: any) => {
   return (
     <div
@@ -52,6 +53,7 @@ const SelectWithLabel = ({
             onChange={onChange}
             disabled={disabled}
             placeholder={`${label}...`}
+            showSearch={showSearch}
           />
         )}
         {!canAssign && (

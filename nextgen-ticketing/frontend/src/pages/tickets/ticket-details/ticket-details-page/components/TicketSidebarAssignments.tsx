@@ -36,6 +36,7 @@ export const TicketSidebarAssignments = ({
           name="assigneeId"
           icon="UserPlus"
           iconColor="var(--accent-secondary)"
+          showSearch
           value={sidebarDraft.assigneeId}
           onChange={(val: string) => onSidebarDraftChange("assigneeId", val)}
           options={[
@@ -83,6 +84,7 @@ export const TicketSidebarAssignments = ({
           name="qaId"
           icon="UserPlus"
           iconColor="var(--accent-secondary)"
+          showSearch
           value={sidebarDraft.qaId}
           onChange={(val: string) => onSidebarDraftChange("qaId", val)}
           options={[

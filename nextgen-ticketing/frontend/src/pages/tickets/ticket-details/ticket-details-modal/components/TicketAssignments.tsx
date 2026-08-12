@@ -43,6 +43,7 @@ const TicketAssignments: React.FC<TicketAssignmentsProps> = ({
         icon="UserPlus"
         iconColor="var(--accent-secondary)"
         control={control}
+        showSearch
         disabled={!canAssign}
         onChange={(val: any) => {
           setValue("assigneeId", val, {
@@ -110,6 +111,7 @@ const TicketAssignments: React.FC<TicketAssignmentsProps> = ({
           icon="UserPlus"
           iconColor="var(--accent-secondary)"
           control={control}
+          showSearch
           disabled={!canUpdate || isDisbaledMode || isClient}
           onChange={(val: any) => {
             setValue("qaId", val, {

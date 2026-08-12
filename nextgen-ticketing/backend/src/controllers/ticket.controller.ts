@@ -191,7 +191,10 @@ export const ticketController = {
 
   async getTimeline(req: AuthRequest, res: Response) {
     try {
-      const history = await ticketUsecase.getTimeline(req.params.id as string);
+      const history = await ticketUsecase.getTimeline(
+        req.params.id as string,
+        req.user,
+      );
       res.json({ success: true, history });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

@@ -1093,6 +1093,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                           <CustomSelect
                             name="assigneeId"
                             control={control}
+                            showSearch
                             options={[
                               {
                                 value: "",
@@ -1102,6 +1103,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                               ...users.map((agent) => ({
                                 value: agent.id,
                                 label: agent.fullname,
+                                sublabel: agent.teamNames?.length
+                                  ? agent.teamNames.join(", ")
+                                  : agent.role?.name || undefined,
                                 image: agent.image,
                               })),
                             ]}
@@ -1236,6 +1240,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                             <CustomSelect
                               name="qaId"
                               control={control}
+                              showSearch
                               options={[
                                 {
                                   value: "",
@@ -1247,6 +1252,9 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                                 ...qaList.map((qaUser) => ({
                                   value: qaUser.id,
                                   label: qaUser.fullname,
+                                  sublabel: qaUser.teamNames?.length
+                                    ? qaUser.teamNames.join(", ")
+                                    : qaUser.role?.name || undefined,
                                   image: qaUser.image,
                                 })),
                               ]}

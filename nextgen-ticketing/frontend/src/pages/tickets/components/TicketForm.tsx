@@ -267,13 +267,16 @@ const TicketForm: React.FC<TicketFormProps> = ({
           <CustomSelect
             name="assigneeId"
             control={control}
+            showSearch
             label="Assign To (Optional)"
             placeholder="Unassigned"
             options={[
               { value: "", label: "Unassigned" },
               ...agents.map((a) => ({
                 value: a.id,
-                label: `${a.fullname}-(${a.role.name})`,
+                label: a.fullname,
+                sublabel: a.role?.name || undefined,
+                image: a.image,
               })),
             ]}
           />

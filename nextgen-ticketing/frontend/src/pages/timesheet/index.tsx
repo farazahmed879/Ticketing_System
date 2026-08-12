@@ -131,20 +131,33 @@ const Timesheet: React.FC = () => {
 
           {entry && (
             <>
-              <div className={styles.hoursBadge} title={getEntryTypeLabel(entry.entryType)}>
+              <div
+                className={styles.hoursBadge}
+                title={getEntryTypeLabel(entry.entryType)}
+              >
                 {isZeroHourEntryType(entry.entryType)
                   ? getEntryTypeLabel(entry.entryType)
-                  : `${entry.totalHours}h`}
+                  : `${entry.totalHours}-h`}
               </div>
               <div
                 className={`${styles.statusIndicator} ${
-                  entry.hrApproved === "APPROVED" || entry.managerApproved === "APPROVED"
+                  entry.hrApproved === "APPROVED" ||
+                  entry.managerApproved === "APPROVED"
                     ? styles.statusApproved
-                    : entry.hrApproved === "REJECTED" || entry.managerApproved === "REJECTED"
+                    : entry.hrApproved === "REJECTED" ||
+                        entry.managerApproved === "REJECTED"
                       ? styles.statusRejected
                       : styles.statusPending
                 }`}
-                title={entry.hrApproved === "APPROVED" || entry.managerApproved === "APPROVED" ? "Approved" : entry.hrApproved === "REJECTED" || entry.managerApproved === "REJECTED" ? "Rejected" : "Pending"}
+                title={
+                  entry.hrApproved === "APPROVED" ||
+                  entry.managerApproved === "APPROVED"
+                    ? "Approved"
+                    : entry.hrApproved === "REJECTED" ||
+                        entry.managerApproved === "REJECTED"
+                      ? "Rejected"
+                      : "Pending"
+                }
               />
 
               {!isZeroHourEntryType(entry.entryType) && (
@@ -191,7 +204,8 @@ const Timesheet: React.FC = () => {
   const approvedHours = entries
     .filter(
       (e) =>
-        (e.hrApproved === "APPROVED" || e.managerApproved === "APPROVED") && isSameMonth(new Date(e.date), currentMonth),
+        (e.hrApproved === "APPROVED" || e.managerApproved === "APPROVED") &&
+        isSameMonth(new Date(e.date), currentMonth),
     )
     .reduce((sum, e) => sum + e.totalHours, 0);
 
@@ -228,39 +242,33 @@ const Timesheet: React.FC = () => {
             {loading ? (
               <CustomSkeleton width="60px" height="2rem" />
             ) : (
-              `${totalMonthlyHours}h`
+              `${totalMonthlyHours}-h`
             )}
           </div>
         </div>
         <div className={`glass-card ${styles.statCard}`}>
           <div className={styles.statLabel}>Approved</div>
-          <div
-            className={`${styles.statValue} ${styles.textSuccess}`}
-          >
+          <div className={`${styles.statValue} ${styles.textSuccess}`}>
             {loading ? (
               <CustomSkeleton width="60px" height="2rem" />
             ) : (
-              `${approvedHours}h`
+              `${approvedHours}-h`
             )}
           </div>
         </div>
         <div className={`glass-card ${styles.statCard}`}>
           <div className={styles.statLabel}>Pending Approval</div>
-          <div
-            className={`${styles.statValue} ${styles.textWarning}`}
-          >
+          <div className={`${styles.statValue} ${styles.textWarning}`}>
             {loading ? (
               <CustomSkeleton width="60px" height="2rem" />
             ) : (
-              `${totalMonthlyHours - approvedHours}h`
+              `${totalMonthlyHours - approvedHours}-h`
             )}
           </div>
         </div>
         <div className={`glass-card ${styles.statCard}`}>
           <div className={styles.statLabel}>Target (160h)</div>
-          <div
-            className={`${styles.statValue} ${styles.textSecondary}`}
-          >
+          <div className={`${styles.statValue} ${styles.textSecondary}`}>
             {loading ? (
               <CustomSkeleton width="60px" height="2rem" />
             ) : (

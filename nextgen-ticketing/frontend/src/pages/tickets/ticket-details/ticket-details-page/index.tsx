@@ -820,7 +820,11 @@ const TicketDetail: React.FC = () => {
               feedHeight={feedHeight}
             />
           ) : (
-            <TicketDetailHistory ticket={ticket} feedHeight={feedHeight} />
+            <TicketDetailHistory
+              ticket={ticket}
+              user={user}
+              feedHeight={feedHeight}
+            />
           )}
         </div>
 

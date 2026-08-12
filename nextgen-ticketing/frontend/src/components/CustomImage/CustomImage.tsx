@@ -8,7 +8,7 @@ const CustomImage: React.FC<CustomImageProps> = ({
   alt,
   fallback = "/placeholder-avatar.png",
   containerStyle,
-  borderRadius = "8px",
+  borderRadius,
   showSkeleton = true,
   className = "",
   style,
@@ -44,10 +44,10 @@ const CustomImage: React.FC<CustomImageProps> = ({
 
   return (
     <div
-      className={styles.container}
+      className={`${styles.container} ${className}`}
       style={{
+        ...(borderRadius !== undefined ? { borderRadius } : {}),
         ...containerStyle,
-        borderRadius: borderRadius,
       }}
     >
       {loading && showSkeleton && <div className={styles.skeleton} />}
@@ -57,10 +57,10 @@ const CustomImage: React.FC<CustomImageProps> = ({
         alt={alt || "Image"}
         onLoad={handleLoad}
         onError={handleError}
-        className={`${styles.image} ${loading ? styles.hidden : ""} ${className}`}
+        className={`${styles.image} ${loading ? styles.hidden : ""}`}
         style={{
+          ...(borderRadius !== undefined ? { borderRadius } : {}),
           ...style,
-          borderRadius: borderRadius,
         }}
         {...props}
       />

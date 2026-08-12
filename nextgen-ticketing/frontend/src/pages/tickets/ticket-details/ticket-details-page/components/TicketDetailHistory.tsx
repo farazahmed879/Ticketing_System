@@ -2,18 +2,30 @@ import React from "react";
 import { timeAgo } from "../../../../../utils/helpers";
 import styles from "../TicketDetail.module.css";
 import cs from "../../../shared/commentThread.module.css";
-import type { TicketDetail as ITicketDetail } from "../../../../../types";
+import type { TicketDetail as ITicketDetail, User } from "../../../../../types";
+import { ROLE_TYPE } from "../../../../roles/roleConstants";
 
 interface TicketDetailHistoryProps {
   ticket: ITicketDetail;
+  user?: User | null;
   /** Matches the comment area's height so History scrolls to the same size. */
   feedHeight?: number;
 }
 
 const TicketDetailHistory: React.FC<TicketDetailHistoryProps> = ({
   ticket,
+  user,
   feedHeight,
 }) => {
+  const isClient = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
+  const historyList = (ticket.history || []).filter((item: any) => {
+    if (isClient) {
+      if (item.action === "NOTE_ADDED") return false;
+      if (item.description?.toLowerCase().includes("note")) return false;
+    }
+    return true;
+  });
+
   return (
     <div
       className={`${styles.historyList} ${cs.scroll}`}
@@ -24,7 +36,7 @@ const TicketDetailHistory: React.FC<TicketDetailHistoryProps> = ({
         paddingRight: 8,
       }}
     >
-      {ticket.history.map((item) => (
+      {historyList.map((item) => (
         <div key={item.id} className={styles.historyItem}>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>

@@ -256,8 +256,18 @@ export const ticketUsecase = {
     const ticket = await ticketRepository.findTicketById(id);
     if (!ticket) throw new Error("Ticket not found");
 
-    if (user && user.role === RoleType.CUSTOMER && ticket.comments) {
-      ticket.comments = ticket.comments.filter((c: any) => !c.isNote);
+    const userRole = user?.role?.roleType || user?.role;
+    if (user && userRole === RoleType.CUSTOMER) {
+      if (ticket.comments) {
+        ticket.comments = ticket.comments.filter((c: any) => !c.isNote);
+      }
+      if (ticket.history) {
+        ticket.history = ticket.history.filter(
+          (h: any) =>
+            h.action !== ActionName.NOTE_ADDED &&
+            !h.description?.toLowerCase().includes("note"),
+        );
+      }
     }
 
     // Resolve the ticket's team lead(s) via its project — same as the list API.
@@ -284,6 +294,16 @@ export const ticketUsecase = {
     const uid = count + 1000;
 
     let finalStatusId = data.statusId;
+
+    if (data.assigneeId) {
+      const assignedStatus = await ticketRepository.findStatusByName(
+        StatusName.OPEN,
+      );
+      if (assignedStatus) {
+        finalStatusId = assignedStatus.id;
+      }
+    }
+
     if (!finalStatusId) {
       const newStatus = await ticketRepository.findStatusByName(StatusName.NEW);
       finalStatusId = newStatus?.id;
@@ -462,7 +482,7 @@ export const ticketUsecase = {
           [
             [StatusName.IN_PROCESS],
             StatusName.RESOLVED,
-            "Only tickets in progress can be marked as Done.",
+            "Only tickets that are In Progress can be marked as Done.",
           ],
         ];
 
@@ -544,6 +564,11 @@ export const ticketUsecase = {
             [StatusName.RESOLVED],
             StatusName.APPROVED,
             "Only Done tickets can be moved to Approved.",
+          ],
+          [
+            [StatusName.IN_PROCESS],
+            StatusName.RESOLVED,
+            "Only tickets that are In Progress can be marked as Done.",
           ],
         ];
 
@@ -876,8 +901,17 @@ export const ticketUsecase = {
     return { tickets, totalCount };
   },
 
-  async getTimeline(ticketId: string) {
-    return ticketRepository.getTimeline(ticketId);
+  async getTimeline(ticketId: string, user?: any) {
+    const history = await ticketRepository.getTimeline(ticketId);
+    const userRole = user?.role?.roleType || user?.role;
+    if (user && userRole === RoleType.CUSTOMER) {
+      return history.filter(
+        (h: any) =>
+          h.action !== ActionName.NOTE_ADDED &&
+          !h.description?.toLowerCase().includes("note"),
+      );
+    }
+    return history;
   },
 
   /**

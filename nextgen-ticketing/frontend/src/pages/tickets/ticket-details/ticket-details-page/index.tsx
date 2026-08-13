@@ -659,8 +659,7 @@ const TicketDetail: React.FC = () => {
         </div>
       )}
 
-      {user?.role?.roleType === ROLE_TYPE.CUSTOMER &&
-        ticket.owner?.id === user?.id &&
+      {ticket.owner?.id === user?.id &&
         ticket.status.name === StatusName.APPROVED &&
         (() => {
           const daysLeft = (() => {

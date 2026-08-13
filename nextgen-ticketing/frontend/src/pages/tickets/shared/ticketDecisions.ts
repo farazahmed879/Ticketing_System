@@ -346,17 +346,17 @@ export const handleStatusChange = async (
     return;
   }
 
-  // Tickets reach Returned only through the client's "unsatisfied" decision
-  // on an Approved ticket — staff roles may never move a ticket there.
+  // Tickets reach Returned only through the owner's "unsatisfied" decision
+  // on an Approved ticket — non-owners may never move a ticket there.
   // Mirrors the backend rule.
   if (
     isStatusChanging &&
     body.targetStatusName === StatusName.FAILED &&
-    user?.role?.roleType !== ROLE_TYPE.CUSTOMER
+    !isOwner
   ) {
     showNotification(
       "error",
-      "Tickets can only be moved to Returned by the client when they are unsatisfied with the work.",
+      "Tickets can only be moved to Returned by the ticket owner when they are unsatisfied with the work.",
     );
     return;
   }

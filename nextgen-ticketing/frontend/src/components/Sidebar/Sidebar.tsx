@@ -26,6 +26,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     item: any;
     top: number;
   } | null>(null);
+  const [hoveredTooltip, setHoveredTooltip] = useState<{
+    label: string;
+    top: number;
+  } | null>(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const checkScroll = () => {
@@ -216,12 +220,20 @@ const Sidebar: React.FC<SidebarProps> = ({
             key={item.path}
             className={styles.navItemWrapper}
             onMouseEnter={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
               if (item.children) {
-                const rect = e.currentTarget.getBoundingClientRect();
                 setHoveredSubmenu({ item, top: rect.top });
+              } else if (isCollapsed) {
+                setHoveredTooltip({
+                  label: item.label,
+                  top: rect.top + rect.height / 2,
+                });
               }
             }}
-            onMouseLeave={() => setHoveredSubmenu(null)}
+            onMouseLeave={() => {
+              setHoveredSubmenu(null);
+              setHoveredTooltip(null);
+            }}
           >
             <NavLink
               to={item.path}
@@ -278,6 +290,15 @@ const Sidebar: React.FC<SidebarProps> = ({
               {child.label}
             </NavLink>
           ))}
+        </div>
+      )}
+
+      {hoveredTooltip && (
+        <div
+          className={styles.iconTooltip}
+          style={{ top: hoveredTooltip.top }}
+        >
+          {hoveredTooltip.label}
         </div>
       )}
 

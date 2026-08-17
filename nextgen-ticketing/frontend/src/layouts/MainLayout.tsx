@@ -1,6 +1,7 @@
 import React from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useQueryClient } from "@tanstack/react-query";
 import { timeAgo } from "../utils/helpers";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
@@ -21,6 +22,7 @@ const MainLayout: React.FC = () => {
   const { showNotification } = useNotification();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [notifications, setNotifications] = React.useState<any[]>([]);
@@ -133,11 +135,22 @@ const MainLayout: React.FC = () => {
       setUnreadCount((prev) => prev + 1);
     });
 
-    return () => {
-      socket.off("notifications:update");
-      socket.off("notifications:new");
-    };
-  }, [user, showNotification, location.pathname]);
+      // Listen for real-time ticket updates to update live counts and lists
+      socket.on("ticket:updated", () => {
+        queryClient.invalidateQueries({ queryKey: ["tickets"] });
+        queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+        queryClient.invalidateQueries({ queryKey: ["projects"] });
+        queryClient.invalidateQueries({ queryKey: ["customerProjects"] });
+        queryClient.invalidateQueries({ queryKey: ["ticket-metadata"] });
+        queryClient.invalidateQueries({ queryKey: ["ticket-board-metadata"] });
+      });
+
+      return () => {
+        socket.off("notifications:update");
+        socket.off("notifications:new");
+        socket.off("ticket:updated");
+      };
+    }, [user, showNotification, location.pathname, queryClient]);
 
   const handleMarkAsRead = async (id: string) => {
     socket.emit("notifications:markRead", id);

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
+import { socket } from "../../services/socket";
 import CustomInput from "../../components/CustomInput";
 import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
@@ -148,6 +149,16 @@ const TicketList: React.FC = () => {
 
   const tickets: Ticket[] = ticketData?.tickets || [];
   const totalCount = ticketData?.totalCount || 0;
+
+  React.useEffect(() => {
+    const handleTicketUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
+    };
+    socket.on("ticket:updated", handleTicketUpdate);
+    return () => {
+      socket.off("ticket:updated", handleTicketUpdate);
+    };
+  }, [queryClient]);
 
   const toggleMoreFilters = () => {
     if (showMoreFilters) {

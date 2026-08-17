@@ -1,8 +1,9 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
+import { socket } from "../../services/socket";
 import styles from "./Dashboard.module.css";
 import { AnnouncementType } from "../../utils/constants";
 import { API_ROUTES } from "../../utils/apiRoutes";
@@ -25,6 +26,7 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: dashboardData, isLoading: loading } = useQuery({
     queryKey: ["dashboardStats"],
     queryFn: async () => {
@@ -32,6 +34,16 @@ const Dashboard: React.FC = () => {
       return statsRes.data;
     },
   });
+
+  useEffect(() => {
+    const handleTicketUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+    };
+    socket.on("ticket:updated", handleTicketUpdate);
+    return () => {
+      socket.off("ticket:updated", handleTicketUpdate);
+    };
+  }, [queryClient]);
 
   const stats = dashboardData?.stats || null;
   const newHires = (dashboardData?.newHires || []).filter(

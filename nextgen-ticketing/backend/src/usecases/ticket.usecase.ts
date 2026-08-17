@@ -394,12 +394,12 @@ export const ticketUsecase = {
         );
       }
 
-      // Tickets reach Returned only through the client's "unsatisfied"
-      // decision on an Approved ticket — staff roles may never move a
+      // Tickets reach Returned only through the owner's "unsatisfied"
+      // decision on an Approved ticket — non-owners may never move a
       // ticket there.
-      if (target === StatusName.FAILED.toLowerCase() && !isClient) {
+      if (target === StatusName.FAILED.toLowerCase() && !isOwner && !isAdmin) {
         throw new Error(
-          "Tickets can only be moved to Returned by the client when they are unsatisfied with the work.",
+          "Tickets can only be moved to Returned by the ticket owner when they are unsatisfied with the work.",
         );
       }
 
@@ -437,12 +437,12 @@ export const ticketUsecase = {
           [
             StatusName.APPROVED,
             StatusName.CLOSED,
-            "Only Approved tickets can be Closed.",
+            "Only Resolved tickets can be Closed.",
           ],
           [
             StatusName.APPROVED,
             StatusName.FAILED,
-            "Only Approved tickets can be marked as Failed.",
+            "You can mark the ticket as Satisfied or Unsatisfied from the ticket details.",
           ],
         ];
 

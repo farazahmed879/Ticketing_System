@@ -134,6 +134,10 @@ export const ticketController = {
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
       await ticketUsecase.deleteTicket(req.params.id as string, user);
+
+      const io = req.app.get("io");
+      if (io) io.emit("ticket:updated", { ticketId: req.params.id, deleted: true });
+
       res.json({ success: true, id: req.params.id });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

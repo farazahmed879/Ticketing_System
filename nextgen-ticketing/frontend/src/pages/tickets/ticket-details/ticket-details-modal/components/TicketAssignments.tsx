@@ -52,13 +52,29 @@ const TicketAssignments: React.FC<TicketAssignmentsProps> = ({
           if (val) {
             const openStatus = statuses.find(
               (c: any) =>
-                c.name.toLowerCase() === StatusName.OPEN.toLowerCase(),
+                c.name.toLowerCase() === StatusName.OPEN.toLowerCase()
             );
+
             if (openStatus && watch("statusId") !== openStatus.id) {
               setValue("statusId", openStatus.id, {
                 shouldDirty: true,
               });
               setValue("targetStatusName", openStatus.name, {
+                shouldDirty: true,
+              });
+            }
+
+          } else {
+            const newStatus = statuses.find(
+              (c: any) =>
+                c.name.toLowerCase() === StatusName.NEW.toLowerCase()
+            );
+
+            if (newStatus && watch("statusId") !== newStatus.id) {
+              setValue("statusId", newStatus.id, {
+                shouldDirty: true,
+              });
+              setValue("targetStatusName", newStatus.name, {
                 shouldDirty: true,
               });
             }
@@ -81,14 +97,14 @@ const TicketAssignments: React.FC<TicketAssignmentsProps> = ({
           // Always include the current assignee so it shows even when they are
           // not in the fetched project-members list.
           ...(displayTicket?.assignee?.id &&
-          !users.some((u) => u.id === displayTicket.assignee.id)
+            !users.some((u) => u.id === displayTicket.assignee.id)
             ? [
-                {
-                  value: displayTicket.assignee.id,
-                  label: displayTicket.assignee.fullname,
-                  image: displayTicket.assignee.image,
-                },
-              ]
+              {
+                value: displayTicket.assignee.id,
+                label: displayTicket.assignee.fullname,
+                image: displayTicket.assignee.image,
+              },
+            ]
             : []),
         ]}
         canAssign={canAssign}
@@ -135,14 +151,14 @@ const TicketAssignments: React.FC<TicketAssignmentsProps> = ({
             // Always include the current QA so it shows even when they are not
             // in the fetched project-members list.
             ...(displayTicket?.qa?.id &&
-            !qaList.some((q) => q.id === displayTicket.qa.id)
+              !qaList.some((q) => q.id === displayTicket.qa.id)
               ? [
-                  {
-                    value: displayTicket.qa.id,
-                    label: displayTicket.qa.fullname,
-                    image: displayTicket.qa.image,
-                  },
-                ]
+                {
+                  value: displayTicket.qa.id,
+                  label: displayTicket.qa.fullname,
+                  image: displayTicket.qa.image,
+                },
+              ]
               : []),
           ]}
           canAssign={canAssignQA}

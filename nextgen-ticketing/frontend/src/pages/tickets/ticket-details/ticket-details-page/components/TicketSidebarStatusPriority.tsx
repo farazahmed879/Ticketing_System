@@ -69,6 +69,7 @@ export const TicketSidebarStatusPriority = ({
             value={sidebarDraft.statusId}
             onChange={(val: string) => onSidebarDraftChange("statusId", val)}
             placeholder="Change status..."
+            disabled={ticket?.status?.name === StatusName.NEW}
           />
         </div>
       )}

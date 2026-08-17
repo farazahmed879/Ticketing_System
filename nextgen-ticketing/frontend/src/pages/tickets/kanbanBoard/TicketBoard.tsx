@@ -359,6 +359,8 @@ const TicketBoard: React.FC = () => {
 
     if (!isAllowedToUpdatedTheTicketStatus(ticket, targetStatusName)) return;
 
+    
+
     handleUpdateStatus({
       ticketId,
       statusId,

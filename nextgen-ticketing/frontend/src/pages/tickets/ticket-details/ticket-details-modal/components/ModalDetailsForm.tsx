@@ -143,10 +143,10 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
             </CustomBadge>
           )}
           {user?.role?.roleType !== ROLE_TYPE.CUSTOMER &&
-          !(
-            user?.role?.roleType === ROLE_TYPE.EMPLOYEE &&
-            displayTicket?.status?.name === StatusName.APPROVED
-          ) ? (
+            !(
+              user?.role?.roleType === ROLE_TYPE.EMPLOYEE &&
+              displayTicket?.status?.name === StatusName.APPROVED
+            ) ? (
             <CustomSelect
               name="statusId"
               control={control}
@@ -157,7 +157,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
                 minWidth: 180,
                 fontSize: "0.8rem",
               }}
-              disabled={isDisbaledMode}
+              disabled={isDisbaledMode || displayTicket?.status?.name === StatusName.NEW}
             />
           ) : (
             <CustomBadge
@@ -246,7 +246,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
             iconColor="var(--accent-primary)"
             control={control}
             disabled={!canAssign}
-            onChange={() => {}}
+            onChange={() => { }}
             canAssign={false}
             multiple={false}
             dummyLabel={displayTicket?.owner?.fullname}

@@ -39,8 +39,10 @@ const CustomDatePicker = <T extends FieldValues>({
   value: manualValue,
   onChange: manualOnChange,
   placeholder,
+  min,
+  minDate,
   ...props
-}: CustomDatePickerProps<T>) => {
+}: CustomDatePickerProps<T> & { min?: string | number; minDate?: Date }) => {
   const renderPicker = (fieldProps: any = {}) => {
     const error = manualError || fieldProps.error;
     const value = manualValue || fieldProps.field?.value || "";
@@ -59,6 +61,19 @@ const CustomDatePicker = <T extends FieldValues>({
       }
     };
 
+    let resolvedMinDate: Date | undefined = minDate;
+    if (!resolvedMinDate && min && typeof min === "string") {
+      const parts = min.split("-");
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // 0-indexed month
+        const day = parseInt(parts[2], 10);
+        resolvedMinDate = new Date(year, month, day);
+      } else {
+        resolvedMinDate = new Date(min);
+      }
+    }
+
     return (
       <div className={styles.container} style={containerStyle}>
         {label && <label className={styles.label}>{label}</label>}
@@ -70,6 +85,7 @@ const CustomDatePicker = <T extends FieldValues>({
           isClearable
           portalId="root-portal"
           disabled={props.disabled}
+          minDate={resolvedMinDate}
         />
         {error && <span className={styles.errorText}>{error}</span>}
       </div>

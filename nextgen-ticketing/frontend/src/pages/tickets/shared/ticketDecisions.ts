@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   StatusName,
+  TICKET_STATUS_IDS,
   TICKET_STATUSES,
   UIMessages,
 } from "../../../utils/constants";
@@ -244,8 +245,9 @@ export const canEditDueDate = (user: any, ticket: any): boolean => {
 /**
  * Whether an employee may edit the due date (only allowed while ticket is in Assigned status).
  */
-export const canEmployeeEditDueDate = (statusName: string | undefined): boolean =>
-  statusName === StatusName.OPEN;
+export const canEmployeeEditDueDate = (
+  statusName: string | undefined,
+): boolean => statusName === StatusName.OPEN;
 
 /** Notification kinds (mirrors NotificationContext's NotificationType). */
 type NotificationType = "success" | "error" | "info" | "warning";
@@ -352,7 +354,8 @@ export const handleStatusChange = async (
   if (
     isStatusChanging &&
     body.targetStatusName === StatusName.FAILED &&
-    !isOwner
+    !isOwner &&
+    user?.role?.roleType !== ROLE_TYPE.ADMIN
   ) {
     showNotification(
       "error",
@@ -379,6 +382,10 @@ export const handleStatusChange = async (
       );
       return;
     }
+  }
+
+  if (body.statusId === TICKET_STATUS_IDS.UNASSIGNED) {
+    body.assigneeId = null;
   }
 
   try {

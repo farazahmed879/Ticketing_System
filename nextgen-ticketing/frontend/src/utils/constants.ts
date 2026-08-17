@@ -143,6 +143,17 @@ export const TICKET_STATUSES = [
   },
 ];
 
+export const TICKET_STATUS_IDS = {
+  UNASSIGNED: "69e5da8a0e2d511b4eab95ea",
+  ASSIGNED: "69e5da8b0e2d511b4eab95eb",
+  RETURNED: "69e7608bc5508c8356cd4e0f",
+  IN_PROCESS: "69e5da8b0e2d511b4eab95ec",
+  RESOLVED: "69e5da8c0e2d511b4eab95ed",
+  APPROVED: "69e8990038550b9543f7236f",
+  CLOSED: "69e5da8c0e2d511b4eab95ee",
+  CANCELLED: "69e5f24917cc1f4597f3d5c6",
+};
+
 export const UIMessages = {
   LOGIN: {
     INVALID_CREDENTIALS: "Invalid credentials",

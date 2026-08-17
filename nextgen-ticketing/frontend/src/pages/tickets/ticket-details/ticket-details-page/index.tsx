@@ -16,6 +16,7 @@ import {
   PRIORITIES,
   StatusName,
   TICKET_STATUSES,
+  TICKET_STATUS_IDS,
   UIMessages,
 } from "../../../../utils/constants";
 import ConfirmationModal from "../../../../components/ConfirmationModal";
@@ -295,13 +296,24 @@ const TicketDetail: React.FC = () => {
 
   // --- Sidebar draft handler ---
   const onSidebarDraftChange = (field: keyof SidebarDraft, value: string) => {
-    setSidebarDraft((prev) => ({
-      ...prev,
-      [field]: value,
-      ...(field === "assigneeId" && value
-        ? { statusId: "69e5da8b0e2d511b4eab95eb" }
-        : {}),
-    }));
+    setSidebarDraft((prev) => {
+      const updated = {
+        ...prev,
+        [field]: value,
+      };
+
+      if (field === "assigneeId") {
+        if (value) {
+          // If assigned, set status to Open/Assigned
+          updated.statusId = TICKET_STATUS_IDS.ASSIGNED;
+        } else {
+          // If unassigned, set status to Unassigned/New
+          updated.statusId = TICKET_STATUS_IDS.UNASSIGNED;
+        }
+      }
+
+      return updated;
+    });
   };
 
   // --- Unified Update handler ---

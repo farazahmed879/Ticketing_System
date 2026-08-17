@@ -37,121 +37,133 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
     <div className={styles.filterBar}>
       <div className={styles.filters}>
         <div
-          className={styles.search}
           style={{
-            border: "none",
-            background: "transparent",
-            padding: 0,
-            flex: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px", // optional spacing
           }}
         >
-          <CustomInput
-            placeholder="Search interviews..."
-            value={searchInput}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              const val = e.target.value;
-              setSearchInput(val);
-              if (val === "") {
-                setSearch("");
-              }
+          <div
+            className={styles.search}
+            style={{
+              border: "none",
+              background: "transparent",
+              padding: 0,
+              flex: "none",
             }}
-            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === "Enter") {
-                setSearch(searchInput);
-              }
-            }}
-            icon={<CustomIcon name="Search" size={18} />}
-            containerStyle={{ width: "350px", paddingLeft: "0px" }}
-          />
-        </div>
-        <div className={styles.filterAnchor}>
-          <CustomButton
-            variant={
-              showMoreFilters || activeMoreFilters > 0 ? "primary" : "secondary"
-            }
-            onClick={toggleMoreFilters}
-            icon={<CustomIcon name="SlidersHorizontal" size={18} />}
           >
-            Filters
-            {activeMoreFilters > 0 && (
-              <span
-                style={{
-                  marginLeft: 8,
-                  background: "rgba(255,255,255,0.25)",
-                  color: "#fff",
-                  borderRadius: 999,
-                  fontSize: "0.7rem",
-                  fontWeight: 700,
-                  minWidth: 18,
-                  textAlign: "center",
-                  padding: "1px 6px",
-                }}
-              >
-                {activeMoreFilters}
-              </span>
-            )}
-            <CustomIcon
-              name={showMoreFilters ? "ChevronUp" : "ChevronDown"}
-              size={16}
-              style={{ marginLeft: 6 }}
+            <CustomInput
+              placeholder="Search interviews..."
+              value={searchInput}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                const val = e.target.value;
+                setSearchInput(val);
+                if (val === "") {
+                  setSearch("");
+                }
+              }}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === "Enter") {
+                  setSearch(searchInput);
+                }
+              }}
+              icon={<CustomIcon name="Search" size={18} />}
+              containerStyle={{ width: "350px", paddingLeft: "0px" }}
             />
-          </CustomButton>
-
-          {showMoreFilters && (
-            <div className={styles.advancedPanel}>
-              <div className={styles.filterField}>
-                <span className={styles.filterLabel}>
-                  <CustomIcon name="CircleDot" size={12} /> Filter by
+          </div>
+          <div className={styles.filterAnchor}>
+            <CustomButton
+              variant={
+                showMoreFilters || activeMoreFilters > 0
+                  ? "primary"
+                  : "secondary"
+              }
+              onClick={toggleMoreFilters}
+              icon={<CustomIcon name="SlidersHorizontal" size={18} />}
+              style={{ height: 48 }}
+            >
+              Filters
+              {activeMoreFilters > 0 && (
+                <span
+                  style={{
+                    marginLeft: 8,
+                    background: "rgba(255,255,255,0.25)",
+                    color: "#fff",
+                    borderRadius: 999,
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    minWidth: 18,
+                    textAlign: "center",
+                    padding: "1px 6px",
+                  }}
+                >
+                  {activeMoreFilters}
                 </span>
-                <CustomSelect
-                  value={draftActiveFilter}
-                  onChange={(val) => setDraftActiveFilter(val)}
-                  options={filters}
-                  style={{ width: "100%" }}
-                />
-              </div>
+              )}
+              <CustomIcon
+                name={showMoreFilters ? "ChevronUp" : "ChevronDown"}
+                size={16}
+                style={{ marginLeft: 6 }}
+              />
+            </CustomButton>
 
-              <div className={styles.filterField}>
-                <span className={styles.filterLabel}>
-                  <CustomIcon name="Calendar" size={12} /> Date Range
-                </span>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <CustomDatePicker
-                    value={draftStartDate}
-                    onChange={(val: string) => setDraftStartDate(val)}
-                    placeholder="Start Date"
-                    containerStyle={{ flex: 1 }}
-                  />
-                  <CustomDatePicker
-                    value={draftEndDate}
-                    onChange={(val: string) => setDraftEndDate(val)}
-                    placeholder="End Date"
-                    containerStyle={{ flex: 1 }}
+            {showMoreFilters && (
+              <div className={styles.advancedPanel}>
+                <div className={styles.filterField}>
+                  <span className={styles.filterLabel}>
+                    <CustomIcon name="CircleDot" size={12} /> Filter by
+                  </span>
+                  <CustomSelect
+                    value={draftActiveFilter}
+                    onChange={(val) => setDraftActiveFilter(val)}
+                    options={filters}
+                    style={{ width: "100%" }}
                   />
                 </div>
-              </div>
 
-              <div className={styles.filterActions}>
-                {(draftSelectedCount > 0 || activeMoreFilters > 0) && (
+                <div className={styles.filterField}>
+                  <span className={styles.filterLabel}>
+                    <CustomIcon name="Calendar" size={12} /> Date Range
+                  </span>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <CustomDatePicker
+                      value={draftStartDate}
+                      onChange={(val: string) => setDraftStartDate(val)}
+                      placeholder="Start Date"
+                      containerStyle={{ flex: 1 }}
+                    />
+                    <CustomDatePicker
+                      value={draftEndDate}
+                      onChange={(val: string) => setDraftEndDate(val)}
+                      placeholder="End Date"
+                      containerStyle={{ flex: 1 }}
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.filterActions}>
+                  {(draftSelectedCount > 0 || activeMoreFilters > 0) && (
+                    <CustomButton
+                      variant="ghost"
+                      onClick={clearMoreFilters}
+                      icon={<CustomIcon name="X" size={16} />}
+                    >
+                      Clear all
+                    </CustomButton>
+                  )}
                   <CustomButton
-                    variant="ghost"
-                    onClick={clearMoreFilters}
-                    icon={<CustomIcon name="X" size={16} />}
+                    variant="gradient"
+                    onClick={applyMoreFilters}
+                    icon={<CustomIcon name="Check" size={16} />}
                   >
-                    Clear all
+                    Apply Filters
                   </CustomButton>
-                )}
-                <CustomButton
-                  variant="gradient"
-                  onClick={applyMoreFilters}
-                  icon={<CustomIcon name="Check" size={16} />}
-                >
-                  Apply Filters
-                </CustomButton>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
+
         <div
           style={{
             display: "flex",

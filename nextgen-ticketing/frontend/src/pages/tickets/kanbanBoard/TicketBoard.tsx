@@ -366,6 +366,7 @@ const TicketBoard: React.FC = () => {
       targetStatusName,
       assigneeId: ticket.assignee?.id || null, // Ensure assigneeId is sent for the "Open" status check
       teamLeadIds: ticket?.teamLeadIds || [], // Ensure teamLeadIds is sent for the "Open" status check
+      ownerId: ticket.owner?.id,
     });
   };
 

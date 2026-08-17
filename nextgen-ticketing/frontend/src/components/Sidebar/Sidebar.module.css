@@ -194,6 +194,25 @@
   }
 }
 
+.iconTooltip {
+  position: fixed;
+  left: 90px;
+  transform: translateY(-50%);
+  background: var(--bg-sidebar);
+  backdrop-filter: var(--blur-lg);
+  border: 1px solid var(--border-glass);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  pointer-events: none;
+  animation: slideInLeft 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 .submenuHeader {
   padding: 8px 12px;
   font-size: 0.75rem;

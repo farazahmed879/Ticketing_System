@@ -21,9 +21,15 @@ const ClientDecisionBanner: React.FC<ClientDecisionBannerProps> = ({
   isSaving,
   handleClientDecision,
 }) => {
-  if (!isClient || !isTicketOwner) return null;
-
   const statusName = displayTicket?.status?.name;
+
+  if (statusName === StatusName.NEW) {
+    if (!isClient || !isTicketOwner) return null;
+  } else if (statusName === StatusName.APPROVED) {
+    if (!isTicketOwner) return null;
+  } else {
+    return null;
+  }
 
   if (statusName === StatusName.NEW) {
     return (

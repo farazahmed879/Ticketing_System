@@ -53,7 +53,10 @@ export const ticketRepository = {
         dueDate: { not: null, lt: endOfYesterday },
         statusId: {
           in: TICKET_STATUSES.filter(
-            (s) => !s.isResolved && s.name !== StatusName.FAILED,
+            (s) =>
+              !s.isResolved &&
+              s.name !== StatusName.FAILED &&
+              s.name !== StatusName.TRASH,
           ).map((s) => s.id),
         },
       },

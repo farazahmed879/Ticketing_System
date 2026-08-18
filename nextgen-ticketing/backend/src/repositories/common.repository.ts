@@ -1,6 +1,7 @@
 import prisma from "../prisma";
 import {
   RoleType,
+  StatusName,
   TICKET_STATUSES,
   PRIORITIES,
   TICKET_TYPES,
@@ -116,7 +117,7 @@ export const commonRepository = {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const unresolvedStatusIds = TICKET_STATUSES.filter(
-      (s) => !s.isResolved,
+      (s) => !s.isResolved && s.name !== StatusName.TRASH,
     ).map((s) => s.id);
     const resolvedStatusIds = TICKET_STATUSES.filter((s) => s.isResolved).map(
       (s) => s.id,

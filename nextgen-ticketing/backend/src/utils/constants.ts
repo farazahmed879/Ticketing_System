@@ -56,7 +56,7 @@ export const TICKET_STATUSES = [
     name: "Returned",
     color: "#ef4444",
     order: 2,
-    isResolved: true,
+    isResolved: false,
   },
   {
     id: "69e5da8b0e2d511b4eab95ec",
@@ -91,7 +91,7 @@ export const TICKET_STATUSES = [
     name: "Cancelled",
     color: "#ff5252",
     order: 7,
-    isResolved: true,
+    isResolved: false,
   },
 ];
 

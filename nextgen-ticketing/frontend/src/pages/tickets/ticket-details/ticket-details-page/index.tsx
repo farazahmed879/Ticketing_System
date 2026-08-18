@@ -921,50 +921,30 @@ const TicketDetail: React.FC = () => {
       {/* Floating Update Bar */}
       {hasAnyChanges &&
         createPortal(
-          <div
-            style={{
-              position: "fixed",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              zIndex: 100,
-              background:
-                "linear-gradient(to top, rgba(var(--bg-primary-rgb, 10, 10, 20), 0.98), rgba(var(--bg-primary-rgb, 10, 10, 20), 0.85))",
-              backdropFilter: "blur(16px)",
-              borderTop: "1px solid var(--border-glass)",
-              padding: "14px 32px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              gap: 12,
-              animation: "slideUp 0.25s ease-out",
-            }}
-          >
-            <span
-              style={{
-                marginRight: "auto",
-                fontSize: "0.9rem",
-                color: "var(--text-secondary)",
-              }}
-            >
-              <CustomIcon name="AlertCircle" size={16} /> You have unsaved
-              changes
-            </span>
-            <CustomButton
-              variant="ghost"
-              onClick={handleCancelEditing}
-              disabled={isSaving}
-            >
-              Discard
-            </CustomButton>
-            <CustomButton
-              variant="gradient"
-              onClick={handleUpdate}
-              loading={isSaving}
-              icon={<CustomIcon name="Save" size={16} />}
-            >
-              Update Ticket
-            </CustomButton>
+          <div className={styles.floatingBar}>
+            <div className={styles.unsavedBadge}>
+              <span className={styles.pulseDot} />
+              <CustomIcon name="AlertCircle" size={15} />
+              <span>You have unsaved changes</span>
+            </div>
+            <div className={styles.floatingBarActions}>
+              <CustomButton
+                className={styles.discardButton}
+                onClick={handleCancelEditing}
+                disabled={isSaving}
+                icon={<CustomIcon name="RotateCcw" size={15} />}
+              >
+                Discard
+              </CustomButton>
+              <CustomButton
+                className={styles.saveButton}
+                onClick={handleUpdate}
+                loading={isSaving}
+                icon={<CustomIcon name="Save" size={16} />}
+              >
+                Update Ticket
+              </CustomButton>
+            </div>
           </div>,
           document.body,
         )}

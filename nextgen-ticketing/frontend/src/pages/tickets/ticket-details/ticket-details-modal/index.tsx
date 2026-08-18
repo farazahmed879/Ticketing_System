@@ -184,6 +184,21 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     }
   }, [ticket?.id, reset]);
 
+  /**
+   * Re-fetches the ticket and updates `fullTicketData` (so comments, history,
+   * etc. are refreshed) **without** calling `reset(...)`, so the user's
+   * unsaved form changes are preserved.
+   */
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
+  const refreshTicketData = useCallback(async () => {
+    try {
+      const res = await api.get(API_ROUTES.TICKETS.BY_ID(ticket.id));
+      setFullTicketData(res.data.ticket);
+    } catch (err: any) {
+      console.error("Failed to refresh ticket data", err);
+    }
+  }, [ticket?.id]);
+
   const handleSave = async (data: TicketUpdateFormData) => {
     const targetStatus =
       statuses.find((c: any) => c.id === data.statusId)?.name || "";
@@ -270,7 +285,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
       setCommentAttachmentError(null);
       setCommentCooldownActive(true);
       setTimeout(() => setCommentCooldownActive(false), 1000);
-      fetchFullTicketData();
+      refreshTicketData();
     } catch (err: any) {
       showNotification("error", "Failed to add comment");
     } finally {
@@ -410,7 +425,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
       const handleTicketUpdate = (data: any) => {
         if (data.ticketId === ticket.id) {
-          fetchFullTicketData();
+          refreshTicketData();
         }
       };
 

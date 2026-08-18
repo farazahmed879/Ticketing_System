@@ -226,6 +226,21 @@ const TicketDetail: React.FC = () => {
     }
   };
 
+  /**
+   * Re-fetches the ticket from the server and updates `ticket` state (so
+   * comments, history, etc. are refreshed) **without** resetting the user's
+   * unsaved draft values.  Use this after posting a comment or when a
+   * real-time socket event arrives.
+   */
+  const refreshTicketData = async () => {
+    try {
+      const res = await api.get(API_ROUTES.TICKETS.BY_ID(id!));
+      setTicket(res.data.ticket);
+    } catch (err) {
+      console.error("Failed to refresh ticket data", err);
+    }
+  };
+
   const fetchProjectMembers = async () => {
     if (!ticket?.project?.id) {
       // Fallback if ticket has no project
@@ -549,7 +564,7 @@ const TicketDetail: React.FC = () => {
       setCommentAttachmentError(null);
       setCommentCooldownActive(true);
       setTimeout(() => setCommentCooldownActive(false), 1000);
-      fetchTicket();
+      refreshTicketData();
     } catch (err: any) {
       console.error("Failed to add comment", err);
       showNotification(
@@ -591,7 +606,7 @@ const TicketDetail: React.FC = () => {
   useEffect(() => {
     const handleTicketUpdate = (data: { ticketId: string }) => {
       if (data.ticketId === id) {
-        fetchTicket();
+        refreshTicketData();
       }
     };
 

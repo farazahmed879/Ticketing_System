@@ -137,7 +137,7 @@
 }
 
 .optionSelected {
-  background: rgba(124, 58, 237, 0.1);
+  /* background: rgba(124, 58, 237, 0.1); */
   color: var(--accent-primary);
 }
 

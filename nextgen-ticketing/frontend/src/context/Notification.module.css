@@ -13,13 +13,13 @@
   pointer-events: auto;
   min-width: 320px;
   max-width: 450px;
-  padding: 16px;
-  border-radius: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
+  backdrop-filter: var(--blur-md);
   border: 1px solid var(--border-glass);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
   animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -35,13 +35,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 1px;
 }
 
 .message {
   flex-grow: 1;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 500;
+  line-height: 1.45;
   color: var(--text-primary);
+  word-break: break-word;
 }
 
 .close {
@@ -49,11 +52,18 @@
   background: transparent;
   color: var(--text-muted);
   transition: var(--transition-fast);
-  padding: 4px;
+  padding: 2px;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 6px;
 }
 
 .close:hover {
   color: var(--text-primary);
+  background: var(--icon-bg);
 }
 
 /* Types */

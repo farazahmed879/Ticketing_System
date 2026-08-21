@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
+import { socket } from "../../services/socket";
 import { useNotification } from "../../context/NotificationContext";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useAuth } from "../../context/AuthContext";
@@ -86,6 +87,8 @@ const AnnouncementList: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      socket.emit("announcement:updated");
       showNotification(
         "success",
         editingAnnouncement
@@ -120,6 +123,8 @@ const AnnouncementList: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      socket.emit("announcement:updated");
       showNotification("success", "Announcement deleted successfully");
       setIsDeleteModalOpen(false);
       setAnnouncementToDelete(null);
@@ -357,6 +362,7 @@ const AnnouncementList: React.FC = () => {
                       <CustomIcon name="FolderKanban" size={14} color="var(--text-muted)" />
                       <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
                         Project: {ann.project.name}
+                        {ann.isProjectTeamOnly && " (Project Team Only)"}
                       </span>
                     </div>
                   )}

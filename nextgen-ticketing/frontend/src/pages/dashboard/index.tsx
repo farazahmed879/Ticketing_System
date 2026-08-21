@@ -36,12 +36,14 @@ const Dashboard: React.FC = () => {
   });
 
   useEffect(() => {
-    const handleTicketUpdate = () => {
+    const handleUpdate = () => {
       queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
     };
-    socket.on("ticket:updated", handleTicketUpdate);
+    socket.on("ticket:updated", handleUpdate);
+    socket.on("announcement:updated", handleUpdate);
     return () => {
-      socket.off("ticket:updated", handleTicketUpdate);
+      socket.off("ticket:updated", handleUpdate);
+      socket.off("announcement:updated", handleUpdate);
     };
   }, [queryClient]);
 
@@ -67,7 +69,9 @@ const Dashboard: React.FC = () => {
     (ann: { type: string }) => ann.type === AnnouncementType.MOMENT,
   );
 
-  const cards = [
+  const isHR = user?.role?.roleType === ROLE_TYPE.HR;
+
+  const allCards = [
     {
       label: "Total Tickets",
       value: stats?.totalTickets,
@@ -96,6 +100,10 @@ const Dashboard: React.FC = () => {
       color: "var(--accent-secondary)",
     },
   ];
+
+  const cards = isHR
+    ? allCards.filter((card) => card.label === "Total Users")
+    : allCards;
 
   if (user?.role?.roleType === ROLE_TYPE.CUSTOMER) {
     return <CustomerDashboard stats={stats} moments={moments} />;

@@ -18,6 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { user, logout } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const isCustomer = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
 
   const navRef = useRef<HTMLDivElement>(null);
   const [canScrollUp, setCanScrollUp] = useState(false);
@@ -157,7 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       icon: <CustomIcon name="Megaphone" size={20} />,
-      label: t("sidebar.announcements"),
+      label: isCustomer ? t("sidebar.reviews", "Reviews") : t("sidebar.announcements"),
       path: "/announcements",
       permission: "announcements.view",
     },

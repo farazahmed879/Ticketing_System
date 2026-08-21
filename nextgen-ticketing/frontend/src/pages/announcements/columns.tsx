@@ -13,6 +13,7 @@ export interface Announcement {
   description: string;
   date: string;
   type: string;
+  isProjectTeamOnly?: boolean;
   author: {
     fullname: string;
   };
@@ -55,6 +56,7 @@ export const getAnnouncementColumns = (
           {ann.project && (
             <span className={styles.projectText}>
               Project: {ann.project.name}
+              {ann.isProjectTeamOnly && " (Project Team Only)"}
             </span>
           )}
         </div>

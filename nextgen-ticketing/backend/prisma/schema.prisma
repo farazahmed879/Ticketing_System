@@ -281,12 +281,13 @@ model SystemSetting {
 }
 
 model Announcement {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  title        String
-  description  String
-  date         DateTime
-  type         String   @default("event") // event, important, info
-  shouldPopout Boolean  @default(false)
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  title             String
+  description       String
+  date              DateTime
+  type              String   @default("event") // event, important, info
+  shouldPopout      Boolean  @default(false)
+  isProjectTeamOnly Boolean? @default(false)
 
   projectId String?  @db.ObjectId
   project   Project? @relation(fields: [projectId], references: [id])

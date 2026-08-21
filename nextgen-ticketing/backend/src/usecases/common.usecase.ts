@@ -61,6 +61,39 @@ export const commonUsecase = {
     let announcementsWhere: any = {};
     if (user?.role === RoleType.CUSTOMER) {
       announcementsWhere.authorId = user.id;
+    } else if (
+      user?.role &&
+      user.role !== RoleType.ADMIN &&
+      user.role !== RoleType.AGENT
+    ) {
+      const userTeams = await prisma.team.findMany({
+        where: { memberIds: { has: user.id }, deleted: false },
+        select: { projectIds: true, id: true },
+      });
+      const teamProjectIds = Array.from(
+        new Set(userTeams.flatMap((t: any) => t.projectIds || [])),
+      );
+      const directProjects = await prisma.project.findMany({
+        where: {
+          OR: [
+            { teamIds: { hasSome: userTeams.map((t: any) => t.id) } },
+            { managerId: user.id },
+            { createdById: user.id },
+          ],
+          deleted: false,
+        },
+        select: { id: true },
+      });
+      const userProjectIds = Array.from(
+        new Set([...teamProjectIds, ...directProjects.map((p: any) => p.id)]),
+      );
+
+      announcementsWhere.OR = [
+        { isProjectTeamOnly: { not: true } },
+        { projectId: null },
+        { authorId: user.id },
+        { projectId: { in: userProjectIds } },
+      ];
     }
 
     const [announcements, seenNotifications] = await Promise.all([

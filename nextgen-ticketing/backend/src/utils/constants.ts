@@ -179,6 +179,7 @@ export type LoginHelpType = (typeof LoginHelpType)[keyof typeof LoginHelpType];
 
 export const SocketEvent = {
   TICKET_UPDATED: "ticket:updated",
+  ANNOUNCEMENT_UPDATED: "announcement:updated",
   CHAT_SEND: "chat:send",
   CHAT_RECEIVE: "chat:receive",
   CHAT_TYPING: "chat:typing",

@@ -254,6 +254,11 @@ export function setupSocketEvents(io: Server) {
       io.emit(SocketEvent.TICKET_UPDATED, data);
     });
 
+    // ========== ANNOUNCEMENT EVENTS ==========
+    socket.on(SocketEvent.ANNOUNCEMENT_UPDATED, (data?: any) => {
+      io.emit(SocketEvent.ANNOUNCEMENT_UPDATED, data);
+    });
+
     // ========== ONLINE STATUS ==========
     // Let a freshly-mounted client (e.g. the chat screen) pull the current
     // online snapshot instead of waiting for the next connect/disconnect.

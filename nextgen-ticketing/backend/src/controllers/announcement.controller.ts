@@ -153,7 +153,7 @@ export const announcementController = {
 
   async createAnnouncement(req: Request, res: Response) {
     try {
-      const { title, description, date, type, projectId, shouldPopout } = req.body;
+      const { title, description, date, type, projectId, shouldPopout, isProjectTeamOnly } = req.body;
       const authorId = (req as any).user.id;
 
       const announcement = await announcementRepository.create({
@@ -164,6 +164,7 @@ export const announcementController = {
         authorId,
         projectId: projectId || null,
         shouldPopout: !!shouldPopout,
+        isProjectTeamOnly: !!isProjectTeamOnly,
       });
 
       res.status(201).json({ announcement });
@@ -175,7 +176,7 @@ export const announcementController = {
   async updateAnnouncement(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { title, description, date, type, projectId, shouldPopout } = req.body;
+      const { title, description, date, type, projectId, shouldPopout, isProjectTeamOnly } = req.body;
       const user = (req as any).user;
 
       const existing = await announcementRepository.findById(id as string);
@@ -198,6 +199,7 @@ export const announcementController = {
         type,
         projectId: projectId || null,
         shouldPopout: shouldPopout !== undefined ? !!shouldPopout : undefined,
+        isProjectTeamOnly: isProjectTeamOnly !== undefined ? !!isProjectTeamOnly : undefined,
       });
 
       res.json({ announcement });

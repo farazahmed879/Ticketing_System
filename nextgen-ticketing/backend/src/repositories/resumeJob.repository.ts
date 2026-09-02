@@ -157,6 +157,7 @@ export const resumeJobRepository = {
         id: true,
         status: true,
         originalName: true,
+        driveUrl: true,
         error: true,
         candidateId: true,
         candidateName: true,

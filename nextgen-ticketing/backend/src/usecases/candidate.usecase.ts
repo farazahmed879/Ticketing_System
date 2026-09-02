@@ -618,7 +618,27 @@ export const candidateUsecase = {
       .filter(Boolean)
       .slice(0, 200);
     if (ids.length === 0) return [];
-    return resumeJobRepository.findByIds(ids);
+    const jobs = await resumeJobRepository.findByIds(ids);
+
+    // For duplicate_found jobs, look up the existing candidate's resumeUrl
+    // so the frontend can show "View Existing Resume" alongside the new one.
+    const enriched = await Promise.all(
+      jobs.map(async (job) => {
+        if (
+          (job.status === "duplicate_found" || job.status === "duplicate_conflict") &&
+          job.existingCandidateId
+        ) {
+          const existing = await prisma.candidate.findUnique({
+            where: { id: job.existingCandidateId },
+            select: { resumeUrl: true },
+          });
+          return { ...job, existingResumeUrl: existing?.resumeUrl || null };
+        }
+        return job;
+      }),
+    );
+
+    return enriched;
   },
 
   async convertToUser(id: string) {

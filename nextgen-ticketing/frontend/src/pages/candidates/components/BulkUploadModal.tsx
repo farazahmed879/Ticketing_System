@@ -33,6 +33,8 @@ interface FileEntry {
   jobId?: string; // server-side ResumeJob id (async processing)
   assignedPosition?: string;
   existingCandidateId?: string;
+  newResumeUrl?: string;
+  existingResumeUrl?: string;
 }
 
 interface CsvCandidateRow {
@@ -70,6 +72,8 @@ interface SummaryItem {
   assignedPosition?: string;
   existingCandidateId?: string;
   duplicateAction?: "replace" | "skip";
+  newResumeUrl?: string;
+  existingResumeUrl?: string;
 }
 
 interface UploadSummary {
@@ -308,6 +312,8 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                       candidateName: job.candidateName || f.candidateName,
                       jobId: job.id,
                       existingCandidateId: job.existingCandidateId,
+                      newResumeUrl: job.driveUrl || undefined,
+                      existingResumeUrl: job.existingResumeUrl || undefined,
                     }
                   : f,
               ),
@@ -361,6 +367,8 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
         assignedPosition: f.assignedPosition || "",
         existingCandidateId: f.existingCandidateId,
         duplicateAction: "replace",
+        newResumeUrl: f.newResumeUrl,
+        existingResumeUrl: f.existingResumeUrl,
       }));
       const successCount = items.filter((i) => i.status === "success").length;
       const errorCount = items.filter((i) => i.status === "error").length;
@@ -1731,6 +1739,87 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                           Duplicate Entry
                         </span>
                       </div>
+
+                      {/* View Resume Buttons */}
+                      {(item.newResumeUrl || item.existingResumeUrl) && (
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            alignItems: "center",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {item.newResumeUrl && (
+                            <a
+                              href={item.newResumeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                fontSize: "0.78rem",
+                                fontWeight: 600,
+                                color: "#8b5cf6",
+                                background: "rgba(139, 92, 246, 0.08)",
+                                border: "1px solid rgba(139, 92, 246, 0.25)",
+                                borderRadius: "6px",
+                                padding: "4px 10px",
+                                textDecoration: "none",
+                                cursor: "pointer",
+                                transition: "background 0.15s",
+                              }}
+                              onMouseEnter={(e) =>
+                                (e.currentTarget.style.background =
+                                  "rgba(139, 92, 246, 0.16)")
+                              }
+                              onMouseLeave={(e) =>
+                                (e.currentTarget.style.background =
+                                  "rgba(139, 92, 246, 0.08)")
+                              }
+                            >
+                              <CustomIcon name="FileText" size={13} color="#8b5cf6" />
+                              New Resume
+                              <CustomIcon name="ExternalLink" size={11} color="#8b5cf6" />
+                            </a>
+                          )}
+                          {item.existingResumeUrl && (
+                            <a
+                              href={item.existingResumeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                fontSize: "0.78rem",
+                                fontWeight: 600,
+                                color: "#f59e0b",
+                                background: "rgba(245, 158, 11, 0.08)",
+                                border: "1px solid rgba(245, 158, 11, 0.25)",
+                                borderRadius: "6px",
+                                padding: "4px 10px",
+                                textDecoration: "none",
+                                cursor: "pointer",
+                                transition: "background 0.15s",
+                              }}
+                              onMouseEnter={(e) =>
+                                (e.currentTarget.style.background =
+                                  "rgba(245, 158, 11, 0.16)")
+                              }
+                              onMouseLeave={(e) =>
+                                (e.currentTarget.style.background =
+                                  "rgba(245, 158, 11, 0.08)")
+                              }
+                            >
+                              <CustomIcon name="FileText" size={13} color="#f59e0b" />
+                              Existing Resume
+                              <CustomIcon name="ExternalLink" size={11} color="#f59e0b" />
+                            </a>
+                          )}
+                        </div>
+                      )}
 
                       <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                         <select

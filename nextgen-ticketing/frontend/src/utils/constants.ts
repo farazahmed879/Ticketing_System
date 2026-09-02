@@ -238,6 +238,33 @@ export const CANDIDATE_META_TAGS = [
   "Senior",
 ] as const;
 
+export const COMMON_POSITIONS = [
+  "Frontend Developer",
+  "Backend Developer",
+  "Full Stack Developer",
+  "Software Engineer",
+  "Senior Software Engineer",
+  "QA Engineer",
+  "Data Analyst",
+  "DevOps Engineer",
+  "UI/UX Designer",
+  "Project Manager",
+  "Product Manager",
+  "Business Analyst",
+  "Mobile Developer",
+  "iOS Developer",
+  "Android Developer",
+  "Data Scientist",
+  "Machine Learning Engineer",
+  "Cloud Architect",
+  "System Administrator",
+  "Technical Lead",
+  "Engineering Manager",
+  "Scrum Master",
+  "HR Manager",
+  "Recruiter",
+] as const;
+
 export const Recommendation = {
   STRONG_HIRE: "Strong Hire",
   HIRE: "Hire",

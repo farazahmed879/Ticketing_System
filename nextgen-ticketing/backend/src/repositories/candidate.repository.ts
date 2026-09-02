@@ -53,6 +53,22 @@ export const candidateRepository = {
     return prisma.candidate.create({ data });
   },
 
+  /**
+   * Check if a non-deleted candidate with the same email + position already
+   * exists. Used for the duplicate-check before insert (same person applying
+   * for the same role is a duplicate; different role is allowed).
+   */
+  async findByEmailAndPosition(email: string, position: string) {
+    return prisma.candidate.findFirst({
+      where: {
+        email: { equals: email, mode: "insensitive" },
+        position: { equals: position, mode: "insensitive" },
+        deleted: false,
+      },
+      select: { id: true, name: true, email: true, position: true },
+    });
+  },
+
   async update(id: string, data: any) {
     return prisma.candidate.update({
       where: { id },
@@ -61,10 +77,45 @@ export const candidateRepository = {
   },
 
   async delete(id: string) {
+    const candidate = await prisma.candidate.findUnique({
+      where: { id },
+      select: { email: true },
+    });
+    if (!candidate) return null;
     return prisma.candidate.update({
       where: { id },
-      data: { deleted: true },
+      data: {
+        deleted: true,
+        email: candidate.email.startsWith("deleted_")
+          ? candidate.email
+          : `deleted_${Date.now()}_${candidate.email}`,
+      },
     });
+  },
+
+  /**
+   * Rename emails of any existing soft-deleted candidates matching (email, position)
+   * so MongoDB's unique index doesn't block creating a new candidate with the same email.
+   */
+  async clearSoftDeletedConflict(email: string, position: string) {
+    if (!email || !position) return;
+    const staleDeleted = await prisma.candidate.findMany({
+      where: {
+        email: { equals: email, mode: "insensitive" },
+        position: { equals: position, mode: "insensitive" },
+        deleted: true,
+      },
+      select: { id: true, email: true },
+    });
+
+    for (const c of staleDeleted) {
+      if (!c.email.startsWith("deleted_")) {
+        await prisma.candidate.update({
+          where: { id: c.id },
+          data: { email: `deleted_${Date.now()}_${c.email}` },
+        });
+      }
+    }
   },
 
   async createNote(data: {
@@ -94,5 +145,14 @@ export const candidateRepository = {
       },
       orderBy: { createdAt: "desc" },
     });
+  },
+
+  async getDistinctPositions() {
+    const candidates = await prisma.candidate.findMany({
+      where: { deleted: false, position: { not: "" } },
+      select: { position: true },
+      distinct: ["position"],
+    });
+    return candidates.map((c) => c.position).filter(Boolean);
   },
 };

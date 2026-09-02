@@ -6,6 +6,7 @@ import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import { useNotification } from "../../../context/NotificationContext";
 import { CandidateStatus, COUNTRY_CODES } from "../../../utils/constants";
+import PositionAutocomplete from "../../../components/PositionAutocomplete";
 
 interface BulkUploadModalProps {
   isOpen: boolean;
@@ -13,7 +14,15 @@ interface BulkUploadModalProps {
   onSuccess: () => void; // Triggered when at least one candidate is successfully created
 }
 
-type FileStatus = "pending" | "processing" | "success" | "error";
+type FileStatus =
+  | "pending"
+  | "processing"
+  | "success"
+  | "error"
+  | "needs_title"
+  | "duplicate_found"
+  | "replaced"
+  | "skipped_by_user";
 
 interface FileEntry {
   id: string;
@@ -22,6 +31,8 @@ interface FileEntry {
   message?: string;
   candidateName?: string;
   jobId?: string; // server-side ResumeJob id (async processing)
+  assignedPosition?: string;
+  existingCandidateId?: string;
 }
 
 interface CsvCandidateRow {
@@ -42,6 +53,32 @@ interface CsvCandidateRow {
   message?: string;
   isValid: boolean;
   errors: string[];
+}
+
+interface SummaryItem {
+  name: string;
+  status:
+    | "success"
+    | "error"
+    | "needs_title"
+    | "duplicate_found"
+    | "replaced"
+    | "skipped_by_user";
+  error?: string;
+  candidateName?: string;
+  jobId?: string;
+  assignedPosition?: string;
+  existingCandidateId?: string;
+  duplicateAction?: "replace" | "skip";
+}
+
+interface UploadSummary {
+  total: number;
+  successCount: number;
+  errorCount: number;
+  needsTitleCount: number;
+  duplicateCount: number;
+  items: SummaryItem[];
 }
 
 // RFC-4180 compliant CSV Parser
@@ -105,6 +142,8 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [csvRows, setCsvRows] = useState<CsvCandidateRow[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [summary, setSummary] = useState<UploadSummary | null>(null);
+  const [assigningJobId, setAssigningJobId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const csvFileInputRef = useRef<HTMLInputElement>(null);
   const { showNotification } = useNotification();
@@ -239,6 +278,40 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                   : f,
               ),
             );
+          } else if (job.status === "needs_title") {
+            pendingIds.delete(job.id);
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === entryId
+                  ? {
+                      ...f,
+                      status: "needs_title",
+                      message: "Position title required",
+                      candidateName: job.candidateName || f.candidateName,
+                      jobId: job.id,
+                    }
+                  : f,
+              ),
+            );
+          } else if (
+            job.status === "duplicate_found" ||
+            job.status === "duplicate_conflict"
+          ) {
+            pendingIds.delete(job.id);
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === entryId
+                  ? {
+                      ...f,
+                      status: "duplicate_found",
+                      message: "A candidate with this email already applied for this role.",
+                      candidateName: job.candidateName || f.candidateName,
+                      jobId: job.id,
+                      existingCandidateId: job.existingCandidateId,
+                    }
+                  : f,
+              ),
+            );
           } else if (job.status === "processing") {
             setFiles((prev) =>
               prev.map((f) =>
@@ -269,9 +342,49 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
     }
 
     setIsProcessing(false);
+    setFiles((currentFiles) => {
+      const items: SummaryItem[] = currentFiles.map((f) => ({
+        name: f.file.name,
+        status:
+          f.status === "success" || f.status === "replaced"
+            ? "success"
+            : f.status === "needs_title"
+              ? "needs_title"
+              : f.status === "duplicate_found"
+                ? "duplicate_found"
+                : f.status === "skipped_by_user"
+                  ? "skipped_by_user"
+                  : "error",
+        error: f.status === "error" ? f.message || "Failed to process" : undefined,
+        candidateName: f.candidateName,
+        jobId: f.jobId,
+        assignedPosition: f.assignedPosition || "",
+        existingCandidateId: f.existingCandidateId,
+        duplicateAction: "replace",
+      }));
+      const successCount = items.filter((i) => i.status === "success").length;
+      const errorCount = items.filter((i) => i.status === "error").length;
+      const needsTitleCount = items.filter(
+        (i) => i.status === "needs_title",
+      ).length;
+      const duplicateCount = items.filter(
+        (i) => i.status === "duplicate_found",
+      ).length;
+
+      setSummary({
+        total: items.length,
+        successCount,
+        errorCount,
+        needsTitleCount,
+        duplicateCount,
+        items,
+      });
+
+      return currentFiles;
+    });
+
     if (anySuccess) {
       showNotification("success", "Bulk upload completed");
-      onSuccess();
     }
   };
 
@@ -458,9 +571,30 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
     }
 
     setIsProcessing(false);
+    setCsvRows((currentRows) => {
+      const items: SummaryItem[] = currentRows.map((r) => ({
+        name: r.name || r.email || `Row ${r.id}`,
+        status: r.status === "success" ? "success" : "error",
+        error: r.status === "error" ? r.message || "Failed to create" : undefined,
+        candidateName: r.name,
+      }));
+      const successCount = items.filter((i) => i.status === "success").length;
+      const errorCount = items.filter((i) => i.status === "error").length;
+
+      setSummary({
+        total: items.length,
+        successCount,
+        errorCount,
+        needsTitleCount: 0,
+        duplicateCount: 0,
+        items,
+      });
+
+      return currentRows;
+    });
+
     if (anySuccess) {
       showNotification("success", "Bulk spreadsheet upload completed");
-      onSuccess();
     }
   };
 
@@ -482,7 +616,14 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
           />
         );
       case "success":
+      case "replaced":
         return <CustomIcon name="CheckCircle" size={16} color="#10b981" />;
+      case "needs_title":
+        return <CustomIcon name="HelpCircle" size={16} color="#f59e0b" />;
+      case "duplicate_found":
+        return <CustomIcon name="Copy" size={16} color="#3b82f6" />;
+      case "skipped_by_user":
+        return <CustomIcon name="MinusCircle" size={16} color="#9ca3af" />;
       case "error":
         return <CustomIcon name="AlertCircle" size={16} color="#ef4444" />;
     }
@@ -506,7 +647,8 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
     csvRows.every((r) => r.status === "success" || !r.isValid);
 
   return (
-    <Modal
+    <>
+      <Modal
       isOpen={isOpen}
       onClose={handleClose}
       title="Bulk Upload Candidates"
@@ -1224,7 +1366,610 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
         )}
       </div>
     </Modal>
-  );
+
+    {/* Post-Upload Summary Results Modal */}
+    {summary && (
+      <Modal
+        isOpen={!!summary}
+        onClose={() => {
+          const hasSuccess = summary.successCount > 0;
+          setSummary(null);
+          if (hasSuccess) {
+            onSuccess();
+            onClose();
+          }
+        }}
+        title="Bulk Upload Summary"
+        maxWidth="620px"
+        footer={
+          <CustomButton
+            variant="gradient"
+            onClick={() => {
+              const hasSuccess = summary.successCount > 0;
+              setSummary(null);
+              if (hasSuccess) {
+                onSuccess();
+                onClose();
+              }
+            }}
+          >
+            {summary.successCount > 0 ? "Done & View Candidates" : "Close"}
+          </CustomButton>
+        }
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Top Summary Stats */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                summary.needsTitleCount > 0
+                  ? "repeat(4, 1fr)"
+                  : "repeat(3, 1fr)",
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                background: "var(--bg-glass-hover, rgba(255, 255, 255, 0.05))",
+                border: "1px solid var(--border-glass, rgba(255, 255, 255, 0.1))",
+                borderRadius: "12px",
+                padding: "16px 12px",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--text-main)" }}>
+                {summary.total}
+              </div>
+              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>
+                Total Processed
+              </div>
+            </div>
+
+            <div
+              style={{
+                background: "rgba(16, 185, 129, 0.08)",
+                border: "1px solid rgba(16, 185, 129, 0.25)",
+                borderRadius: "12px",
+                padding: "16px 12px",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: "#10b981" }}>
+                {summary.successCount}
+              </div>
+              <div style={{ fontSize: "0.8rem", color: "#10b981", marginTop: "4px", fontWeight: 600 }}>
+                Uploaded
+              </div>
+            </div>
+
+            {summary.needsTitleCount > 0 && (
+              <div
+                style={{
+                  background: "rgba(245, 158, 11, 0.08)",
+                  border: "1px solid rgba(245, 158, 11, 0.25)",
+                  borderRadius: "12px",
+                  padding: "16px 12px",
+                  textAlign: "center",
+                }}
+              >
+                <div style={{ fontSize: "1.6rem", fontWeight: 700, color: "#f59e0b" }}>
+                  {summary.needsTitleCount}
+                </div>
+                <div style={{ fontSize: "0.8rem", color: "#f59e0b", marginTop: "4px", fontWeight: 600 }}>
+                  Needs Title
+                </div>
+              </div>
+            )}
+
+            {summary.duplicateCount > 0 && (
+              <div
+                style={{
+                  background: "rgba(59, 130, 246, 0.08)",
+                  border: "1px solid rgba(59, 130, 246, 0.25)",
+                  borderRadius: "12px",
+                  padding: "16px 12px",
+                  textAlign: "center",
+                }}
+              >
+                <div style={{ fontSize: "1.6rem", fontWeight: 700, color: "#3b82f6" }}>
+                  {summary.duplicateCount}
+                </div>
+                <div style={{ fontSize: "0.8rem", color: "#3b82f6", marginTop: "4px", fontWeight: 600 }}>
+                  Duplicates
+                </div>
+              </div>
+            )}
+
+            <div
+              style={{
+                background: summary.errorCount > 0 ? "rgba(239, 68, 68, 0.08)" : "var(--bg-glass-hover, rgba(255, 255, 255, 0.05))",
+                border: summary.errorCount > 0 ? "1px solid rgba(239, 68, 68, 0.25)" : "1px solid var(--border-glass, rgba(255, 255, 255, 0.1))",
+                borderRadius: "12px",
+                padding: "16px 12px",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: summary.errorCount > 0 ? "#ef4444" : "var(--text-muted)" }}>
+                {summary.errorCount}
+              </div>
+              <div style={{ fontSize: "0.8rem", color: summary.errorCount > 0 ? "#ef4444" : "var(--text-muted)", marginTop: "4px", fontWeight: summary.errorCount > 0 ? 600 : 400 }}>
+                Failed / Errors
+              </div>
+            </div>
+          </div>
+
+          {/* Needs Position Title Review Section */}
+          {summary.needsTitleCount > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <h4
+                style={{
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
+                  color: "#f59e0b",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  margin: 0,
+                }}
+              >
+                <CustomIcon name="HelpCircle" size={18} color="#f59e0b" />
+                Resumes Needing Position Title ({summary.needsTitleCount})
+              </h4>
+              <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: 0 }}>
+                The following resumes have no detected position title. Select or enter a title for each to save them:
+              </p>
+              <div
+                style={{
+                  maxHeight: "260px",
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                  paddingRight: "4px",
+                }}
+              >
+                {summary.items
+                  .filter((item) => item.status === "needs_title")
+                  .map((item, idx) => (
+                    <div
+                      key={item.jobId || idx}
+                      style={{
+                        background: "rgba(245, 158, 11, 0.06)",
+                        border: "1px solid rgba(245, 158, 11, 0.25)",
+                        borderRadius: "10px",
+                        padding: "12px 14px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: 600,
+                            color: "var(--text-main)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <CustomIcon name="FileText" size={15} color="#f59e0b" />
+                          {item.candidateName || item.name}
+                        </span>
+                        <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                          {item.name}
+                        </span>
+                      </div>
+
+                      <div style={{ display: "flex", gap: "10px", alignItems: "flex-end" }}>
+                        <div style={{ flex: 1 }}>
+                          <PositionAutocomplete
+                            value={item.assignedPosition || ""}
+                            onChange={(val) => {
+                              setSummary((prev) => {
+                                if (!prev) return null;
+                                return {
+                                  ...prev,
+                                  items: prev.items.map((i) =>
+                                    i.jobId === item.jobId
+                                      ? { ...i, assignedPosition: val }
+                                      : i,
+                                  ),
+                                };
+                              });
+                            }}
+                            placeholder="Type or pick a position title..."
+                            label=""
+                          />
+                        </div>
+                        <CustomButton
+                          variant="gradient"
+                          size="sm"
+                          disabled={!item.assignedPosition?.trim() || assigningJobId === item.jobId}
+                          loading={assigningJobId === item.jobId}
+                          onClick={async () => {
+                            if (!item.jobId || !item.assignedPosition?.trim()) return;
+                            setAssigningJobId(item.jobId);
+                            try {
+                              await api.post(
+                                API_ROUTES.CANDIDATES.ASSIGN_TITLE(item.jobId),
+                                { position: item.assignedPosition.trim() },
+                              );
+                              showNotification(
+                                "success",
+                                `Candidate saved as "${item.assignedPosition.trim()}"`,
+                              );
+                              onSuccess();
+                              setSummary((prev) => {
+                                if (!prev) return null;
+                                const updatedItems = prev.items.map((i) =>
+                                  i.jobId === item.jobId
+                                    ? { ...i, status: "success" as const, error: undefined }
+                                    : i,
+                                );
+                                const sCount = updatedItems.filter(
+                                  (i) => i.status === "success",
+                                ).length;
+                                const ntCount = updatedItems.filter(
+                                  (i) => i.status === "needs_title",
+                                ).length;
+                                return {
+                                  ...prev,
+                                  successCount: sCount,
+                                  needsTitleCount: ntCount,
+                                  items: updatedItems,
+                                };
+                              });
+                            } catch (assignErr: any) {
+                              const errMsg =
+                                assignErr.response?.data?.error ||
+                                assignErr.message ||
+                                "Failed to assign title";
+                              showNotification("error", errMsg);
+                              setSummary((prev) => {
+                                if (!prev) return null;
+                                return {
+                                  ...prev,
+                                  items: prev.items.map((i) =>
+                                    i.jobId === item.jobId ? { ...i, error: errMsg } : i,
+                                  ),
+                                };
+                              });
+                            } finally {
+                              setAssigningJobId(null);
+                            }
+                          }}
+                        >
+                          Save
+                        </CustomButton>
+                      </div>
+                      {item.error && (
+                        <span style={{ fontSize: "0.78rem", color: "#ef4444" }}>
+                          {item.error}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Duplicate Resumes Detected Section */}
+          {summary.duplicateCount > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <h4
+                style={{
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
+                  color: "#3b82f6",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  margin: 0,
+                }}
+              >
+                <CustomIcon name="Copy" size={18} color="#3b82f6" />
+                Duplicate Resumes Detected ({summary.duplicateCount})
+              </h4>
+              <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", margin: 0 }}>
+                A candidate with the same email and position already exists in the database. Choose how to handle each duplicate:
+              </p>
+              <div
+                style={{
+                  maxHeight: "260px",
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                  paddingRight: "4px",
+                }}
+              >
+                {summary.items
+                  .filter((item) => item.status === "duplicate_found")
+                  .map((item, idx) => (
+                    <div
+                      key={item.jobId || idx}
+                      style={{
+                        background: "rgba(59, 130, 246, 0.06)",
+                        border: "1px solid rgba(59, 130, 246, 0.25)",
+                        borderRadius: "10px",
+                        padding: "12px 14px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: 600,
+                            color: "var(--text-main)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <CustomIcon name="FileText" size={15} color="#3b82f6" />
+                          {item.candidateName || item.name}
+                        </span>
+                        <span style={{ fontSize: "0.78rem", color: "#3b82f6", fontWeight: 600 }}>
+                          Duplicate Entry
+                        </span>
+                      </div>
+
+                      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        <select
+                          value={item.duplicateAction || "replace"}
+                          onChange={(e) => {
+                            const act = e.target.value as "replace" | "skip";
+                            setSummary((prev) => {
+                              if (!prev) return null;
+                              return {
+                                ...prev,
+                                items: prev.items.map((i) =>
+                                  i.jobId === item.jobId
+                                    ? { ...i, duplicateAction: act }
+                                    : i,
+                                ),
+                              };
+                            });
+                          }}
+                          style={{
+                            flex: 1,
+                            background: "var(--bg-glass, rgba(255, 255, 255, 0.05))",
+                            border: "1px solid var(--border-glass, rgba(255, 255, 255, 0.15))",
+                            borderRadius: "8px",
+                            padding: "8px 10px",
+                            color: "var(--text-main)",
+                            fontSize: "0.85rem",
+                            outline: "none",
+                          }}
+                        >
+                          <option value="replace" style={{ background: "#1e1e2e", color: "#fff" }}>
+                            Replace existing record
+                          </option>
+                          <option value="skip" style={{ background: "#1e1e2e", color: "#fff" }}>
+                            Keep existing / discard new upload
+                          </option>
+                        </select>
+
+                        <CustomButton
+                          variant="gradient"
+                          size="sm"
+                          disabled={assigningJobId === item.jobId}
+                          loading={assigningJobId === item.jobId}
+                          onClick={async () => {
+                            if (!item.jobId) return;
+                            const action = item.duplicateAction || "replace";
+                            setAssigningJobId(item.jobId);
+                            try {
+                              await api.post(
+                                API_ROUTES.CANDIDATES.RESOLVE_DUPLICATE(item.jobId),
+                                { action },
+                              );
+                              showNotification(
+                                "success",
+                                action === "replace"
+                                  ? "Replaced existing record successfully"
+                                  : "Skipped duplicate resume",
+                              );
+                              onSuccess();
+                              setSummary((prev) => {
+                                if (!prev) return null;
+                                const updatedItems = prev.items.map((i) =>
+                                  i.jobId === item.jobId
+                                    ? {
+                                        ...i,
+                                        status: action === "skip" ? ("skipped_by_user" as const) : ("success" as const),
+                                        error: action === "skip" ? "Skipped by user" : undefined,
+                                      }
+                                    : i,
+                                );
+                                const sCount = updatedItems.filter(
+                                  (i) => i.status === "success",
+                                ).length;
+                                const dCount = updatedItems.filter(
+                                  (i) => i.status === "duplicate_found",
+                                ).length;
+                                const eCount = updatedItems.filter(
+                                  (i) => i.status === "error",
+                                ).length;
+                                return {
+                                  ...prev,
+                                  successCount: sCount,
+                                  duplicateCount: dCount,
+                                  errorCount: eCount,
+                                  items: updatedItems,
+                                };
+                              });
+                            } catch (resolveErr: any) {
+                              const errMsg =
+                                resolveErr.response?.data?.error ||
+                                resolveErr.message ||
+                                "Failed to resolve duplicate";
+                              showNotification("error", errMsg);
+                            } finally {
+                              setAssigningJobId(null);
+                            }
+                          }}
+                        >
+                          Apply
+                        </CustomButton>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Error Breakdown Section */}
+          {summary.errorCount > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <h4
+                style={{
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
+                  color: "#ef4444",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  margin: 0,
+                }}
+              >
+                <CustomIcon name="AlertCircle" size={18} color="#ef4444" />
+                Resumes with Errors ({summary.errorCount})
+              </h4>
+              <div
+                style={{
+                  maxHeight: "220px",
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  paddingRight: "4px",
+                }}
+              >
+                {summary.items
+                  .filter((item) => item.status === "error")
+                  .map((item, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        background: "rgba(239, 68, 68, 0.06)",
+                        border: "1px solid rgba(239, 68, 68, 0.2)",
+                        borderRadius: "8px",
+                        padding: "10px 14px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontWeight: 600,
+                          fontSize: "0.85rem",
+                          color: "var(--text-main)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <CustomIcon name="FileText" size={15} color="#ef4444" />
+                        {item.name}
+                      </div>
+                      <div style={{ fontSize: "0.8rem", color: "#f87171", paddingLeft: "23px" }}>
+                        {item.error || "Failed to process resume"}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Successful Uploads Section */}
+          {summary.successCount > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <h4
+                style={{
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
+                  color: "#10b981",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  margin: 0,
+                }}
+              >
+                <CustomIcon name="CheckCircle" size={18} color="#10b981" />
+                Successfully Uploaded ({summary.successCount})
+              </h4>
+              <div
+                style={{
+                  maxHeight: "180px",
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                  paddingRight: "4px",
+                }}
+              >
+                {summary.items
+                  .filter((item) => item.status === "success")
+                  .map((item, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        background: "rgba(16, 185, 129, 0.06)",
+                        border: "1px solid rgba(16, 185, 129, 0.2)",
+                        borderRadius: "8px",
+                        padding: "8px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontWeight: 500,
+                          color: "var(--text-main)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <CustomIcon name="FileText" size={15} color="#10b981" />
+                        {item.name}
+                      </span>
+                      {item.candidateName && (
+                        <span style={{ fontSize: "0.8rem", color: "var(--accent-primary)", fontWeight: 600 }}>
+                          {item.candidateName}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+    )}
+  </>);
 };
 
 export default BulkUploadModal;

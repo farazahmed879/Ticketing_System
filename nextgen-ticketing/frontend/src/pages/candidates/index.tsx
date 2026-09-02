@@ -17,6 +17,9 @@ import CustomButton from "../../components/CustomButton";
 
 import CandidateModal from "./components/CandidateModal";
 import BulkUploadModal from "./components/BulkUploadModal";
+import DuplicateConflictModal, {
+  type DuplicateConflictCandidate,
+} from "./components/DuplicateConflictModal";
 import CustomPagination from "../../components/CustomPagination";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
@@ -32,6 +35,11 @@ const CandidateList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [duplicateConflict, setDuplicateConflict] = useState<{
+    existingCandidate: DuplicateConflictCandidate;
+    payload: any;
+  } | null>(null);
+  const [isResolvingConflict, setIsResolvingConflict] = useState(false);
   const { showNotification, setIsLoading } = useNotification();
   const navigate = useNavigate();
 
@@ -158,12 +166,59 @@ const CandidateList: React.FC = () => {
       setCurrentEditingId(null);
     },
     onError: (err: any) => {
+      const isDuplicate =
+        err.response?.data?.duplicate ||
+        err.response?.status === 409 ||
+        (err.response?.status === 400 &&
+          (err.response?.data?.error?.includes("already exists") ||
+            err.response?.data?.error?.includes("already registered")));
+
+      if (isDuplicate && err.response?.data?.existingCandidate) {
+        let payload = null;
+        try {
+          payload = err.config?.data ? JSON.parse(err.config.data) : null;
+        } catch (e) {}
+        setDuplicateConflict({
+          existingCandidate: err.response.data.existingCandidate,
+          payload,
+        });
+        return;
+      }
       showNotification(
         "error",
         err.response?.data?.error || "Failed to save candidate",
       );
     },
   });
+
+  const handleResolveConflict = async (action: "update" | "replace") => {
+    if (!duplicateConflict) return;
+    setIsResolvingConflict(true);
+    try {
+      const payload = {
+        ...(duplicateConflict.payload || {}),
+        overwriteMode: action,
+      };
+      await api.post(API_ROUTES.CANDIDATES.BASE, payload);
+      queryClient.invalidateQueries({ queryKey: ["candidates"] });
+      showNotification(
+        "success",
+        action === "update"
+          ? "Existing candidate updated successfully"
+          : "Candidate replaced successfully",
+      );
+      setDuplicateConflict(null);
+      setIsModalOpen(false);
+      setCurrentEditingId(null);
+    } catch (err: any) {
+      showNotification(
+        "error",
+        err.response?.data?.error || "Failed to resolve candidate conflict",
+      );
+    } finally {
+      setIsResolvingConflict(false);
+    }
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -868,6 +923,14 @@ const CandidateList: React.FC = () => {
           setIsBulkModalOpen(false);
           queryClient.invalidateQueries({ queryKey: ["candidates"] });
         }}
+      />
+
+      <DuplicateConflictModal
+        isOpen={!!duplicateConflict}
+        onClose={() => setDuplicateConflict(null)}
+        existingCandidate={duplicateConflict?.existingCandidate || null}
+        onResolve={handleResolveConflict}
+        isResolving={isResolvingConflict}
       />
     </>
   );

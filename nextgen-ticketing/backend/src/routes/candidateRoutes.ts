@@ -30,12 +30,31 @@ router.get(
   checkRole(allowedRoles),
   candidateController.getLeaderboard,
 );
+router.get(
+  "/positions",
+  authMiddleware,
+  checkRole(allowedRoles),
+  candidateController.getPositionSuggestions,
+);
+
 // Job-status polling for async bulk upload. Must be registered before /:id.
 router.get(
   "/jobs",
   authMiddleware,
   checkRole(allowedRoles),
   candidateController.getResumeJobs,
+);
+router.post(
+  "/jobs/:jobId/assign-title",
+  authMiddleware,
+  checkRole(allowedRoles),
+  candidateController.assignJobTitle,
+);
+router.post(
+  "/jobs/:jobId/resolve-duplicate",
+  authMiddleware,
+  checkRole(allowedRoles),
+  candidateController.resolveDuplicateJob,
 );
 router.get(
   "/:id",

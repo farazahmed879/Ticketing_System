@@ -72,6 +72,60 @@ export const resumeJobRepository = {
     });
   },
 
+  async markNeedsTitle(
+    id: string,
+    candidateName: string,
+    parsedData: any,
+    parsedPosition?: string | null,
+  ) {
+    return prisma.resumeJob.update({
+      where: { id },
+      data: {
+        status: "needs_title",
+        candidateName,
+        parsedData,
+        parsedPosition: parsedPosition || null,
+        error: null,
+        leasedAt: null,
+      },
+    });
+  },
+
+  async markDuplicateFound(
+    id: string,
+    existingCandidateId: string,
+    candidateName: string,
+    parsedData: any,
+    parsedPosition?: string | null,
+  ) {
+    return prisma.resumeJob.update({
+      where: { id },
+      data: {
+        status: "duplicate_found",
+        existingCandidateId,
+        candidateName,
+        parsedData,
+        parsedPosition: parsedPosition || null,
+        error: "A candidate with this email already applied for this role.",
+        leasedAt: null,
+      },
+    });
+  },
+
+  async markReplaced(id: string, candidateId: string, candidateName: string) {
+    return prisma.resumeJob.update({
+      where: { id },
+      data: { status: "replaced", candidateId, candidateName, error: null },
+    });
+  },
+
+  async markSkipped(id: string) {
+    return prisma.resumeJob.update({
+      where: { id },
+      data: { status: "skipped_by_user", error: "Skipped by user" },
+    });
+  },
+
   /**
    * Record a failure. Jobs with attempts left go back to "pending" for a
    * prompt retry; exhausted jobs are marked "failed" permanently.
@@ -106,6 +160,9 @@ export const resumeJobRepository = {
         error: true,
         candidateId: true,
         candidateName: true,
+        parsedData: true,
+        parsedPosition: true,
+        existingCandidateId: true,
         attempts: true,
       },
     });

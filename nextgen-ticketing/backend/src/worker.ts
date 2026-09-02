@@ -34,9 +34,28 @@ async function handleJob(job: LeasedJob): Promise<void> {
   const label = `${job.originalName} (job ${job.id}, attempt ${job.attempts})`;
   console.log(`[worker] processing ${label}`);
   try {
-    const { candidateId, candidateName } = await processResumeJob(job as any);
-    await resumeJobRepository.markDone(job.id, candidateId, candidateName);
-    console.log(`[worker] done ${label} -> candidate ${candidateId}`);
+    const result = await processResumeJob(job as any);
+    if (result.needsTitle) {
+      await resumeJobRepository.markNeedsTitle(
+        job.id,
+        result.candidateName,
+        result.parsedData,
+        result.parsedPosition,
+      );
+      console.log(`[worker] needs_title ${label}`);
+    } else if (result.duplicateFound) {
+      await resumeJobRepository.markDuplicateFound(
+        job.id,
+        result.existingCandidateId || "",
+        result.candidateName,
+        result.parsedData,
+        result.parsedPosition,
+      );
+      console.log(`[worker] duplicate_found ${label}`);
+    } else if (result.candidateId) {
+      await resumeJobRepository.markDone(job.id, result.candidateId, result.candidateName);
+      console.log(`[worker] done ${label} -> candidate ${result.candidateId}`);
+    }
   } catch (err: any) {
     const message = err?.message || String(err);
     console.error(`[worker] failed ${label}: ${message}`);

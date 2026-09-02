@@ -438,6 +438,27 @@ function extractContactInfo(text: string): {
     }
   }
 
+  // Clear single vague words (like "Coordinator", "Associate", "Applicant") that are
+  // too ambiguous to be valid position titles, so the user is prompted to assign one.
+  if (result.position) {
+    const WEAK_TITLES = new Set([
+      "coordinator",
+      "associate",
+      "specialist",
+      "officer",
+      "executive",
+      "intern",
+      "assistant",
+      "consultant",
+      "applicant",
+      "member",
+      "staff",
+    ]);
+    if (WEAK_TITLES.has(result.position.trim().toLowerCase())) {
+      result.position = "";
+    }
+  }
+
   // --- Email ---
   const emailMatch = text.match(
     /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/,

@@ -392,7 +392,7 @@ model TimesheetTask {
 model Candidate {
   id              String      @id @default(auto()) @map("_id") @db.ObjectId
   name            String
-  email           String      @unique
+  email           String
   phone           String?
   cnic            String?
   address         String?
@@ -431,6 +431,10 @@ model Candidate {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   deleted         Boolean     @default(false)
+
+  // Duplicate = same email applying for same position. Different positions are
+  // allowed so the same person can be tracked across multiple roles.
+  @@unique([email, position])
 }
 
 // A single attributed note on a candidate. authorName/authorRole are snapshots
@@ -520,6 +524,9 @@ model ResumeJob {
   error        String?
   candidateId  String?   @db.ObjectId
   candidateName String?  // snapshot for the bulk-upload progress UI
+  parsedData    Json?    // parsed resume payload when position title is missing or conflict
+  parsedPosition String? // raw parsed position (if any)
+  existingCandidateId String? @db.ObjectId // reference to existing candidate on duplicate conflict
   createdById  String?   @db.ObjectId
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

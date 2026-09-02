@@ -370,38 +370,93 @@ export const candidateUsecase = {
     return candidate;
   },
 
-  async createCandidate(data: any, createdById?: string) {
+  async createCandidate(
+    data: any,
+    createdById?: string,
+    overwriteMode?: "update" | "replace",
+  ) {
+    const cleanEmail = data.email ? data.email.trim() : "";
+    const cleanPosition = data.position ? data.position.trim() : "";
+
+    // Duplicate check: same email + same position = duplicate.
+    // Different position for the same email is allowed (candidate applying to
+    // multiple roles).
+    if (cleanEmail && cleanPosition) {
+      const existing = await candidateRepository.findByEmailAndPosition(
+        cleanEmail,
+        cleanPosition,
+      );
+      if (existing) {
+        if (overwriteMode === "update") {
+          return this.updateCandidate(existing.id, { ...data, email: cleanEmail, position: cleanPosition }, createdById);
+        } else if (overwriteMode === "replace") {
+          await candidateRepository.delete(existing.id);
+        } else {
+          const err: any = new Error(
+            `A candidate with email "${cleanEmail}" is already registered for position "${cleanPosition}"`,
+          );
+          err.code = "DUPLICATE_CONFLICT";
+          err.existingCandidate = existing;
+          throw err;
+        }
+      }
+
+      // Clear email on any past soft-deleted candidates so MongoDB's unique index
+      // doesn't conflict with inserting this new record.
+      await candidateRepository.clearSoftDeletedConflict(cleanEmail, cleanPosition);
+    }
+
     const enrichment = await safeEnrichAndEmbed(data);
-    const candidate = await candidateRepository.create({
-      ...data,
-      createdById: createdById || null,
-      skills: enrichment.skills,
-      yearsExperience: enrichment.yearsExperience,
-      skillEmbedding: enrichment.skillEmbedding,
-      phone: data.phone || null,
-      cnic: data.cnic || null,
-      address: data.address || null,
-      resumeUrl: data.resumeUrl || null,
-      // Notes are stored as attributed entries in notesLog, not on the record.
-      notes: null,
-      objective: data.objective || null,
-      technicalSkills: data.technicalSkills || null,
-      workExperience: data.workExperience || null,
-      linkedin: data.linkedin || null,
-      portfolio: data.portfolio || null,
-      github: data.github || null,
-      projects: data.projects || null,
-      metaTags: data.metaTags || null,
-      status: data.status || "Active",
-      dob: data.dob ? new Date(data.dob) : null,
-      nationality: data.nationality || null,
-      city: data.city || null,
-      immediateJoiner: data.immediateJoiner === true || data.immediateJoiner === "true" ? true : false,
-    });
+    try {
+      const candidate = await candidateRepository.create({
+        ...data,
+        email: cleanEmail || data.email,
+        position: cleanPosition || data.position,
+        createdById: createdById || null,
+        skills: enrichment.skills,
+        yearsExperience: enrichment.yearsExperience,
+        skillEmbedding: enrichment.skillEmbedding,
+        phone: data.phone || null,
+        cnic: data.cnic || null,
+        address: data.address || null,
+        resumeUrl: data.resumeUrl || null,
+        // Notes are stored as attributed entries in notesLog, not on the record.
+        notes: null,
+        objective: data.objective || null,
+        technicalSkills: data.technicalSkills || null,
+        workExperience: data.workExperience || null,
+        linkedin: data.linkedin || null,
+        portfolio: data.portfolio || null,
+        github: data.github || null,
+        projects: data.projects || null,
+        metaTags: data.metaTags || null,
+        status: data.status || "Active",
+        dob: data.dob ? new Date(data.dob) : null,
+        nationality: data.nationality || null,
+        city: data.city || null,
+        immediateJoiner: data.immediateJoiner === true || data.immediateJoiner === "true" ? true : false,
+      });
 
-    await addNoteIfPresent(candidate.id, data.notes, createdById);
+      await addNoteIfPresent(candidate.id, data.notes, createdById);
 
-    return candidate;
+      return candidate;
+    } catch (err: any) {
+      if (err?.code === "P2002" && cleanEmail && cleanPosition) {
+        const existing = await candidateRepository.findByEmailAndPosition(cleanEmail, cleanPosition);
+        const conflictErr: any = new Error(
+          `A candidate with email "${cleanEmail}" is already registered for position "${cleanPosition}"`,
+        );
+        conflictErr.code = "DUPLICATE_CONFLICT";
+        conflictErr.existingCandidate = existing || {
+          id: "",
+          name: data.name || "Existing Candidate",
+          email: cleanEmail,
+          position: cleanPosition,
+        };
+        throw conflictErr;
+      }
+      throw err;
+    }
   },
 
   async updateCandidate(id: string, data: any, editorId?: string) {
@@ -657,5 +712,112 @@ export const candidateUsecase = {
       }
       return b.interviewCount - a.interviewCount;
     });
+  },
+
+  async getPositionSuggestions(query?: string) {
+    const commonPositions = [
+      "Frontend Developer",
+      "Backend Developer",
+      "Full Stack Developer",
+      "Software Engineer",
+      "Senior Software Engineer",
+      "QA Engineer",
+      "Data Analyst",
+      "DevOps Engineer",
+      "UI/UX Designer",
+      "Project Manager",
+      "Product Manager",
+      "Business Analyst",
+      "Mobile Developer",
+      "iOS Developer",
+      "Android Developer",
+      "Data Scientist",
+      "Machine Learning Engineer",
+      "Cloud Architect",
+      "System Administrator",
+      "Technical Lead",
+      "Engineering Manager",
+      "Scrum Master",
+      "HR Manager",
+      "Recruiter",
+    ];
+
+    const dbPositions = await candidateRepository.getDistinctPositions();
+    const seen = new Set<string>();
+    const combined: string[] = [];
+
+    for (const pos of [...dbPositions, ...commonPositions]) {
+      const key = pos.toLowerCase().trim();
+      if (!seen.has(key)) {
+        seen.add(key);
+        combined.push(pos.trim());
+      }
+    }
+
+    if (query && query.trim()) {
+      const q = query.toLowerCase().trim();
+      return combined.filter((p) => p.toLowerCase().includes(q));
+    }
+
+    return combined;
+  },
+
+  async assignJobTitle(jobId: string, position: string, userId?: string) {
+    const job = await prisma.resumeJob.findUnique({ where: { id: jobId } });
+    if (!job) {
+      throw new Error("Resume job not found");
+    }
+    if (!job.parsedData) {
+      throw new Error("No saved resume data found for this job");
+    }
+
+    const trimmedPosition = position.trim();
+    if (!trimmedPosition) {
+      throw new Error("Position title is required");
+    }
+
+    const payload = {
+      ...(job.parsedData as any),
+      position: trimmedPosition,
+    };
+
+    const candidate = await this.createCandidate(
+      payload,
+      userId || job.createdById || undefined,
+    );
+
+    await resumeJobRepository.markDone(job.id, candidate.id, candidate.name);
+
+    return candidate;
+  },
+
+  async resolveDuplicateJob(
+    jobId: string,
+    action: "update" | "replace" | "skip",
+    userId?: string,
+  ) {
+    const job = await prisma.resumeJob.findUnique({ where: { id: jobId } });
+    if (!job) {
+      throw new Error("Resume job not found");
+    }
+
+    if (action === "skip") {
+      await resumeJobRepository.markSkipped(job.id);
+      return { skipped: true, status: "skipped_by_user" };
+    }
+
+    if (!job.parsedData) {
+      throw new Error("No saved resume data found for this job");
+    }
+
+    const candidate = await this.createCandidate(
+      job.parsedData,
+      userId || job.createdById || undefined,
+      action === "replace" ? "replace" : "update",
+    );
+
+    await resumeJobRepository.markReplaced(job.id, candidate.id, candidate.name);
+
+    return { success: true, candidate, status: "replaced" };
   },
 };

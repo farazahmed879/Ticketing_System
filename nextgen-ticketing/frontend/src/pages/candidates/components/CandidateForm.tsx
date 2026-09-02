@@ -6,6 +6,7 @@ import CustomSelect from "../../../components/CustomSelect";
 import CustomTextArea from "../../../components/CustomTextArea";
 import CustomButton from "../../../components/CustomButton";
 import CustomChipInput from "../../../components/CustomChipInput";
+import PositionAutocomplete from "../../../components/PositionAutocomplete";
 import PhoneInput from "../../../components/PhoneInput";
 import {
   CandidateStatus,
@@ -431,13 +432,12 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
           />
 
           <div className={styles.twoColGrid}>
-            <CustomInput
+            <PositionAutocomplete
               name="position"
               control={control}
               rules={{ required: "Position is required" }}
-              label="Position"
-              type="text"
-              placeholder="e.g. Senior Developer"
+              label="Position / Role"
+              placeholder="e.g. Senior Backend Developer"
               required
             />
 

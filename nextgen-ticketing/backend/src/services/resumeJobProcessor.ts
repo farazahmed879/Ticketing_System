@@ -3,6 +3,7 @@ import { downloadFromGoogleDrive } from "./googleDriveService";
 import { llamaParseService } from "./llamaParseService";
 import { resumeParserService } from "./resumeParserService";
 import { candidateUsecase } from "../usecases/candidate.usecase";
+import { candidateRepository } from "../repositories/candidate.repository";
 
 /**
  * The heavy per-resume pipeline, run by the worker process (NOT the web
@@ -52,7 +53,16 @@ export interface ResumeJobRecord {
 
 export async function processResumeJob(
   job: ResumeJobRecord,
-): Promise<{ candidateId: string; candidateName: string }> {
+): Promise<{
+  candidateId?: string;
+  candidateName: string;
+  needsTitle?: boolean;
+  duplicateFound?: boolean;
+  existingCandidateId?: string;
+  parsedData?: any;
+  parsedPosition?: string | null;
+  message?: string;
+}> {
   // Idempotency: if a previous attempt already created the candidate but
   // crashed before marking the job done, reuse it instead of duplicating.
   const existing = await prisma.candidate.findFirst({
@@ -92,7 +102,7 @@ export async function processResumeJob(
       parsed.email ||
       `${Math.random().toString(36).substring(7)}@example.com`,
     phone: parsed.phone ? `+92 ${parsed.phone}` : "",
-    position: parsed.position || "Applicant",
+    position: parsed.position ? parsed.position.trim() : "",
     resumeUrl: job.driveUrl,
     notes: text ? "Automatically created from bulk upload." : "",
     status: "Active",
@@ -111,6 +121,16 @@ export async function processResumeJob(
     resumeJobId: job.id,
   };
 
+  // If no position title could be extracted, flag for manual title selection
+  if (!payload.position) {
+    return {
+      needsTitle: true,
+      candidateName: name,
+      parsedData: payload,
+      parsedPosition: null,
+    };
+  }
+
   try {
     const candidate = await candidateUsecase.createCandidate(
       payload,
@@ -118,11 +138,29 @@ export async function processResumeJob(
     );
     return { candidateId: candidate.id, candidateName: candidate.name };
   } catch (err: any) {
-    // Surface the common unique-email conflict with a readable message.
-    if (err?.code === "P2002") {
-      throw new Error(
-        `A candidate with email ${payload.email} already exists`,
-      );
+    if (
+      err?.code === "DUPLICATE_CONFLICT" ||
+      err?.code === "DUPLICATE_FOUND" ||
+      err?.code === "DUPLICATE_CANDIDATE" ||
+      err?.code === "P2002" ||
+      (err?.message && err.message.toLowerCase().includes("already exists"))
+    ) {
+      const existing =
+        err.existingCandidate ||
+        (await candidateRepository.findByEmailAndPosition(
+          payload.email,
+          payload.position,
+        ));
+      return {
+        duplicateFound: true,
+        existingCandidateId: existing?.id || "",
+        candidateName: name,
+        parsedData: payload,
+        parsedPosition: payload.position,
+        message:
+          err.message ||
+          "A candidate with this email already applied for this role.",
+      };
     }
     throw err;
   }

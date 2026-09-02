@@ -25,14 +25,33 @@ export const candidateController = {
   },
 
   async createCandidate(req: AuthRequest, res: Response) {
+    const { overwriteMode, ...payload } = req.body;
     try {
-      const candidate = await candidateUsecase.createCandidate(req.body, req.user?.id);
+      const candidate = await candidateUsecase.createCandidate(
+        payload,
+        req.user?.id,
+        overwriteMode,
+      );
       res.status(201).json({ success: true, candidate });
     } catch (error: any) {
-      if (error.code === "P2002") {
-        return res.status(400).json({
+      if (error.code === "DUPLICATE_CONFLICT" || error.code === "P2002") {
+        const existing = error.existingCandidate || {
+          id: "",
+          name: req.body.name || "Existing Candidate",
+          email: req.body.email,
+          position: req.body.position,
+        };
+        return res.status(409).json({
           success: false,
-          error: "A candidate with this email already exists",
+          duplicate: true,
+          status: "duplicate_found",
+          existingCandidateId: existing.id,
+          existingCandidateName: existing.name,
+          parsedData: payload,
+          parsedPosition: payload.position,
+          message: "A candidate with this email already applied for this role.",
+          existingCandidate: existing,
+          error: "A candidate with this email already applied for this role.",
         });
       }
       res.status(500).json({ success: false, error: error.message });
@@ -48,10 +67,13 @@ export const candidateController = {
       );
       res.json({ success: true, candidate });
     } catch (error: any) {
-      if (error.code === "P2002") {
+      if (error.code === "DUPLICATE_CANDIDATE" || error.code === "P2002") {
         return res.status(400).json({
           success: false,
-          error: "A candidate with this email already exists",
+          error:
+            error.code === "DUPLICATE_CANDIDATE"
+              ? error.message
+              : "A candidate with this email and position already exists",
         });
       }
       res.status(500).json({ success: false, error: error.message });
@@ -142,6 +164,62 @@ export const candidateController = {
     try {
       const leaderboard = await candidateUsecase.getLeaderboard();
       res.json({ success: true, leaderboard });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  async getPositionSuggestions(req: AuthRequest, res: Response) {
+    try {
+      const positions = await candidateUsecase.getPositionSuggestions(
+        req.query.q as string | undefined,
+      );
+      res.json({ success: true, positions });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  async assignJobTitle(req: AuthRequest, res: Response) {
+    try {
+      const { position } = req.body;
+      if (!position) {
+        return res
+          .status(400)
+          .json({ success: false, error: "Position title is required" });
+      }
+      const candidate = await candidateUsecase.assignJobTitle(
+        req.params.jobId as string,
+        position,
+        req.user?.id,
+      );
+      res.json({ success: true, candidate });
+    } catch (error: any) {
+      const status =
+        error.code === "DUPLICATE_CANDIDATE" ||
+        error.code === "DUPLICATE_CONFLICT" ||
+        error.code === "P2002"
+          ? 400
+          : 500;
+      res.status(status).json({ success: false, error: error.message });
+    }
+  },
+
+  async resolveDuplicateJob(req: AuthRequest, res: Response) {
+    try {
+      const { action } = req.body;
+      if (!action || !["update", "replace", "skip"].includes(action)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid resolution action. Must be 'update', 'replace', or 'skip'.",
+        });
+      }
+      const result = await candidateUsecase.resolveDuplicateJob(
+        req.params.jobId as string,
+        action,
+        req.user?.id,
+      );
+      res.json({ success: true, result });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }

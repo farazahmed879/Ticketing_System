@@ -1,4 +1,10 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import path from "path";
+const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env";
+const envPath = path.resolve(__dirname, `../${envFile}`);
+dotenv.config({ path: envPath });
+dotenv.config(); // fallback
+
 import prisma from "./prisma";
 import { resumeJobRepository } from "./repositories/resumeJob.repository";
 import { processResumeJob } from "./services/resumeJobProcessor";

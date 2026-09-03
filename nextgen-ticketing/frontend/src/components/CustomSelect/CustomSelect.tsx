@@ -29,8 +29,13 @@ const CustomSelect = <T extends FieldValues>({
   isClearable = false,
 }: CustomSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [dropdownStyles, setDropdownStyles] = useState<React.CSSProperties>({});
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) setSearch("");
+  }, [isOpen]);
 
   const updateDropdownPosition = useCallback(() => {
     if (containerRef.current && isOpen) {
@@ -137,10 +142,6 @@ const CustomSelect = <T extends FieldValues>({
       : null;
     const selectedLabel = getSelectedLabel();
 
-    // Inside renderSelect
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [search, setSearch] = useState("");
-
     const filteredOptions = serverSideSearch
       ? options
       : options.filter(
@@ -149,12 +150,6 @@ const CustomSelect = <T extends FieldValues>({
             (opt.sublabel &&
               opt.sublabel.toLowerCase().includes(search.toLowerCase())),
         );
-
-    // Inside renderSelect
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => {
-      if (!isOpen) setSearch("");
-    }, [isOpen]);
 
     return (
       <div

@@ -112,11 +112,13 @@
 }
 
 .suggestions {
+  position: fixed;
+  z-index: 999999;
   padding: 8px;
   max-height: 260px;
   overflow-y: auto;
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border-glass) !important;
-  background: var(--bg-dropdown);
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.16), 0 0 0 1px var(--border-glass) !important;
+  background: var(--bg-dropdown, #ffffff) !important;
   border: 1px solid var(--border-glass);
   border-radius: 12px;
   backdrop-filter: var(--blur-md);

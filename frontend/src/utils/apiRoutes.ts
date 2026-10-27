@@ -81,6 +81,7 @@ export const API_ROUTES = {
     BASE: "/projects",
     BY_ID: (id: string) => `/projects/${id}`,
     MEMBERS: (id: string) => `/projects/${id}/members`,
+    DEVELOPER_HOURS: (id: string) => `/projects/${id}/developer-hours`,
   },
 
   // Notifications
@@ -112,6 +113,7 @@ export const API_ROUTES = {
     RESOLVE_DUPLICATE: (jobId: string) => `/candidates/jobs/${jobId}/resolve-duplicate`,
     CONVERT: (id: string) => `/candidates/${id}/convert`,
     LEADERBOARD: "/candidates/leaderboard",
+    DELETE_ALL: "/candidates/delete-all",
   },
 
   // Interviews

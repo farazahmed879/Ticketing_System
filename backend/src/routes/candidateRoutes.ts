@@ -56,6 +56,20 @@ router.post(
   checkRole(allowedRoles),
   candidateController.resolveDuplicateJob,
 );
+// Danger Zone: Admin-only deletion of all candidates (requires password verification)
+router.post(
+  "/delete-all",
+  authMiddleware,
+  checkRole([RoleType.ADMIN]),
+  candidateController.deleteAllCandidates,
+);
+router.delete(
+  "/all",
+  authMiddleware,
+  checkRole([RoleType.ADMIN]),
+  candidateController.deleteAllCandidates,
+);
+
 router.get(
   "/:id",
   authMiddleware,

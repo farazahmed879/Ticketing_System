@@ -89,6 +89,28 @@ export const candidateController = {
     }
   },
 
+  async deleteAllCandidates(req: AuthRequest, res: Response) {
+    try {
+      const { password } = req.body;
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ success: false, error: "Unauthorized" });
+      }
+      const result = await candidateUsecase.deleteAllCandidates(userId, password);
+      res.json({
+        success: true,
+        message: `Successfully deleted all candidates (${result.count} total).`,
+        count: result.count,
+      });
+    } catch (error: any) {
+      const isAuthError =
+        error.message?.includes("password") ||
+        error.message?.includes("administrator") ||
+        error.message?.includes("Unauthorized");
+      res.status(isAuthError ? 400 : 500).json({ success: false, error: error.message });
+    }
+  },
+
   async uploadResume(req: AuthRequest, res: Response) {
     try {
       const file = (req as any).file;

@@ -315,21 +315,25 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
               </div>
               {fields.length > 1 && (
                 <div className={styles.tasksHeaderActions}>
-                  <button
+                  <CustomButton
+                    variant="ghost"
+                    size="sm"
                     type="button"
                     onClick={expandAll}
-                    className={styles.linkBtn}
+                    style={{ padding: "2px 6px", height: "auto" }}
                   >
                     Expand All
-                  </button>
+                  </CustomButton>
                   <span className={styles.linkDivider}>|</span>
-                  <button
+                  <CustomButton
+                    variant="ghost"
+                    size="sm"
                     type="button"
                     onClick={collapseAll}
-                    className={styles.linkBtn}
+                    style={{ padding: "2px 6px", height: "auto", color: "var(--text-muted)" }}
                   >
                     Collapse All
-                  </button>
+                  </CustomButton>
                 </div>
               )}
             </div>
@@ -381,17 +385,23 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
 
                         <div className={styles.taskAccordionHeaderRight}>
                           {!isApproved && fields.length > 1 && (
-                            <button
+                            <CustomButton
                               type="button"
-                              className={styles.trashBtn}
+                              variant="ghost"
+                              size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 remove(index);
                               }}
                               title="Delete Task"
-                            >
-                              <CustomIcon name="Trash2" size={15} />
-                            </button>
+                              icon={<CustomIcon name="Trash2" size={15} />}
+                              style={{
+                                padding: 6,
+                                minWidth: "auto",
+                                color: "var(--text-muted)",
+                              }}
+                              className={styles.trashBtn}
+                            />
                           )}
                         </div>
                       </div>
@@ -448,10 +458,14 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
                               name={`tasks.${index}.hours` as const}
                               control={control}
                               label="Hours"
-                              rules={{ required: "Hours is required" }}
+                              rules={{
+                                required: "Hours is required",
+                                min: { value: 0.1, message: "Hours must be at least 0.1" },
+                                max: { value: 24, message: "Hours cannot exceed 24" },
+                              }}
                               type="number"
-                              step="0.5"
-                              min={0.25}
+                              step="any"
+                              min={0.1}
                               max={24}
                               disabled={isApproved}
                               required
@@ -469,39 +483,48 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
                                 </span>
                                 {!isApproved && (
                                   <div className={styles.formattingTools}>
-                                    <button
+                                    <CustomButton
                                       type="button"
-                                      className={styles.formatBtn}
+                                      variant="secondary"
+                                      size="sm"
                                       onClick={(e) => {
                                         e.preventDefault();
                                         insertFormatting(index, "bullet");
                                       }}
                                       title="Add bullet point"
+                                      icon={<CustomIcon name="List" size={12} />}
+                                      style={{ padding: "3px 8px", fontSize: "0.72rem" }}
                                     >
-                                      <CustomIcon name="List" size={12} /> Bullet
-                                    </button>
-                                    <button
+                                      Bullet
+                                    </CustomButton>
+                                    <CustomButton
                                       type="button"
-                                      className={styles.formatBtn}
+                                      variant="secondary"
+                                      size="sm"
                                       onClick={(e) => {
                                         e.preventDefault();
                                         insertFormatting(index, "number");
                                       }}
                                       title="Add numbered list item"
+                                      icon={<CustomIcon name="ListOrdered" size={12} />}
+                                      style={{ padding: "3px 8px", fontSize: "0.72rem" }}
                                     >
-                                      <CustomIcon name="ListOrdered" size={12} /> Numbered
-                                    </button>
-                                    <button
+                                      Numbered
+                                    </CustomButton>
+                                    <CustomButton
                                       type="button"
-                                      className={styles.formatBtn}
+                                      variant="secondary"
+                                      size="sm"
                                       onClick={(e) => {
                                         e.preventDefault();
                                         insertFormatting(index, "bold");
                                       }}
                                       title="Add bold formatting"
+                                      icon={<CustomIcon name="Bold" size={12} />}
+                                      style={{ padding: "3px 8px", fontSize: "0.72rem" }}
                                     >
-                                      <CustomIcon name="Bold" size={12} /> Bold
-                                    </button>
+                                      Bold
+                                    </CustomButton>
                                   </div>
                                 )}
                               </div>
@@ -528,9 +551,12 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
             )}
 
             {!isApproved && (
-              <button
+              <CustomButton
                 type="button"
-                className={styles.addTaskButton}
+                variant="outline"
+                fullWidth
+                size="md"
+                icon={<CustomIcon name="PlusCircle" size={16} />}
                 onClick={() => {
                   const nextIdx = fields.length;
                   append({
@@ -545,9 +571,8 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
                   }));
                 }}
               >
-                <CustomIcon name="PlusCircle" size={16} />
-                <span>Add Another Task</span>
-              </button>
+                Add Another Task
+              </CustomButton>
             )}
           </div>
         )}

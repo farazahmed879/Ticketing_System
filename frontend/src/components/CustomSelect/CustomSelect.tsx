@@ -26,7 +26,9 @@ const CustomSelect = <T extends FieldValues>({
   showSearch = false,
   onSearch,
   serverSideSearch = false,
-  isClearable = false,
+  isClearable = true,
+  dropdownClassName,
+  dropdownStyle,
 }: CustomSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -113,8 +115,8 @@ const CustomSelect = <T extends FieldValues>({
       return value === val;
     };
 
-    const handleClear = (e: React.MouseEvent) => {
-      e.stopPropagation();
+    const handleClear = (e?: React.MouseEvent) => {
+      e?.stopPropagation();
       onChange?.(isMulti ? [] : "");
       setIsOpen(false);
     };
@@ -122,7 +124,7 @@ const CustomSelect = <T extends FieldValues>({
     const hasValue = isMulti
       ? Array.isArray(value) && value.length > 0
       : value !== undefined && value !== null && value !== "";
-    const showClear = isClearable && !disabled && hasValue;
+    const showClear = (isClearable ?? true) && !disabled && !required && hasValue;
 
     const handleOptionClick = (optionValue: string) => {
       if (isMulti) {
@@ -132,7 +134,12 @@ const CustomSelect = <T extends FieldValues>({
           : [...currentValues, optionValue];
         onChange?.(newValue);
       } else {
-        onChange?.(optionValue);
+        // Deselect if clicking the already-selected option and field is not required
+        if (!required && value === optionValue) {
+          onChange?.("");
+        } else {
+          onChange?.(optionValue);
+        }
         setIsOpen(false);
       }
     };
@@ -241,8 +248,8 @@ const CustomSelect = <T extends FieldValues>({
         {isOpen &&
           createPortal(
             <div
-              className={styles.dropdown}
-              style={dropdownStyles}
+              className={`${styles.dropdown} ${dropdownClassName || ""}`}
+              style={{ ...dropdownStyles, ...dropdownStyle }}
               onMouseDown={(e) => e.stopPropagation()}
             >
               {showSearch && (
@@ -270,7 +277,28 @@ const CustomSelect = <T extends FieldValues>({
               {filteredOptions.length === 0 ? (
                 <div className={styles.noOptions}>No options available</div>
               ) : (
-                filteredOptions.map((option) => {
+                <>
+                  {!isMulti && !required && hasValue && (
+                    <div
+                      className={`${styles.option} ${styles.clearOption}`}
+                      onClick={(e) => {
+                        handleClear(e);
+                      }}
+                      title="Deselect option"
+                    >
+                      <div className={styles.optionContent}>
+                        <CustomIcon
+                          name="XCircle"
+                          size={15}
+                          style={{ color: "var(--accent-danger)", opacity: 0.85 }}
+                        />
+                        <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                          Clear selection (None)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {filteredOptions.map((option) => {
                   const selected = isSelected(option.value);
                   return (
                     <div
@@ -320,8 +348,9 @@ const CustomSelect = <T extends FieldValues>({
                       )}
                     </div>
                   );
-                })
-              )}
+                })}
+              </>
+            )}
             </div>,
             document.body,
           )}

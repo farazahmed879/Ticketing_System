@@ -155,4 +155,35 @@ export const candidateRepository = {
     });
     return candidates.map((c) => c.position).filter(Boolean);
   },
+
+  async deleteAll() {
+    const activeCandidates = await prisma.candidate.findMany({
+      where: { deleted: false },
+      select: { id: true, email: true },
+    });
+
+    const candidateIds = activeCandidates.map((c) => c.id);
+    const timestamp = Date.now();
+
+    for (const c of activeCandidates) {
+      await prisma.candidate.update({
+        where: { id: c.id },
+        data: {
+          deleted: true,
+          email: c.email.startsWith("deleted_")
+            ? c.email
+            : `deleted_${timestamp}_${c.id}_${c.email}`,
+        },
+      });
+    }
+
+    if (candidateIds.length > 0) {
+      await prisma.interview.updateMany({
+        where: { candidateId: { in: candidateIds } },
+        data: { deleted: true },
+      });
+    }
+
+    return activeCandidates.length;
+  },
 };

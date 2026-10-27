@@ -22,6 +22,9 @@ import DuplicateConflictModal, {
 } from "./components/DuplicateConflictModal";
 import CustomPagination from "../../components/CustomPagination";
 import ConfirmationModal from "../../components/ConfirmationModal";
+import DeleteAllCandidatesModal from "./components/DeleteAllCandidatesModal";
+import { useAuth } from "../../context/AuthContext";
+import { ROLE_TYPE } from "../roles/roleConstants";
 
 import StandardListLayout from "../../components/StandardListLayout";
 import { getCandidateColumns, statusBadgeVariant } from "./columns";
@@ -40,6 +43,9 @@ const CandidateList: React.FC = () => {
     payload: any;
   } | null>(null);
   const [isResolvingConflict, setIsResolvingConflict] = useState(false);
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role?.roleType === ROLE_TYPE.ADMIN;
+  const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false);
   const { showNotification, setIsLoading } = useNotification();
   const navigate = useNavigate();
 
@@ -327,7 +333,16 @@ const CandidateList: React.FC = () => {
                 Manage interview candidates and their profiles
               </p>
             </div>
-            <div style={{ display: "flex", gap: "12px" }}>
+            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              {isAdmin && (
+                <CustomButton
+                  variant="danger"
+                  icon={<CustomIcon name="Trash2" size={18} />}
+                  onClick={() => setIsDeleteAllModalOpen(true)}
+                >
+                  Delete All
+                </CustomButton>
+              )}
               <CustomButton
                 variant="outline"
                 icon={<CustomIcon name="Copy" size={20} />}
@@ -932,6 +947,18 @@ const CandidateList: React.FC = () => {
         onResolve={handleResolveConflict}
         isResolving={isResolvingConflict}
       />
+
+      {isAdmin && (
+        <DeleteAllCandidatesModal
+          isOpen={isDeleteAllModalOpen}
+          onClose={() => setIsDeleteAllModalOpen(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["candidates"] });
+            setCurrentPage(0);
+          }}
+          totalCandidates={totalItems}
+        />
+      )}
     </>
   );
 };

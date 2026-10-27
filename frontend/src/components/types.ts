@@ -57,6 +57,8 @@ export interface CustomSelectProps<T extends FieldValues = any> {
   onSearch?: (query: string) => void;
   serverSideSearch?: boolean;
   isClearable?: boolean;
+  dropdownClassName?: string;
+  dropdownStyle?: React.CSSProperties;
 }
 
 export interface CustomMultiSelectProps<T extends FieldValues = any> {
@@ -123,6 +125,10 @@ export interface CustomTableProps<T> {
   style?: React.CSSProperties;
   /** Highlights the row with this id and scrolls it into view (e.g. deep-linking). */
   highlightRowId?: string | number;
+  /** Optional custom renderer for an expandable child row beneath this row */
+  renderExpandedRow?: (item: T, index: number) => React.ReactNode;
+  /** Function to check whether a specific row is expanded */
+  isRowExpanded?: (item: T, index: number) => boolean;
 }
 
 export interface FilterOption {

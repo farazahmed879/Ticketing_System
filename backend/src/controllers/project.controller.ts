@@ -155,4 +155,28 @@ export const projectController = {
       res.status(500).json({ success: false, error: err.message });
     }
   },
+
+  async getDeveloperHours(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { startDate, endDate } = req.query;
+
+      const data = await projectRepository.getDeveloperHours(
+        id as string,
+        typeof startDate === "string" ? startDate : undefined,
+        typeof endDate === "string" ? endDate : undefined
+      );
+
+      if (!data) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Project not found" });
+      }
+
+      res.json({ success: true, ...data });
+    } catch (err: any) {
+      console.error("Failed to get developer hours:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  },
 };

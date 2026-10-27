@@ -25,7 +25,7 @@ import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
-import TimesheetDayModal from "./components/TimesheetDayModal";
+import TimesheetLogPanel from "./components/TimesheetLogPanel";
 import { useAuth } from "../../context/AuthContext";
 
 import type { TimesheetEntry } from "../../types";
@@ -47,12 +47,13 @@ interface TimesheetTableRow {
 }
 
 const Timesheet: React.FC = () => {
-  const [period, setPeriod] = useState<"monthly" | "weekly">("monthly");
+  const [period, setPeriod] = useState<"monthly" | "weekly">("weekly");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"calendar" | "table">("calendar");
   const [tableFilter, setTableFilter] = useState<"all" | "working" | "missing">("all");
+  const [isCalendarCollapsed, setIsCalendarCollapsed] = useState(false);
+  const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -118,7 +119,16 @@ const Timesheet: React.FC = () => {
 
   const renderHeader = () => (
     <div className={styles.controls}>
-      <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <button
+          type="button"
+          className={styles.calendarCollapseBtn}
+          onClick={() => setIsCalendarCollapsed(true)}
+          title="Collapse Calendar"
+          aria-label="Collapse Calendar"
+        >
+          <CustomIcon name="ChevronRight" size={16} />
+        </button>
         <h2 className={styles.monthYear}>{getDateTitle()}</h2>
         <div className={styles.navButtons}>
           <CustomButton variant="secondary" size="sm" onClick={handlePrev}>
@@ -127,7 +137,11 @@ const Timesheet: React.FC = () => {
           <CustomButton
             variant="secondary"
             size="sm"
-            onClick={() => setCurrentDate(new Date())}
+            onClick={() => {
+              const today = new Date();
+              setCurrentDate(today);
+              setSelectedDate(today);
+            }}
           >
             Today
           </CustomButton>
@@ -140,38 +154,46 @@ const Timesheet: React.FC = () => {
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         {/* Monthly / Weekly Filter Switcher */}
         <div className={styles.viewSwitcher}>
-          <button
+          <CustomButton
             type="button"
-            className={`${styles.viewSwitchBtn} ${period === "monthly" ? styles.viewSwitchBtnActive : ""}`}
+            variant={period === "monthly" ? "primary" : "ghost"}
+            size="sm"
+            icon={<CustomIcon name="CalendarRange" size={15} />}
             onClick={() => setPeriod("monthly")}
           >
-            <CustomIcon name="CalendarRange" size={16} /> Monthly
-          </button>
-          <button
+            Monthly
+          </CustomButton>
+          <CustomButton
             type="button"
-            className={`${styles.viewSwitchBtn} ${period === "weekly" ? styles.viewSwitchBtnActive : ""}`}
+            variant={period === "weekly" ? "primary" : "ghost"}
+            size="sm"
+            icon={<CustomIcon name="CalendarDays" size={15} />}
             onClick={() => setPeriod("weekly")}
           >
-            <CustomIcon name="CalendarDays" size={16} /> Weekly
-          </button>
+            Weekly
+          </CustomButton>
         </div>
 
         {/* View Switcher: Calendar / Table */}
         <div className={styles.viewSwitcher}>
-          <button
+          <CustomButton
             type="button"
-            className={`${styles.viewSwitchBtn} ${viewMode === "calendar" ? styles.viewSwitchBtnActive : ""}`}
+            variant={viewMode === "calendar" ? "primary" : "ghost"}
+            size="sm"
+            icon={<CustomIcon name="Calendar" size={15} />}
             onClick={() => setViewMode("calendar")}
           >
-            <CustomIcon name="Calendar" size={16} /> Calendar
-          </button>
-          <button
+            Calendar
+          </CustomButton>
+          <CustomButton
             type="button"
-            className={`${styles.viewSwitchBtn} ${viewMode === "table" ? styles.viewSwitchBtnActive : ""}`}
+            variant={viewMode === "table" ? "primary" : "ghost"}
+            size="sm"
+            icon={<CustomIcon name="Table" size={15} />}
             onClick={() => setViewMode("table")}
           >
-            <CustomIcon name="Table" size={16} /> Table View
-          </button>
+            Table View
+          </CustomButton>
         </div>
       </div>
     </div>
@@ -213,75 +235,56 @@ const Timesheet: React.FC = () => {
 
       const isCurrentMonth = isSameMonth(day, currentDate);
       const isTodayDay = isSameDay(day, new Date());
+      const isSelectedDay = isSameDay(day, selectedDate);
 
       grid.push(
         <div
           key={day.toString()}
-          className={`${styles.dayCell} glass-card ${period === "monthly" && !isCurrentMonth ? styles.otherMonth : ""} ${isTodayDay ? styles.today : ""}`}
-          style={period === "weekly" ? { minHeight: 220 } : undefined}
-          onClick={() => {
-            setSelectedDate(day);
-            setIsModalOpen(true);
-          }}
+          className={`${styles.dayCell} glass-card ${period === "monthly" && !isCurrentMonth ? styles.otherMonth : ""} ${isTodayDay ? styles.today : ""} ${isSelectedDay ? styles.selectedDay : ""}`}
+          style={period === "weekly" ? { minHeight: 110, padding: "8px 6px" } : undefined}
+          onClick={() => setSelectedDate(day)}
         >
-          <div className={styles.dayNumber}>
-            {format(day, dateFormat)}
-            {period === "weekly" && (
-              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginLeft: 6 }}>
-                ({format(day, "EEEE")})
-              </span>
-            )}
-          </div>
-
-          {entry && (
-            <>
-              <div
-                className={styles.hoursBadge}
-                title={getEntryTypeLabel(entry.entryType)}
-              >
-                {isZeroHourEntryType(entry.entryType)
-                  ? getEntryTypeLabel(entry.entryType)
-                  : `${entry.totalHours}-h`}
-              </div>
-              <div
-                className={`${styles.statusIndicator} ${
-                  entry.hrApproved === "APPROVED" ||
-                  entry.managerApproved === "APPROVED"
+          <div className={styles.dayCellHeader}>
+            <span className={`${styles.dayNumber} ${isTodayDay ? styles.todayDayNumber : ""}`}>
+              {format(day, dateFormat)}
+            </span>
+            {entry && (
+              <span
+                className={`${styles.statusDotSmall} ${
+                  entry.hrApproved === "APPROVED" || entry.managerApproved === "APPROVED"
                     ? styles.statusApproved
-                    : entry.hrApproved === "REJECTED" ||
-                        entry.managerApproved === "REJECTED"
+                    : entry.hrApproved === "REJECTED" || entry.managerApproved === "REJECTED"
                       ? styles.statusRejected
                       : styles.statusPending
                 }`}
                 title={
-                  entry.hrApproved === "APPROVED" ||
-                  entry.managerApproved === "APPROVED"
+                  entry.hrApproved === "APPROVED" || entry.managerApproved === "APPROVED"
                     ? "Approved"
-                    : entry.hrApproved === "REJECTED" ||
-                        entry.managerApproved === "REJECTED"
+                    : entry.hrApproved === "REJECTED" || entry.managerApproved === "REJECTED"
                       ? "Rejected"
                       : "Pending"
                 }
               />
+            )}
+          </div>
 
-              {!isZeroHourEntryType(entry.entryType) && (
-                <div className={styles.taskList}>
-                  {entry.tasks.slice(0, period === "weekly" ? 5 : 2).map((task, idx) => (
-                    <div key={idx} className={styles.taskItem}>
-                      {task.description}
-                    </div>
-                  ))}
-                  {entry.tasks.length > (period === "weekly" ? 5 : 2) && (
-                    <div
-                      className={styles.taskItem}
-                      style={{ border: "none", fontStyle: "italic" }}
-                    >
-                      + {entry.tasks.length - (period === "weekly" ? 5 : 2)} more
-                    </div>
-                  )}
+          {entry && (
+            <div className={styles.dayCellContent}>
+              <div
+                className={`${styles.hoursBadge} ${isZeroHourEntryType(entry.entryType) ? styles.zeroHourBadge : ""}`}
+                title={getEntryTypeLabel(entry.entryType)}
+              >
+                {isZeroHourEntryType(entry.entryType)
+                  ? getEntryTypeLabel(entry.entryType)
+                  : `${entry.totalHours}h`}
+              </div>
+
+              {!isZeroHourEntryType(entry.entryType) && entry.tasks?.length > 0 && (
+                <div className={styles.weeklyTaskIndicator}>
+                  {entry.tasks.length} {entry.tasks.length === 1 ? "task" : "tasks"}
                 </div>
               )}
-            </>
+            </div>
           )}
 
           {googleEvents.length > 0 && (
@@ -300,56 +303,142 @@ const Timesheet: React.FC = () => {
     return <div className={styles.calendarGrid}>{grid}</div>;
   };
 
+  const toggleDayExpanded = (dayId: string) => {
+    setExpandedDays((prev) => ({
+      ...prev,
+      [dayId]: !prev[dayId],
+    }));
+  };
+
+  const renderExpandedTasks = (row: TimesheetTableRow) => {
+    const entry = row.entry;
+    const tasks = entry?.tasks || [];
+
+    return (
+      <div className={styles.expandedChildContainer}>
+        <div className={styles.expandedChildHeader}>
+          <div className={styles.expandedChildTitle}>
+            <CustomIcon name="ListTodo" size={14} style={{ color: "var(--accent-primary)" }} />
+            <span>Tasks Breakdown</span>
+            {entry?.entryType && (
+              <CustomBadge variant="neutral" style={{ fontSize: "0.68rem", padding: "1px 6px", textTransform: "none" }}>
+                {getEntryTypeLabel(entry.entryType)}
+              </CustomBadge>
+            )}
+          </div>
+          {entry && (
+            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--accent-primary)" }}>
+              {isZeroHourEntryType(entry.entryType) ? "0h" : `${entry.totalHours}h Total`}
+            </span>
+          )}
+        </div>
+
+        {tasks.length > 0 ? (
+          <div className={styles.expandedTasksList}>
+            {tasks.map((task, idx) => (
+              <div key={task.id || idx} className={styles.childTaskCard}>
+                <div className={styles.childTaskCardTop}>
+                  <div className={styles.childTaskMeta}>
+                    {task.project?.name && (
+                      <span className={styles.childTaskProject}>
+                        <CustomIcon name="Folder" size={12} />
+                        {task.project.name}
+                      </span>
+                    )}
+                    {task.ticket && (
+                      <span className={styles.childTaskTicket}>
+                        <CustomIcon name="Ticket" size={12} />
+                        #{task.ticket.uid} {task.ticket.subject}
+                      </span>
+                    )}
+                  </div>
+                  {task.hours > 0 && (
+                    <span className={styles.childTaskHours}>{task.hours}h</span>
+                  )}
+                </div>
+                {task.description && (
+                  <div className={styles.childTaskDesc}>{task.description}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : entry?.notes ? (
+          <div className={styles.childEmptyNote}>
+            <CustomIcon name="FileText" size={14} style={{ color: "var(--accent-primary)" }} />
+            <span>{entry.notes}</span>
+          </div>
+        ) : (
+          <div className={styles.childEmptyState}>
+            <CustomIcon name="Clock" size={14} />
+            <span>
+              {row.isWeekendDay
+                ? "Weekend Off — No tasks recorded"
+                : row.isFutureDay
+                ? "Upcoming day"
+                : "No tasks logged yet for this day"}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const tableColumns = [
     {
       header: "Date",
       key: "date",
-      style: { minWidth: "170px" },
-      render: (row: TimesheetTableRow) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <span
-            style={{
-              fontWeight: 600,
-              color: row.isTodayDay ? "var(--accent-primary)" : "var(--text-primary)",
-            }}
-          >
-            {format(row.day, "EEE, MMM dd, yyyy")}
-          </span>
-          {row.isTodayDay && (
-            <CustomBadge variant="primary" style={{ fontSize: "0.65rem", padding: "2px 6px" }}>
-              Today
-            </CustomBadge>
-          )}
-          {row.isWeekendDay && (
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-              (Weekend)
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      header: "Day Type",
-      key: "entryType",
-      style: { minWidth: "140px" },
+      style: { minWidth: "150px" },
       render: (row: TimesheetTableRow) => {
-        if (row.entry) {
-          return (
-            <span style={{ fontWeight: 500, color: "var(--text-secondary)" }}>
-              {getEntryTypeLabel(row.entry.entryType)}
-            </span>
-          );
-        }
-        if (row.isWeekendDay) {
-          return <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Weekend Off</span>;
-        }
-        return <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>Not Logged</span>;
+        const isExpanded = !!expandedDays[row.id];
+        return (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              type="button"
+              className={styles.rowExpandBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleDayExpanded(row.id);
+              }}
+              title={isExpanded ? "Collapse Tasks Summary" : "Expand Tasks Summary"}
+              aria-label={isExpanded ? "Collapse Tasks Summary" : "Expand Tasks Summary"}
+            >
+              <CustomIcon
+                name={isExpanded ? "ChevronDown" : "ChevronRight"}
+                size={14}
+                style={{ color: isExpanded ? "var(--accent-primary)" : "var(--text-muted)" }}
+              />
+            </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    fontWeight: 600,
+                    color: row.isTodayDay ? "var(--accent-primary)" : "var(--text-primary)",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  {format(row.day, "EEE, MMM dd")}
+                </span>
+                {row.isTodayDay && (
+                  <CustomBadge variant="primary" style={{ fontSize: "0.62rem", padding: "1px 5px" }}>
+                    Today
+                  </CustomBadge>
+                )}
+              </div>
+              {row.isWeekendDay && (
+                <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                  Weekend
+                </span>
+              )}
+            </div>
+          </div>
+        );
       },
     },
     {
       header: "Hours",
       key: "totalHours",
-      style: { width: "90px" },
+      style: { width: "70px", textAlign: "center" as const },
       render: (row: TimesheetTableRow) => {
         if (row.entry) {
           return (
@@ -364,60 +453,9 @@ const Timesheet: React.FC = () => {
       },
     },
     {
-      header: "Tasks Summary",
-      key: "tasks",
-      render: (row: TimesheetTableRow) => {
-        if (row.entry && row.entry.tasks && row.entry.tasks.length > 0) {
-          return (
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, maxWidth: "420px" }}>
-              {row.entry.tasks.slice(0, 3).map((task, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    fontSize: "0.82rem",
-                    color: "var(--text-secondary)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
-                  <span style={{ color: "var(--accent-primary)" }}>•</span>
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {task.description || "Task"}
-                  </span>
-                  {task.hours > 0 && (
-                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", flexShrink: 0 }}>
-                      ({task.hours}h)
-                    </span>
-                  )}
-                </div>
-              ))}
-              {row.entry.tasks.length > 3 && (
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontStyle: "italic" }}>
-                  +{row.entry.tasks.length - 3} more tasks
-                </div>
-              )}
-            </div>
-          );
-        }
-        if (row.entry && row.entry.notes) {
-          return (
-            <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)", fontStyle: "italic" }}>
-              {row.entry.notes}
-            </span>
-          );
-        }
-        return (
-          <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontStyle: "italic" }}>
-            {row.isWeekendDay ? "No work scheduled" : "No tasks logged yet"}
-          </span>
-        );
-      },
-    },
-    {
       header: "Status",
       key: "status",
-      style: { width: "130px" },
+      style: { width: "100px" },
       render: (row: TimesheetTableRow) => {
         if (row.entry) {
           const isApproved =
@@ -452,18 +490,17 @@ const Timesheet: React.FC = () => {
     {
       header: "Action",
       key: "action",
-      style: { width: "110px", textAlign: "right" as const },
+      style: { width: "95px", textAlign: "right" as const },
       render: (row: TimesheetTableRow) => {
         if (row.entry) {
           return (
             <CustomButton
               size="sm"
               variant="secondary"
-              icon={<CustomIcon name="Edit3" size={14} />}
+              icon={<CustomIcon name="Edit3" size={13} />}
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedDate(row.day);
-                setIsModalOpen(true);
               }}
             >
               Edit
@@ -474,14 +511,13 @@ const Timesheet: React.FC = () => {
           <CustomButton
             size="sm"
             variant="gradient"
-            icon={<CustomIcon name="Plus" size={14} />}
+            icon={<CustomIcon name="Plus" size={13} />}
             onClick={(e) => {
               e.stopPropagation();
               setSelectedDate(row.day);
-              setIsModalOpen(true);
             }}
           >
-            Log Time
+            Log
           </CustomButton>
         );
       },
@@ -535,47 +571,64 @@ const Timesheet: React.FC = () => {
       return true;
     });
 
+    const allExpanded =
+      filteredRows.length > 0 && filteredRows.every((r) => !!expandedDays[r.id]);
+
+    const toggleAllExpanded = () => {
+      if (allExpanded) {
+        setExpandedDays({});
+      } else {
+        const next: Record<string, boolean> = {};
+        filteredRows.forEach((r) => {
+          next[r.id] = true;
+        });
+        setExpandedDays(next);
+      }
+    };
+
     return (
       <div className={styles.tableWrapper}>
         <div className={styles.tableFilterRow}>
           <div className={styles.tableFilters}>
-            <button
+            <CustomButton
               type="button"
-              className={`${styles.filterPill} ${tableFilter === "all" ? styles.filterPillActive : ""}`}
+              variant={tableFilter === "all" ? "primary" : "secondary"}
+              size="sm"
               onClick={() => setTableFilter("all")}
             >
-              All Days ({tableRows.length})
-            </button>
-            <button
+              All ({tableRows.length})
+            </CustomButton>
+            <CustomButton
               type="button"
-              className={`${styles.filterPill} ${tableFilter === "working" ? styles.filterPillActive : ""}`}
+              variant={tableFilter === "working" ? "primary" : "secondary"}
+              size="sm"
               onClick={() => setTableFilter("working")}
             >
-              Working Days ({workingDaysCount})
-            </button>
-            <button
+              Working ({workingDaysCount})
+            </CustomButton>
+            <CustomButton
               type="button"
-              className={`${styles.filterPill} ${tableFilter === "missing" ? styles.filterPillActive : ""}`}
+              variant={tableFilter === "missing" ? "danger" : "secondary"}
+              size="sm"
+              icon={<CustomIcon name="AlertCircle" size={13} />}
               onClick={() => setTableFilter("missing")}
             >
-              Missing Logs ({missingDaysCount})
-            </button>
-            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginLeft: 6 }}>
-              • {loggedDaysCount} Logged
-            </span>
+              Missing ({missingDaysCount})
+            </CustomButton>
+            <CustomButton
+              type="button"
+              variant="ghost"
+              size="sm"
+              icon={<CustomIcon name={allExpanded ? "ChevronsUp" : "ChevronsDown"} size={13} />}
+              onClick={toggleAllExpanded}
+              title={allExpanded ? "Collapse All Rows" : "Expand All Rows"}
+            >
+              {allExpanded ? "Collapse All" : "Expand All"}
+            </CustomButton>
           </div>
-          <div
-            style={{
-              fontSize: "0.82rem",
-              color: "var(--text-muted)",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <CustomIcon name="MousePointerClick" size={14} />
-            <span>Click any row or button to log/edit hours</span>
-          </div>
+          <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+            • {loggedDaysCount} Logged
+          </span>
         </div>
 
         <CustomTable<TimesheetTableRow>
@@ -583,10 +636,10 @@ const Timesheet: React.FC = () => {
           data={filteredRows}
           loading={loading}
           emptyMessage="No days match the selected filter."
-          onRowClick={(row) => {
-            setSelectedDate(row.day);
-            setIsModalOpen(true);
-          }}
+          highlightRowId={format(selectedDate, "yyyy-MM-dd")}
+          onRowClick={(row) => setSelectedDate(row.day)}
+          isRowExpanded={(row) => !!expandedDays[row.id]}
+          renderExpandedRow={renderExpandedTasks}
         />
       </div>
     );
@@ -685,42 +738,77 @@ const Timesheet: React.FC = () => {
         </div>
       </div>
 
-      <div
-        className={`glass-card ${styles.calendarWrapper} ${styles.flexColumn}`}
-        style={{ padding: 16 }}
-      >
-        {renderHeader()}
-        {viewMode === "calendar" ? (
-          <>
-            {renderDays()}
-            {loading ? (
-              <div style={{ marginTop: 24 }}>
-                <CalendarSkeleton rows={period === "monthly" ? 5 : 1} />
-              </div>
-            ) : (
-              renderCells()
+      {/* 60 / 40 Split Layout: Left Log Tasks & Right Calendar/Table */}
+      <div className={styles.timesheetLayout}>
+        {/* Left Section (60% or Expanded): Log Tasks Panel */}
+        <div
+          className={`${styles.logTasksSection} ${
+            isCalendarCollapsed ? styles.logTasksSectionExpanded : ""
+          }`}
+        >
+          <TimesheetLogPanel
+            date={selectedDate}
+            existingEntry={entries.find((e) =>
+              isSameDay(new Date(e.date), selectedDate),
             )}
-          </>
-        ) : (
-          renderTableView()
-        )}
-      </div>
+            googleEvents={MOCK_GOOGLE_EVENTS.filter((e) =>
+              isSameDay(e.date, selectedDate),
+            )}
+            isCalendarCollapsed={isCalendarCollapsed}
+            onExpandCalendar={() => setIsCalendarCollapsed(false)}
+          />
+        </div>
 
-      {isModalOpen && selectedDate && (
-        <TimesheetDayModal
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-          }}
-          date={selectedDate}
-          existingEntry={entries.find((e) =>
-            isSameDay(new Date(e.date), selectedDate),
+        {/* Right Section (40% or Collapsed): Calendar or Table View */}
+        <div
+          className={`glass-card ${styles.calendarSection} ${
+            isCalendarCollapsed ? styles.calendarSectionCollapsed : ""
+          }`}
+          onClick={isCalendarCollapsed ? () => setIsCalendarCollapsed(false) : undefined}
+          title={isCalendarCollapsed ? "Click to expand calendar" : undefined}
+        >
+          {isCalendarCollapsed ? (
+            <div className={styles.collapsedCalendarRail}>
+              <button
+                type="button"
+                className={styles.calendarExpandBtn}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCalendarCollapsed(false);
+                }}
+                title="Expand Calendar"
+                aria-label="Expand Calendar"
+              >
+                <CustomIcon name="ChevronLeft" size={16} />
+              </button>
+              <CustomIcon
+                name="Calendar"
+                size={18}
+                style={{ color: "var(--accent-primary)" }}
+              />
+              <span className={styles.collapsedCalendarText}>Calendar</span>
+            </div>
+          ) : (
+            <>
+              {renderHeader()}
+              {viewMode === "calendar" ? (
+                <>
+                  {renderDays()}
+                  {loading ? (
+                    <div style={{ marginTop: 24 }}>
+                      <CalendarSkeleton rows={period === "monthly" ? 5 : 1} />
+                    </div>
+                  ) : (
+                    renderCells()
+                  )}
+                </>
+              ) : (
+                renderTableView()
+              )}
+            </>
           )}
-          googleEvents={MOCK_GOOGLE_EVENTS.filter((e) =>
-            isSameDay(e.date, selectedDate),
-          )}
-        />
-      )}
+        </div>
+      </div>
     </div>
   );
 };

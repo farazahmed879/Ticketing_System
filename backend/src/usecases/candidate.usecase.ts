@@ -495,6 +495,33 @@ export const candidateUsecase = {
     return candidateRepository.delete(id);
   },
 
+  async deleteAllCandidates(userId: string, passwordPlain: string) {
+    if (!passwordPlain) {
+      throw new Error("Admin password is required to confirm deletion.");
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { role: true },
+    });
+
+    if (!user) {
+      throw new Error("User not found.");
+    }
+
+    if (user.role?.roleType !== "ADMIN") {
+      throw new Error("Only an administrator can perform this action.");
+    }
+
+    const isValidPassword = await bcrypt.compare(passwordPlain, user.password);
+    if (!isValidPassword) {
+      throw new Error("Invalid administrator password. Deletion cancelled.");
+    }
+
+    const count = await candidateRepository.deleteAll();
+    return { count };
+  },
+
   async uploadResume(file: any) {
     const allowedTypes = [
       "application/pdf",

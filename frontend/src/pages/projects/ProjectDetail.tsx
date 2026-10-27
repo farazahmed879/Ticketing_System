@@ -10,6 +10,7 @@ import { useAuth } from "../../context/AuthContext";
 import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import type { Project } from "../../types";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import ProjectDeveloperHours from "./components/ProjectDeveloperHours";
 
 const getStatusVariant = (status: string) => {
   switch (status.toLowerCase()) {
@@ -156,36 +157,42 @@ const ProjectDetail: React.FC = () => {
       <div
         style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: 24 }}
       >
-        {/* Description */}
-        <div className="glass-card" style={{ padding: 24 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              marginBottom: 16,
-            }}
-          >
-            <CustomIcon
-              name="FileText"
-              size={20}
-              color="var(--accent-primary)"
-            />
-            <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700 }}>
-              About this Project
-            </h3>
+        {/* Left Column: Description + Developer Hours */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {/* Description */}
+          <div className="glass-card" style={{ padding: 24 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                marginBottom: 16,
+              }}
+            >
+              <CustomIcon
+                name="FileText"
+                size={20}
+                color="var(--accent-primary)"
+              />
+              <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700 }}>
+                About this Project
+              </h3>
+            </div>
+            <p
+              style={{
+                color: "var(--text-secondary)",
+                lineHeight: 1.7,
+                fontSize: "1rem",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {project.description?.trim() ||
+                "No description has been provided for this project."}
+            </p>
           </div>
-          <p
-            style={{
-              color: "var(--text-secondary)",
-              lineHeight: 1.7,
-              fontSize: "1rem",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {project.description?.trim() ||
-              "No description has been provided for this project."}
-          </p>
+
+          {/* Developer Hours & Timesheet Analysis */}
+          <ProjectDeveloperHours projectId={project.id} />
         </div>
 
         {/* Sidebar Info (Manager + Clients) */}

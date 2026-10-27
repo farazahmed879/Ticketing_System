@@ -13,6 +13,8 @@ const CustomTable = <T extends { id: string | number }>({
   className = "",
   style,
   highlightRowId,
+  renderExpandedRow,
+  isRowExpanded,
 }: CustomTableProps<T>) => {
   const highlightRef = useRef<HTMLTableRowElement>(null);
 
@@ -48,35 +50,46 @@ const CustomTable = <T extends { id: string | number }>({
               </td>
             </tr>
           ) : (
-            data.map((item, rowIndex) => (
-              <tr
-                key={item.id}
-                ref={item.id === highlightRowId ? highlightRef : undefined}
-                className={
-                  item.id === highlightRowId ? tableStyles.highlightRow : undefined
-                }
-                onClick={() => {
-                  const selection = window.getSelection();
-                  if (selection && selection.toString().trim().length > 0) return;
-                  onRowClick?.(item);
-                }}
-                style={{ cursor: onRowClick ? "pointer" : "default" }}
-              >
-                {columns.map((column, colIndex) => (
-                  <td
-                    key={colIndex}
-                    style={{ ...column.style, width: column.width }}
-                    className={column.className}
+            data.map((item, rowIndex) => {
+              const isExpanded = isRowExpanded ? isRowExpanded(item, rowIndex) : false;
+              return (
+                <React.Fragment key={item.id}>
+                  <tr
+                    ref={item.id === highlightRowId ? highlightRef : undefined}
+                    className={
+                      item.id === highlightRowId ? tableStyles.highlightRow : undefined
+                    }
+                    onClick={() => {
+                      const selection = window.getSelection();
+                      if (selection && selection.toString().trim().length > 0) return;
+                      onRowClick?.(item);
+                    }}
+                    style={{ cursor: onRowClick ? "pointer" : "default" }}
                   >
-                    {column.render
-                      ? column.render(item, rowIndex)
-                      : (item[
-                          column.key as keyof T
-                        ] as unknown as React.ReactNode)}
-                  </td>
-                ))}
-              </tr>
-            ))
+                    {columns.map((column, colIndex) => (
+                      <td
+                        key={colIndex}
+                        style={{ ...column.style, width: column.width }}
+                        className={column.className}
+                      >
+                        {column.render
+                          ? column.render(item, rowIndex)
+                          : (item[
+                              column.key as keyof T
+                            ] as unknown as React.ReactNode)}
+                      </td>
+                    ))}
+                  </tr>
+                  {isExpanded && renderExpandedRow && (
+                    <tr className={tableStyles.expandedRow}>
+                      <td colSpan={columns.length} style={{ padding: 0 }}>
+                        {renderExpandedRow(item, rowIndex)}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })
           )}
         </tbody>
       </table>

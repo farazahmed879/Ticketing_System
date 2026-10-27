@@ -34,7 +34,7 @@
 
 .triggerActive {
   border-color: var(--accent-primary) !important;
-  background: rgba(124, 58, 237, 0.05) !important;
+  background: var(--surface-hover, rgba(255, 255, 255, 0.05)) !important;
   box-shadow: none !important;
 }
 
@@ -132,6 +132,17 @@
 .optionSelected {
   /* background: rgba(124, 58, 237, 0.1); */
   color: var(--accent-primary);
+}
+
+.clearOption {
+  border-bottom: 1px dashed var(--border-glass);
+  margin-bottom: 4px;
+  border-radius: 8px;
+}
+
+.clearOption:hover {
+  background: rgba(239, 68, 68, 0.08) !important;
+  color: var(--accent-danger) !important;
 }
 
 .optionContent {

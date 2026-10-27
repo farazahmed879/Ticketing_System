@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import Modal from "../../../components/Modal";
@@ -7,6 +7,7 @@ import CustomInput from "../../../components/CustomInput";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
+import CustomTextArea from "../../../components/CustomTextArea";
 import { useNotification } from "../../../context/NotificationContext";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
@@ -47,6 +48,29 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
     control,
     name: "tasks",
   });
+
+  const [expandedTasks, setExpandedTasks] = useState<Record<number, boolean>>({
+    0: true,
+  });
+
+  const toggleTask = (index: number) => {
+    setExpandedTasks((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
+
+  const expandAll = () => {
+    const all: Record<number, boolean> = {};
+    fields.forEach((_, i) => {
+      all[i] = true;
+    });
+    setExpandedTasks(all);
+  };
+
+  const collapseAll = () => {
+    setExpandedTasks({});
+  };
 
   const watchedTasks = watch("tasks");
   const watchedEntryType = watch("entryType");
@@ -170,12 +194,33 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
     saveMutation.mutate(data);
   };
 
+  const insertFormatting = (
+    index: number,
+    type: "bullet" | "number" | "bold",
+  ) => {
+    const currentVal = watchedTasks?.[index]?.description || "";
+    let updated = currentVal;
+    if (type === "bullet") {
+      updated = currentVal ? `${currentVal}\n• ` : "• ";
+    } else if (type === "number") {
+      const lines = currentVal.split("\n");
+      const num = lines.filter((l) => /^\d+\./.test(l.trim())).length + 1;
+      updated = currentVal ? `${currentVal}\n${num}. ` : "1. ";
+    } else if (type === "bold") {
+      updated = currentVal ? `${currentVal} **bold**` : "**bold**";
+    }
+    setValue(`tasks.${index}.description`, updated, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={`Log Tasks - ${format(date, "MMMM dd, yyyy")}`}
-      maxWidth="1200px"
+      maxWidth="980px"
     >
       <form
         onSubmit={handleSubmit(handleSave)}
@@ -201,18 +246,33 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
           </div>
         )}
 
-        <CustomSelect
-          name="entryType"
-          control={control}
-          label="Day Type"
-          options={ENTRY_TYPE_OPTIONS}
-          disabled={isApproved}
-        />
+        {/* Top Controls: Day Type & Daily Notes in balanced 2-column grid */}
+        <div className={styles.modalTopRow}>
+          <CustomSelect
+            name="entryType"
+            control={control}
+            label="Day Type"
+            options={ENTRY_TYPE_OPTIONS}
+            disabled={isApproved}
+          />
+          <CustomInput
+            name="notes"
+            control={control}
+            label="Daily Notes (Optional)"
+            placeholder="Anything special or noteworthy about today?"
+            disabled={isApproved}
+          />
+        </div>
 
         {watchedEntryType === "HALF_DAY_LEAVE" && (
           <div
             className="glass-card"
-            style={{ padding: 12, fontSize: "0.85rem", color: "var(--text-secondary)" }}
+            style={{
+              padding: 12,
+              fontSize: "0.85rem",
+              color: "var(--text-secondary)",
+              borderLeft: "3px solid var(--accent-warning)",
+            }}
           >
             Log the hours worked for the working half of the day below.
             Approving this entry will deduct 0.5 day from your leave balance.
@@ -222,7 +282,12 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
         {isZeroHourDay && (
           <div
             className="glass-card"
-            style={{ padding: 12, fontSize: "0.85rem", color: "var(--text-secondary)" }}
+            style={{
+              padding: 12,
+              fontSize: "0.85rem",
+              color: "var(--text-secondary)",
+              borderLeft: "3px solid var(--accent-primary)",
+            }}
           >
             {watchedEntryType === "FULL_DAY_LEAVE"
               ? "No hours or tasks are needed for a Full Day Leave. Approving this entry will deduct 1 day from your leave balance."
@@ -232,160 +297,262 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
           </div>
         )}
 
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 24 }}
-        >
-          {!isZeroHourDay && (
-            <div>
-              <CustomInput
-                name="totalHours"
-                control={control}
-                rules={{ required: "Total hours is required" }}
-                label="Total Hours for the Day"
-                type="number"
-                step="0.5"
-                max={24}
-                required
-                readOnly
-                disabled={isApproved}
-              />
-              <div
-                className={`${styles.fontSm} ${styles.textMuted} ${styles.mt12}`}
-              >
-                Sum of tasks: {taskSum}h
-              </div>
-            </div>
-          )}
-          <CustomInput
-            name="notes"
-            control={control}
-            label="Daily Notes (Optional)"
-            placeholder="Anything special about today?"
-            disabled={isApproved}
-          />
-        </div>
-
+        {/* Tasks & Deliverables Section */}
         {!isZeroHourDay && (
-        <div className={`${styles.flexColumn} ${styles.gap12}`}>
-          {fields.length > 0 ? (
-            <div
-              className={`glass-card ${styles.flexColumn}`}
-              style={{ padding: "8px 0" }}
-            >
-              <div className={styles.taskGridHeader}>
-                <div>Project</div>
-                <div>Ticket</div>
-                <div>Hours</div>
-                <div>Description</div>
-                <div style={{ width: 36 }}></div>
+          <div className={styles.flexColumn} style={{ gap: 12 }}>
+            <div className={styles.tasksSectionHeader}>
+              <div className={styles.tasksHeaderTitle}>
+                <h3 className={styles.sectionHeading}>
+                  <CustomIcon name="Layers" size={17} />
+                  <span>Tasks & Deliverables</span>
+                </h3>
+                <span className={styles.tasksCountPill}>
+                  {fields.length} {fields.length === 1 ? "task" : "tasks"}
+                </span>
+                <span className={styles.hoursLoggedPill}>
+                  {taskSum}h / 8h logged
+                </span>
               </div>
+              {fields.length > 1 && (
+                <div className={styles.tasksHeaderActions}>
+                  <button
+                    type="button"
+                    onClick={expandAll}
+                    className={styles.linkBtn}
+                  >
+                    Expand All
+                  </button>
+                  <span className={styles.linkDivider}>|</span>
+                  <button
+                    type="button"
+                    onClick={collapseAll}
+                    className={styles.linkBtn}
+                  >
+                    Collapse All
+                  </button>
+                </div>
+              )}
+            </div>
 
-              <div className={styles.flexColumn}>
-                {fields.map((field, index) => (
-                  <div key={field.id} className={styles.taskGridRow}>
-                    <CustomSelect
-                      name={`tasks.${index}.projectId` as const}
-                      control={control}
-                      placeholder="Select Project"
-                      options={[
-                        { value: MISC_PROJECT, label: "Miscellaneous" },
-                        ...projects.map((p: any) => ({
-                          value: p.id,
-                          label: p.name,
-                        })),
-                      ]}
-                      disabled={isApproved}
-                      showSearch
-                    />
-                    {watchedTasks?.[index]?.projectId === MISC_PROJECT ? (
-                      // Miscellaneous activity isn't tied to a ticket — hide the
-                      // Ticket picker (empty spacer keeps the grid columns aligned).
-                      <div />
-                    ) : (
-                      <CustomSelect
-                        name={`tasks.${index}.ticketId` as const}
-                        control={control}
-                        placeholder="Link Ticket"
-                        options={tickets
-                          // When a project is selected, only its tickets are
-                          // linkable; otherwise all tickets are shown.
-                          .filter((t: any) =>
-                            watchedTasks?.[index]?.projectId
-                              ? t.project?.id === watchedTasks[index].projectId
-                              : true,
-                          )
-                          .map((t: { id: any; uid: any; subject: string }) => ({
-                            value: t.id,
-                            label: `#${t.uid} ${t.subject.substring(0, 20)}...`,
-                          }))}
-                        disabled={isApproved}
-                        showSearch
-                      />
-                    )}
-                    <CustomInput
-                      name={`tasks.${index}.hours` as const}
-                      control={control}
-                      rules={{ required: "Hours is required" }}
-                      type="number"
-                      step="0.5"
-                      max={24}
-                      disabled={isApproved}
-                      required
-                    />
-                    <CustomInput
-                      name={`tasks.${index}.description` as const}
-                      control={control}
-                      rules={{ required: "Description is required" }}
-                      placeholder="What did you do?"
-                      disabled={isApproved}
-                      required
-                    />
-                    {!isApproved && (
-                      <CustomButton
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => remove(index)}
-                        icon={<CustomIcon name="Trash2" size={20} />}
-                        style={{ color: "var(--accent-danger)" }}
-                      />
-                    )}
-                  </div>
-                ))}
+            {fields.length > 0 ? (
+              <div className={styles.flexColumn} style={{ gap: 12 }}>
+                {fields.map((field, index) => {
+                  const isExpanded = expandedTasks[index] ?? index === 0;
+                  const taskHours = watchedTasks?.[index]?.hours;
+                  const taskDesc = watchedTasks?.[index]?.description;
+                  const taskProjId = watchedTasks?.[index]?.projectId;
+                  const taskProjName =
+                    taskProjId === MISC_PROJECT
+                      ? "Miscellaneous"
+                      : projects.find((p: any) => p.id === taskProjId)?.name;
+
+                  return (
+                    <div key={field.id} className={styles.taskAccordionCard}>
+                      {/* Accordion Header */}
+                      <div
+                        className={styles.taskAccordionHeader}
+                        onClick={() => toggleTask(index)}
+                      >
+                        <div className={styles.taskAccordionHeaderLeft}>
+                          <CustomIcon
+                            name={isExpanded ? "ChevronDown" : "ChevronRight"}
+                            size={16}
+                            style={{ color: "var(--accent-primary)", flexShrink: 0 }}
+                          />
+                          <span className={styles.taskNumberBadge}>
+                            Task #{index + 1}
+                          </span>
+                          {taskProjName && (
+                            <span className={styles.taskSummarySnippet}>
+                              • <span>{taskProjName}</span>
+                            </span>
+                          )}
+                          {Number(taskHours) > 0 && (
+                            <span className={styles.taskHoursTag}>
+                              {taskHours}h
+                            </span>
+                          )}
+                          {!isExpanded && taskDesc && (
+                            <span className={styles.taskDescPreview}>
+                              {taskDesc.replace(/\n+/g, " ")}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className={styles.taskAccordionHeaderRight}>
+                          {!isApproved && fields.length > 1 && (
+                            <button
+                              type="button"
+                              className={styles.trashBtn}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                remove(index);
+                              }}
+                              title="Delete Task"
+                            >
+                              <CustomIcon name="Trash2" size={15} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Accordion Body */}
+                      {isExpanded && (
+                        <div className={styles.taskAccordionBody}>
+                          {/* Metadata Row: Project, Ticket, Hours */}
+                          <div
+                            className={
+                              watchedTasks?.[index]?.projectId === MISC_PROJECT
+                                ? styles.taskInputsGridNoTicket
+                                : styles.taskInputsGrid
+                            }
+                          >
+                            <CustomSelect
+                              name={`tasks.${index}.projectId` as const}
+                              control={control}
+                              label="Project"
+                              placeholder="Select Project"
+                              options={[
+                                { value: MISC_PROJECT, label: "Miscellaneous" },
+                                ...projects.map((p: any) => ({
+                                  value: p.id,
+                                  label: p.name,
+                                })),
+                              ]}
+                              disabled={isApproved}
+                              showSearch
+                            />
+
+                            {watchedTasks?.[index]?.projectId !== MISC_PROJECT && (
+                              <CustomSelect
+                                name={`tasks.${index}.ticketId` as const}
+                                control={control}
+                                label="Linked Ticket (Optional)"
+                                placeholder="Link Ticket"
+                                options={tickets
+                                  .filter((t: any) =>
+                                    watchedTasks?.[index]?.projectId
+                                      ? t.project?.id === watchedTasks[index].projectId
+                                      : true,
+                                  )
+                                  .map((t: { id: any; uid: any; subject: string }) => ({
+                                    value: t.id,
+                                    label: `#${t.uid} ${t.subject.substring(0, 24)}...`,
+                                  }))}
+                                disabled={isApproved}
+                                showSearch
+                              />
+                            )}
+
+                            <CustomInput
+                              name={`tasks.${index}.hours` as const}
+                              control={control}
+                              label="Hours"
+                              rules={{ required: "Hours is required" }}
+                              type="number"
+                              step="0.5"
+                              min={0.25}
+                              max={24}
+                              disabled={isApproved}
+                              required
+                            />
+                          </div>
+
+                          {/* Description Textarea with Integrated Formatting Toolbar */}
+                          <CustomTextArea
+                            name={`tasks.${index}.description` as const}
+                            control={control}
+                            label={
+                              <div className={styles.textareaLabelRow}>
+                                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                  <CustomIcon name="FileText" size={14} /> Description & Progress
+                                </span>
+                                {!isApproved && (
+                                  <div className={styles.formattingTools}>
+                                    <button
+                                      type="button"
+                                      className={styles.formatBtn}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        insertFormatting(index, "bullet");
+                                      }}
+                                      title="Add bullet point"
+                                    >
+                                      <CustomIcon name="List" size={12} /> Bullet
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={styles.formatBtn}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        insertFormatting(index, "number");
+                                      }}
+                                      title="Add numbered list item"
+                                    >
+                                      <CustomIcon name="ListOrdered" size={12} /> Numbered
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={styles.formatBtn}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        insertFormatting(index, "bold");
+                                      }}
+                                      title="Add bold formatting"
+                                    >
+                                      <CustomIcon name="Bold" size={12} /> Bold
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            }
+                            rules={{ required: "Description is required" }}
+                            placeholder="What did you work on? Detail your progress, commits, or deliverables..."
+                            rows={3}
+                            autoResize
+                            disabled={isApproved}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-          ) : (
-            <div
-              className={`glass-card ${styles.textCenter} ${styles.textMuted}`}
-              style={{ padding: 32 }}
-            >
-              No task added
-            </div>
-          )}
+            ) : (
+              <div
+                className={`glass-card ${styles.textCenter} ${styles.textMuted}`}
+                style={{ padding: 32 }}
+              >
+                No tasks added yet
+              </div>
+            )}
 
-          {!isApproved && (
-            <div className={styles.flexRow}>
-              <CustomButton
-                variant="secondary"
-                size="sm"
+            {!isApproved && (
+              <button
                 type="button"
-                onClick={() =>
+                className={styles.addTaskButton}
+                onClick={() => {
+                  const nextIdx = fields.length;
                   append({
                     description: "",
                     hours: 0,
                     projectId: "",
                     ticketId: "",
-                  })
-                }
-                icon={<CustomIcon name="Plus" size={16} />}
+                  });
+                  setExpandedTasks((prev) => ({
+                    ...prev,
+                    [nextIdx]: true,
+                  }));
+                }}
               >
-                Add Task
-              </CustomButton>
-            </div>
-          )}
-        </div>
+                <CustomIcon name="PlusCircle" size={16} />
+                <span>Add Another Task</span>
+              </button>
+            )}
+          </div>
         )}
 
+        {/* Modal Footer */}
         <div className={`${styles.flexEnd} ${styles.gap12} ${styles.mt12}`}>
           <CustomButton variant="secondary" type="button" onClick={onClose}>
             Cancel

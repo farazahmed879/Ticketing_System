@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Controller, type FieldValues } from "react-hook-form";
 import CustomIcon from "../CustomIcon";
@@ -29,38 +29,54 @@ const CustomSelect = <T extends FieldValues>({
   isClearable = false,
 }: CustomSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [dropdownStyles, setDropdownStyles] = useState<React.CSSProperties>({});
+  const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const updateDropdownPosition = useCallback(() => {
-    if (containerRef.current && isOpen) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const dropdownHeight = 250; // Match max-height in CSS
+  const computePosition = useCallback((): React.CSSProperties => {
+    if (!containerRef.current) return {};
+    const rect = containerRef.current.getBoundingClientRect();
+    const windowHeight = window.innerHeight;
+    const dropdownHeight = 250;
 
-      const spaceBelow = windowHeight - rect.bottom;
-      // Flip up only when there isn't room below but there is above.
-      const openUp = spaceBelow < dropdownHeight && rect.top > spaceBelow;
+    const spaceBelow = windowHeight - rect.bottom;
+    const openUp = spaceBelow < dropdownHeight && rect.top > spaceBelow;
 
-      setDropdownStyles({
-        position: "fixed",
-        // When opening upward, anchor the menu's BOTTOM to the trigger's top so
-        // it grows upward flush against the select (using a fixed height here
-        // would leave a gap that floats the menu over the field above it).
-        // Explicitly clear the opposite edge — the .dropdown CSS class sets
-        // `top: calc(100% + 4px)`, which would otherwise fight the `bottom`
-        // value and collapse the menu to zero height (making it invisible).
-        ...(openUp
-          ? { top: "auto", bottom: windowHeight - rect.top + 4 }
-          : { top: rect.bottom + 4, bottom: "auto" }),
-        left: rect.left,
-        width: rect.width,
-        zIndex: 999999,
-      });
+    return {
+      position: "fixed",
+      ...(openUp
+        ? { top: "auto", bottom: windowHeight - rect.top + 4 }
+        : { top: rect.bottom + 4, bottom: "auto" }),
+      left: rect.left,
+      width: rect.width,
+      zIndex: 999999,
+    };
+  }, []);
+
+  const [dropdownStyles, setDropdownStyles] = useState<React.CSSProperties>({});
+
+  const handleToggle = () => {
+    if (disabled) return;
+    if (!isOpen) {
+      // Calculate coordinates synchronously before mounting dropdown
+      const pos = computePosition();
+      setDropdownStyles(pos);
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
     }
-  }, [isOpen]);
+  };
 
   useEffect(() => {
+    if (!isOpen) setSearch("");
+  }, [isOpen]);
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+
+    const syncPos = () => {
+      setDropdownStyles(computePosition());
+    };
+
     const handleClickOutside = (event: MouseEvent) => {
       if (
         containerRef.current &&
@@ -71,19 +87,18 @@ const CustomSelect = <T extends FieldValues>({
       }
     };
 
-    if (isOpen) {
-      updateDropdownPosition();
-      document.addEventListener("mousedown", handleClickOutside);
-      window.addEventListener("scroll", updateDropdownPosition, true);
-      window.addEventListener("resize", updateDropdownPosition);
-    }
+    // Ensure position is updated on scroll or resize
+    syncPos();
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", syncPos, true);
+    window.addEventListener("resize", syncPos);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", updateDropdownPosition, true);
-      window.removeEventListener("resize", updateDropdownPosition);
+      window.removeEventListener("scroll", syncPos, true);
+      window.removeEventListener("resize", syncPos);
     };
-  }, [isOpen, updateDropdownPosition]);
+  }, [isOpen, computePosition]);
 
   const renderSelect = (fieldProps: any = {}) => {
     const value =
@@ -137,10 +152,6 @@ const CustomSelect = <T extends FieldValues>({
       : null;
     const selectedLabel = getSelectedLabel();
 
-    // Inside renderSelect
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [search, setSearch] = useState("");
-
     const filteredOptions = serverSideSearch
       ? options
       : options.filter(
@@ -150,15 +161,9 @@ const CustomSelect = <T extends FieldValues>({
               opt.sublabel.toLowerCase().includes(search.toLowerCase())),
         );
 
-    // Inside renderSelect
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => {
-      if (!isOpen) setSearch("");
-    }, [isOpen]);
-
     return (
       <div
-        className={`${styles.container} ${isOpen ? styles.containerActive : ""} ${className || ""}`}
+        className={`${styles.container} ${className || ""}`}
         ref={containerRef}
         style={style}
       >
@@ -175,7 +180,7 @@ const CustomSelect = <T extends FieldValues>({
 
         <div
           className={`${styles.trigger} ${isOpen ? styles.triggerActive : ""} ${disabled ? styles.disabled : ""} ${error ? styles.triggerError : ""} glass-card`}
-          onClick={() => !disabled && setIsOpen(!isOpen)}
+          onClick={handleToggle}
         >
           <div className={styles.currentValue}>
             {selectedLabel ? (
@@ -236,7 +241,7 @@ const CustomSelect = <T extends FieldValues>({
         {isOpen &&
           createPortal(
             <div
-              className={`${styles.dropdown} glass-card animate-fade-in`}
+              className={styles.dropdown}
               style={dropdownStyles}
               onMouseDown={(e) => e.stopPropagation()}
             >

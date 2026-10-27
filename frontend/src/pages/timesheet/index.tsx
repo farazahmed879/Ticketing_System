@@ -10,7 +10,6 @@ import {
   endOfWeek,
   isSameMonth,
   isSameDay,
-  addDays,
   eachDayOfInterval,
 } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -28,12 +27,8 @@ import { CalendarSkeleton } from "../../components/CustomSkeleton/CustomSkeleton
 import { ROLE_TYPE } from "../roles/roleConstants";
 import { getEntryTypeLabel, isZeroHourEntryType } from "./entryTypes";
 
-// Mock Google Calendar Events
-const MOCK_GOOGLE_EVENTS = [
-  { date: new Date(), title: "Team Standup" },
-  { date: addDays(new Date(), 1), title: "Project Alpha Sync" },
-  { date: addDays(new Date(), -2), title: "Client Review Meeting" },
-];
+// Google Calendar Events
+const MOCK_GOOGLE_EVENTS: { date: Date; title: string }[] = [];
 
 const Timesheet: React.FC = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());

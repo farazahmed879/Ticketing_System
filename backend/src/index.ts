@@ -34,6 +34,7 @@ import { setupSwagger } from './swagger';
 import { setupSocketEvents } from './socketio/events';
 import { startAutoCloseScheduler } from './services/autoCloseTickets';
 import { startNotificationCleanupScheduler } from './services/cleanupNotifications';
+import { startResumeJobWorker } from './services/resumeJobWorker';
 
 const app = express();
 const server = http.createServer(app);
@@ -87,6 +88,7 @@ server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   startAutoCloseScheduler();
   startNotificationCleanupScheduler();
+  startResumeJobWorker();
 });
 
 export { app, io, prisma };

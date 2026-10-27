@@ -57,6 +57,7 @@ async function extractText(
 
   // 2) Poll the job until it finishes.
   const deadline = Date.now() + POLL_TIMEOUT_MS;
+  let done = false;
   while (Date.now() < deadline) {
     const jobRes = await fetch(`${BASE}/job/${id}`, {
       headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
@@ -65,11 +66,17 @@ async function extractText(
       throw new Error(`LlamaParse job poll failed (${jobRes.status})`);
     }
     const { status } = (await jobRes.json()) as { status: string };
-    if (status === "SUCCESS") break;
+    if (status === "SUCCESS") {
+      done = true;
+      break;
+    }
     if (status === "ERROR" || status === "FAILED" || status === "CANCELLED") {
       throw new Error(`LlamaParse job ${status}`);
     }
     await sleep(POLL_INTERVAL_MS);
+  }
+  if (!done) {
+    throw new Error(`LlamaParse job timed out after ${POLL_TIMEOUT_MS}ms`);
   }
 
   // 3) Fetch the parsed result as markdown text.

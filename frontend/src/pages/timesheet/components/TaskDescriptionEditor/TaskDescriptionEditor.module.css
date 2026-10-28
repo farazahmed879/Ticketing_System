@@ -1,0 +1,148 @@
+.editorContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 6px;
+}
+
+.toolbarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 2px;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.titleIcon {
+  color: var(--accent-primary);
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.historyActions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.formattingActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbarDivider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-glass);
+  margin: 0 4px;
+}
+
+.toolButton {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.2;
+  transition: all 0.15s ease;
+}
+
+.toolButton:hover:not(:disabled) {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  transform: translateY(-1px);
+}
+
+.toolButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.textareaCard {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px;
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-glass) !important;
+  border-radius: 12px !important;
+  transition: var(--transition-fast);
+  box-shadow: none !important;
+  min-height: 96px;
+}
+
+.textareaCard:focus-within {
+  border-color: var(--accent-primary) !important;
+  background: rgba(124, 58, 237, 0.04) !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12) !important;
+}
+
+.textareaCardError {
+  border-color: var(--accent-danger) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+}
+
+.textareaInput {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  max-height: 320px;
+}
+
+.textareaInput::placeholder {
+  color: var(--text-muted);
+  opacity: 0.75;
+}
+
+.editorFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.shortcutHint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.charCount {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.errorText {
+  font-size: 0.75rem;
+  color: var(--accent-danger);
+  margin-top: 2px;
+}

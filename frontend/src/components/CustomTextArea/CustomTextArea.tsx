@@ -20,11 +20,11 @@ const CustomTextArea = <T extends FieldValues>({
   // Grow the textarea to fit its content (CSS max-height caps it, then it
   // scrolls). Runs on input and whenever the controlled value changes (so it
   // also shrinks back after the field is cleared).
-  const resize = () => {
-    const el = innerRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight}px`;
+  const resize = (el?: HTMLTextAreaElement | null) => {
+    const target = el || innerRef.current;
+    if (!target) return;
+    target.style.height = "auto";
+    target.style.height = `${target.scrollHeight}px`;
   };
 
   useEffect(() => {
@@ -37,16 +37,33 @@ const CustomTextArea = <T extends FieldValues>({
 
     return (
       <div className={styles.container} style={containerStyle}>
-        {label && <label className={styles.label}>{label}</label>}
+        {label &&
+          (typeof label === "string" ? (
+            <label className={styles.label}>{label}</label>
+          ) : (
+            <div className={styles.label}>{label}</div>
+          ))}
         <div
           className={`${styles.inputWrapper} ${error ? styles.inputWrapperError : ""} glass-card`}
         >
           <textarea
-            ref={autoResize ? innerRef : undefined}
-            className={`${styles.textarea} ${className || ""}`}
             {...props}
             {...fieldProps.field}
-            onInput={autoResize ? resize : props.onInput}
+            ref={(el) => {
+              innerRef.current = el;
+              if (fieldProps.field?.ref) {
+                if (typeof fieldProps.field.ref === "function") {
+                  fieldProps.field.ref(el);
+                } else {
+                  fieldProps.field.ref.current = el;
+                }
+              }
+            }}
+            className={`${styles.textarea} ${className || ""}`}
+            onInput={(e) => {
+              if (autoResize) resize(e.currentTarget);
+              props.onInput?.(e);
+            }}
           />
         </div>
         {error && <span className={styles.errorText}>{error}</span>}

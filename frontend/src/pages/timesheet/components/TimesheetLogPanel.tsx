@@ -6,8 +6,8 @@ import CustomInput from "../../../components/CustomInput";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
-import CustomTextArea from "../../../components/CustomTextArea";
 import CustomBadge from "../../../components/CustomBadge";
+import TaskDescriptionEditor from "./TaskDescriptionEditor";
 import { useNotification } from "../../../context/NotificationContext";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
@@ -203,27 +203,6 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
 
   const handleSave = async (data: TimesheetFormData) => {
     saveMutation.mutate(data);
-  };
-
-  const insertFormatting = (
-    index: number,
-    type: "bullet" | "number" | "bold",
-  ) => {
-    const currentVal = watchedTasks?.[index]?.description || "";
-    let updated = currentVal;
-    if (type === "bullet") {
-      updated = currentVal ? `${currentVal}\n• ` : "• ";
-    } else if (type === "number") {
-      const lines = currentVal.split("\n");
-      const num = lines.filter((l) => /^\d+\./.test(l.trim())).length + 1;
-      updated = currentVal ? `${currentVal}\n${num}. ` : "1. ";
-    } else if (type === "bold") {
-      updated = currentVal ? `${currentVal} **bold**` : "**bold**";
-    }
-    setValue(`tasks.${index}.description`, updated, {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
   };
 
   return (
@@ -536,67 +515,11 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                             </div>
                           </div>
 
-                          <CustomTextArea
+                          <TaskDescriptionEditor
                             name={`tasks.${index}.description` as const}
                             control={control}
-                            label={
-                              <div className={styles.textareaLabelRow}>
-                                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                  <CustomIcon name="FileText" size={13} /> Details
-                                </span>
-                                {!isApproved && (
-                                  <div className={styles.formattingTools}>
-                                    <CustomButton
-                                      type="button"
-                                      variant="secondary"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        insertFormatting(index, "bullet");
-                                      }}
-                                      title="Add bullet point"
-                                      icon={<CustomIcon name="List" size={12} />}
-                                      style={{ padding: "2px 6px", fontSize: "0.7rem" }}
-                                    >
-                                      Bullet
-                                    </CustomButton>
-                                    <CustomButton
-                                      type="button"
-                                      variant="secondary"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        insertFormatting(index, "number");
-                                      }}
-                                      title="Add numbered list item"
-                                      icon={<CustomIcon name="ListOrdered" size={12} />}
-                                      style={{ padding: "2px 6px", fontSize: "0.7rem" }}
-                                    >
-                                      Numbered
-                                    </CustomButton>
-                                    <CustomButton
-                                      type="button"
-                                      variant="secondary"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        insertFormatting(index, "bold");
-                                      }}
-                                      title="Add bold formatting"
-                                      icon={<CustomIcon name="Bold" size={12} />}
-                                      style={{ padding: "2px 6px", fontSize: "0.7rem" }}
-                                    >
-                                      Bold
-                                    </CustomButton>
-                                  </div>
-                                )}
-                              </div>
-                            }
-                            rules={{ required: "Description is required" }}
-                            placeholder="What did you work on? Deliverables, tickets, or commits..."
-                            rows={3}
-                            autoResize
                             disabled={isApproved}
+                            required
                           />
                         </div>
                       )}

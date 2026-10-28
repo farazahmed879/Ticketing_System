@@ -9,6 +9,7 @@ import {
 } from "../services/googleDriveService";
 import { resumeJobRepository } from "../repositories/resumeJob.repository";
 import { resumeParserService } from "../services/resumeParserService";
+import { resumeAiParserService } from "../services/resumeAiParserService";
 import { llamaParseService } from "../services/llamaParseService";
 import { aiSearchService } from "../services/aiSearchService";
 import { embeddingService } from "../services/embeddingService";
@@ -59,7 +60,10 @@ async function addNoteIfPresent(
  * candidate's text. Never blocks the write — on any failure we persist what we
  * have and rely on the backfill script to fill the rest in later.
  */
-async function safeEnrichAndEmbed(data: any): Promise<{
+async function safeEnrichAndEmbed(
+  data: any,
+  { reuseSkills = false } = {},
+): Promise<{
   skills: string[];
   yearsExperience: number | null;
   skillEmbedding: number[];
@@ -69,20 +73,22 @@ async function safeEnrichAndEmbed(data: any): Promise<{
 
   let skills: string[] = [];
   let yearsExperience: number | null = null;
-  try {
-    ({ skills, yearsExperience } = await aiSearchService.enrichCandidate(text));
-  } catch (err) {
-    console.error("Candidate enrichment failed (persisting empty):", err);
+  if (reuseSkills && Array.isArray(data.skills) && data.skills.length > 0) {
+    // Claude resume parsing already extracted these; don't pay for it twice.
+    skills = data.skills;
+    yearsExperience = data.yearsExperience ?? null;
+  } else {
+    try {
+      ({ skills, yearsExperience } = await aiSearchService.enrichCandidate(text));
+    } catch (err) {
+      console.error("Candidate enrichment failed (persisting empty):", err);
+    }
   }
 
   let skillEmbedding: number[] = [];
   try {
     // Embed a concise role+skills text (avoids diluting the signal with prose).
-    const profileText = aiSearchService.embeddingProfileText({
-      position: data.position,
-      skills,
-      technicalSkills: data.technicalSkills,
-    });
+    const profileText = aiSearchService.embeddingProfileText({ ...data, skills });
     skillEmbedding = await embeddingService.embedProfile(profileText);
   } catch (err) {
     console.error("Candidate embedding failed (persisting empty):", err);
@@ -149,6 +155,18 @@ export const candidateUsecase = {
     let total: number;
 
     if (aiPrompt) {
+      // Meta tags the query names exactly are hard filters (e.g. "referred
+      // flutter devs" only returns candidates tagged "Referred"). Observing
+      // skills it names ("fast learners") are matched like skills instead.
+      const labels = await candidateRepository.findSearchLabels();
+      const requiredTags = aiSearchService.tagsNamedInQuery(
+        aiPrompt as string,
+        labels.metaTags.flatMap(aiSearchService.splitList),
+      );
+      const namedObserving = aiSearchService.tagsNamedInQuery(
+        aiPrompt as string,
+        labels.observingSkills.flatMap(aiSearchService.splitList),
+      );
       try {
         // Hybrid AI search:
         //  1) Claude parses the NL query into structured constraints + topic.
@@ -160,6 +178,7 @@ export const candidateUsecase = {
         //  3b) If the query names NO skill (e.g. "senior frontend dev"), fall
         //      back to pure semantic vector ranking with a relevance floor.
         const filter = await aiSearchService.parseQuery(aiPrompt as string);
+        filter.skills = [...new Set([...filter.skills, ...namedObserving])];
         const aiWhere = aiSearchService.toPrismaWhere(filter);
 
         const topicText = aiSearchService.queryTopicText(filter);
@@ -168,10 +187,12 @@ export const candidateUsecase = {
 
         // If the query is too vague to search on, tell the user instead of
         // returning arbitrary matches. Loose keywords/position don't count as a
-        // concrete signal here — only a real skill, role, seniority, or status.
+        // concrete signal here — only a real skill, role, seniority, status,
+        // or a named meta tag.
         const hasConcreteSignal =
           hasSkills ||
           !!roleKey ||
+          requiredTags.length > 0 ||
           filter.minYearsExperience != null ||
           filter.statuses.length > 0 ||
           filter.failedInterviewBefore;
@@ -192,85 +213,64 @@ export const candidateUsecase = {
         }
 
         // Fetch all structurally-matching candidates; rank + paginate in app.
-        let matched = await candidateRepository.findMany(merged);
+        const structural = await candidateRepository.findMany(merged);
 
-        if (hasSkills || roleKey) {
-          // --- Skill / role path ---
-          // Exact skill coverage (if the query named skills) and/or role-tech
-          // count (if it named a role like "backend") drive the results. When
-          // both are present the explicit skill is mandatory and the role is a
-          // ranking signal. Semantic sim is only a final tie-breaker, so it's
-          // optional: if the embedding call fails we still rank by skills/role.
-          let queryVec: number[] = [];
-          try {
-            queryVec = await embeddingService.embedQuery(topicText);
-          } catch (embedErr) {
-            console.error("Query embed failed; ranking by skills/role only:", embedErr);
+        // The query embedding is only needed to pre-select for the judge when
+        // the pool exceeds its cap, and for the rule-based fallback. Without
+        // it, those still rank by skills/role/tags.
+        let queryVec: number[] | null = null;
+        const getQueryVec = async () => {
+          if (queryVec) return queryVec;
+          queryVec = [];
+          if (topicText) {
+            try {
+              queryVec = await embeddingService.embedQuery(topicText);
+            } catch (embedErr) {
+              console.error("Query embed failed; ranking without similarity:", embedErr);
+            }
           }
-
-          const scored = matched
-            .map((c) => {
-              const coverage = hasSkills
-                ? aiSearchService.skillCoverage(filter.skills, (c as any).skills)
-                : 0;
-              const roleHits = roleKey
-                ? aiSearchService.roleSkillHits(roleKey, c as any)
-                : 0;
-              const sim = queryVec.length
-                ? embeddingService.cosineSimilarity(
-                    queryVec,
-                    (c as any).skillEmbedding || [],
-                  )
-                : 0;
-              // Skill coverage drives the score when skills were named;
-              // otherwise an ABSOLUTE role-fit score: each role technology the
-              // candidate has is ~33%, so a single incidental tool reads as a
-              // weak match (~33%) rather than being inflated to 100%.
-              const matchScore = hasSkills
-                ? Math.round(coverage * 100)
-                : Math.min(100, roleHits * 33);
-              return { ...c, _coverage: coverage, _role: roleHits, _sim: sim, matchScore };
-            })
-            // Must have a requested skill (skill query) or at least one role
-            // technology (role query). No match => not returned.
-            .filter((c) => (hasSkills ? c._coverage > 0 : c._role > 0))
-            .sort(
-              (a, b) =>
-                b._coverage - a._coverage ||
-                b._role - a._role ||
-                b._sim - a._sim,
-            );
-
-          matched = scored.map(({ _coverage, _role, _sim, ...c }) => c);
-        } else if (topicText) {
-          // --- Semantic-only path (no explicit skill in the query) ---
-          const queryVec = await embeddingService.embedQuery(topicText);
-          const scored = matched.map((c) => {
-            const sim = embeddingService.cosineSimilarity(
-              queryVec,
-              (c as any).skillEmbedding || [],
-            );
-            return {
-              ...c,
-              _score: sim,
-              matchScore: Math.min(100, Math.round(sim * 100)),
-            };
-          });
-          scored.sort((a, b) => b._score - a._score);
-
-          // Keep results within a margin of the best match (and above a sane
-          // floor). If nothing clears the floor, return empty rather than
-          // dumping every candidate.
-          const top = scored[0]?._score ?? 0;
-          const REL_GAP = 0.08;
-          const ABS_FLOOR = 0.6;
-          const ranked = scored.filter(
-            (c) => c._score >= Math.max(ABS_FLOOR, top - REL_GAP),
+          return queryVec;
+        };
+        const ruleRanked = async () =>
+          aiSearchService.rankCandidates(
+            filter,
+            structural,
+            await getQueryVec(),
+            requiredTags,
           );
-          matched = ranked.map(({ _score, ...c }) => c);
+
+        // Topic searches go to the Claude judge, which reads the profiles and
+        // keeps only real fits (with a reason). Tag-only ("hot leads") and
+        // purely structured ("rejected candidates") searches are already
+        // exact, so they skip it.
+        const useJudge =
+          hasSkills || !!roleKey || (!!topicText && requiredTags.length === 0);
+
+        let matched: any[];
+        if (!useJudge) {
+          matched = await ruleRanked();
+        } else {
+          const pool =
+            structural.length > aiSearchService.JUDGE_MAX_CANDIDATES
+              ? aiSearchService.selectForJudge(
+                  filter,
+                  structural,
+                  await getQueryVec(),
+                  requiredTags,
+                )
+              : structural.filter((c) =>
+                  aiSearchService.hasAllTags(c.metaTags, requiredTags),
+                );
+          try {
+            matched = await aiSearchService.judgeCandidates(
+              aiPrompt as string,
+              pool,
+            );
+          } catch (judgeErr) {
+            console.error("AI judge failed; using rule-based ranking:", judgeErr);
+            matched = await ruleRanked();
+          }
         }
-        // else: pure structured query (e.g. "rejected candidates") -> return
-        // the structurally-matched set as-is.
 
         total = matched.length;
         candidates =
@@ -282,7 +282,9 @@ export const candidateUsecase = {
         // so search degrades gracefully if the LLM call fails.
         console.error("AI search failed, falling back to keyword scorer:", err);
 
-        candidates = await candidateRepository.findMany(where);
+        candidates = (await candidateRepository.findMany(where)).filter((c) =>
+          aiSearchService.hasAllTags(c.metaTags, requiredTags),
+        );
 
         // Colleague's improved keyword scorer (normalizes front-end/back-end
         // etc. + simple plurals) — reused here as the error-only fallback.
@@ -306,13 +308,7 @@ export const candidateUsecase = {
           .map((c) => {
             let score = 0;
             const candidateText = normalizeTechTerms(
-              [
-                c.technicalSkills,
-                c.workExperience,
-                c.objective,
-                c.notes,
-                c.position,
-              ]
+              [aiSearchService.candidateEnrichmentText(c), c.notes]
                 .filter(Boolean)
                 .join(" "),
             );
@@ -406,7 +402,7 @@ export const candidateUsecase = {
       await candidateRepository.clearSoftDeletedConflict(cleanEmail, cleanPosition);
     }
 
-    const enrichment = await safeEnrichAndEmbed(data);
+    const enrichment = await safeEnrichAndEmbed(data, { reuseSkills: true });
     try {
       const candidate = await candidateRepository.create({
         ...data,
@@ -588,7 +584,7 @@ export const candidateUsecase = {
           file.mimetype,
         );
       }
-      parsedData = { ...parsedData, ...resumeParserService.parseData(text) };
+      parsedData = { ...parsedData, ...(await resumeAiParserService.parse(text)) };
     } catch (parseError) {
       console.error("Failed to parse resume text:", parseError);
     }

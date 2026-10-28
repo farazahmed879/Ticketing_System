@@ -233,6 +233,11 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
         }
       }
 
+      // Snapshot of what the instant client-side (regex) parse filled in, so
+      // the server's Claude parse can replace it without clobbering edits the
+      // user made while the upload was running.
+      const clientValues = getValues();
+
       const formData = new FormData();
       formData.append("resume", file);
       try {
@@ -248,8 +253,12 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
           setHasUploadedResume(true);
           if (uploadRes.data.parsedData) {
             const serverParsed = uploadRes.data.parsedData;
-            // Use server-parsed values as fallback for any field the client missed.
+            // Server values (Claude, regex fallback) take priority over the
+            // client regex parse, unless the user has edited the field since.
             const currentValues = getValues();
+            const untouched = (field: keyof typeof currentValues) =>
+              !currentValues[field] ||
+              currentValues[field] === clientValues[field];
             const stringFields: Array<keyof typeof currentValues> = [
               "name",
               "position",
@@ -259,21 +268,22 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
               "linkedin",
               "portfolio",
               "github",
+              "projects",
               "nationality",
               "city",
             ];
             for (const field of stringFields) {
-              if (serverParsed[field] && !currentValues[field]) {
+              if (serverParsed[field] && untouched(field)) {
                 setValue(field, serverParsed[field]);
               }
             }
-            if (serverParsed.dob && !currentValues.dob) {
+            if (serverParsed.dob && untouched("dob")) {
               const date = new Date(serverParsed.dob);
               if (!isNaN(date.getTime())) {
                 setValue("dob", date.toISOString().split("T")[0]);
               }
             }
-            if (serverParsed.phone && !currentValues.phone) {
+            if (serverParsed.phone && untouched("phone")) {
               const matchedCode = COUNTRY_CODES.find((code) =>
                 serverParsed.phone.startsWith(code.value),
               );
@@ -288,12 +298,12 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
               }
             }
             setResumeData((prev) => ({
-              objective: prev.objective || serverParsed.objective || "",
+              objective: serverParsed.objective || prev.objective || "",
               technicalSkills:
-                prev.technicalSkills || serverParsed.technicalSkills || "",
+                serverParsed.technicalSkills || prev.technicalSkills || "",
               workExperience:
-                prev.workExperience || serverParsed.workExperience || "",
-              projects: prev.projects || serverParsed.projects || "",
+                serverParsed.workExperience || prev.workExperience || "",
+              projects: serverParsed.projects || prev.projects || "",
               rawText: prev.rawText,
             }));
           }

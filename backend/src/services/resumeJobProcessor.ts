@@ -2,14 +2,16 @@ import prisma from "../prisma";
 import { downloadFromGoogleDrive } from "./googleDriveService";
 import { llamaParseService } from "./llamaParseService";
 import { resumeParserService } from "./resumeParserService";
+import { resumeAiParserService } from "./resumeAiParserService";
 import { candidateUsecase } from "../usecases/candidate.usecase";
 import { candidateRepository } from "../repositories/candidate.repository";
 
 /**
  * The heavy per-resume pipeline, run by the worker process (NOT the web
  * server): download from Drive → extract text (LlamaParse, falling back to
- * pdf-parse/mammoth) → regex-parse fields → create the candidate (which runs
- * the usual Claude enrichment + Gemini embedding inside createCandidate).
+ * pdf-parse/mammoth) → Claude-parse fields (regex fallback) → create the
+ * candidate (which runs the Gemini embedding inside createCandidate, and the
+ * Claude enrichment only if parsing didn't already return skills).
  *
  * The candidate payload mirrors what BulkUploadModal used to build client-side
  * (fallback name from filename, generated fallback email, "+92 " phone prefix,
@@ -91,7 +93,7 @@ export async function processResumeJob(
     text = await resumeParserService.extractText(buffer, job.mimetype);
   }
 
-  const parsed: any = text ? resumeParserService.parseData(text) : {};
+  const parsed: any = await resumeAiParserService.parse(text);
 
   const name =
     parsed.name || deriveNameFromFilename(job.originalName) || "Unknown Candidate";
@@ -118,6 +120,8 @@ export async function processResumeJob(
     dob: parsed.dob || null,
     nationality: parsed.nationality || null,
     city: parsed.city || null,
+    skills: parsed.skills,
+    yearsExperience: parsed.yearsExperience,
     resumeJobId: job.id,
   };
 

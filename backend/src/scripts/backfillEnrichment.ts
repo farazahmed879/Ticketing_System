@@ -28,6 +28,8 @@ async function main() {
       workExperience: true,
       objective: true,
       projects: true,
+      observingSkills: true,
+      metaTags: true,
       skills: true,
       yearsExperience: true,
       skillEmbedding: true,
@@ -57,11 +59,7 @@ async function main() {
       }
 
       // Always (re)embed with the concise role+skills text and current model.
-      const profileText = aiSearchService.embeddingProfileText({
-        position: c.position,
-        skills,
-        technicalSkills: c.technicalSkills,
-      });
+      const profileText = aiSearchService.embeddingProfileText({ ...c, skills });
       const skillEmbedding = await embeddingService.embedProfile(profileText);
 
       await prisma.candidate.update({

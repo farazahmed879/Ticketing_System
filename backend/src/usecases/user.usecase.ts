@@ -164,7 +164,8 @@ export const userUsecase = {
       branch: data.branch,
       image: data.image,
       isLead: data.isLead || false,
-    });
+      mustChangePassword: true,
+    } as any);
     const { password: _, ...safeUser } = user;
     return safeUser;
   },
@@ -246,8 +247,23 @@ export const userUsecase = {
     const valid = await bcrypt.compare(currentPass, user.password);
     if (!valid) throw new Error("Current password is incorrect");
 
+    if (newPass === "admin123") {
+      throw new Error("New password cannot be the default password");
+    }
+
+    if (currentPass === newPass) {
+      throw new Error("New password must be different from current password");
+    }
+
+    if (newPass.length < 6) {
+      throw new Error("Password must be at least 6 characters long");
+    }
+
     const hashed = await bcrypt.hash(newPass, 10);
-    await userRepository.update(id, { password: hashed });
+    await userRepository.update(id, {
+      password: hashed,
+      mustChangePassword: false,
+    } as any);
   },
 
   async updatePhoneNumber(id: string, currentPhone: string, newPhone: string) {

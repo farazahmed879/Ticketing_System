@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import Modal from "../../../components/Modal";
 import CustomButton from "../../../components/CustomButton";
 import CustomInput from "../../../components/CustomInput";
@@ -6,15 +8,9 @@ import CustomIcon from "../../../components/CustomIcon";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import { useNotification } from "../../../context/NotificationContext";
-
-interface DeleteAllCandidatesModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: (count: number) => void;
-  totalCandidates?: number;
-}
-
-const REQUIRED_CONFIRMATION = "DELETE";
+import type { DeleteAllCandidatesModalProps } from "./deleteAllCandidates.types";
+import { DELETE_ALL_CANDIDATES } from "./deleteAllCandidates.constants";
+import styles from "./DeleteAllCandidatesModal.module.css";
 
 const DeleteAllCandidatesModal: React.FC<DeleteAllCandidatesModalProps> = ({
   isOpen,
@@ -25,17 +21,18 @@ const DeleteAllCandidatesModal: React.FC<DeleteAllCandidatesModalProps> = ({
   const [confirmationInput, setConfirmationInput] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const { showNotification } = useNotification();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { runBackgroundTask } = useNotification();
 
   const isConfirmationMatched =
-    confirmationInput.trim().toUpperCase() === REQUIRED_CONFIRMATION;
+    confirmationInput.trim().toUpperCase() ===
+    DELETE_ALL_CANDIDATES.REQUIRED_CONFIRMATION;
   const isFormValid = isConfirmationMatched && password.trim().length > 0;
 
   const handleClose = () => {
-    if (isSubmitting) return;
     setConfirmationInput("");
     setPassword("");
     setShowPassword(false);
@@ -43,168 +40,113 @@ const DeleteAllCandidatesModal: React.FC<DeleteAllCandidatesModalProps> = ({
     onClose();
   };
 
-  const handleDeleteAll = async (e: React.FormEvent) => {
+  const handleDeleteAll = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid || isSubmitting) return;
+    if (!isFormValid) return;
 
-    setIsSubmitting(true);
-    setErrorMsg(null);
+    const trimmedPassword = password.trim();
 
-    try {
-      const response = await api.post(API_ROUTES.CANDIDATES.DELETE_ALL, {
-        password: password.trim(),
-      });
+    handleClose();
+    navigate(DELETE_ALL_CANDIDATES.DASHBOARD_PATH);
 
-      const deletedCount = response.data?.count ?? totalCandidates ?? 0;
-      showNotification(
-        "success",
-        response.data?.message || `Successfully deleted ${deletedCount} candidates.`,
-      );
+    runBackgroundTask(
+      DELETE_ALL_CANDIDATES.TASK_TITLE,
+      async () => {
+        const response = await api.post(API_ROUTES.CANDIDATES.DELETE_ALL, {
+          password: trimmedPassword,
+        });
 
-      handleClose();
-      onSuccess(deletedCount);
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.error ||
-        err.message ||
-        "Failed to delete all candidates. Please check your password.";
-      setErrorMsg(msg);
-      showNotification("error", msg);
-    } finally {
-      setIsSubmitting(false);
-    }
+        const deletedCount = response.data?.count ?? totalCandidates ?? 0;
+        return (
+          response.data?.message ||
+          DELETE_ALL_CANDIDATES.getSuccessMessage(deletedCount)
+        );
+      },
+      () => {
+        queryClient.invalidateQueries({ queryKey: ["candidates"] });
+        onSuccess(totalCandidates || 0);
+      }
+    );
   };
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Delete All Candidates"
-      maxWidth="480px"
+      title={DELETE_ALL_CANDIDATES.MODAL_TITLE}
+      maxWidth={DELETE_ALL_CANDIDATES.MODAL_MAX_WIDTH}
       footer={
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            width: "100%",
-            gap: "10px",
-          }}
-        >
+        <div className={styles.modalFooter}>
           <CustomButton
             type="button"
             variant="secondary"
             onClick={handleClose}
-            disabled={isSubmitting}
           >
-            Cancel
+            {DELETE_ALL_CANDIDATES.CANCEL_BTN_TEXT}
           </CustomButton>
 
           <CustomButton
             type="button"
             variant="danger"
             onClick={handleDeleteAll}
-            loading={isSubmitting}
-            disabled={!isFormValid || isSubmitting}
+            disabled={!isFormValid}
             icon={<CustomIcon name="Trash2" size={16} />}
           >
-            Delete All Candidates
+            {DELETE_ALL_CANDIDATES.CONFIRM_BTN_TEXT}
           </CustomButton>
         </div>
       }
     >
-      <form onSubmit={handleDeleteAll} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        {/* Warning Banner */}
-        <div
-          style={{
-            background: "rgba(239, 68, 68, 0.12)",
-            border: "1px solid rgba(239, 68, 68, 0.35)",
-            borderRadius: 10,
-            padding: "14px 16px",
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 12,
-          }}
-        >
-          <div
-            style={{
-              color: "var(--accent-danger)",
-              flexShrink: 0,
-              marginTop: 2,
-            }}
-          >
+      <form onSubmit={handleDeleteAll} className={styles.form}>
+        <div className={styles.warningBanner}>
+          <div className={styles.warningIcon}>
             <CustomIcon name="AlertTriangle" size={22} />
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span
-              style={{
-                fontWeight: 700,
-                fontSize: "0.92rem",
-                color: "var(--accent-danger)",
-                letterSpacing: "0.02em",
-              }}
-            >
-              CRITICAL ACTION: Danger Zone
+          <div className={styles.warningContent}>
+            <span className={styles.warningTitle}>
+              {DELETE_ALL_CANDIDATES.DANGER_ZONE_TITLE}
             </span>
-            <p
-              style={{
-                margin: 0,
-                fontSize: "0.84rem",
-                color: "var(--text-secondary)",
-                lineHeight: 1.45,
-              }}
-            >
-              You are about to delete <strong>all candidate profiles</strong>
+            <p className={styles.warningDesc}>
+              {DELETE_ALL_CANDIDATES.WARNING_PREFIX}{" "}
+              <strong>{DELETE_ALL_CANDIDATES.PROFILES_TARGET}</strong>
               {typeof totalCandidates === "number" && totalCandidates > 0
-                ? ` (${totalCandidates} active candidates)`
+                ? ` (${totalCandidates} ${DELETE_ALL_CANDIDATES.ACTIVE_SUFFIX})`
                 : ""}
-              , including their resumes, notes, and scheduled interview history.
-              This operation <strong>cannot be undone</strong>.
+              {DELETE_ALL_CANDIDATES.WARNING_BODY}{" "}
+              <strong>{DELETE_ALL_CANDIDATES.CANNOT_BE_UNDONE}</strong>
             </p>
           </div>
         </div>
 
-        {/* Step 1: Confirmation Input */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "0.82rem",
-              fontWeight: 600,
-              color: "var(--text-secondary)",
-              marginBottom: 6,
-            }}
-          >
-            Type <span style={{ color: "var(--accent-danger)", fontWeight: 700 }}>DELETE</span> to confirm:
+          <label className={styles.fieldLabel}>
+            {DELETE_ALL_CANDIDATES.CONFIRM_LABEL_PREFIX}{" "}
+            <span className={styles.highlightText}>
+              {DELETE_ALL_CANDIDATES.REQUIRED_CONFIRMATION}
+            </span>{" "}
+            {DELETE_ALL_CANDIDATES.CONFIRM_LABEL_SUFFIX}
           </label>
           <CustomInput
-            placeholder="Type DELETE"
+            placeholder={DELETE_ALL_CANDIDATES.getConfirmPlaceholder(
+              DELETE_ALL_CANDIDATES.REQUIRED_CONFIRMATION
+            )}
             value={confirmationInput}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setConfirmationInput(e.target.value);
               if (errorMsg) setErrorMsg(null);
             }}
             autoComplete="off"
-            containerStyle={{ width: "100%" }}
+            className={styles.inputField}
           />
         </div>
 
-        {/* Step 2: Admin Password Verification */}
         <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "0.82rem",
-              fontWeight: 600,
-              color: "var(--text-secondary)",
-              marginBottom: 6,
-            }}
-          >
-            Enter your Admin Password:
+          <label className={styles.fieldLabel}>
+            {DELETE_ALL_CANDIDATES.PASSWORD_LABEL}
           </label>
           <CustomInput
             type={showPassword ? "text" : "password"}
-            placeholder="Your administrator account password"
+            placeholder={DELETE_ALL_CANDIDATES.PASSWORD_PLACEHOLDER}
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setPassword(e.target.value);
@@ -213,44 +155,24 @@ const DeleteAllCandidatesModal: React.FC<DeleteAllCandidatesModalProps> = ({
             autoComplete="current-password"
             icon={<CustomIcon name="Lock" size={16} />}
             suffix={
-              <button
-                type="button"
+              <span
                 onClick={() => setShowPassword(!showPassword)}
-                tabIndex={-1}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--text-muted)",
-                  padding: "4px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                title={showPassword ? "Hide password" : "Show password"}
+                className={styles.passwordToggle}
+                title={
+                  showPassword
+                    ? DELETE_ALL_CANDIDATES.HIDE_PASSWORD_TITLE
+                    : DELETE_ALL_CANDIDATES.SHOW_PASSWORD_TITLE
+                }
               >
                 <CustomIcon name={showPassword ? "EyeOff" : "Eye"} size={16} />
-              </button>
+              </span>
             }
-            containerStyle={{ width: "100%" }}
+            className={styles.inputField}
           />
         </div>
 
-        {/* Error message alert */}
         {errorMsg && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: "0.82rem",
-              color: "var(--accent-danger)",
-              background: "rgba(239, 68, 68, 0.08)",
-              padding: "8px 12px",
-              borderRadius: 6,
-              border: "1px solid rgba(239, 68, 68, 0.2)",
-            }}
-          >
+          <div className={styles.errorAlert}>
             <CustomIcon name="AlertCircle" size={16} />
             <span>{errorMsg}</span>
           </div>

@@ -79,6 +79,7 @@ model User {
   updatedAt       DateTime  @updatedAt
   deleted         Boolean   @default(false)
   isLead          Boolean   @default(false)
+  mustChangePassword Boolean? @default(true)
 }
 
 model Role {

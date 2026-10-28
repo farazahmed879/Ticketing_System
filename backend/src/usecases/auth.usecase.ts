@@ -17,6 +17,8 @@ export const authUsecase = {
       throw new Error("Invalid credentials");
     }
 
+    const mustChangePassword = (user as any).mustChangePassword !== false;
+
     const token = jwt.sign(
       { id: user.id, role: user.role.roleType },
       process.env.JWT_SECRET as string,
@@ -32,6 +34,7 @@ export const authUsecase = {
         image: user.image,
         leaves: user.leaves,
         isLead: user.isLead,
+        mustChangePassword,
         role: {
           name: user.role.name,
           roleType: user.role.roleType,
@@ -48,6 +51,8 @@ export const authUsecase = {
       throw new Error("User not found");
     }
 
+    const mustChangePassword = (user as any).mustChangePassword !== false;
+
     return {
       id: user.id,
       email: user.email,
@@ -56,6 +61,7 @@ export const authUsecase = {
       image: user.image,
       leaves: user.leaves,
       isLead: user.isLead,
+      mustChangePassword: Boolean(mustChangePassword),
       role: {
         name: user.role.name,
         roleType: user.role.roleType,

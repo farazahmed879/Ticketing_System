@@ -509,7 +509,11 @@ export const candidateUsecase = {
       throw new Error("User not found.");
     }
 
-    if (user.role?.roleType !== "ADMIN") {
+    const roleType = (user.role?.roleType || "").toLowerCase();
+    const roleName = (user.role?.name || "").toLowerCase();
+    const isAdmin = roleType === "admin" || roleName === "admin";
+
+    if (!isAdmin) {
       throw new Error("Only an administrator can perform this action.");
     }
 
@@ -699,7 +703,8 @@ export const candidateUsecase = {
           gitUrl: candidate.github || candidate.portfolio,
           nationality: candidate.nationality,
           location: candidate.city,
-        },
+          mustChangePassword: true,
+        } as any,
       });
 
       // 2. Mark Candidate as Converted

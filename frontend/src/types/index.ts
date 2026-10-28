@@ -37,6 +37,7 @@ export interface User {
   createdAt?: string;
   teamNames?: string[];
   isLead?: boolean;
+  mustChangePassword?: boolean;
 }
 
 export interface Department {

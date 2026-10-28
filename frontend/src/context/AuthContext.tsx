@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (token: string, userData: User) => void;
   logout: () => void;
   loading: boolean;
+  updateUser: (partial: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -51,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = () => {
     localStorage.removeItem("token");
+    sessionStorage.clear();
     // The QueryClient lives for the whole SPA lifetime and logout only does a
     // client-side navigate (no page reload), so its cache would otherwise
     // survive and be served to the next user who logs in.
@@ -59,8 +61,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     disconnectSocket();
   };
 
+  const updateUser = (partial: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...partial } : prev));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider
+      value={{ user, login, logout, loading, updateUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

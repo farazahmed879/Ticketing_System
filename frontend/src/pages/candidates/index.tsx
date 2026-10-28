@@ -375,8 +375,9 @@ const CandidateList: React.FC = () => {
             {/* AI Mode Toggle */}
             <CustomButton
               variant={isAiMode ? "gradient" : "outline"}
-              size="sm"
-              icon={<CustomIcon name="Sparkles" size={16} />}
+              className={styles.filterBarBtn}
+              style={{ padding: "0 18px" }}
+              icon={<CustomIcon name="Sparkles" size={18} />}
               onClick={() => {
                 setIsAiMode(!isAiMode);
                 setCurrentPage(0);
@@ -422,7 +423,12 @@ const CandidateList: React.FC = () => {
               />
             </div>
 
-            <CustomButton variant="primary" onClick={handleSearch}>
+            <CustomButton
+              variant="primary"
+              className={styles.filterBarBtn}
+              style={{ padding: "0 22px" }}
+              onClick={handleSearch}
+            >
               {isAiMode ? "Analyze" : "Search"}
             </CustomButton>
 
@@ -441,6 +447,8 @@ const CandidateList: React.FC = () => {
                     ? "primary"
                     : "secondary"
                 }
+                className={styles.filterBarBtn}
+                style={{ padding: "0 18px" }}
                 onClick={() => setShowMoreFilters(!showMoreFilters)}
                 icon={<CustomIcon name="SlidersHorizontal" size={18} />}
               >
@@ -633,32 +641,24 @@ const CandidateList: React.FC = () => {
                 </div>
               )}
             </div>
-            <div
-              style={{
-                display: "flex",
-                gap: 4,
-                padding: 4,
-                borderRadius: 10,
-                border: "1px solid var(--border-glass)",
-                background: "rgba(255,255,255,0.03)",
-                marginLeft: "auto",
-              }}
-            >
+            <div className={styles.viewModeToggle}>
               <CustomButton
                 variant={viewMode === "list" ? "primary" : "ghost"}
+                className={styles.viewModeBtn}
                 size="sm"
                 onClick={() => setViewMode("list")}
                 icon={<CustomIcon name="List" size={16} />}
                 title="List view"
-                style={{ padding: "6px 10px" }}
+                style={{ padding: "6px 12px" }}
               />
               <CustomButton
                 variant={viewMode === "grid" ? "primary" : "ghost"}
+                className={styles.viewModeBtn}
                 size="sm"
                 onClick={() => setViewMode("grid")}
                 icon={<CustomIcon name="LayoutGrid" size={16} />}
                 title="Grid view"
-                style={{ padding: "6px 10px" }}
+                style={{ padding: "6px 12px" }}
               />
             </div>
           </div>

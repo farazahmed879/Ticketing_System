@@ -79,6 +79,36 @@
   transform: translateX(-50%) translateY(-4px);
 }
 
+/* Filter bar buttons matching the exact height & border-radius of the search bar */
+.filterBarBtn {
+  height: 48px !important;
+  min-height: 48px !important;
+  border-radius: 12px !important;
+  box-sizing: border-box !important;
+  font-size: 0.88rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.viewModeToggle {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.03);
+  margin-left: auto;
+  height: 48px;
+  box-sizing: border-box;
+  align-items: center;
+}
+
+.viewModeBtn {
+  height: 38px !important;
+  border-radius: 8px !important;
+}
+
 /* Anchor for the floating advanced-filters dropdown */
 .filterAnchor {
   position: relative;

@@ -127,3 +127,96 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Background Task Snackbar (Bottom Right) */
+.bottomRightContainer {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 20000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.bottomRightSnackbar {
+  pointer-events: auto;
+  min-width: 340px;
+  max-width: 450px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: var(--bg-card);
+  backdrop-filter: var(--blur-md);
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  animation: slideUpSnackbar 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpSnackbar {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.runningSnackbar {
+  border-color: rgba(124, 58, 237, 0.45);
+  box-shadow: 0 16px 36px rgba(124, 58, 237, 0.22);
+}
+
+.successSnackbar {
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow: 0 16px 36px rgba(16, 185, 129, 0.22);
+}
+
+.errorSnackbar {
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: 0 16px 36px rgba(239, 68, 68, 0.22);
+}
+
+.spinAnimation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: spin 1s linear infinite;
+}
+
+.runningIcon {
+  color: var(--accent-primary);
+}
+
+.successIcon {
+  color: var(--accent-success);
+}
+
+.errorIcon {
+  color: var(--accent-danger);
+}
+
+.taskContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.taskTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.taskMessage {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+

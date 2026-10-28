@@ -7,9 +7,11 @@ import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
 import { socket } from "../services/socket";
 import CustomIcon from "../components/CustomIcon";
+import CustomButton from "../components/CustomButton";
 import styles from "./MainLayout.module.css";
 import Sidebar from "../components/Sidebar";
 import ConfirmationModal from "../components/ConfirmationModal";
+import ChangeDefaultPasswordModal from "../components/ChangeDefaultPasswordModal";
 import {
   ensureNotificationPermission,
   showDesktopNotification,
@@ -28,8 +30,25 @@ const MainLayout: React.FC = () => {
   const [notifications, setNotifications] = React.useState<any[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
   const [isMarkAllReadOpen, setIsMarkAllReadOpen] = React.useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = React.useState(false);
+  const [isBannerDismissed, setIsBannerDismissed] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const notificationRef = React.useRef<HTMLDivElement>(null);
+
+  // Automatically prompt user to change password if they are using default/initial password
+  React.useEffect(() => {
+    if (user?.id) {
+      setIsBannerDismissed(false);
+      if (user.mustChangePassword) {
+        const promptKey = `default_password_prompt_shown_${user.id}`;
+        const alreadyPrompted = sessionStorage.getItem(promptKey);
+        if (!alreadyPrompted) {
+          setIsChangePasswordOpen(true);
+          sessionStorage.setItem(promptKey, "true");
+        }
+      }
+    }
+  }, [user?.id, user?.mustChangePassword]);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -526,10 +545,56 @@ const MainLayout: React.FC = () => {
           </div>
         </header>
 
+        {user?.mustChangePassword && !isBannerDismissed && (
+          <div className={styles.passwordAlertBanner}>
+            <div className={styles.alertLeft}>
+              <div className={styles.alertIconWrapper}>
+                <CustomIcon
+                  name="ShieldAlert"
+                  size={20}
+                  className={styles.alertShieldIcon}
+                />
+              </div>
+              <div className={styles.alertTextContent}>
+                <div className={styles.alertTitle}>
+                  <span>Security Notice: Default Password Detected</span>
+                </div>
+                <div className={styles.alertDesc}>
+                  You are currently using an initial or default password. Please update your password to protect your account.
+                </div>
+              </div>
+            </div>
+            <div className={styles.alertActions}>
+              <CustomButton
+                variant="primary"
+                size="sm"
+                icon={<CustomIcon name="KeyRound" size={15} />}
+                onClick={() => setIsChangePasswordOpen(true)}
+                className={styles.alertBtn}
+              >
+                Change Password
+              </CustomButton>
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                icon={<CustomIcon name="X" size={16} />}
+                onClick={() => setIsBannerDismissed(true)}
+                title="Dismiss notice"
+                className={styles.alertDismissBtn}
+              />
+            </div>
+          </div>
+        )}
+
         <div className={styles.pageContainer}>
           <Outlet />
         </div>
       </main>
+
+      <ChangeDefaultPasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+      />
 
       <ConfirmationModal
         isOpen={isMarkAllReadOpen}

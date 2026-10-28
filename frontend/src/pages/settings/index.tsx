@@ -14,6 +14,7 @@ import styles from "./Settings.module.css";
 import { t } from "i18next";
 
 const PasswordSection = () => {
+  const { updateUser } = useAuth();
   const {
     control,
     handleSubmit,
@@ -33,6 +34,7 @@ const PasswordSection = () => {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });
+      updateUser({ mustChangePassword: false });
       setMsg({ type: "success", text: "Password updated successfully!" });
       reset();
     } catch (err: any) {

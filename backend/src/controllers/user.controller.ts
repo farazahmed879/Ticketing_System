@@ -138,7 +138,12 @@ export const userController = {
       await userUsecase.updatePassword(userId, currentPassword, newPassword);
       res.json({ success: true });
     } catch (error: any) {
-      const status = error.message.includes("incorrect") ? 400 : 500;
+      const isClientError =
+        error.message.includes("incorrect") ||
+        error.message.includes("cannot be") ||
+        error.message.includes("must be") ||
+        error.message.includes("at least");
+      const status = isClientError ? 400 : 500;
       res.status(status).json({ success: false, error: error.message });
     }
   },

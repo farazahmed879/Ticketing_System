@@ -12,6 +12,12 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Selected text: white on the accent colour so it stays readable in inputs. */
+::selection {
+  background: var(--accent-primary);
+  color: #fff;
+}
+
 :root {
   /* Common Colors (can be overridden by theme management) */
   --accent-primary: #7c3aed;

@@ -103,7 +103,12 @@ export async function processResumeJob(
     email:
       parsed.email ||
       `${Math.random().toString(36).substring(7)}@example.com`,
-    phone: parsed.phone ? `+92 ${parsed.phone}` : "",
+    // Claude returns "+<code> <number>"; the regex fallback returns bare digits.
+    phone: parsed.phone
+      ? parsed.phone.startsWith("+")
+        ? parsed.phone
+        : `+92 ${parsed.phone}`
+      : "",
     position: parsed.position ? parsed.position.trim() : "",
     resumeUrl: job.driveUrl,
     notes: text ? "Automatically created from bulk upload." : "",

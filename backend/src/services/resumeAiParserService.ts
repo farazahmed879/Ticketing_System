@@ -19,6 +19,7 @@ const resumeSchema = z.object({
   position: str,
   email: str,
   phone: str,
+  phoneCountryCode: str,
   cnic: str,
   address: str,
   city: str,
@@ -49,9 +50,14 @@ const resumeToolInputSchema = {
     ),
     email: nullableString("Email address."),
     phone: nullableString("Phone number exactly as written."),
+    phoneCountryCode: nullableString(
+      "Country calling code of the phone number, e.g. \"+92\" or \"+966\". Use the code written with the number, or the one its format clearly implies (e.g. 05x numbers in Saudi Arabia -> \"+966\"). null if unknown.",
+    ),
     cnic: nullableString("Pakistani CNIC in 12345-1234567-1 format, if present."),
     address: nullableString("Postal/home address."),
-    city: nullableString("City of residence."),
+    city: nullableString(
+      "City of residence. Take it from the address or contact line if not stated separately (e.g. \"Riyadh, Saudi Arabia\" -> \"Riyadh\").",
+    ),
     nationality: nullableString("Nationality, only if stated."),
     dob: nullableString("Date of birth as YYYY-MM-DD, only if stated."),
     linkedin: nullableString("LinkedIn profile URL."),
@@ -86,16 +92,20 @@ Rules:
 - position is the exception: infer a sensible title when none is stated (see its description).
 - The text may contain Markdown (**bold**, # headings, tables); return plain text without Markdown symbols.`;
 
-export type ParsedResume = z.infer<typeof resumeSchema>;
+export type ParsedResume = Omit<z.infer<typeof resumeSchema>, "phoneCountryCode">;
 
-// Same shape the regex parser and the frontend expect: phone as digits with
-// the Pakistani country code (92 / 0092) stripped.
-function normalizePhone(raw: string | null): string | null {
+// "+<code> <number>", the shape the frontend splits back into its country
+// code dropdown. Defaults to Pakistan (+92) when the code is unknown.
+export function normalizePhone(
+  raw: string | null,
+  countryCode: string | null = null,
+): string | null {
   if (!raw) return null;
   let digits = raw.replace(/\D/g, "");
-  if (digits.startsWith("0092")) digits = digits.slice(4);
-  else if (digits.startsWith("92") && digits.length > 10) digits = digits.slice(2);
-  return digits || null;
+  if (digits.startsWith("00")) digits = digits.slice(2);
+  const code = countryCode?.replace(/\D/g, "") || "92";
+  if (digits.startsWith(code) && digits.length > 10) digits = digits.slice(code.length);
+  return digits ? `+${code} ${digits}` : null;
 }
 
 async function parseWithClaude(text: string): Promise<ParsedResume> {
@@ -121,8 +131,8 @@ async function parseWithClaude(text: string): Promise<ParsedResume> {
     throw new Error("Model did not return a tool call");
   }
 
-  const parsed = resumeSchema.parse(toolUse.input);
-  return { ...parsed, phone: normalizePhone(parsed.phone) };
+  const { phoneCountryCode, ...parsed } = resumeSchema.parse(toolUse.input);
+  return { ...parsed, phone: normalizePhone(parsed.phone, phoneCountryCode) };
 }
 
 /**

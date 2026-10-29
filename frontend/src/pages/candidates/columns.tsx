@@ -66,19 +66,6 @@ export const getCandidateColumns = (
       ),
     },
     {
-      header: "Notes",
-      key: "notes",
-      render: (c) =>
-        c.notes ? (
-          <div className={styles.notesContainer}>
-            <span className={styles.notesText}>{c.notes}</span>
-            <div className={styles.notesTooltip}>{c.notes}</div>
-          </div>
-        ) : (
-          <span className="text-sm-secondary">—</span>
-        ),
-    },
-    {
       header: "Location",
       key: "location",
       render: (c) => (
@@ -231,6 +218,19 @@ export const getCandidateColumns = (
           <span className="text-sm font-semibold">{c.matchScore || 0}%</span>
         </div>
       ),
+    },
+    {
+      header: "Why It Matched",
+      key: "matchReason",
+      render: (c: any) =>
+        c.matchReason ? (
+          <div className={styles.notesContainer}>
+            <span className={styles.notesText}>{c.matchReason}</span>
+            <div className={styles.notesTooltip}>{c.matchReason}</div>
+          </div>
+        ) : (
+          <span className="text-sm-secondary">—</span>
+        ),
     });
   }
 

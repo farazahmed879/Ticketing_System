@@ -124,7 +124,13 @@ export const resumeParserService = {
   },
 
   parseData(text: string) {
-    const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    // LlamaParse returns Markdown; drop emphasis and heading markers so they
+    // don't leak into parsed fields (e.g. position "- **python Programming**").
+    const normalized = text
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      .replace(/\*\*|__/g, "")
+      .replace(/^[ \t]*#{1,6}[ \t]+/gm, "");
     const sections = {
       objective: extractSection(normalized, SECTION_HEADERS.objective),
       workExperience: extractSection(normalized, SECTION_HEADERS.workExperience),

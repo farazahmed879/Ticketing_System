@@ -1,6 +1,25 @@
 import prisma from "../prisma";
 
+// Prisma's MongoDB connector turns case-insensitive `equals` into an
+// unescaped regex, so parsed text like "**Python**" crashes the query.
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export const candidateRepository = {
+  /** Raw metaTags / observingSkills strings of all live candidates. */
+  async findSearchLabels(): Promise<{ metaTags: string[]; observingSkills: string[] }> {
+    const rows = await prisma.candidate.findMany({
+      where: {
+        deleted: false,
+        OR: [{ metaTags: { not: null } }, { observingSkills: { not: null } }],
+      },
+      select: { metaTags: true, observingSkills: true },
+    });
+    return {
+      metaTags: rows.map((r) => r.metaTags || ""),
+      observingSkills: rows.map((r) => r.observingSkills || ""),
+    };
+  },
+
   async findMany(where: any, skip?: number, take?: number) {
     return prisma.candidate.findMany({
       where: { ...where, deleted: false },
@@ -61,8 +80,8 @@ export const candidateRepository = {
   async findByEmailAndPosition(email: string, position: string) {
     return prisma.candidate.findFirst({
       where: {
-        email: { equals: email, mode: "insensitive" },
-        position: { equals: position, mode: "insensitive" },
+        email: { equals: escapeRegex(email), mode: "insensitive" },
+        position: { equals: escapeRegex(position), mode: "insensitive" },
         deleted: false,
       },
       select: { id: true, name: true, email: true, position: true },
@@ -101,8 +120,8 @@ export const candidateRepository = {
     if (!email || !position) return;
     const staleDeleted = await prisma.candidate.findMany({
       where: {
-        email: { equals: email, mode: "insensitive" },
-        position: { equals: position, mode: "insensitive" },
+        email: { equals: escapeRegex(email), mode: "insensitive" },
+        position: { equals: escapeRegex(position), mode: "insensitive" },
         deleted: true,
       },
       select: { id: true, email: true },

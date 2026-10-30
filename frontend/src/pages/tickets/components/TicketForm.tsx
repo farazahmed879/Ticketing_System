@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
-import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
+import { TaskDescriptionEditor } from "../../timesheet/components/TaskDescriptionEditor";
 import {
   ACCEPT_ATTRIBUTE,
   MAX_ATTACHMENTS,
@@ -63,10 +63,8 @@ const TicketForm: React.FC<TicketFormProps> = ({
 
   const selectedPriority = watch("priorityId");
   const subjectValue = watch("subject");
-  const issueValue = watch("issue");
 
   const [subjectLen, setSubjectLen] = useState(0);
-  const [issueLen, setIssueLen] = useState(0);
   const [attachments, setAttachments] = useState<string[]>([]);
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,13 +75,6 @@ const TicketForm: React.FC<TicketFormProps> = ({
     }, 150);
     return () => clearTimeout(timer);
   }, [subjectValue]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIssueLen(issueValue?.length || 0);
-    }, 150);
-    return () => clearTimeout(timer);
-  }, [issueValue]);
 
   const hasChanges = isDirty || attachments.length > 0;
 
@@ -294,41 +285,16 @@ const TicketForm: React.FC<TicketFormProps> = ({
         )}
       </div>
 
-      <CustomTextArea
+      <TaskDescriptionEditor
         name="issue"
         control={control}
-        rules={{
-          required: "Description is required",
-          maxLength: {
-            value: 500,
-            message: "Description cannot exceed 500 characters",
-          },
-        }}
-        label={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              width: "100%",
-            }}
-          >
-            <span>Description</span>
-            <span
-              style={{
-                fontSize: "0.75rem",
-                opacity: 0.6,
-                color: issueLen > 480 ? "var(--accent-danger)" : "inherit",
-              }}
-            >
-              {issueLen} / 500
-            </span>
-          </div>
-        }
+        label="Description"
         placeholder="Detailed explanation..."
-        rows={5}
         required
         maxLength={500}
-        style={{ resize: "none" }}
+        rules={{
+          required: "Description is required",
+        }}
       />
 
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

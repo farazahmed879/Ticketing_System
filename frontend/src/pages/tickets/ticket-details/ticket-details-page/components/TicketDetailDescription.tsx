@@ -1,6 +1,10 @@
 import React from "react";
 import styles from "../TicketDetail.module.css";
 import type { TicketDetail as ITicketDetail } from "../../../../../types";
+import {
+  TaskDescriptionEditor,
+  FormattedTaskDescription,
+} from "../../../../timesheet/components/TaskDescriptionEditor";
 
 interface TicketDetailDescriptionProps {
   ticket: ITicketDetail;
@@ -18,13 +22,17 @@ const TicketDetailDescription: React.FC<TicketDetailDescriptionProps> = ({
   return (
     <>
       {canEditContent ? (
-        <textarea
+        <TaskDescriptionEditor
           value={issueDraft}
-          onChange={(e) => setIssueDraft(e.target.value)}
-          className={styles.issueInput}
+          onChange={setIssueDraft}
+          label="Description"
+          placeholder="Describe the issue in detail..."
         />
       ) : (
-        <div className={styles.issue}>{ticket.issue}</div>
+        <FormattedTaskDescription
+          content={ticket.issue}
+          className={styles.issue}
+        />
       )}
     </>
   );

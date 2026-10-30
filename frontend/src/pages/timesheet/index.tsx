@@ -26,6 +26,7 @@ import CustomIcon from "../../components/CustomIcon";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
 import TimesheetLogPanel from "./components/TimesheetLogPanel";
+import { FormattedTaskDescription } from "./components/TaskDescriptionEditor";
 import { useAuth } from "../../context/AuthContext";
 
 import type { TimesheetEntry } from "../../types";
@@ -200,6 +201,7 @@ const Timesheet: React.FC = () => {
   );
 
   const renderDays = () => {
+    if (period === "weekly") return null;
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     return (
       <div className={styles.calendarGrid}>
@@ -237,11 +239,11 @@ const Timesheet: React.FC = () => {
       const isTodayDay = isSameDay(day, new Date());
       const isSelectedDay = isSameDay(day, selectedDate);
 
-      grid.push(
+      const cellNode = (
         <div
           key={day.toString()}
-          className={`${styles.dayCell} glass-card ${period === "monthly" && !isCurrentMonth ? styles.otherMonth : ""} ${isTodayDay ? styles.today : ""} ${isSelectedDay ? styles.selectedDay : ""}`}
-          style={period === "weekly" ? { minHeight: 110, padding: "8px 6px" } : undefined}
+          className={`${styles.dayCell} ${period === "weekly" ? styles.weeklyDayCell : ""} glass-card ${period === "monthly" && !isCurrentMonth ? styles.otherMonth : ""} ${isTodayDay ? styles.today : ""} ${isSelectedDay ? styles.selectedDay : ""}`}
+          style={undefined}
           onClick={() => setSelectedDate(day)}
         >
           <div className={styles.dayCellHeader}>
@@ -296,11 +298,23 @@ const Timesheet: React.FC = () => {
               ))}
             </div>
           )}
-        </div>,
+        </div>
+      );
+      if (period === "weekly") {
+        grid.push(
+          <div key={day.toString()} className={styles.weeklyDayColumn}>
+            <div className={styles.dayHeader}>{format(day, "EEE")}</div>
+            {cellNode}
+          </div>
+        );
+      } else {
+        grid.push(cellNode);
+      }
+      void (0
       );
     });
 
-    return <div className={styles.calendarGrid}>{grid}</div>;
+    return <div className={period === "weekly" ? styles.weeklyCalendarGrid : styles.calendarGrid}>{grid}</div>;
   };
 
   const toggleDayExpanded = (dayId: string) => {
@@ -357,7 +371,7 @@ const Timesheet: React.FC = () => {
                   )}
                 </div>
                 {task.description && (
-                  <div className={styles.childTaskDesc}>{task.description}</div>
+                  <FormattedTaskDescription content={task.description} className={styles.childTaskDesc} />
                 )}
               </div>
             ))}
@@ -796,7 +810,7 @@ const Timesheet: React.FC = () => {
                   {renderDays()}
                   {loading ? (
                     <div style={{ marginTop: 24 }}>
-                      <CalendarSkeleton rows={period === "monthly" ? 5 : 1} />
+                      <CalendarSkeleton rows={period === "monthly" ? 5 : 2} />
                     </div>
                   ) : (
                     renderCells()

@@ -3,6 +3,7 @@ import CustomButton from "../../../components/CustomButton";
 import CustomBadge from "../../../components/CustomBadge";
 import CustomTooltip from "../../../components/CustomTooltip";
 import { RoleName } from "../../../utils/constants";
+import { FormattedTaskDescription } from "../../timesheet/components/TaskDescriptionEditor";
 import type { Role } from "../../../types";
 
 interface RoleCardProps {
@@ -65,7 +66,11 @@ const RoleCard = ({ data, handleEdit, handleDelete }: RoleCardProps) => {
           flex: 1,
         }}
       >
-        {data.description || "-"}
+        {data.description ? (
+          <FormattedTaskDescription content={data.description} />
+        ) : (
+          "-"
+        )}
       </div>
 
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

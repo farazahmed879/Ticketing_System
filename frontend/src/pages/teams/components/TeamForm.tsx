@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
-import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomMultiSelect from "../../../components/CustomMultiSelect";
+import { TaskDescriptionEditor } from "../../timesheet/components/TaskDescriptionEditor";
 import type { Team, User } from "../../../types";
 import { ROLE_TYPE } from "../../roles/roleConstants";
 
@@ -99,12 +99,11 @@ const TeamForm: React.FC<TeamFormProps> = ({
         options={userOptions}
       />
 
-      <CustomTextArea
+      <TaskDescriptionEditor
         name="description"
         control={control}
         label="Description"
         placeholder="Team purpose or goals..."
-        rows={3}
       />
     </form>
   );

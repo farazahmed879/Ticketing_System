@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import Modal from "../../components/Modal";
 import CustomInput from "../../components/CustomInput";
 import CustomSelect from "../../components/CustomSelect";
-import CustomTextArea from "../../components/CustomTextArea";
+import { TaskDescriptionEditor } from "../timesheet/components/TaskDescriptionEditor";
 import CustomButton from "../../components/CustomButton";
 import CustomMultiSelect from "../../components/CustomMultiSelect";
 import CustomDateTimePicker from "../../components/CustomDateTimePicker";
@@ -302,12 +302,11 @@ const ScheduleInterviewModal: React.FC<Props> = ({
             required
           />
 
-          <CustomTextArea
+          <TaskDescriptionEditor
             name="notes"
             control={control}
             label="Notes"
             placeholder="Any additional instructions..."
-            rows={3}
           />
         </form>
       </Modal>

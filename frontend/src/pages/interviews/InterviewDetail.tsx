@@ -16,7 +16,7 @@ import type { Interview, InterviewFeedback } from "../../types";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
 import CustomSelect from "../../components/CustomSelect";
-import CustomTextArea from "../../components/CustomTextArea";
+import { TaskDescriptionEditor, FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import CustomImage from "../../components/CustomImage";
 
@@ -299,7 +299,7 @@ const InterviewDetail: React.FC = () => {
               lineHeight: 1.6,
             }}
           >
-            {interview.notes}
+            <FormattedTaskDescription content={interview.notes} />
           </p>
         )}
       </div>
@@ -483,14 +483,14 @@ const InterviewDetail: React.FC = () => {
                     />
                   </div>
 
-                  <CustomTextArea
+                  <TaskDescriptionEditor
                     label="Detailed Comments"
                     value={comments}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                      setComments(e.target.value)
+                    onChange={(val) =>
+                      setComments(val)
                     }
                     placeholder="Share your detailed assessment of the candidate..."
-                    rows={4}
+                    minHeight={110}
                   />
 
                   <CustomButton
@@ -638,7 +638,7 @@ const InterviewDetail: React.FC = () => {
                 </div>
 
                 {f.comments && (
-                  <div className={styles.feedbackComments}>{f.comments}</div>
+                  <div className={styles.feedbackComments}><FormattedTaskDescription content={f.comments} /></div>
                 )}
               </div>
             ))}

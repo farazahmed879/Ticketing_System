@@ -7,6 +7,7 @@ import CustomIcon from "../../components/CustomIcon";
 import Highlight from "../../components/Highlight";
 import CustomTooltip from "../../components/CustomTooltip";
 import { ProjectStatus } from "../../utils/constants";
+import { getTaskDescriptionPlainText } from "../timesheet/components/TaskDescriptionEditor";
 import styles from "./columns.module.css";
 
 export const statusBadgeVariant = (status: string) => {
@@ -51,7 +52,10 @@ export const getProjectColumns = (
             <div className={styles.projectMeta}>
               <span>
                 {p.description ? (
-                  <Highlight text={p.description} query={search} />
+                  <Highlight
+                    text={getTaskDescriptionPlainText(p.description)}
+                    query={search}
+                  />
                 ) : (
                   "Company project"
                 )}

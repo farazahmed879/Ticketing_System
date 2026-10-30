@@ -5,6 +5,7 @@ import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
 import CustomTooltip from "../../components/CustomTooltip";
 import { RoleName } from "../../utils/constants";
+import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 import styles from "./columns.module.css";
 
 export const getRoleColumns = (
@@ -32,7 +33,11 @@ export const getRoleColumns = (
     key: "description",
     render: (role) => (
       <span className="text-base-sm text-secondary">
-        {role.description || "-"}
+        {role.description ? (
+          <FormattedTaskDescription content={role.description} />
+        ) : (
+          "-"
+        )}
       </span>
     ),
   },

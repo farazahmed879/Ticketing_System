@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import CustomIcon from "../../../components/CustomIcon";
 import Modal from "../../../components/Modal";
+import { FormattedTaskDescription } from "../../timesheet/components/TaskDescriptionEditor";
 import styles from "../Dashboard.module.css";
 import CustomImage from "../../../components/CustomImage";
 
@@ -12,17 +13,17 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const renderReviewCard = (review: any) => (
-    <div
-      key={review.id}
-      className={`${styles.premiumReviewCard} glass-card`}
-    >
+    <div key={review.id} className={`${styles.premiumReviewCard} glass-card`}>
       <div className={styles.quoteIconWrapper}>
         <CustomIcon name="Quote" size={16} />
       </div>
 
       <div className={styles.reviewContent}>
         <h4 className={styles.reviewTitle}>{review.title}</h4>
-        <p className={styles.reviewText}>{review.description}</p>
+        <FormattedTaskDescription
+          content={review.description}
+          className={styles.reviewText}
+        />
       </div>
 
       <div className={styles.reviewDivider} />
@@ -51,21 +52,17 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
 
         <div className={styles.reviewerMeta}>
           <div className={styles.reviewerTop}>
-            <h5 className={styles.reviewerName}>
-              {review.author?.fullname}
-            </h5>
+            <h5 className={styles.reviewerName}>{review.author?.fullname}</h5>
             <div className={styles.reviewStars}>
-              {Array.from({ length: review.rating || 5 }).map(
-                (_, i) => (
-                  <CustomIcon
-                    key={i}
-                    name="Star"
-                    size={8}
-                    className={styles.premiumStar}
-                    fill="currentColor"
-                  />
-                ),
-              )}
+              {Array.from({ length: review.rating || 5 }).map((_, i) => (
+                <CustomIcon
+                  key={i}
+                  name="Star"
+                  size={8}
+                  className={styles.premiumStar}
+                  fill="currentColor"
+                />
+              ))}
             </div>
           </div>
           <span className={styles.reviewerRole}>

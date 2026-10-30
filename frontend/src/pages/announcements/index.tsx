@@ -19,6 +19,7 @@ import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS, AnnouncementType } from "../../ut
 import StandardListLayout from "../../components/StandardListLayout";
 import { getAnnouncementColumns, type Announcement } from "./columns";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 
 const AnnouncementList: React.FC = () => {
   const { user } = useAuth();
@@ -354,7 +355,7 @@ const AnnouncementList: React.FC = () => {
                   </div>
 
                   <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.4 }}>
-                    {ann.description}
+                    <FormattedTaskDescription content={ann.description} />
                   </p>
 
                   {ann.project && (

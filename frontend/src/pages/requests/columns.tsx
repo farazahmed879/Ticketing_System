@@ -5,6 +5,7 @@ import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
 import CustomTooltip from "../../components/CustomTooltip";
 import { timeAgo } from "../../utils/helpers";
+import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 import styles from "./Requests.module.css";
 import type { User } from "../../types";
 
@@ -37,12 +38,12 @@ export const getRequestColumns = (
     header: "Message",
     key: "message",
     className: styles.messageCell,
+    render: (r) => <FormattedTaskDescription content={r.message} />,
   },
   {
     header: "Requested",
     key: "createdAt",
-    render: (r) =>
-      timeAgo(r.createdAt),
+    render: (r) => timeAgo(r.createdAt),
   },
   {
     header: "Status",
@@ -69,27 +70,27 @@ export const getRequestColumns = (
         {r.status === "PENDING" &&
           (hasPermission("requests.update") ||
             (user?.isLead && r.userId !== user?.id)) && (
-          <>
-            <CustomTooltip text="Approve">
-              <CustomButton
-                variant="ghost"
-                size="sm"
-                onClick={() => handleUpdateStatus(r.id, "APPROVED")}
-                style={{ color: "var(--accent-success)" }}
-                icon={<CustomIcon name="CheckCircle2" size={18} />}
-              />
-            </CustomTooltip>
-            <CustomTooltip text="Reject">
-              <CustomButton
-                variant="ghost"
-                size="sm"
-                onClick={() => handleUpdateStatus(r.id, "REJECTED")}
-                style={{ color: "var(--accent-danger)" }}
-                icon={<CustomIcon name="XCircle" size={18} />}
-              />
-            </CustomTooltip>
-          </>
-        )}
+            <>
+              <CustomTooltip text="Approve">
+                <CustomButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleUpdateStatus(r.id, "APPROVED")}
+                  style={{ color: "var(--accent-success)" }}
+                  icon={<CustomIcon name="CheckCircle2" size={18} />}
+                />
+              </CustomTooltip>
+              <CustomTooltip text="Reject">
+                <CustomButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleUpdateStatus(r.id, "REJECTED")}
+                  style={{ color: "var(--accent-danger)" }}
+                  icon={<CustomIcon name="XCircle" size={18} />}
+                />
+              </CustomTooltip>
+            </>
+          )}
         {(r.userId === user?.id || hasPermission("requests.delete")) && (
           <CustomTooltip text="Delete">
             <CustomButton

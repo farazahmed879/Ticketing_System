@@ -6,7 +6,7 @@ import React, {
 } from "react";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomInput from "../../../components/CustomInput";
-import CustomTextArea from "../../../components/CustomTextArea";
+import { TaskDescriptionEditor } from "../../timesheet/components/TaskDescriptionEditor";
 import type { RoleFormData } from "../../../types";
 import {
   DEFAULT_PERMISSIONS,
@@ -208,15 +208,11 @@ const RoleForm = forwardRef<any, RoleFormProps>(
               placeholder="e.g. Support Manager"
               disabled={isCoreAdmin}
             />
-            <CustomTextArea
-              name="description"
+            <TaskDescriptionEditor
               value={formData.description}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                handleInputChange("description", e.target.value)
-              }
+              onChange={(val) => handleInputChange("description", val)}
               label="Description"
               placeholder="Briefly describe the role's purpose"
-              rows={3}
               disabled={isCoreAdmin}
             />
           </div>
@@ -259,17 +255,6 @@ const RoleForm = forwardRef<any, RoleFormProps>(
                     <div style={{ fontWeight: 600, fontSize: "0.8rem" }}>
                       {type.label}
                     </div>
-                    {/* {type.subLabel && (
-                    <span
-                      style={{
-                        fontSize: "0.7rem",
-                        color: "var(--text-muted)",
-                        marginLeft: "auto",
-                      }}
-                    >
-                      {type.subLabel}
-                    </span>
-                  )} */}
                   </div>
                 </div>
               );

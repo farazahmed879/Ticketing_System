@@ -3,8 +3,8 @@ import CustomIcon from "../../../../../components/CustomIcon";
 import CustomSelect from "../../../../../components/CustomSelect";
 import CustomButton from "../../../../../components/CustomButton";
 import CustomBadge from "../../../../../components/CustomBadge";
-import CustomTextArea from "../../../../../components/CustomTextArea";
 import CustomDatePicker from "../../../../../components/CustomDatePicker";
+import { TaskDescriptionEditor } from "../../../../timesheet/components/TaskDescriptionEditor";
 import { StatusName } from "../../../../../utils/constants";
 import type { TicketDetail, TicketUpdateFormData } from "../../../../../types";
 import type { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
@@ -143,10 +143,10 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
             </CustomBadge>
           )}
           {user?.role?.roleType !== ROLE_TYPE.CUSTOMER &&
-            !(
-              user?.role?.roleType === ROLE_TYPE.EMPLOYEE &&
-              displayTicket?.status?.name === StatusName.APPROVED
-            ) ? (
+          !(
+            user?.role?.roleType === ROLE_TYPE.EMPLOYEE &&
+            displayTicket?.status?.name === StatusName.APPROVED
+          ) ? (
             <CustomSelect
               name="statusId"
               control={control}
@@ -157,7 +157,9 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
                 minWidth: 180,
                 fontSize: "0.8rem",
               }}
-              disabled={isDisbaledMode || displayTicket?.status?.name === StatusName.NEW}
+              disabled={
+                isDisbaledMode || displayTicket?.status?.name === StatusName.NEW
+              }
             />
           ) : (
             <CustomBadge
@@ -203,34 +205,16 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
           gap: 20,
         }}
       >
-        <CustomTextArea
+        <TaskDescriptionEditor
           name="issue"
           control={control}
-          label={
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <CustomIcon name="Info" size={16} color="var(--accent-primary)" />
-              <span>Description</span>
-            </div>
-          }
+          label="Description"
           disabled={!canEditContent || isDisbaledMode}
           placeholder={
             canEditContent ? "Add a description..." : "No description provided"
           }
-          rows={6}
           containerStyle={{ height: "100%" }}
-          style={{
-            background: "rgba(255,255,255,0.02)",
-            fontSize: "0.95rem",
-            cursor: !canEditContent ? "not-allowed" : "text",
-            resize: !canEditContent ? "none" : "vertical",
-            height: "100%",
-          }}
+          minHeight={130}
         />
         <div
           style={{
@@ -246,7 +230,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
             iconColor="var(--accent-primary)"
             control={control}
             disabled={!canAssign}
-            onChange={() => { }}
+            onChange={() => {}}
             canAssign={false}
             multiple={false}
             dummyLabel={displayTicket?.owner?.fullname}

@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { getDepartmentColumns } from "./columns";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import styles from "./DepartmentList.module.css";
+import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 
 const DepartmentList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -303,7 +304,7 @@ const DepartmentList: React.FC = () => {
                 </div>
 
                 <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.4 }}>
-                  {d.description ? d.description : "No description provided."}
+                  {d.description ? <FormattedTaskDescription content={d.description} /> : "No description provided."}
                 </p>
 
                 <div style={{ borderTop: "1px solid var(--border-glass)", paddingTop: 12 }}>

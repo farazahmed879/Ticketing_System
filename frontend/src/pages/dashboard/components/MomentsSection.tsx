@@ -7,6 +7,7 @@ import styles from "../Dashboard.module.css";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import CustomImage from "../../../components/CustomImage";
+import { FormattedTaskDescription } from "../../timesheet/components/TaskDescriptionEditor";
 
 interface MomentsSectionProps {
   moments: any[];
@@ -141,7 +142,7 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
                 </span>
               </div>
               <h4 className={styles.momentTitle}>{mom.title}</h4>
-              <p className={styles.momentText}>{mom.description}</p>
+              <FormattedTaskDescription content={mom.description} className={styles.momentText} />
             </div>
           ))
         ) : (
@@ -228,7 +229,7 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
 
             <div className={styles.highlightBody}>
               <h2 className={styles.highlightTitle}>{selectedMoment.title}</h2>
-              <p className={styles.highlightText}>{selectedMoment.description}</p>
+              <FormattedTaskDescription content={selectedMoment.description} className={styles.highlightText} />
             </div>
 
             <div className={styles.highlightFooter}>

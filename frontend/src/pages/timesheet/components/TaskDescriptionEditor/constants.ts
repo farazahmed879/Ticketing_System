@@ -20,37 +20,37 @@ export const TASK_EDITOR_TOOLBAR: ToolbarAction[] = [
     type: "bold",
     label: "Bold",
     iconName: "Bold",
-    tooltip: "Bold text (Ctrl+B / **text**)",
+    tooltip: "Bold (Ctrl+B)",
   },
   {
     type: "italic",
     label: "Italic",
     iconName: "Italic",
-    tooltip: "Italic text (Ctrl+I / *text*)",
+    tooltip: "Italic (Ctrl+I)",
   },
   {
     type: "bullet",
     label: "Bullet",
     iconName: "List",
-    tooltip: "Bullet list (• )",
+    tooltip: "Bullet list",
   },
   {
     type: "number",
     label: "Numbered",
     iconName: "ListOrdered",
-    tooltip: "Numbered list (1. )",
+    tooltip: "Numbered list",
   },
   {
     type: "checklist",
     label: "Task",
     iconName: "CheckSquare",
-    tooltip: "Checklist item ([ ] )",
+    tooltip: "Task checklist",
   },
   {
     type: "code",
     label: "Code",
     iconName: "Code",
-    tooltip: "Inline code (`code`)",
+    tooltip: "Inline code",
   },
 ];
 

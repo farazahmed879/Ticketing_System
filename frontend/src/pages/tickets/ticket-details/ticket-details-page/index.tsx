@@ -340,7 +340,7 @@ const TicketDetail: React.FC = () => {
       showNotification("error", "Subject cannot be empty");
       return;
     }
-    if (issueDraft.trim() === "") {
+    if (issueDraft.replace(/<[^>]*>/g, "").trim() === "") {
       showNotification("error", "Description cannot be empty");
       return;
     }

@@ -8,6 +8,7 @@ import { useNotification } from "../../context/NotificationContext";
 import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import type { Team } from "../../types";
 import CustomImage from "../../components/CustomImage";
+import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 
 const getInitials = (name?: string) =>
   (name || "?")
@@ -136,7 +137,7 @@ const TeamDetail: React.FC = () => {
                 lineHeight: 1.6,
               }}
             >
-              {team.description}
+              <FormattedTaskDescription content={team.description} />
             </p>
           )}
         </div>

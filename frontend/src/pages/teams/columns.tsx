@@ -5,6 +5,7 @@ import CustomButton from "../../components/CustomButton";
 import Highlight from "../../components/Highlight";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
 import CustomTooltip from "../../components/CustomTooltip";
+import { getTaskDescriptionPlainText } from "../timesheet/components/TaskDescriptionEditor";
 import styles from "./columns.module.css";
 import CustomImage from "../../components/CustomImage";
 
@@ -28,7 +29,10 @@ export const getTeamColumns = (
           </div>
           <div className="text-xs-muted">
             {t.description ? (
-              <Highlight text={t.description} query={search} />
+              <Highlight
+                text={getTaskDescriptionPlainText(t.description)}
+                query={search}
+              />
             ) : (
               "Internal team"
             )}
@@ -89,9 +93,7 @@ export const getTeamColumns = (
     header: "Projects",
     key: "projects",
     render: (t) => (
-      <span className="text-base-sm">
-        {t.projects?.length || 0} Assigned
-      </span>
+      <span className="text-base-sm">{t.projects?.length || 0} Assigned</span>
     ),
   },
   ...(canManageTeams

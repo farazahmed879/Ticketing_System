@@ -1,9 +1,9 @@
 import { useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
-import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomIcon from "../../../components/CustomIcon";
+import { TaskDescriptionEditor } from "../../timesheet/components/TaskDescriptionEditor";
 import { useAuth } from "../../../context/AuthContext";
 import { AnnouncementType } from "../../../utils/constants";
 import api from "../../../services/api";
@@ -129,13 +129,13 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
           label="Title"
           placeholder="Title"
         />
-        <CustomTextArea
+        <TaskDescriptionEditor
           name="description"
           control={control}
           rules={{ required: "Description is required" }}
           label="Description"
           placeholder="Detailed description"
-          rows={4}
+          required
         />
         {canSelectProject && (
           <CustomSelect
@@ -207,9 +207,7 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
                       background: !field.value
                         ? "var(--accent-primary)"
                         : "transparent",
-                      color: !field.value
-                        ? "#fff"
-                        : "var(--text-secondary)",
+                      color: !field.value ? "#fff" : "var(--text-secondary)",
                       boxShadow: !field.value
                         ? "0 2px 8px rgba(var(--primary-rgb, 99, 102, 241), 0.3)"
                         : "none",
@@ -237,9 +235,7 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
                       background: field.value
                         ? "var(--accent-primary)"
                         : "transparent",
-                      color: field.value
-                        ? "#fff"
-                        : "var(--text-secondary)",
+                      color: field.value ? "#fff" : "var(--text-secondary)",
                       boxShadow: field.value
                         ? "0 2px 8px rgba(var(--primary-rgb, 99, 102, 241), 0.3)"
                         : "none",
@@ -252,7 +248,13 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
               )}
             />
 
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 2 }}>
+            <span
+              style={{
+                fontSize: "0.75rem",
+                color: "var(--text-muted)",
+                marginTop: 2,
+              }}
+            >
               {isProjectTeamOnly
                 ? "🔒 Only team members assigned to this project can view this shoutout."
                 : "🌐 Visible to all company members on the dashboard and announcements."}
@@ -282,49 +284,50 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
             disabled={isRestricted}
           />
         </div>
-        {
-          !isCustomer ?
-            <Controller
-              name="shouldPopout"
-              control={control}
-              render={({ field }) => (
-                <div
+        {!isCustomer ? (
+          <Controller
+            name="shouldPopout"
+            control={control}
+            render={({ field }) => (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "4px 0",
+                }}
+              >
+                <input
+                  id="shouldPopout"
+                  type="checkbox"
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: "4px 0",
+                    width: 18,
+                    height: 18,
+                    accentColor: "var(--accent-primary)",
+                    cursor: "pointer",
+                  }}
+                />
+
+                <label
+                  htmlFor="shouldPopout"
+                  style={{
+                    fontSize: "0.95rem",
+                    color: "var(--text-primary)",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    userSelect: "none",
                   }}
                 >
-                  <input
-                    id="shouldPopout"
-                    type="checkbox"
-                    checked={field.value}
-                    onChange={(e) => field.onChange(e.target.checked)}
-                    style={{
-                      width: 18,
-                      height: 18,
-                      accentColor: "var(--accent-primary)",
-                      cursor: "pointer",
-                    }}
-                  />
-
-                  <label
-                    htmlFor="shouldPopout"
-                    style={{
-                      fontSize: "0.95rem",
-                      color: "var(--text-primary)",
-                      fontWeight: 500,
-                      cursor: "pointer",
-                      userSelect: "none",
-                    }}
-                  >
-                    Popout/Celebrate automatically on Dashboard
-                  </label>
-                </div>
-              )}
-            /> : ''
-        }
+                  Popout/Celebrate automatically on Dashboard
+                </label>
+              </div>
+            )}
+          />
+        ) : (
+          ""
+        )}
       </form>
     );
   },

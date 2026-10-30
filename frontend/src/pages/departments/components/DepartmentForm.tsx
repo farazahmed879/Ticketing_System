@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
-import CustomTextArea from "../../../components/CustomTextArea";
 import CustomButton from "../../../components/CustomButton";
+import { TaskDescriptionEditor } from "../../timesheet/components/TaskDescriptionEditor";
 import type { Department } from "../../../types";
 
 interface DepartmentFormData {
@@ -57,12 +57,11 @@ const DepartmentForm: React.FC<DepartmentFormProps> = ({
         placeholder="e.g. Engineering, Marketing..."
         required
       />
-      <CustomTextArea
+      <TaskDescriptionEditor
         name="description"
         control={control}
         label="Description"
         placeholder="Brief description of the department..."
-        rows={4}
       />
       <div
         style={{

@@ -11,6 +11,7 @@ import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import type { Project } from "../../types";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import ProjectDeveloperHours from "./components/ProjectDeveloperHours";
+import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 
 const getStatusVariant = (status: string) => {
   switch (status.toLowerCase()) {
@@ -186,7 +187,7 @@ const ProjectDetail: React.FC = () => {
                 whiteSpace: "pre-wrap",
               }}
             >
-              {project.description?.trim() ||
+              {project.description?.trim() ? <FormattedTaskDescription content={project.description} /> :
                 "No description has been provided for this project."}
             </p>
           </div>

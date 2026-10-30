@@ -9,6 +9,7 @@ import CustomSkeleton from "../../components/CustomSkeleton";
 import CustomTable from "../../components/CustomTable";
 import type { Department, Team, Project } from "../../types";
 import type { TableColumn } from "../../components/types";
+import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 
 const DepartmentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -225,7 +226,7 @@ const DepartmentDetail: React.FC = () => {
       <div className="glass-card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
         <h3 style={{ margin: 0, fontSize: "1.2rem" }}>About Department</h3>
         <p style={{ color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
-          {department.description || "No description provided for this department."}
+          {department.description ? <FormattedTaskDescription content={department.description} /> : "No description provided for this department."}
         </p>
       </div>
 

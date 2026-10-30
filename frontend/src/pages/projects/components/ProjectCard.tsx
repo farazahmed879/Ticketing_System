@@ -5,6 +5,7 @@ import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomTooltip from "../../../components/CustomTooltip";
 import Highlight from "../../../components/Highlight";
+import { getTaskDescriptionPlainText } from "../../timesheet/components/TaskDescriptionEditor";
 import { statusBadgeVariant } from "../columns";
 
 interface ProjectCardProps {
@@ -82,7 +83,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             }}
           >
             {p.description ? (
-              <Highlight text={p.description} query={search} />
+              <Highlight
+                text={getTaskDescriptionPlainText(p.description)}
+                query={search}
+              />
             ) : (
               "Company project"
             )}

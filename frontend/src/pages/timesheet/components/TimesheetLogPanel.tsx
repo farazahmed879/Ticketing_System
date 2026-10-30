@@ -7,7 +7,9 @@ import CustomSelect from "../../../components/CustomSelect";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomBadge from "../../../components/CustomBadge";
-import TaskDescriptionEditor from "./TaskDescriptionEditor";
+import TaskDescriptionEditor, {
+  getTaskDescriptionPlainText,
+} from "./TaskDescriptionEditor";
 import { useNotification } from "../../../context/NotificationContext";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
@@ -169,7 +171,11 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
         tasks: isZeroHour
           ? []
           : (data.tasks || [])
-              .filter((t) => t.description?.trim() || t.hours > 0)
+              .filter(
+                (t) =>
+                  getTaskDescriptionPlainText(t.description).trim() ||
+                  t.hours > 0,
+              )
               .map((t) => {
                 const isMisc = t.projectId === MISC_PROJECT;
                 const projectId = isMisc ? "" : t.projectId;
@@ -416,7 +422,10 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                           )}
                           {!isExpanded && taskDesc && (
                             <span className={styles.taskDescPreview}>
-                              {taskDesc.replace(/\n+/g, " ")}
+                              {getTaskDescriptionPlainText(taskDesc).replace(
+                                /\n+/g,
+                                " • ",
+                              )}
                             </span>
                           )}
                         </div>

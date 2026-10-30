@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
-import CustomTextArea from "../../../components/CustomTextArea";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomMultiSelect from "../../../components/CustomMultiSelect";
 import CustomIcon from "../../../components/CustomIcon";
+import { TaskDescriptionEditor } from "../../timesheet/components/TaskDescriptionEditor";
 import type { ProjectFormData, ProjectFormProps } from "../../../types";
 import { PROJECT_STATUS_OPTIONS } from "../../../utils/constants";
 import styles from "./ProjectForm.module.css";
@@ -104,12 +104,11 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
         />
       </div>
 
-      <CustomTextArea
+      <TaskDescriptionEditor
         name="description"
         control={control}
         label="Description"
         placeholder="Project scope and details..."
-        rows={3}
       />
 
       {/* Section 2: Team & Assignment */}

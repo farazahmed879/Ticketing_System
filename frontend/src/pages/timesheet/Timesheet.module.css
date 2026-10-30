@@ -50,6 +50,48 @@
   gap: 6px;
 }
 
+.weeklyCalendarGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px 12px;
+  margin-top: 4px;
+}
+
+.weeklyDayColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.weeklyDayCell {
+  min-height: 150px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  gap: 8px;
+}
+
+.weeklyDayCell .dayNumber {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.weeklyDayCell .hoursBadge {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+}
+
+.weeklyDayCell .weeklyTaskIndicator {
+  font-size: 0.74rem;
+  padding: 4px 8px;
+}
+
+.calendarGridOldUnused {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
 .dayHeader {
   text-align: center;
   font-size: 0.72rem;

@@ -3,8 +3,8 @@ import { useForm } from "react-hook-form";
 import Modal from "../../components/Modal";
 import CustomInput from "../../components/CustomInput";
 import CustomSelect from "../../components/CustomSelect";
-import CustomTextArea from "../../components/CustomTextArea";
 import CustomButton from "../../components/CustomButton";
+import { TaskDescriptionEditor } from "../timesheet/components/TaskDescriptionEditor";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import type { UserRequest } from "../../types";
@@ -15,7 +15,11 @@ interface RequestModalProps {
   onSuccess: (newRequest: UserRequest) => void;
 }
 
-const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, onSuccess }) => {
+const RequestModal: React.FC<RequestModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
+}) => {
   const { control, handleSubmit, reset, watch } = useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const todayIso = new Date().toISOString().split("T")[0];
@@ -43,11 +47,7 @@ const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, onSuccess 
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Create New Request"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Create New Request">
       <form
         onSubmit={handleSubmit(onSubmit)}
         style={{ display: "flex", flexDirection: "column", gap: 20 }}
@@ -86,11 +86,12 @@ const RequestModal: React.FC<RequestModalProps> = ({ isOpen, onClose, onSuccess 
           />
         </div>
 
-        <CustomTextArea
+        <TaskDescriptionEditor
           name="message"
           control={control}
           label="Message / Reason"
           placeholder="Describe your request..."
+          required
           rules={{ required: "Reason is required" }}
         />
 

@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import Modal from "../../../components/Modal";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
+import { FormattedTaskDescription } from "./TaskDescriptionEditor";
 import type { TimesheetReviewModalProps } from "../types";
 import { getEntryTypeLabel, getLeaveDaysForEntryType, isZeroHourEntryType } from "../entryTypes";
 
@@ -140,9 +141,9 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
               }}
             >
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>
-                  {t.description}
-                </span>
+                <div>
+                  <FormattedTaskDescription content={t.description} style={{ fontSize: "0.9rem" }} />
+                </div>
                 <div
                   style={{
                     display: "flex",

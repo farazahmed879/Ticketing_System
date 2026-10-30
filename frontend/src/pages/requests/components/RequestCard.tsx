@@ -3,6 +3,10 @@ import CustomButton from "../../../components/CustomButton";
 import CustomBadge from "../../../components/CustomBadge";
 import CustomTooltip from "../../../components/CustomTooltip";
 import { timeAgo } from "../../../utils/helpers";
+import {
+  FormattedTaskDescription,
+  getTaskDescriptionPlainText,
+} from "../../timesheet/components/TaskDescriptionEditor";
 import styles from "../Requests.module.css";
 import type { User, UserRequest } from "../../../types";
 
@@ -82,7 +86,7 @@ const RequestCard = ({
       </div>
 
       <div
-        title={data.message}
+        title={getTaskDescriptionPlainText(data.message)}
         style={{
           fontSize: "0.85rem",
           color: "var(--text-secondary)",
@@ -93,7 +97,7 @@ const RequestCard = ({
           flex: 1,
         }}
       >
-        {data.message}
+        <FormattedTaskDescription content={data.message} />
       </div>
 
       <div

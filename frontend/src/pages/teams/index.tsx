@@ -20,6 +20,7 @@ import CustomImage from "../../components/CustomImage";
 import StandardListLayout from "../../components/StandardListLayout";
 import { getTeamColumns } from "./columns";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 
 const TeamList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -376,7 +377,7 @@ const TeamList: React.FC = () => {
                     lineHeight: 1.4,
                   }}
                 >
-                  {t.description ? t.description : "No description provided."}
+                  {t.description ? <FormattedTaskDescription content={t.description} /> : "No description provided."}
                 </p>
 
                 <div

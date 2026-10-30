@@ -11,6 +11,8 @@
   justify-content: space-between;
   width: 100%;
   padding: 0 2px;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .headerTitle {
@@ -30,6 +32,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-wrap: wrap;
 }
 
 .historyActions {
@@ -42,6 +45,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-wrap: wrap;
 }
 
 .toolbarDivider {
@@ -74,6 +78,12 @@
   transform: translateY(-1px);
 }
 
+.activeToolButton {
+  background: rgba(124, 58, 237, 0.15) !important;
+  border-color: var(--accent-primary) !important;
+  color: var(--accent-primary) !important;
+}
+
 .toolButton:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -102,23 +112,128 @@
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
 }
 
-.textareaInput {
+.richEditorInput {
   width: 100%;
   background: transparent;
   border: none;
   outline: none;
   color: var(--text-primary);
   font-size: 0.88rem;
-  line-height: 1.55;
+  line-height: 1.6;
   font-family: inherit;
-  resize: vertical;
   min-height: 80px;
   max-height: 320px;
+  overflow-y: auto;
+  word-break: break-word;
+  cursor: text;
 }
 
-.textareaInput::placeholder {
+.richEditorDisabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.richEditorInput:empty::before {
+  content: attr(data-placeholder);
   color: var(--text-muted);
   opacity: 0.75;
+  pointer-events: none;
+  display: block;
+}
+
+/* Shared Rich Content Typography (Editor + Display Views) */
+.richContent strong,
+.richContent b {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.richContent em,
+.richContent i {
+  font-style: italic;
+}
+
+.richContent code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82em;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  color: var(--accent-primary);
+}
+
+.richContent ul:not([data-task-list="true"]) {
+  list-style-type: disc;
+  padding-left: 22px;
+  margin: 4px 0;
+}
+
+.richContent ol {
+  list-style-type: decimal;
+  padding-left: 22px;
+  margin: 4px 0;
+}
+
+.richContent li {
+  margin: 2px 0;
+}
+
+.richContent ul[data-task-list="true"] {
+  list-style: none;
+  padding-left: 2px;
+  margin: 4px 0;
+}
+
+.richContent li[data-task-item="true"] {
+  position: relative;
+  padding-left: 24px;
+  margin: 3px 0;
+  list-style: none;
+}
+
+.richContent li[data-task-item="true"]::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  border: 1.5px solid var(--text-muted);
+  background: var(--bg-card);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.richContent li[data-task-item="true"]:hover::before {
+  border-color: var(--accent-primary);
+}
+
+.richContent li[data-task-item="true"][data-checked="true"] {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.richContent li[data-task-item="true"][data-checked="true"]::before {
+  content: "✓";
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #ffffff;
+}
+
+.formattedDisplay {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+  word-break: break-word;
 }
 
 .editorFooter {

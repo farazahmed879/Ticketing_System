@@ -4,6 +4,7 @@ import CustomIcon from "../../components/CustomIcon";
 import CustomButton from "../../components/CustomButton";
 import CustomTooltip from "../../components/CustomTooltip";
 import { truncateString } from "../../utils/helpers";
+import { getTaskDescriptionPlainText } from "../timesheet/components/TaskDescriptionEditor";
 import type { NavigateFunction } from "react-router-dom";
 import styles from "./columns.module.css";
 
@@ -34,7 +35,7 @@ export const getDepartmentColumns = (
           <div className={styles.deptTitle}>{d.name}</div>
           <div className="text-xs-muted">
             {d.description
-              ? truncateString(d.description, 60)
+              ? truncateString(getTaskDescriptionPlainText(d.description), 60)
               : "No description"}
           </div>
         </div>
@@ -62,9 +63,7 @@ export const getDepartmentColumns = (
     header: "Projects",
     key: "projects",
     render: (d) => (
-      <span className="text-base-sm">
-        {d.projects?.length || 0} Projects
-      </span>
+      <span className="text-base-sm">{d.projects?.length || 0} Projects</span>
     ),
   },
   {

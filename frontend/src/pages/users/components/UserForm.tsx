@@ -369,7 +369,7 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
                 style={{
                   fontSize: "1.1rem",
                   fontWeight: 600,
-                  color: "var(--text-main)",
+                  color: "var(--text-primary)",
                 }}
               >
                 Step 1: Primary Information
@@ -669,7 +669,7 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
                 style={{
                   fontSize: "1.1rem",
                   fontWeight: 600,
-                  color: "var(--text-main)",
+                  color: "var(--text-primary)",
                 }}
               >
                 Step 2: Professional & Additional Details
@@ -799,7 +799,7 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
                       htmlFor="isLead"
                       style={{
                         fontSize: "0.9rem",
-                        color: "var(--text-main)",
+                        color: "var(--text-primary)",
                         cursor: "pointer",
                         userSelect: "none",
                       }}

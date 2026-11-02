@@ -146,7 +146,10 @@ async function parse(
   try {
     return await parseWithClaude(text);
   } catch (err) {
-    console.error("Claude resume parsing failed, falling back to regex:", err);
+    console.error(
+      "Claude resume parsing failed, falling back to regex:",
+      err instanceof Anthropic.APIError ? `${err.status} ${err.message}` : err,
+    );
     return resumeParserService.parseData(text);
   }
 }

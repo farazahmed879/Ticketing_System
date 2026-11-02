@@ -125,7 +125,9 @@ export function getClient(): Anthropic {
     if (!apiKey) {
       throw new Error("ANTHROPIC_API_KEY is not set");
     }
-    client = new Anthropic({ apiKey });
+    // Bulk uploads burst past the per-minute rate limit; the SDK waits out
+    // 429/529s (honouring retry-after) before we fall back to regex parsing.
+    client = new Anthropic({ apiKey, maxRetries: 8 });
   }
   return client;
 }

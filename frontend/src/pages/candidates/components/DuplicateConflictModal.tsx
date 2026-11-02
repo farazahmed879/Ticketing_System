@@ -77,7 +77,7 @@ const DuplicateConflictModal: React.FC<DuplicateConflictModalProps> = ({
           }}
         >
           <CustomIcon name="AlertTriangle" size={22} color="#f59e0b" />
-          <div style={{ fontSize: "0.88rem", color: "var(--text-main)", lineHeight: 1.5 }}>
+          <div style={{ fontSize: "0.88rem", color: "var(--text-primary)", lineHeight: 1.5 }}>
             A candidate with email{" "}
             <strong style={{ color: "#f59e0b" }}>{existingCandidate.email}</strong> is
             already registered for the position{" "}
@@ -114,7 +114,7 @@ const DuplicateConflictModal: React.FC<DuplicateConflictModalProps> = ({
               <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
                 Candidate Name
               </div>
-              <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text-main)", marginTop: "2px" }}>
+              <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text-primary)", marginTop: "2px" }}>
                 {existingCandidate.name}
               </div>
             </div>

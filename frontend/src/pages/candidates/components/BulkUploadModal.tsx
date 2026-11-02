@@ -1426,7 +1426,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                 textAlign: "center",
               }}
             >
-              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--text-main)" }}>
+              <div style={{ fontSize: "1.6rem", fontWeight: 700, color: "var(--text-primary)" }}>
                 {summary.total}
               </div>
               <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>
@@ -1563,7 +1563,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                         <span
                           style={{
                             fontWeight: 600,
-                            color: "var(--text-main)",
+                            color: "var(--text-primary)",
                             display: "flex",
                             alignItems: "center",
                             gap: "8px",
@@ -1726,7 +1726,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                         <span
                           style={{
                             fontWeight: 600,
-                            color: "var(--text-main)",
+                            color: "var(--text-primary)",
                             display: "flex",
                             alignItems: "center",
                             gap: "8px",
@@ -1844,7 +1844,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                             border: "1px solid var(--border-glass, rgba(255, 255, 255, 0.15))",
                             borderRadius: "8px",
                             padding: "8px 10px",
-                            color: "var(--text-main)",
+                            color: "var(--text-primary)",
                             fontSize: "0.85rem",
                             outline: "none",
                           }}
@@ -1972,7 +1972,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                         style={{
                           fontWeight: 600,
                           fontSize: "0.85rem",
-                          color: "var(--text-main)",
+                          color: "var(--text-primary)",
                           display: "flex",
                           alignItems: "center",
                           gap: "8px",
@@ -2036,7 +2036,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
                       <span
                         style={{
                           fontWeight: 500,
-                          color: "var(--text-main)",
+                          color: "var(--text-primary)",
                           display: "flex",
                           alignItems: "center",
                           gap: "8px",

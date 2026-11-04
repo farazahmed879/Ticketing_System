@@ -1,0 +1,21 @@
+{
+  "name": "ticketing-tutorials",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Scripted tutorial video recordings for the Ticketing System (Client & Employee journeys)",
+  "type": "module",
+  "scripts": {
+    "setup": "npm install && npx playwright-core install ffmpeg",
+    "seed": "node seed.js",
+    "record": "node record.js",
+    "record:client": "node record.js client",
+    "record:employee": "node record.js employee",
+    "cleanup": "cd ../backend && node scripts/tutorial-cleanup.js",
+    "fresh:client": "npm run cleanup && npm run seed && npm run record:client",
+    "fresh:employee": "npm run cleanup && npm run seed && npm run record:employee",
+    "fresh:all": "npm run cleanup && npm run seed && npm run record"
+  },
+  "dependencies": {
+    "playwright-core": "1.64.1"
+  }
+}

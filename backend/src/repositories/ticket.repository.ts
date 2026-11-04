@@ -46,6 +46,17 @@ export const ticketRepository = {
     return prisma.ticket.count({ where });
   },
 
+  // Next ticket number = highest existing uid + 1 (first ticket is #1000).
+  // Based on the max rather than the row count so deleting a ticket can never
+  // make a new ticket reuse an existing number.
+  async nextUid(): Promise<number> {
+    const last = await prisma.ticket.findFirst({
+      orderBy: { uid: "desc" },
+      select: { uid: true },
+    });
+    return last ? last.uid + 1 : 1000;
+  },
+
   async findOverdueTickets(endOfYesterday: Date) {
     return prisma.ticket.findMany({
       where: {

@@ -1,13 +1,22 @@
 import { Response } from "express";
 import { AuthRequest } from "../types";
 import { timesheetUsecase } from "../usecases/timesheet.usecase";
+import { RoleType } from "../utils/constants";
+
+// Timesheet reviewers (same set as the approval routes) may read anyone's
+// entries/report; everyone else is pinned to their own, whatever ?userId= says.
+const REVIEW_ROLES: string[] = [RoleType.AGENT, RoleType.ADMIN, RoleType.HR];
+const resolveTargetUserId = (req: AuthRequest, userId: unknown) => {
+  const self = req.user?.id;
+  if (typeof userId !== "string" || !userId || userId === self) return self;
+  return REVIEW_ROLES.includes(req.user?.role ?? "") ? userId : self;
+};
 
 export const timesheetController = {
   async getEntries(req: AuthRequest, res: Response) {
     try {
       const { startDate, endDate, userId } = req.query;
-      const targetUserId =
-        (typeof userId === "string" ? userId : undefined) || req.user?.id;
+      const targetUserId = resolveTargetUserId(req, userId);
 
       if (!targetUserId)
         return res.status(401).json({ message: "Unauthorized" });
@@ -105,8 +114,7 @@ export const timesheetController = {
   async getMonthlyReport(req: AuthRequest, res: Response) {
     try {
       const { month, year, userId } = req.query;
-      const targetUserId =
-        (typeof userId === "string" ? userId : undefined) || req.user?.id;
+      const targetUserId = resolveTargetUserId(req, userId);
 
       if (!targetUserId)
         return res.status(401).json({ message: "Unauthorized" });

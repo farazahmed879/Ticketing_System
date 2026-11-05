@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { noticeController } from '../controllers/notice.controller';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, requirePermission, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -53,7 +53,7 @@ router.get('/', authMiddleware, noticeController.getNotices);
  *       201:
  *         description: Notice created
  */
-router.post('/', authMiddleware, noticeController.createNotice);
+router.post('/', authMiddleware, requireAdmin, noticeController.createNotice);
 
 /**
  * @swagger
@@ -73,7 +73,7 @@ router.post('/', authMiddleware, noticeController.createNotice);
  *       200:
  *         description: Notice updated
  */
-router.put('/:id', authMiddleware, noticeController.updateNotice);
+router.put('/:id', authMiddleware, requireAdmin, noticeController.updateNotice);
 
 /**
  * @swagger
@@ -93,12 +93,12 @@ router.put('/:id', authMiddleware, noticeController.updateNotice);
  *       200:
  *         description: Notice activated
  */
-router.put('/:id/activate', authMiddleware, noticeController.activateNotice);
+router.put('/:id/activate', authMiddleware, requireAdmin, noticeController.activateNotice);
 
 /**
  * @swagger
  * /api/notices/clear:
- *   get:
+ *   post:
  *     summary: Deactivate all notices
  *     tags: [Notices]
  *     security:
@@ -107,7 +107,7 @@ router.put('/:id/activate', authMiddleware, noticeController.activateNotice);
  *       200:
  *         description: All notices deactivated
  */
-router.get('/clear', authMiddleware, noticeController.clearNotices);
+router.post('/clear', authMiddleware, requireAdmin, noticeController.clearNotices);
 
 /**
  * @swagger
@@ -127,6 +127,6 @@ router.get('/clear', authMiddleware, noticeController.clearNotices);
  *       200:
  *         description: Notice deleted
  */
-router.delete('/:id', authMiddleware, noticeController.deleteNotice);
+router.delete('/:id', authMiddleware, requireAdmin, noticeController.deleteNotice);
 
 export default router;

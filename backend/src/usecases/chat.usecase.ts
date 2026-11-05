@@ -189,6 +189,10 @@ export const chatUsecase = {
   },
 
   async sendMessage(id: string, userId: string, body: string) {
+    const room = await chatRepository.findRoomById(id);
+    if (!room) throw new Error("Conversation not found");
+    if (!room.memberIds.includes(userId)) throw new Error("Access denied");
+
     const message = await chatRepository.createMessage({
       body,
       senderId: userId,

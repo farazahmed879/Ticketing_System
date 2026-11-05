@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { userController } from "../controllers/user.controller";
-import { authMiddleware, checkRole } from "../middleware/auth";
+import { authMiddleware, requirePermission } from "../middleware/auth";
 
 const router = Router();
 
@@ -109,7 +109,7 @@ router.get("/usersByRole", authMiddleware, userController.getUsersByRoles);
  *       201:
  *         description: User created
  */
-router.post("/", authMiddleware, userController.createUser);
+router.post("/", authMiddleware, requirePermission("users.create"), userController.createUser);
 
 /**
  * @swagger
@@ -263,6 +263,6 @@ router.put("/:id", authMiddleware, userController.updateUser);
  *       200:
  *         description: User deleted
  */
-router.delete("/:id", authMiddleware, userController.deleteUser);
+router.delete("/:id", authMiddleware, requirePermission("users.delete"), userController.deleteUser);
 
 export default router;

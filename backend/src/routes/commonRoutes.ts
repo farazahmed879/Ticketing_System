@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { commonController } from '../controllers/common.controller';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, requirePermission, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -121,7 +121,7 @@ router.get('/groups', authMiddleware, commonController.getGroups);
  *       201:
  *         description: Group created
  */
-router.post('/groups', authMiddleware, commonController.createGroup);
+router.post('/groups', authMiddleware, requirePermission('groups.create'), commonController.createGroup);
 
 /**
  * @swagger
@@ -141,7 +141,7 @@ router.post('/groups', authMiddleware, commonController.createGroup);
  *       200:
  *         description: Group updated
  */
-router.put('/groups/:id', authMiddleware, commonController.updateGroup);
+router.put('/groups/:id', authMiddleware, requirePermission('groups.update'), commonController.updateGroup);
 
 /**
  * @swagger
@@ -161,10 +161,10 @@ router.put('/groups/:id', authMiddleware, commonController.updateGroup);
  *       200:
  *         description: Group deleted
  */
-router.delete('/groups/:id', authMiddleware, commonController.deleteGroup);
+router.delete('/groups/:id', authMiddleware, requirePermission('groups.delete'), commonController.deleteGroup);
 
 // System Settings (admin-only)
 router.get('/settings', authMiddleware, commonController.getSystemSettings);
-router.put('/settings', authMiddleware, commonController.updateSystemSettings);
+router.put('/settings', authMiddleware, requireAdmin, commonController.updateSystemSettings);
 
 export default router;

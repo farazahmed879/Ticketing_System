@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { teamController } from '../controllers/team.controller';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, requirePermission, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -95,7 +95,7 @@ router.get('/:id', authMiddleware, teamController.getTeam);
  *       201:
  *         description: Team created
  */
-router.post('/', authMiddleware, teamController.createTeam);
+router.post('/', authMiddleware, requirePermission('teams.create'), teamController.createTeam);
 
 /**
  * @swagger
@@ -128,7 +128,7 @@ router.post('/', authMiddleware, teamController.createTeam);
  *       200:
  *         description: Team updated
  */
-router.put('/:id', authMiddleware, teamController.updateTeam);
+router.put('/:id', authMiddleware, requirePermission('teams.update'), teamController.updateTeam);
 
 /**
  * @swagger
@@ -148,6 +148,6 @@ router.put('/:id', authMiddleware, teamController.updateTeam);
  *       200:
  *         description: Team deleted
  */
-router.delete('/:id', authMiddleware, teamController.deleteTeam);
+router.delete('/:id', authMiddleware, requirePermission('teams.delete'), teamController.deleteTeam);
 
 export default router;

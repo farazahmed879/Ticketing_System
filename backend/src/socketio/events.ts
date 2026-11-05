@@ -79,8 +79,24 @@ export function setupSocketEvents(io: Server) {
         // Nothing to send.
         if (!body && attachments.length === 0) return;
 
+        // Only members may post into a room.
+        const room = await prisma.chatRoom.findUnique({ where: { id: data.roomId } });
+        if (!room || !room.memberIds.includes(user.id)) {
+          socket.emit('chat:error', { message: 'Access denied' });
+          return;
+        }
+        // A reply must point at a message in the same room.
+        let replyToId: string | undefined;
+        if (data.replyToId) {
+          const replyTo = await prisma.chatMessage.findUnique({
+            where: { id: data.replyToId },
+            select: { roomId: true },
+          });
+          if (replyTo?.roomId === room.id) replyToId = data.replyToId;
+        }
+
         const message = await prisma.chatMessage.create({
-          data: { body, attachments, senderId: user.id, roomId: data.roomId, replyToId: data.replyToId },
+          data: { body, attachments, senderId: user.id, roomId: room.id, replyToId },
           include: { 
             sender: { select: { id: true, fullname: true, image: true } },
             replyTo: { select: { id: true, body: true, sender: { select: { fullname: true } } } }
@@ -89,11 +105,10 @@ export function setupSocketEvents(io: Server) {
         // A new message un-hides the room for everyone who had deleted it
         // (same as the REST send path) — their clearedAtByUser cutoff still
         // hides the older history.
-        await prisma.chatRoom.update({ where: { id: data.roomId }, data: { updatedAt: new Date(), hiddenByIds: [] } });
+        await prisma.chatRoom.update({ where: { id: room.id }, data: { updatedAt: new Date(), hiddenByIds: [] } });
 
-        // Get room members and emit to them
-        const room = await prisma.chatRoom.findUnique({ where: { id: data.roomId } });
-        if (room) {
+        // Emit to room members
+        {
           for (const memberId of room.memberIds) {
             // Send message via socket
             const memberOnline = onlineUsers.get(memberId);
@@ -177,7 +192,8 @@ export function setupSocketEvents(io: Server) {
 
         await prisma.chatMessage.delete({ where: { id: data.messageId } });
 
-        const room = await prisma.chatRoom.findUnique({ where: { id: data.roomId } });
+        // Use the message's real room, not the client-supplied roomId.
+        const room = await prisma.chatRoom.findUnique({ where: { id: message.roomId } });
         if (room) {
           for (const memberId of room.memberIds) {
             const memberOnline = onlineUsers.get(memberId);
@@ -226,7 +242,8 @@ export function setupSocketEvents(io: Server) {
 
     socket.on('notifications:markRead', async (notificationId: string) => {
       try {
-        await prisma.notification.update({ where: { id: notificationId }, data: { unread: false } });
+        // Scoped to the caller so nobody can flip someone else's notifications.
+        await prisma.notification.updateMany({ where: { id: notificationId, userId: user.id }, data: { unread: false } });
         const count = await prisma.notification.count({ where: { userId: user.id, unread: true, type: { not: 'seen_moment' } } });
         socket.emit(SocketEvent.NOTIFICATIONS_UPDATE, { count });
       } catch {}
@@ -249,15 +266,9 @@ export function setupSocketEvents(io: Server) {
       } catch {}
     });
 
-    // ========== TICKET EVENTS ==========
-    socket.on(SocketEvent.TICKET_UPDATED, (data: { ticketId: string }) => {
-      io.emit(SocketEvent.TICKET_UPDATED, data);
-    });
-
-    // ========== ANNOUNCEMENT EVENTS ==========
-    socket.on(SocketEvent.ANNOUNCEMENT_UPDATED, (data?: any) => {
-      io.emit(SocketEvent.ANNOUNCEMENT_UPDATED, data);
-    });
+    // ticket:updated / announcement:updated are emitted by the REST
+    // controllers after a successful write. They used to be relayed from any
+    // client to everyone, which let a single client spam global refetches.
 
     // ========== ONLINE STATUS ==========
     // Let a freshly-mounted client (e.g. the chat screen) pull the current

@@ -18,9 +18,9 @@ export const notificationRepository = {
     return prisma.notification.count({ where: { userId, type: { not: 'seen_moment' } } });
   },
 
-  async markRead(id: string) {
-    return prisma.notification.update({
-      where: { id },
+  async markRead(id: string, userId: string) {
+    return prisma.notification.updateMany({
+      where: { id, userId },
       data: { unread: false },
     });
   },

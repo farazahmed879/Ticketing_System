@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthRequest } from "../types";
-import { userUsecase } from "../usecases/user.usecase";
+import { userUsecase, ForbiddenError } from "../usecases/user.usecase";
 import { RoleType } from "../utils/constants";
 
 export const userController = {
@@ -66,9 +66,14 @@ export const userController = {
 
   async createUser(req: AuthRequest, res: Response) {
     try {
+      // requirePermission() has already refreshed req.user.role from the DB.
+      await userUsecase.assertCanAssignRole(req.user?.role, req.body?.roleId);
       const account = await userUsecase.createUser(req.body);
       res.status(201).json({ success: true, account });
     } catch (error: any) {
+      if (error instanceof ForbiddenError) {
+        return res.status(403).json({ success: false, error: error.message });
+      }
       if (error?.code === "P2002") {
         return res.status(409).json({
           success: false,
@@ -92,12 +97,20 @@ export const userController = {
           error: "Only Admins and HR can edit user profiles.",
         });
       }
+      await userUsecase.assertCanAssignRole(
+        callerRole,
+        req.body?.roleId,
+        req.params.id as string,
+      );
       const user = await userUsecase.updateUser(
         req.params.id as string,
         req.body,
       );
       res.json({ success: true, user });
     } catch (error: any) {
+      if (error instanceof ForbiddenError) {
+        return res.status(403).json({ success: false, error: error.message });
+      }
       if (error?.code === "P2002") {
         return res.status(409).json({
           success: false,

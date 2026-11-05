@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { announcementRepository } from "../repositories/announcement.repository";
-import { RoleType } from "../utils/constants";
+import { RoleType, SocketEvent } from "../utils/constants";
 import prisma from "../prisma";
 
 export const announcementController = {
@@ -167,6 +167,7 @@ export const announcementController = {
         isProjectTeamOnly: !!isProjectTeamOnly,
       });
 
+      req.app.get("io")?.emit(SocketEvent.ANNOUNCEMENT_UPDATED);
       res.status(201).json({ announcement });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -202,6 +203,7 @@ export const announcementController = {
         isProjectTeamOnly: isProjectTeamOnly !== undefined ? !!isProjectTeamOnly : undefined,
       });
 
+      req.app.get("io")?.emit(SocketEvent.ANNOUNCEMENT_UPDATED);
       res.json({ announcement });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -227,6 +229,7 @@ export const announcementController = {
       }
 
       await announcementRepository.delete(id as string);
+      req.app.get("io")?.emit(SocketEvent.ANNOUNCEMENT_UPDATED);
       res.json({ message: "Announcement deleted successfully" });
     } catch (error: any) {
       res.status(500).json({ message: error.message });

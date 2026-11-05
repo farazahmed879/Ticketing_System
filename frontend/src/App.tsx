@@ -10,7 +10,6 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { useTranslation } from "react-i18next";
 import Login from "./pages/auth/Login.tsx";
-// import Register from "./pages/auth/Register.tsx";
 import Dashboard from "./pages/dashboard/index.tsx";
 import TicketList from "./pages/tickets/index.tsx";
 import TicketBoard from "./pages/tickets/kanbanBoard/TicketBoard.tsx";

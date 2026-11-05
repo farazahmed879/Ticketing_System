@@ -159,31 +159,44 @@ const Dashboard: React.FC = () => {
 
       <StatsCards cards={cards} />
 
-      {/* Work: recent tickets (+ recruiter leaderboard for Admin/HR) */}
-      {(showRecentTickets || showLeaderboard) && (
-        <div
-          className={
-            showRecentTickets && showLeaderboard
-              ? styles.splitRow
-              : styles.singleRow
-          }
-        >
-          {showRecentTickets && <RecentTicketsSection tickets={recentTickets} />}
-          {showLeaderboard && <LeaderboardSection />}
-        </div>
+      {showRecentTickets ? (
+        <>
+          {/* Work: recent tickets (+ recruiter leaderboard for Admin) */}
+          <div className={showLeaderboard ? styles.splitRow : styles.singleRow}>
+            <RecentTicketsSection tickets={recentTickets} />
+            {showLeaderboard && <LeaderboardSection />}
+          </div>
+
+          {/* Company feed */}
+          <div className={styles.twoColRow}>
+            <AnnouncementSection announcements={generalAnnouncements} t={t} />
+            <ReviewsSection reviews={reviews} />
+          </div>
+
+          {/* People */}
+          <div className={styles.twoColRow}>
+            <NewHiresSection newHires={newHires} />
+            <MomentsSection moments={moments} seenMomentIds={seenMomentIds} />
+          </div>
+        </>
+      ) : (
+        <>
+          {/* HR: people first — new hires beside the recruiter leaderboard */}
+          <div className={styles.twoColRow}>
+            <NewHiresSection newHires={newHires} />
+            {showLeaderboard && <LeaderboardSection />}
+          </div>
+
+          <div className={styles.twoColRow}>
+            <AnnouncementSection announcements={generalAnnouncements} t={t} />
+            <ReviewsSection reviews={reviews} />
+          </div>
+
+          <div className={styles.singleRow}>
+            <MomentsSection moments={moments} seenMomentIds={seenMomentIds} />
+          </div>
+        </>
       )}
-
-      {/* Company feed */}
-      <div className={styles.twoColRow}>
-        <AnnouncementSection announcements={generalAnnouncements} t={t} />
-        <ReviewsSection reviews={reviews} />
-      </div>
-
-      {/* People */}
-      <div className={styles.twoColRow}>
-        <NewHiresSection newHires={newHires} />
-        <MomentsSection moments={moments} seenMomentIds={seenMomentIds} />
-      </div>
     </div>
   );
 };

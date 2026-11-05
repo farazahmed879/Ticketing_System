@@ -87,6 +87,11 @@
   cursor: pointer;
 }
 
+/* A role with a single stat (HR) shouldn't get one full-width bar */
+.statCard:only-child {
+  max-width: 340px;
+}
+
 .statCardClickable:hover {
   border-color: color-mix(in srgb, var(--accent-primary) 40%, var(--border-glass));
   box-shadow: var(--shadow-glass);
@@ -166,7 +171,9 @@
   flex-direction: column;
   min-width: 0;
   padding: 18px;
+  container-type: inline-size;
 }
+
 
 .sectionHead {
   display: flex;
@@ -1273,4 +1280,21 @@
 .fullscreenSectionFullPage .sectionTitle,
 .fullscreenSectionFullPage .momentTitle {
   color: #f1f5f9;
+}
+
+/* A section spanning the full row (e.g. a role that only sees one card in
+   that row) flows its items into columns instead of stretching them. */
+@container (min-width: 900px) {
+  .feedList,
+  .personList,
+  .momentsList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+
+  .rankList {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 24px;
+  }
 }

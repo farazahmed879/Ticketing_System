@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { authController } from '../controllers/auth.controller';
 import { authMiddleware } from '../middleware/auth';
+import { loginAccountLimiter, loginIpLimiter, publicWriteLimiter } from '../middleware/rateLimit';
+import { validateBody, schemas } from '../middleware/validate';
+import { registrationEnabled } from '../controllers/auth.controller';
 
 const router = Router();
 
@@ -24,8 +27,8 @@ const router = Router();
  *       200:
  *         description: Login successful
  */
-router.post('/login', authController.login);
-router.post('/login-help', authController.loginHelp);
+router.post('/login', loginIpLimiter, validateBody(schemas.login), loginAccountLimiter, authController.login);
+router.post('/login-help', publicWriteLimiter, validateBody(schemas.loginHelp), authController.loginHelp);
 
 /**
  * @swagger
@@ -48,7 +51,7 @@ router.post('/login-help', authController.loginHelp);
  *       201:
  *         description: User registered
  */
-router.post('/register', authController.register);
+router.post('/register', registrationEnabled, publicWriteLimiter, validateBody(schemas.register), authController.register);
 
 /**
  * @swagger

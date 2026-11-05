@@ -3,6 +3,33 @@ import { AuthRequest } from "../types";
 import { userUsecase, ForbiddenError } from "../usecases/user.usecase";
 import { RoleType } from "../utils/constants";
 
+/**
+ * Personal data only Admin, HR and the user themselves may see. Everyone else
+ * (colleagues browsing a profile, clients picking an assignee, ...) gets the
+ * record without these keys. Phone numbers / LinkedIn / Git stay visible as
+ * normal directory info — add them here to hide them too.
+ */
+export const PRIVATE_USER_FIELDS = [
+  "cnic",
+  "address",
+  "emergencyContact",
+  "leaves",
+  "primaryResumeUrl",
+  "jpPatternResumeUrl",
+] as const;
+
+const canSeePrivateFields = (req: AuthRequest, userId?: string) =>
+  req.user?.role === RoleType.ADMIN ||
+  req.user?.role === RoleType.HR ||
+  (!!userId && userId === req.user?.id);
+
+export const redactUser = (req: AuthRequest, user: any) => {
+  if (!user || canSeePrivateFields(req, user.id)) return user;
+  const copy = { ...user };
+  for (const f of PRIVATE_USER_FIELDS) delete copy[f];
+  return copy;
+};
+
 export const userController = {
   async getUsers(req: AuthRequest, res: Response) {
     try {
@@ -20,7 +47,7 @@ export const userController = {
         showDeleted as string,
         search as string,
       );
-      res.json({ success: true, accounts, total, count: accounts.length });
+      res.json({ success: true, accounts: accounts.map((u: any) => redactUser(req, u)), total, count: accounts.length });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
@@ -49,7 +76,7 @@ export const userController = {
         showDeleted as string,
         search as string,
       );
-      res.json({ success: true, accounts, total, count: accounts.length });
+      res.json({ success: true, accounts: accounts.map((u: any) => redactUser(req, u)), total, count: accounts.length });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
@@ -58,7 +85,7 @@ export const userController = {
   async getUserById(req: AuthRequest, res: Response) {
     try {
       const account = await userUsecase.getUserById(req.params.id as string);
-      res.json({ success: true, account });
+      res.json({ success: true, account: redactUser(req, account) });
     } catch (error: any) {
       res.status(404).json({ success: false, error: error.message });
     }

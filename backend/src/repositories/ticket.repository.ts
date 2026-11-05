@@ -136,11 +136,11 @@ export const ticketRepository = {
     const ticket = await prisma.ticket.create({
       data,
       include: {
-        owner: true,
+        owner: { select: { id: true, fullname: true, email: true, image: true } },
         group: true,
         project: true,
-        assignee: true,
-        qa: true,
+        assignee: { select: { id: true, fullname: true, email: true, image: true } },
+        qa: { select: { id: true, fullname: true, email: true, image: true } },
       },
     });
     return mapTicketStatusAndPriority(ticket);
@@ -151,11 +151,11 @@ export const ticketRepository = {
       where: { id },
       data,
       include: {
-        owner: true,
+        owner: { select: { id: true, fullname: true, email: true, image: true } },
         group: true,
         project: true,
-        assignee: true,
-        qa: true,
+        assignee: { select: { id: true, fullname: true, email: true, image: true } },
+        qa: { select: { id: true, fullname: true, email: true, image: true } },
       },
     });
     return mapTicketStatusAndPriority(ticket);

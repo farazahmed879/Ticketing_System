@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { userController } from "../controllers/user.controller";
 import { authMiddleware, requirePermission } from "../middleware/auth";
+import { validateBody, schemas } from "../middleware/validate";
 
 const router = Router();
 
@@ -109,7 +110,7 @@ router.get("/usersByRole", authMiddleware, userController.getUsersByRoles);
  *       201:
  *         description: User created
  */
-router.post("/", authMiddleware, requirePermission("users.create"), userController.createUser);
+router.post("/", authMiddleware, requirePermission("users.create"), validateBody(schemas.createUser), userController.createUser);
 
 /**
  * @swagger
@@ -164,7 +165,7 @@ router.put("/profile", authMiddleware, userController.updateProfile);
  *       200:
  *         description: Password updated
  */
-router.post("/profile/password", authMiddleware, userController.updatePassword);
+router.post("/profile/password", authMiddleware, validateBody(schemas.changePassword), userController.updatePassword);
 
 /**
  * @swagger
@@ -243,7 +244,7 @@ router.get("/:id", authMiddleware, userController.getUserById);
  *       200:
  *         description: User updated
  */
-router.put("/:id", authMiddleware, userController.updateUser);
+router.put("/:id", authMiddleware, validateBody(schemas.updateUser), userController.updateUser);
 
 /**
  * @swagger

@@ -1,6 +1,22 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { authUsecase } from "../usecases/auth.usecase";
 import { emitNotificationToUser } from "../socketio/events";
+
+/**
+ * Public self-registration is off unless ALLOW_PUBLIC_REGISTRATION=true.
+ * The frontend has no sign-up page (accounts are created by Admin/HR), and an
+ * open endpoint lets anyone on the internet get a logged-in Client account.
+ */
+export const registrationEnabled = (
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (process.env.ALLOW_PUBLIC_REGISTRATION === "true") return next();
+  return res
+    .status(403)
+    .json({ message: "Self-registration is disabled. Please contact an administrator." });
+};
 
 export const authController = {
   async login(req: Request, res: Response) {
@@ -30,7 +46,11 @@ export const authController = {
       const result = await authUsecase.register(email, password, fullname, username);
       res.status(201).json(result);
     } catch (error: any) {
-      const status = error.message === "User already exists" ? 400 : 500;
+      const status =
+        error.message === "Email already exists" ||
+        error.message === "Username already taken"
+          ? 409
+          : 500;
       res.status(status).json({ message: error.message });
     }
   },

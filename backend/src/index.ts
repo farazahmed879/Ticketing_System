@@ -7,6 +7,9 @@ const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.en
 const envPath = path.resolve(__dirname, `../${envFile}`);
 dotenv.config({ path: envPath });
 
+import { assertJwtSecret } from './utils/assertJwtSecret';
+assertJwtSecret();
+
 import http from 'http';
 import { Server } from 'socket.io';
 import prisma from './prisma';

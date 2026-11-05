@@ -25,6 +25,7 @@ import StandardListLayout from "../../components/StandardListLayout";
 import { getProjectColumns } from "./columns";
 import ProjectCard from "./components/ProjectCard";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import { useListViewMode } from "../../utils/helpers";
 
 const ProjectList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -45,9 +46,7 @@ const ProjectList: React.FC = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
-  const [viewMode, setViewMode] = useState<"list" | "grid">(
-    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
-  );
+  const [viewMode, setViewMode] = useListViewMode();
 
   const canCreate =
     user?.role?.roleType === ROLE_TYPE.ADMIN ||
@@ -94,8 +93,8 @@ const ProjectList: React.FC = () => {
     queryKey: ["projects", "modal-data"],
     queryFn: async () => {
       const [clientsRes, teamsRes] = await Promise.all([
-        api.get(API_ROUTES.USERS.GET_BY_ROLES, {
-          params: { roles: [ROLE_TYPE.CUSTOMER, ROLE_TYPE.AGENT], limit: -1 },
+        api.get(API_ROUTES.USERS.BASE, {
+          params: { type: "all", limit: -1 },
         }),
         api.get(API_ROUTES.TEAMS.BASE, {
           params: { limit: -1 },
@@ -107,7 +106,7 @@ const ProjectList: React.FC = () => {
           (u: any) => u.role?.roleType === ROLE_TYPE.CUSTOMER,
         ),
         managers: accounts.filter(
-          (u: any) => u.role?.roleType === ROLE_TYPE.AGENT,
+          (u: any) => u.role?.roleType !== ROLE_TYPE.CUSTOMER,
         ),
         teams: teamsRes.data.teams || [],
       };
@@ -273,7 +272,7 @@ const ProjectList: React.FC = () => {
               icon={<CustomIcon name="Activity" size={18} />}
               style={{ minWidth: 200 }}
             />
-            <div
+            <div className="view-mode-switcher"
               style={{
                 display: "flex",
                 gap: 4,

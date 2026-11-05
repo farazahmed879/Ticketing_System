@@ -24,6 +24,7 @@ import { getInterviewColumns, statusBadgeVariant } from "./columns";
 import { InterviewListHeader } from "./components/InterviewListHeader";
 import { InterviewListFilter } from "./components/InterviewListFilter";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import { getDefaultListView } from "../../utils/helpers";
 
 const InterviewList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -73,9 +74,7 @@ const InterviewList: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
-  const [viewMode, setViewMode] = useState<"list" | "grid">(
-    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
-  );
+  const [viewMode, setViewMode] = useState<"list" | "grid">(getDefaultListView());
 
   React.useEffect(() => {
     setCurrentPage(0);

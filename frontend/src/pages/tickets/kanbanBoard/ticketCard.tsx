@@ -3,6 +3,7 @@ import CustomDropdownMenu from "../../../components/CustomDropdownMenu";
 import CustomIcon from "../../../components/CustomIcon";
 import { ROLE_TYPE } from "../../roles/roleConstants";
 import { copyToClipboard } from "../../../utils/helpers";
+import { statusDisplayName } from "../shared/ticketDecisions";
 
 const TicketCard = ({
   ticket,
@@ -11,7 +12,20 @@ const TicketCard = ({
   user,
   showNotification,
   styles,
+  columns,
+  onMoveTicket,
 }: any) => {
+  const currentStatusName = ticket.status?.name;
+  const availableColumns = (columns || []).filter(
+    (col: any) => col.name !== currentStatusName
+  );
+  const moveMenuItems = (availableColumns.length > 0 && onMoveTicket)
+    ? availableColumns.map((col: any) => ({
+        label: `Move to ${statusDisplayName(col.name, user)}`,
+        icon: "ArrowRight",
+        onClick: () => onMoveTicket(ticket.id, col.id, col.name),
+      }))
+    : [];
   return (
     <>
       <div
@@ -80,6 +94,12 @@ const TicketCard = ({
                   );
                 },
               },
+              ...(moveMenuItems.length > 0
+                ? [
+                    { divider: true, label: "", onClick: () => {} },
+                    ...moveMenuItems,
+                  ]
+                : []),
               ...(user?.role?.roleType === ROLE_TYPE.ADMIN
                 ? [
                     {

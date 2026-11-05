@@ -109,3 +109,36 @@
   border-bottom-left-radius: 24px;
   border-bottom-right-radius: 24px;
 }
+
+@media (max-width: 768px) {
+  .overlay {
+    padding: 0 !important;
+  }
+
+  .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  .header {
+    padding: 16px !important;
+  }
+
+  .header h2 {
+    font-size: 1.15rem !important;
+  }
+
+  .content {
+    padding: 14px 16px !important;
+  }
+
+  .footer {
+    padding: 14px 16px !important;
+    border-radius: 0 !important;
+  }
+}

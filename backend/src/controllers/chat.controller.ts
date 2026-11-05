@@ -93,7 +93,8 @@ export const chatController = {
       );
       res.status(201).json({ success: true, message });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      const status = error.message === "Access denied" ? 403 : error.message === "Conversation not found" ? 404 : 500;
+      res.status(status).json({ success: false, error: error.message });
     }
   },
 

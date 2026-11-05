@@ -7,6 +7,9 @@ const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.en
 const envPath = path.resolve(__dirname, `../${envFile}`);
 dotenv.config({ path: envPath });
 
+import { assertJwtSecret } from './utils/assertJwtSecret';
+assertJwtSecret();
+
 import http from 'http';
 import { Server } from 'socket.io';
 import prisma from './prisma';
@@ -31,6 +34,7 @@ import announcementRoutes from './routes/announcementRoutes';
 
 // Swagger & Socket
 import { setupSwagger } from './swagger';
+import { maskInternalErrors, errorHandler } from './middleware/errors';
 import { setupSocketEvents } from './socketio/events';
 import { startAutoCloseScheduler } from './services/autoCloseTickets';
 import { startNotificationCleanupScheduler } from './services/cleanupNotifications';
@@ -54,8 +58,20 @@ app.use(cors());
 // comments (up to 5 images × 2MB binary ≈ 13.3MB base64 per payload).
 app.use(express.json({ limit: "20mb" }));
 
-// Swagger
-setupSwagger(app);
+// Behind nginx / a load balancer, set TRUST_PROXY (e.g. "1" = one hop) so
+// req.ip is the real client and the login rate limiter works per user.
+if (process.env.TRUST_PROXY) {
+  const v = process.env.TRUST_PROXY;
+  app.set('trust proxy', /^\d+$/.test(v) ? Number(v) : v === 'true' ? true : v);
+}
+
+// 5xx responses never leak internal error text (logged server-side instead).
+app.use(maskInternalErrors);
+
+// Swagger: public API docs are off in production unless explicitly enabled.
+const swaggerEnabled =
+  process.env.NODE_ENV !== 'production' || process.env.ENABLE_SWAGGER === 'true';
+if (swaggerEnabled) setupSwagger(app);
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -75,10 +91,17 @@ app.use('/api/interviews', interviewRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/announcements', announcementRoutes);
 
-// Root → Swagger
+// Root → Swagger (or a plain health response when docs are disabled)
 app.get('/', (req, res) => {
-  res.redirect('/api-docs');
+  if (swaggerEnabled) return res.redirect('/api-docs');
+  res.json({ status: 'ok' });
 });
+
+// Unknown API routes → JSON 404; anything thrown past a controller → 500.
+app.use('/api', (req, res) => {
+  res.status(404).json({ message: 'Not found' });
+});
+app.use(errorHandler);
 
 // Socket.io
 setupSocketEvents(io);

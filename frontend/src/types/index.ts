@@ -187,9 +187,18 @@ export interface UserRequest {
   email: string;
   userId: string;
   user?: {
+    id?: string;
     fullname: string;
     email: string;
+    image?: string;
   };
+  approvedById?: string;
+  approvedBy?: {
+    id?: string;
+    fullname: string;
+    email: string;
+    image?: string;
+  } | null;
   createdAt: string;
 }
 
@@ -514,6 +523,8 @@ export interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   unreadMessageCount?: number;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
 export interface CustomerDashboardProps {

@@ -140,8 +140,10 @@ export const timesheetRepository = {
     });
   },
 
-  async findReviewEntries(filters: { status?: string; userId?: string; startDate?: Date; endDate?: Date; roleType?: string }) {
+  async findReviewEntries(filters: { status?: string; userId?: string; startDate?: Date; endDate?: Date; roleType?: string; excludeUserId?: string }) {
     const where: any = {};
+    // Reviewers never see (or count) their own entries — self-review is blocked.
+    if (filters.excludeUserId) where.AND = [...(where.AND || []), { userId: { not: filters.excludeUserId } }];
 
     // Map the filter status to the boolean fields
     if (filters.status === "PENDING") {
@@ -183,8 +185,10 @@ export const timesheetRepository = {
     });
   },
   
-  async getPendingCounts(startDate?: Date, endDate?: Date, roleType?: string) {
+  async getPendingCounts(startDate?: Date, endDate?: Date, roleType?: string, excludeUserId?: string) {
     const where: any = {};
+    // Reviewers never see (or count) their own entries — self-review is blocked.
+    if (excludeUserId) where.AND = [...(where.AND || []), { userId: { not: excludeUserId } }];
     if (roleType === "hr") {
       where.hrApproved = "PENDING";
     } else {

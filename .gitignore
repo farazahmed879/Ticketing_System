@@ -6,13 +6,11 @@ dist/
 dist-ssr/
 *.tsbuildinfo
 
-# Environment variables
+# Environment variables: ignore every .env variant (staging, test, ...);
+# only the committed templates are allowed.
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.production
+.env.*
+!.env.example
 
 # Logs
 logs

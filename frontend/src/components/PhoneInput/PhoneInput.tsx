@@ -55,7 +55,14 @@ const PhoneInput = <T extends FieldValues>({
 
     return (
       <div className={styles.container}>
-        {label && <label className={styles.label}>{label}</label>}
+        {label && (
+          <label className={styles.label}>
+            {label}
+            {required && (
+              <span style={{ color: "var(--accent-danger)", marginLeft: 4 }}>*</span>
+            )}
+          </label>
+        )}
         <div className={`${styles.inputWrapper} ${error ? styles.inputWrapperError : ''} glass-card`}>
           <div className={styles.codeSelector} ref={dropdownRef}>
             <div 

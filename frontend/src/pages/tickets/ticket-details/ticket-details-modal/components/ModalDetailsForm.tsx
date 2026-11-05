@@ -1,7 +1,7 @@
+import styles from "../TicketDetailModal.module.css";
 import React from "react";
 import CustomIcon from "../../../../../components/CustomIcon";
 import CustomSelect from "../../../../../components/CustomSelect";
-import CustomButton from "../../../../../components/CustomButton";
 import CustomBadge from "../../../../../components/CustomBadge";
 import CustomDatePicker from "../../../../../components/CustomDatePicker";
 import { TaskDescriptionEditor } from "../../../../timesheet/components/TaskDescriptionEditor";
@@ -37,8 +37,8 @@ interface ModalDetailsFormProps {
   isTicketOwner: boolean;
   user: any;
   handleStartChat: (userId: string) => void;
-  onClose: () => void;
-  navigate: (path: string) => void;
+  onClose?: () => void;
+  navigate?: (path: string) => void;
 }
 
 const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
@@ -57,8 +57,6 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
   canAssignQA,
   isClient,
   user,
-  onClose,
-  navigate,
 }) => {
   const getStatusOptions = (columns: any[]) => {
     return columns.map((s: any) => ({
@@ -102,109 +100,79 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
         </span>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        {/* Header Badges */}
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            flexWrap: "nowrap",
-            alignItems: "center",
-          }}
-        >
-          {user?.role?.roleType !== ROLE_TYPE.CUSTOMER ? (
-            <CustomSelect
-              name="priorityId"
-              control={control}
-              options={priorities.map((p) => ({
-                value: p.id,
-                label: p.name,
-                icon: <CustomIcon name="Tag" size={14} color={p.color} />,
-              }))}
-              style={{
-                minWidth: 140,
-                fontSize: "0.8rem",
-              }}
-              disabled={isDisbaledMode}
-            />
-          ) : (
-            <CustomBadge
-              color={displayTicket.priority.color}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 12px",
-                borderRadius: 8,
-                fontSize: "0.8rem",
-              }}
-            >
-              <CustomIcon name="Tag" size={16} /> {displayTicket.priority.name}
-            </CustomBadge>
-          )}
-          {user?.role?.roleType !== ROLE_TYPE.CUSTOMER &&
-          !(
-            user?.role?.roleType === ROLE_TYPE.EMPLOYEE &&
-            displayTicket?.status?.name === StatusName.APPROVED
-          ) ? (
-            <CustomSelect
-              name="statusId"
-              control={control}
-              options={getStatusOptions(
-                statusOptionsForUser(user, displayTicket?.status),
-              )}
-              style={{
-                minWidth: 180,
-                fontSize: "0.8rem",
-              }}
-              disabled={
-                isDisbaledMode || displayTicket?.status?.name === StatusName.NEW
-              }
-            />
-          ) : (
-            <CustomBadge
-              color={displayTicket.status.color}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 12px",
-                borderRadius: 8,
-                fontSize: "0.8rem",
-              }}
-            >
-              <CustomIcon name="Status" size={16} />{" "}
-              {isClient && displayTicket.status.name === StatusName.RESOLVED
-                ? StatusName.IN_PROCESS
-                : statusDisplayName(displayTicket.status.name, user)}
-            </CustomBadge>
-          )}
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <CustomButton
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              onClose();
-              navigate(`/tickets/${displayTicket.id}`);
-            }}
-            icon={<CustomIcon name="Maximize2" size={16} />}
+      <div className={styles.twoColumnRow} style={{ marginTop: 2, marginBottom: 4 }}>
+        {user?.role?.roleType !== ROLE_TYPE.CUSTOMER ? (
+          <CustomSelect
+            name="priorityId"
+            control={control}
+            options={priorities.map((p) => ({
+              value: p.id,
+              label: p.name,
+              icon: <CustomIcon name="Tag" size={14} color={p.color} />,
+            }))}
             style={{
-              color: "var(--accent-primary)",
-              border: "1px solid var(--accent-primary)30",
+              width: "100%",
+              fontSize: "0.8rem",
             }}
+            disabled={isDisbaledMode}
           />
-        </div>
+        ) : (
+          <CustomBadge
+            color={displayTicket.priority.color}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 12px",
+              borderRadius: 8,
+              fontSize: "0.8rem",
+              justifyContent: "center",
+            }}
+          >
+            <CustomIcon name="Tag" size={16} /> {displayTicket.priority.name}
+          </CustomBadge>
+        )}
+        {user?.role?.roleType !== ROLE_TYPE.CUSTOMER &&
+        !(
+          user?.role?.roleType === ROLE_TYPE.EMPLOYEE &&
+          displayTicket?.status?.name === StatusName.APPROVED
+        ) ? (
+          <CustomSelect
+            name="statusId"
+            control={control}
+            options={getStatusOptions(
+              statusOptionsForUser(user, displayTicket?.status),
+            )}
+            style={{
+              width: "100%",
+              fontSize: "0.8rem",
+            }}
+            disabled={
+              isDisbaledMode || displayTicket?.status?.name === StatusName.NEW
+            }
+          />
+        ) : (
+          <CustomBadge
+            color={displayTicket.status.color}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 12px",
+              borderRadius: 8,
+              fontSize: "0.8rem",
+              justifyContent: "center",
+            }}
+          >
+            <CustomIcon name="Status" size={16} />{" "}
+            {isClient && displayTicket.status.name === StatusName.RESOLVED
+              ? StatusName.IN_PROCESS
+              : statusDisplayName(displayTicket.status.name, user)}
+          </CustomBadge>
+        )}
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 20,
-        }}
-      >
+      <div className={styles.formGrid}>
         <TaskDescriptionEditor
           name="issue"
           control={control}
@@ -220,44 +188,46 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 10,
+            gap: 8,
           }}
         >
-          <SelectWithLabel
-            label="Reporter"
-            name="ownerId"
-            icon="User"
-            iconColor="var(--accent-primary)"
-            control={control}
-            disabled={!canAssign}
-            onChange={() => {}}
-            canAssign={false}
-            multiple={false}
-            dummyLabel={displayTicket?.owner?.fullname}
-          />
+          <div className={styles.twoColumnRow}>
+            <SelectWithLabel
+              label="Reporter"
+              name="ownerId"
+              icon="User"
+              iconColor="var(--accent-primary)"
+              control={control}
+              disabled={!canAssign}
+              onChange={() => {}}
+              canAssign={false}
+              multiple={false}
+              dummyLabel={displayTicket?.owner?.fullname}
+            />
 
-          <CustomDatePicker
-            name="dueDate"
-            control={control}
-            label={
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                }}
-              >
-                <CustomIcon
-                  name="Clock"
-                  size={18}
-                  color="var(--accent-primary)"
-                />
-                <span>Due Date</span>
-              </div>
-            }
-            min={new Date().toISOString().split("T")[0]}
-            disabled={!canEditDueDate(user, displayTicket)}
-          />
+            <CustomDatePicker
+              name="dueDate"
+              control={control}
+              label={
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <CustomIcon
+                    name="Clock"
+                    size={15}
+                    color="var(--accent-primary)"
+                  />
+                  <span>Due Date</span>
+                </div>
+              }
+              min={new Date().toISOString().split("T")[0]}
+              disabled={!canEditDueDate(user, displayTicket)}
+            />
+          </div>
 
           <TicketAssignments
             control={control}

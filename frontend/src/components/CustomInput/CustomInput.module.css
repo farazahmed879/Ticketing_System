@@ -136,3 +136,24 @@
 :global(.glass-card) .inputWrapper {
   border: none;
 }
+
+@media (max-width: 768px) {
+  .inputWrapper {
+    min-height: 36px !important;
+    padding: 0 10px !important;
+    border-radius: 8px !important;
+  }
+
+  .label {
+    font-size: 0.78rem !important;
+    margin-bottom: 3px !important;
+  }
+
+  .input {
+    font-size: 0.82rem !important;
+  }
+
+  .icon {
+    margin-right: 8px !important;
+  }
+}

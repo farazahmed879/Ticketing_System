@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { ticketController } from '../controllers/ticket.controller';
-import { authMiddleware } from '../middleware/auth';
+import { authMiddleware, requirePermission, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -153,7 +153,7 @@ router.post('/', authMiddleware, ticketController.createTicket);
  *       200:
  *         description: Tickets updated
  */
-router.put('/batch', authMiddleware, ticketController.batchUpdateTickets);
+router.put('/batch', authMiddleware, requirePermission('tickets.update'), ticketController.batchUpdateTickets);
 
 /**
  * @swagger
@@ -230,7 +230,7 @@ router.put('/:id', authMiddleware, ticketController.updateTicket);
  *       200:
  *         description: Ticket deleted
  */
-router.delete('/:id', authMiddleware, ticketController.deleteTicket);
+router.delete('/:id', authMiddleware, requirePermission('tickets.delete'), ticketController.deleteTicket);
 
 /**
  * @swagger

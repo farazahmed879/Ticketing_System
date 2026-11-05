@@ -14,6 +14,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   onToggleCollapse,
   unreadMessageCount,
+  isMobileOpen = false,
+  onCloseMobile,
 }) => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
@@ -182,7 +184,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`${styles.sidebar} ${isCollapsed ? styles.sidebarCollapsed : ""}`}
+      className={`${styles.sidebar} ${isCollapsed ? styles.sidebarCollapsed : ""} ${isMobileOpen ? styles.sidebarMobileOpen : ""}`}
     >
       <button
         className={styles.collapseToggle}
@@ -196,17 +198,27 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </button>
 
-      <div className={styles.logo}>
-        <CustomImage
-          src="/logo-sq.png"
-          alt="Logo"
-          style={{ width: 32, height: 32, objectFit: "contain", flexShrink: 0 }}
-        />
-        {!isCollapsed && (
-          <span style={{ color: "forestgreen", fontWeight: 700 }}>
-            Jami Partners
-          </span>
-        )}
+      <div className={styles.logoRow}>
+        <div className={styles.logo}>
+          <CustomImage
+            src="/logo-sq.png"
+            alt="Logo"
+            style={{ width: 32, height: 32, objectFit: "contain", flexShrink: 0 }}
+          />
+          {!isCollapsed && (
+            <span style={{ color: "forestgreen", fontWeight: 700 }}>
+              Jami Partners
+            </span>
+          )}
+        </div>
+        <button
+          className={styles.mobileCloseBtn}
+          onClick={onCloseMobile}
+          aria-label="Close menu"
+          type="button"
+        >
+          <CustomIcon name="X" size={20} />
+        </button>
       </div>
 
       {canScrollUp && (
@@ -239,6 +251,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             <NavLink
               to={item.path}
               end={item.path === "/tickets"}
+              onClick={() => {
+                if (onCloseMobile) onCloseMobile();
+              }}
               className={({ isActive }) =>
                 `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`
               }
@@ -286,7 +301,10 @@ const Sidebar: React.FC<SidebarProps> = ({
               className={({ isActive }) =>
                 `${styles.submenuLink} ${isActive ? styles.submenuLinkActive : ""}`
               }
-              onClick={() => setHoveredSubmenu(null)}
+              onClick={() => {
+                setHoveredSubmenu(null);
+                if (onCloseMobile) onCloseMobile();
+              }}
             >
               {child.label}
             </NavLink>
@@ -311,7 +329,10 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       <div
         className={styles.userProfile}
-        onClick={() => navigate("/profile")}
+        onClick={() => {
+          if (onCloseMobile) onCloseMobile();
+          navigate("/profile");
+        }}
         style={{
           cursor: "pointer",
           flexDirection: isCollapsed ? "column" : "row",

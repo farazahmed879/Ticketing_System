@@ -39,7 +39,12 @@ const CustomTextArea = <T extends FieldValues>({
       <div className={styles.container} style={containerStyle}>
         {label &&
           (typeof label === "string" ? (
-            <label className={styles.label}>{label}</label>
+            <label className={styles.label}>
+              {label}
+              {Boolean(props.required || rules?.required) && (
+                <span style={{ color: "var(--accent-danger)", marginLeft: 4 }}>*</span>
+              )}
+            </label>
           ) : (
             <div className={styles.label}>{label}</div>
           ))}

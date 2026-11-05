@@ -1,51 +1,30 @@
 import React from "react";
 import type { StandardListLayoutProps } from "../types";
+import styles from "./StandardListLayout.module.css";
 
 const StandardListLayout: React.FC<StandardListLayoutProps> = ({
   header,
   filters,
   children,
   pagination,
-  // Fill the viewport minus the chrome above/below the page container
-  // (56px topbar + 16px top/bottom page padding ≈ 88px).
   height = "calc(100vh - 90px)",
 }) => {
   return (
     <div
-      className="animate-fade-in"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height,
-        overflow: "hidden",
-      }}
+      className={`animate-fade-in ${styles.layout}`}
+      style={{ ["--layout-height" as any]: height }}
     >
-      {header && <div style={{ marginBottom: 14 }}>{header}</div>}
-      {filters && <div style={{ marginBottom: 14 }}>{filters}</div>}
+      {header && <div className={styles.headerSlot}>{header}</div>}
+      {filters && <div className={styles.filtersSlot}>{filters}</div>}
 
       <div
-        style={{
-          flex: 1,
-          minHeight: 0,
-          display: "flex",
-          flexDirection: "column",
-          marginBottom: pagination ? "12px" : 0,
-        }}
+        className={`${styles.contentSlot} ${pagination ? styles.contentWithPagination : ""}`}
       >
         {children}
       </div>
 
       {pagination && (
-        <div
-          className="glass-card"
-          style={{
-            padding: 0,
-            zIndex: 10,
-            borderTop: "1px solid var(--border-glass)",
-            backdropFilter: "var(--blur-md)",
-            background: "var(--bg-card)",
-          }}
-        >
+        <div className={`glass-card ${styles.paginationSlot}`}>
           {pagination}
         </div>
       )}

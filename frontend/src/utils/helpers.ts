@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 
 /**
@@ -106,4 +107,39 @@ export const formatCnic = (value: string): string => {
   if (digits.length > 5) parts.push(digits.slice(5, 12));
   if (digits.length > 12) parts.push(digits.slice(12, 13));
   return parts.join("-");
+};
+
+/**
+ * Returns the default view mode for list/grid pages.
+ * Defaults to "grid" on mobile viewports (<= 768px), or the saved user preference / "list" on desktop.
+ */
+export const getDefaultListView = (): "list" | "grid" => {
+  if (typeof window !== "undefined" && window.innerWidth <= 768) {
+    return "grid";
+  }
+  return (
+    (typeof window !== "undefined"
+      ? (localStorage.getItem("defaultListView") as "list" | "grid")
+      : null) || "list"
+  );
+};
+
+/**
+ * Hook providing viewMode ("list" | "grid"). Automatically enforces "grid" on mobile viewports (<= 768px).
+ */
+export const useListViewMode = () => {
+  const [viewMode, setViewMode] = useState<"list" | "grid">(getDefaultListView());
+
+  useEffect(() => {
+    const checkMobile = () => {
+      if (typeof window !== "undefined" && window.innerWidth <= 768) {
+        setViewMode("grid");
+      }
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  return [viewMode, setViewMode] as const;
 };

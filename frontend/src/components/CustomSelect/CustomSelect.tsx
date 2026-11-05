@@ -23,7 +23,7 @@ const CustomSelect = <T extends FieldValues>({
   error: manualError,
   isMulti = false,
   icon: triggerIcon,
-  showSearch = false,
+  showSearch = true,
   onSearch,
   serverSideSearch = false,
   isClearable = true,
@@ -124,7 +124,8 @@ const CustomSelect = <T extends FieldValues>({
     const hasValue = isMulti
       ? Array.isArray(value) && value.length > 0
       : value !== undefined && value !== null && value !== "";
-    const showClear = (isClearable ?? true) && !disabled && !required && hasValue;
+    const isRequired = Boolean(required || rules?.required);
+    const showClear = (isClearable ?? true) && !disabled && !isRequired && hasValue;
 
     const handleOptionClick = (optionValue: string) => {
       if (isMulti) {
@@ -135,7 +136,7 @@ const CustomSelect = <T extends FieldValues>({
         onChange?.(newValue);
       } else {
         // Deselect if clicking the already-selected option and field is not required
-        if (!required && value === optionValue) {
+        if (!isRequired && value === optionValue) {
           onChange?.("");
         } else {
           onChange?.(optionValue);
@@ -177,7 +178,7 @@ const CustomSelect = <T extends FieldValues>({
         {label && (
           <label className={styles.label}>
             {label}
-            {required && (
+            {isRequired && (
               <span style={{ color: "var(--accent-danger)", marginLeft: 4 }}>
                 *
               </span>
@@ -278,7 +279,7 @@ const CustomSelect = <T extends FieldValues>({
                 <div className={styles.noOptions}>No options available</div>
               ) : (
                 <>
-                  {!isMulti && !required && hasValue && (
+                  {!isMulti && !isRequired && hasValue && (
                     <div
                       className={`${styles.option} ${styles.clearOption}`}
                       onClick={(e) => {

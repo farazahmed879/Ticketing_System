@@ -176,7 +176,7 @@ export const requestUsecase = {
     for (const targetId of targetUserIds) {
       const notification = await requestRepository.createNotification({
         title: "New Request Submitted",
-        message: `${creator?.fullname || "A user"} has submitted a ${data.type.toLowerCase().replace("_", " ")} request.`,
+        message: `${creator?.fullname || "A user"} has submitted a ${data.type.toLowerCase().replace(/_/g, " ")} request.`,
         type: "request",
         userId: targetId,
         data: { requestId: request.id },
@@ -187,7 +187,7 @@ export const requestUsecase = {
     return { request, notifications };
   },
 
-  async updateRequestStatus(id: string, status: string, message: string) {
+  async updateRequestStatus(id: string, status: string, message?: string, approverId?: string) {
     const existing = await requestRepository.findById(id);
     if (!existing) throw new Error("Request not found.");
     const previousStatus = existing.status;
@@ -228,11 +228,20 @@ export const requestUsecase = {
       }
     }
 
-    const request = await requestRepository.update(id, {
+    const updatePayload: any = {
       status,
       message,
       updatedAt: new Date(),
-    });
+    };
+    if (status === "APPROVED" || status === "REJECTED") {
+      if (approverId) {
+        updatePayload.approvedById = approverId;
+      }
+    } else if (status === "PENDING") {
+      updatePayload.approvedById = null;
+    }
+
+    const request = await requestRepository.update(id, updatePayload);
 
     let notification = null;
     if (request.userId) {
@@ -240,7 +249,7 @@ export const requestUsecase = {
         title: `Request ${status}`,
         message: `Your ${request.type
           .toLowerCase()
-          .replace("_", " ")} request has been ${status.toLowerCase()}. ${
+          .replace(/_/g, " ")} request has been ${status.toLowerCase()}. ${
           message || ""
         }`,
         type: "request",

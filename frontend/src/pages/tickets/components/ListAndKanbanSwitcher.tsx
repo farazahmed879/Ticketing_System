@@ -41,6 +41,7 @@ const ListAndKanbanSwitcher: React.FC<ListAndKanbanSwitcherProps> = ({
   return (
     <>
       <div
+        className="view-mode-switcher"
         style={{
           display: "flex",
           background: "var(--bg-card)",

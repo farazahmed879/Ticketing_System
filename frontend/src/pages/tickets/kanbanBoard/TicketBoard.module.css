@@ -621,3 +621,231 @@
     transform: translateY(0);
   }
 }
+
+/* Mobile responsive: Change Kanban from column layout to stacked row layout with horizontal card rows */
+@media (max-width: 768px) {
+  .boardContainer {
+    height: auto !important;
+    min-height: 100% !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
+    gap: 14px !important;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 12px;
+  }
+
+  .titleInfo h1 {
+    font-size: 1.35rem;
+  }
+
+  .headerActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .boardScroller {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  /* Hide horizontal scroll arrow affordances on mobile */
+  .scrollAffordance {
+    display: none !important;
+  }
+
+  /* Change Kanban layout from columns (horizontal) to rows (vertical stacking) */
+  .kanbanBoard {
+    flex-direction: column !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    gap: 14px !important;
+    scroll-snap-type: none !important;
+    scroll-padding-inline: 0 !important;
+  }
+
+  /* Expanded status row on mobile: increased height so cards view properly */
+  .column {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 220px !important;
+    border-radius: 16px !important;
+    padding: 14px !important;
+    gap: 14px !important;
+    overflow: visible !important;
+    scroll-snap-align: none !important;
+  }
+
+  /* Collapsed status row on mobile: compact single-row height */
+  .columnCollapsed {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    min-height: 52px !important;
+    height: auto !important;
+    padding: 10px 14px !important;
+    gap: 0 !important;
+    overflow: visible !important;
+  }
+
+  .columnHeader {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 10px !important;
+    padding: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .statusInfo {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    text-align: left !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .statusInfo h3 {
+    font-size: 0.95rem !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+  }
+
+  /* Tickets start inline right next to the status title when row is collapsed */
+  .inlineMiniCardList {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    gap: 6px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 2px 4px !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x !important;
+  }
+
+  .inlineMiniCardList::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .inlineMiniCardList .miniCard {
+    height: 30px !important;
+    min-height: 30px !important;
+    min-width: 85px !important;
+    max-width: 140px !important;
+    width: auto !important;
+    padding: 4px 8px !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-glass) !important;
+    display: flex !important;
+    align-items: center !important;
+    cursor: pointer !important;
+  }
+
+  .inlineMiniCardList .miniCard:hover {
+    border-color: var(--accent-primary) !important;
+  }
+
+  .columnActions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+  }
+
+  /* Each expanded status row lays out its full ticket cards with proper height */
+  .cardList {
+    flex: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    max-height: none !important;
+    min-height: 185px !important;
+    height: auto !important;
+    gap: 12px !important;
+    padding: 4px 2px 14px 2px !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x !important;
+    scrollbar-width: none !important;
+  }
+
+  .cardList::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .card {
+    min-width: 280px !important;
+    max-width: 320px !important;
+    width: 280px !important;
+    min-height: 165px !important;
+    height: auto !important;
+    flex-shrink: 0 !important;
+    padding: 14px !important;
+    scroll-snap-align: start !important;
+    touch-action: manipulation !important;
+    box-sizing: border-box !important;
+  }
+
+  .emptyColumn {
+    width: 100% !important;
+    min-width: 180px !important;
+    padding: 20px 14px !important;
+    min-height: 60px !important;
+  }
+
+  .filterGroup {
+    width: 100%;
+    overflow-x: auto;
+  }
+}
+
+.columnDropHover {
+  border-color: var(--accent-primary) !important;
+  background: rgba(124, 58, 237, 0.12) !important;
+  box-shadow: 0 0 24px rgba(124, 58, 237, 0.35) !important;
+  transform: scale(1.01);
+  transition: all 0.15s ease;
+}
+
+.touchDragGhost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999999;
+  transform: translate(-50%, -50%);
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  border: 2px solid var(--accent-primary);
+  border-radius: 12px;
+  padding: 8px 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(124, 58, 237, 0.5);
+  max-width: 280px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: pulseScale 0.2s ease;
+}
+
+@keyframes pulseScale {
+  0% { transform: translate(-50%, -50%) scale(0.92); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}

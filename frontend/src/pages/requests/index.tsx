@@ -19,6 +19,7 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 import StandardListLayout from "../../components/StandardListLayout";
 import { getRequestColumns } from "./columns";
 import RequestCard from "./components/RequestCard";
+import { useListViewMode } from "../../utils/helpers";
 
 const Requests: React.FC = () => {
   const { user } = useAuth();
@@ -27,9 +28,7 @@ const Requests: React.FC = () => {
   const [searchParams] = useSearchParams();
   const highlightRequestId = searchParams.get("requestId") || undefined;
   const [filter, setFilter] = useState("PENDING");
-  const [viewMode, setViewMode] = useState<"list" | "grid">(
-    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
-  );
+  const [viewMode, setViewMode] = useListViewMode();
 
   // Deep-linked from a notification: show ALL so an already approved/rejected
   // request isn't hidden by the default PENDING filter.
@@ -149,7 +148,7 @@ const Requests: React.FC = () => {
           </div>
         }
         filters={
-          <div
+          <div className="view-mode-switcher"
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -167,7 +166,7 @@ const Requests: React.FC = () => {
                 { value: "ALL", label: "All" },
               ]}
             />
-            <div
+            <div className="view-mode-switcher"
               style={{
                 display: "flex",
                 gap: 4,

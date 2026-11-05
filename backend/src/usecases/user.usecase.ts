@@ -1,8 +1,56 @@
 import bcrypt from "bcryptjs";
 import { userRepository } from "../repositories/user.repository";
 import { RoleType } from "../utils/constants";
+import prisma from "../prisma";
+
+export class ForbiddenError extends Error {
+  status = 403;
+}
 
 export const userUsecase = {
+  /**
+   * Prevents privilege escalation through user create/update: only an Admin
+   * may grant the Admin role, or change the role of an existing Admin.
+   * Also rejects unknown/deleted role ids.
+   */
+  async assertCanAssignRole(
+    callerRoleType: string | undefined,
+    roleId: string | undefined,
+    targetUserId?: string,
+  ) {
+    if (callerRoleType === RoleType.ADMIN) {
+      if (roleId) await this.assertRoleExists(roleId);
+      return;
+    }
+    if (roleId) {
+      const role = await this.assertRoleExists(roleId);
+      if (role.roleType === RoleType.ADMIN) {
+        throw new ForbiddenError("Only Admins can assign the Admin role.");
+      }
+    }
+    if (targetUserId && roleId) {
+      const target = await prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: { roleId: true, role: { select: { roleType: true } } },
+      });
+      if (
+        target?.role?.roleType === RoleType.ADMIN &&
+        target.roleId !== roleId
+      ) {
+        throw new ForbiddenError("Only Admins can change an Admin's role.");
+      }
+    }
+  },
+
+  async assertRoleExists(roleId: string) {
+    const role = await prisma.role.findFirst({
+      where: { id: roleId, deleted: false },
+      select: { roleType: true },
+    });
+    if (!role) throw new ForbiddenError("Invalid role.");
+    return role;
+  },
+
   async getUsers(
     type: string = "ALL",
     limit: string = "10",

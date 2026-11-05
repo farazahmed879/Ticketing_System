@@ -15,8 +15,8 @@ export const notificationUsecase = {
     return { items, unreadCount, totalCount };
   },
 
-  async markRead(id: string) {
-    return notificationRepository.markRead(id);
+  async markRead(id: string, userId: string) {
+    return notificationRepository.markRead(id, userId);
   },
 
   async markAllRead(userId: string) {

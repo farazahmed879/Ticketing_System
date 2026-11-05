@@ -32,7 +32,14 @@ const CustomInput = <T extends FieldValues>({
 
     return (
       <div className={styles.container} style={containerStyle}>
-        {label && <label className={styles.label}>{label}</label>}
+        {label && (
+          <label className={styles.label}>
+            {label}
+            {Boolean(props.required || rules?.required) && typeof label === "string" && (
+              <span style={{ color: "var(--accent-danger)", marginLeft: 4 }}>*</span>
+            )}
+          </label>
+        )}
         <div
           className={`${styles.inputWrapper} ${error ? styles.inputWrapperError : ""} glass-card`}
         >

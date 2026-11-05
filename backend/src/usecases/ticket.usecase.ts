@@ -37,6 +37,95 @@ function validateAttachments(attachments: any): string[] | undefined {
 }
 
 export const ticketUsecase = {
+  /**
+   * Role-based ticket visibility as a Prisma `where` fragment, or null when the
+   * user may see everything (admin). Shared by the list endpoint and every
+   * single-ticket endpoint so the two can never drift apart.
+   */
+  async buildVisibilityClause(user: any): Promise<any | null> {
+    if (user.role === RoleType.ADMIN) return null;
+
+    if (user.role === RoleType.CUSTOMER) {
+      // Clients see every ticket in their projects (regardless of status),
+      // plus any ticket they personally own.
+      const projectIds = await ticketRepository.findClientProjectIds(user.id);
+      const visibility: any[] = [{ ownerId: user.id }];
+      if (projectIds.length) visibility.push({ projectId: { in: projectIds } });
+      return { OR: visibility };
+    }
+
+    if (user.role === RoleType.QA) {
+      return {
+        OR: [{ ownerId: user.id }, { assigneeId: user.id }, { qaId: user.id }],
+      };
+    }
+
+    if (user.role === RoleType.AGENT) {
+      // Managers see tickets in the projects they manage, plus any ticket they
+      // personally own or are assigned.
+      const managedProjectIds = await ticketRepository.findManagedProjectIds(
+        user.id,
+      );
+      const visibility: any[] = [{ ownerId: user.id }, { assigneeId: user.id }];
+      if (managedProjectIds.length) {
+        visibility.push({ projectId: { in: managedProjectIds } });
+      }
+      return { OR: visibility };
+    }
+
+    // Regular users see tickets they own or are assigned. Team leads also see
+    // every ticket assigned to a member of any team they lead, plus every
+    // UNASSIGNED ticket in the project(s) their team is on.
+    const [myLedMemberIds, ledProjectIds] = await Promise.all([
+      ticketRepository.findLedTeamMemberIds(user.id),
+      ticketRepository.findLedTeamProjectIds(user.id),
+    ]);
+    const visibility: any[] = [{ ownerId: user.id }, { assigneeId: user.id }];
+    if (myLedMemberIds.length) {
+      visibility.push({ assigneeId: { in: myLedMemberIds } });
+    }
+    if (ledProjectIds.length) {
+      // Unassigned = no assignee. On MongoDB the field can be either null
+      // (explicitly unassigned) or unset (never assigned), so match both.
+      visibility.push({
+        AND: [
+          { projectId: { in: ledProjectIds } },
+          { OR: [{ assigneeId: null }, { assigneeId: { isSet: false } }] },
+        ],
+      });
+    }
+    return { OR: visibility };
+  },
+
+  /**
+   * Throws "Ticket not found" unless every id is visible to the user. Uses the
+   * same message as a missing ticket so ids can't be probed for existence.
+   */
+  async assertCanAccessTickets(ids: string[], user: any) {
+    if (!user?.id) throw new Error("Ticket not found");
+    const unique = Array.from(new Set(ids.filter(Boolean)));
+    if (!unique.length) throw new Error("Ticket not found");
+    const visibility = await this.buildVisibilityClause(user);
+    if (!visibility) return;
+    const visible = await ticketRepository.count({
+      id: { in: unique },
+      AND: [visibility],
+    });
+    if (visible !== unique.length) throw new Error("Ticket not found");
+  },
+
+  /** Team leads of the teams attached to the ticket's project. */
+  async getProjectLeadIds(projectId?: string | null): Promise<string[]> {
+    if (!projectId) return [];
+    const teams = await ticketRepository.findTeamsByMembersAndProjects(
+      [],
+      [projectId],
+    );
+    return Array.from(
+      new Set(teams.map((t: any) => t.teamLeadId).filter(Boolean)),
+    ) as string[];
+  },
+
   async getTickets(filters: any, user: any) {
     const {
       status,
@@ -54,64 +143,10 @@ export const ticketUsecase = {
 
     const where: any = { deleted: false };
 
-    // Members of the team(s) this user leads. Empty for non-leads. Used for
-    // visibility scoping so team leads can see their team members' tickets.
-    const myLedMemberIds = await ticketRepository.findLedTeamMemberIds(user.id);
-
     // Visibility scoping by role. Kept inside AND so a `search` filter (which
     // also uses OR) can never widen what a restricted user is allowed to see.
-    if (user.role === RoleType.CUSTOMER) {
-      // Clients see every ticket in their projects (regardless of status),
-      // plus any ticket they personally own.
-      const projectIds = await ticketRepository.findClientProjectIds(user.id);
-      const visibility: any[] = [{ ownerId: user.id }];
-      if (projectIds.length) visibility.push({ projectId: { in: projectIds } });
-      where.AND = [...(where.AND || []), { OR: visibility }];
-    } else if (user.role === RoleType.QA) {
-      where.AND = [
-        ...(where.AND || []),
-        {
-          OR: [
-            { ownerId: user.id },
-            { assigneeId: user.id },
-            { qaId: user.id },
-          ],
-        },
-      ];
-    } else if (user.role === RoleType.AGENT) {
-      // Managers see tickets in the projects they manage, plus any ticket they
-      // personally own or are assigned.
-      const managedProjectIds = await ticketRepository.findManagedProjectIds(
-        user.id,
-      );
-      const visibility: any[] = [{ ownerId: user.id }, { assigneeId: user.id }];
-      if (managedProjectIds.length) {
-        visibility.push({ projectId: { in: managedProjectIds } });
-      }
-      where.AND = [...(where.AND || []), { OR: visibility }];
-    } else if (user.role !== RoleType.ADMIN) {
-      // Regular users see tickets they own or are assigned. Team leads also see
-      // every ticket assigned to a member of any team they lead, plus every
-      // UNASSIGNED ticket in the project(s) their team is on.
-      const visibility: any[] = [{ ownerId: user.id }, { assigneeId: user.id }];
-      if (myLedMemberIds.length) {
-        visibility.push({ assigneeId: { in: myLedMemberIds } });
-      }
-      const ledProjectIds = await ticketRepository.findLedTeamProjectIds(
-        user.id,
-      );
-      if (ledProjectIds.length) {
-        // Unassigned = no assignee. On MongoDB the field can be either null
-        // (explicitly unassigned) or unset (never assigned), so match both.
-        visibility.push({
-          AND: [
-            { projectId: { in: ledProjectIds } },
-            { OR: [{ assigneeId: null }, { assigneeId: { isSet: false } }] },
-          ],
-        });
-      }
-      where.AND = [...(where.AND || []), { OR: visibility }];
-    }
+    const visibility = await this.buildVisibilityClause(user);
+    if (visibility) where.AND = [visibility];
 
     if (filters.myTickets === "true") {
       if (user.role === RoleType.CUSTOMER) {
@@ -252,7 +287,8 @@ export const ticketUsecase = {
     return { tickets: ticketsWithLeads, totalCount };
   },
 
-  async getTicketById(id: string, user?: any) {
+  async getTicketById(id: string, user: any) {
+    await this.assertCanAccessTickets([id], user);
     const ticket = await ticketRepository.findTicketById(id);
     if (!ticket) throw new Error("Ticket not found");
 
@@ -290,7 +326,7 @@ export const ticketUsecase = {
   },
 
   async createTicket(data: any, user: any) {
-    const uid = await ticketRepository.nextUid();
+    const uid = await ticketRepository.nextTicketUid();
 
     let finalStatusId = data.statusId;
 
@@ -354,12 +390,31 @@ export const ticketUsecase = {
   },
 
   async updateTicket(id: string, data: any, user: any) {
+    await this.assertCanAccessTickets([id], user);
     const existingTicket = (await ticketRepository.findTicketById(id)) as any;
     if (!existingTicket) throw new Error("Ticket not found");
 
+    // Never trust role/status hints from the request body: derive them here.
+    // (Clients used to send isLead / currentStatusName / targetStatusName,
+    // which let a caller grant itself manager rights or skip status rules.)
+    const leadIds = await this.getProjectLeadIds(existingTicket.projectId);
+    const isLeadOfTicket = leadIds.includes(user.id);
+    const statusNameById = (sid?: string | null) =>
+      TICKET_STATUSES.find((s: any) => s.id === sid)?.name || "";
+    const currentStatusName = statusNameById(existingTicket.statusId);
+    data = {
+      ...data,
+      isLead: isLeadOfTicket,
+      currentStatusName,
+      targetStatusName:
+        data.statusId !== undefined
+          ? statusNameById(data.statusId)
+          : currentStatusName,
+    };
+
     const actorId = user.id;
     const isAdmin = user.role === RoleType.ADMIN;
-    const isManager = user?.role === RoleType.AGENT || data?.isLead;
+    const isManager = user?.role === RoleType.AGENT || isLeadOfTicket;
     const isEmployee = user.role === RoleType.EMPLOYEE;
     const isClient = user.role === RoleType.CUSTOMER;
     const isQA = user.role === RoleType.QA;
@@ -371,7 +426,7 @@ export const ticketUsecase = {
     const targetStatus = data?.targetStatusName?.toLowerCase() || "";
     const currentStatus = data?.currentStatusName?.toLowerCase() || "";
 
-    if (currentStatus == StatusName.TRASH)
+    if (currentStatus === StatusName.TRASH.toLowerCase())
       throw new Error("Cancelled Ticket can not be changed.");
 
     // Status
@@ -810,6 +865,12 @@ export const ticketUsecase = {
       data;
     const actorId = user.id;
 
+    if (!Array.isArray(ticketIds) || !ticketIds.length) {
+      throw new Error("ticketIds must be a non-empty array");
+    }
+    // Every ticket must be visible to the caller before anything is written.
+    await this.assertCanAccessTickets(ticketIds, user);
+
     const updateData: any = {};
     if (statusId) updateData.statusId = statusId;
     if (priorityId) updateData.priorityId = priorityId;
@@ -851,13 +912,19 @@ export const ticketUsecase = {
   },
 
   async addComment(id: string, data: any, user: any) {
-    const authorId = data.authorId || user.id;
-    const ticketId = data.ticketId || id;
+    // Author and ticket always come from the auth context / URL, never the
+    // body, so nobody can post as another user or onto another ticket.
+    await this.assertCanAccessTickets([id], user);
+    const authorId = user.id;
+    const ticketId = id;
     const attachments = validateAttachments(data.attachments) ?? [];
+    // Internal notes are hidden from clients, so clients can't write them.
+    const isNote = user.role !== RoleType.CUSTOMER && data.isNote === true;
+    data = { ...data, isNote };
 
     const newComment = await ticketRepository.addComment({
       comment: data.comment,
-      isNote: data.isNote || false,
+      isNote,
       attachments,
       authorId,
       ticketId,
@@ -884,13 +951,15 @@ export const ticketUsecase = {
     };
   },
 
-  async getTicketHistory(filters: any) {
+  async getTicketHistory(filters: any, user: any) {
     const { status, page = "0", limit = "25" } = filters;
     const take = parseInt(limit as string);
     const skip = parseInt(page as string) * take;
 
     const where: any = { deleted: false, status: { isResolved: true } };
     if (status) where.status = { name: status as string };
+    const visibility = await this.buildVisibilityClause(user);
+    if (visibility) where.AND = [visibility];
 
     const [tickets, totalCount] = await Promise.all([
       ticketRepository.findMany(where, skip, take),
@@ -900,7 +969,8 @@ export const ticketUsecase = {
     return { tickets, totalCount };
   },
 
-  async getTimeline(ticketId: string, user?: any) {
+  async getTimeline(ticketId: string, user: any) {
+    await this.assertCanAccessTickets([ticketId], user);
     const history = await ticketRepository.getTimeline(ticketId);
     const userRole = user?.role?.roleType || user?.role;
     if (user && userRole === RoleType.CUSTOMER) {

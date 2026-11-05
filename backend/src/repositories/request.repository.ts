@@ -1,11 +1,14 @@
 import prisma from "../prisma";
 
+const USER_SELECT = { id: true, fullname: true, email: true, image: true };
+
 export const requestRepository = {
   async findMany(where: any = {}) {
     return prisma.userRequest.findMany({
       where: { ...where, deleted: false },
       include: {
-        user: { select: { id: true, fullname: true, email: true, image: true } },
+        user: { select: USER_SELECT },
+        approvedBy: { select: USER_SELECT },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -15,7 +18,8 @@ export const requestRepository = {
     return prisma.userRequest.findFirst({
       where: { id, deleted: false },
       include: {
-        user: { select: { id: true, fullname: true, email: true, image: true } },
+        user: { select: USER_SELECT },
+        approvedBy: { select: USER_SELECT },
       },
     });
   },
@@ -24,7 +28,8 @@ export const requestRepository = {
     return prisma.userRequest.create({
       data,
       include: {
-        user: { select: { id: true, fullname: true, email: true, image: true } },
+        user: { select: USER_SELECT },
+        approvedBy: { select: USER_SELECT },
       },
     });
   },
@@ -33,7 +38,10 @@ export const requestRepository = {
     return prisma.userRequest.update({
       where: { id },
       data,
-      include: { user: true },
+      include: {
+        user: { select: USER_SELECT },
+        approvedBy: { select: USER_SELECT },
+      },
     });
   },
 

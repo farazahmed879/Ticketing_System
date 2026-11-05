@@ -108,8 +108,8 @@ export const projectRepository = {
       },
       include: {
         department: true,
-        clients: true,
-        manager: true,
+        clients: { select: { id: true, fullname: true, email: true, image: true } },
+        manager: { select: { id: true, fullname: true, email: true, image: true } },
         teams: { select: { id: true, name: true } },
       },
     });
@@ -130,8 +130,8 @@ export const projectRepository = {
       },
       include: {
         department: true,
-        clients: true,
-        manager: true,
+        clients: { select: { id: true, fullname: true, email: true, image: true } },
+        manager: { select: { id: true, fullname: true, email: true, image: true } },
         teams: { select: { id: true, name: true } },
       },
     });

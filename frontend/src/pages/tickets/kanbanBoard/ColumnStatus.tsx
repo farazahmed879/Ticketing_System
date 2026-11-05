@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import CustomIcon from "../../../components/CustomIcon";
 import { isToday, isTomorrow, isBefore, startOfDay, parseISO } from "date-fns";
 import styles from "./TicketBoard.module.css";
@@ -19,7 +20,27 @@ const ColumnStatus = ({
   setIsDeleteModalOpen,
   showNotification,
   user,
+  columns,
+  onMoveTicket,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  onTouchCancel,
+  hoveredColumnId,
 }: any) => {
+  const draggedRef = useRef(false);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 768 : false,
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const handleCheckTomorrow = (ticket: any) => {
     return (
       ticket.dueDate &&
@@ -47,7 +68,9 @@ const ColumnStatus = ({
   return (
     <div
       key={column.id}
-      className={`${styles.column} ${isCollapsed ? styles.columnCollapsed : ""} ${!isStatusAllowed ? styles.columnDisabled : ""}`}
+      data-column-id={column.id}
+      data-status-name={column.name}
+      className={`${styles.column} ${isCollapsed ? styles.columnCollapsed : ""} ${!isStatusAllowed ? styles.columnDisabled : ""} ${hoveredColumnId === column.id ? styles.columnDropHover : ""}`}
       onDragOver={handleDragOver}
       onDrop={(e) => handleDrop(e, column.id, column.name)}
     >
@@ -55,7 +78,7 @@ const ColumnStatus = ({
         <CustomIcon name="Lock" className={styles.bgLockIcon} />
       )}
       <div className={styles.columnHeader}>
-        {isCollapsed && (
+        {!isMobile && isCollapsed && (
           <div
             style={{
               display: "flex",
@@ -79,10 +102,11 @@ const ColumnStatus = ({
             </button>
           </div>
         )}
+
         <div
           className={styles.statusInfo}
           style={
-            isCollapsed
+            !isMobile && isCollapsed
               ? {
                   flexDirection: "row",
                   flexWrap: "wrap",
@@ -104,79 +128,168 @@ const ColumnStatus = ({
             />
           )}
         </div>
-        {!isCollapsed && (
+
+        {/* On mobile when collapsed: show tickets inline in the same row starting next to status */}
+        {isMobile && isCollapsed && column.tickets.length > 0 && (
+          <div className={styles.inlineMiniCardList}>
+            {column.tickets.map((ticket: any) => (
+              <div
+                key={ticket.id}
+                className={styles.miniCard}
+                onTouchStart={(e) => onTouchStart?.(e, ticket)}
+                onTouchMove={onTouchMove}
+                onTouchEnd={(e) => {
+                  const wasDragging = onTouchEnd?.(e);
+                  if (wasDragging) {
+                    draggedRef.current = true;
+                  }
+                }}
+                onTouchCancel={onTouchCancel}
+                onClick={(e) => {
+                  if (draggedRef.current) {
+                    draggedRef.current = false;
+                    return;
+                  }
+                  e.stopPropagation();
+                  openTicketDetail(ticket);
+                }}
+              >
+                <div className={styles.miniCardContent} title={ticket.subject}>
+                  <div
+                    className={styles.miniPriorityDot}
+                    style={{ background: ticket.priority.color }}
+                  ></div>
+                  <span className={styles.miniUid}>#{ticket.uid}</span>
+                  {user?.role?.roleType !== ROLE_TYPE.CUSTOMER && (
+                    <span
+                      style={{ marginLeft: "auto", display: "inline-flex" }}
+                      title={
+                        ticket.qa
+                          ? `QA assigned: ${ticket.qa.fullname}`
+                          : "QA not assigned"
+                      }
+                    >
+                      <CustomIcon
+                        name={ticket.qa ? "ShieldCheck" : "ShieldOff"}
+                        size={12}
+                        color={
+                          ticket.qa
+                            ? "var(--accent-success, #10b981)"
+                            : "var(--text-muted)"
+                        }
+                      />
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(!isCollapsed || isMobile) && (
           <div className={styles.columnActions}>
             <span className={styles.count}>{column.tickets.length}</span>
             <button
               className={styles.columnToggle}
               onClick={() => toggleColumnCollapse(column.id)}
-              title="Collapse Column"
+              title={isCollapsed ? "Expand Column" : "Collapse Column"}
+              type="button"
             >
-              <CustomIcon name="ChevronLeft" size={20} />
+              <CustomIcon
+                name={
+                  isMobile
+                    ? isCollapsed
+                      ? "ChevronDown"
+                      : "ChevronUp"
+                    : isCollapsed
+                      ? "ChevronRight"
+                      : "ChevronLeft"
+                }
+                size={isMobile ? 18 : 20}
+              />
             </button>
           </div>
         )}
       </div>
 
-      <div className={styles.cardList}>
-        {column.tickets.map((ticket: any) => (
-          <div
-            key={ticket.id}
-            className={`${styles.card} ${isCollapsed ? styles.miniCard : "glass-card"} ${
-              handleCheckOverdue(ticket)
-                ? "overdue-card"
-                : handleCheckTomorrow(ticket)
-                  ? "due-tomorrow-card"
-                  : ""
-            }`}
-            draggable
-            onDragStart={(e) => handleDragStart(e, ticket.id)}
-            onClick={() => openTicketDetail(ticket)}
-          >
-            {isCollapsed ? (
-              <div className={styles.miniCardContent} title={ticket.subject}>
-                <div
-                  className={styles.miniPriorityDot}
-                  style={{ background: ticket.priority.color }}
-                ></div>
-                <span className={styles.miniUid}>#{ticket.uid}</span>
-                {user?.role?.roleType !== ROLE_TYPE.CUSTOMER && (
-                  <span
-                    style={{ marginLeft: "auto", display: "inline-flex" }}
-                    title={
-                      ticket.qa
-                        ? `QA assigned: ${ticket.qa.fullname}`
-                        : "QA not assigned"
-                    }
-                  >
-                    <CustomIcon
-                      name={ticket.qa ? "ShieldCheck" : "ShieldOff"}
-                      size={12}
-                      color={
+      {(!isMobile || !isCollapsed) && (
+        <div className={styles.cardList}>
+          {column.tickets.map((ticket: any) => (
+            <div
+              key={ticket.id}
+              className={`${styles.card} ${isCollapsed ? styles.miniCard : "glass-card"} ${
+                handleCheckOverdue(ticket)
+                  ? "overdue-card"
+                  : handleCheckTomorrow(ticket)
+                    ? "due-tomorrow-card"
+                    : ""
+              }`}
+              draggable
+              onDragStart={(e) => handleDragStart(e, ticket.id)}
+              onTouchStart={(e) => onTouchStart?.(e, ticket)}
+              onTouchMove={onTouchMove}
+              onTouchEnd={(e) => {
+                const wasDragging = onTouchEnd?.(e);
+                if (wasDragging) {
+                  draggedRef.current = true;
+                }
+              }}
+              onTouchCancel={onTouchCancel}
+              onClick={() => {
+                if (draggedRef.current) {
+                  draggedRef.current = false;
+                  return;
+                }
+                openTicketDetail(ticket);
+              }}
+            >
+              {isCollapsed ? (
+                <div className={styles.miniCardContent} title={ticket.subject}>
+                  <div
+                    className={styles.miniPriorityDot}
+                    style={{ background: ticket.priority.color }}
+                  ></div>
+                  <span className={styles.miniUid}>#{ticket.uid}</span>
+                  {user?.role?.roleType !== ROLE_TYPE.CUSTOMER && (
+                    <span
+                      style={{ marginLeft: "auto", display: "inline-flex" }}
+                      title={
                         ticket.qa
-                          ? "var(--accent-success, #10b981)"
-                          : "var(--text-muted)"
+                          ? `QA assigned: ${ticket.qa.fullname}`
+                          : "QA not assigned"
                       }
-                    />
-                  </span>
-                )}
-              </div>
-            ) : (
-              <TicketCard
-                ticket={ticket}
-                setTicketToDelete={setTicketToDelete}
-                setIsDeleteModalOpen={setIsDeleteModalOpen}
-                user={user}
-                showNotification={showNotification}
-                styles={styles}
-              />
-            )}
-          </div>
-        ))}
-        {column.tickets.length === 0 && !isCollapsed && (
-          <div className={styles.emptyColumn}>No tickets</div>
-        )}
-      </div>
+                    >
+                      <CustomIcon
+                        name={ticket.qa ? "ShieldCheck" : "ShieldOff"}
+                        size={12}
+                        color={
+                          ticket.qa
+                            ? "var(--accent-success, #10b981)"
+                            : "var(--text-muted)"
+                        }
+                      />
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <TicketCard
+                  ticket={ticket}
+                  setTicketToDelete={setTicketToDelete}
+                  setIsDeleteModalOpen={setIsDeleteModalOpen}
+                  user={user}
+                  showNotification={showNotification}
+                  styles={styles}
+                  columns={columns}
+                  onMoveTicket={onMoveTicket}
+                />
+              )}
+            </div>
+          ))}
+          {column.tickets.length === 0 && !isCollapsed && (
+            <div className={styles.emptyColumn}>No tickets</div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

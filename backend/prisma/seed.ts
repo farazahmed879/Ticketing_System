@@ -312,7 +312,19 @@ async function main() {
 
 
   // ========== DEFAULT ADMIN USER ==========
-  const hashedPassword = await bcrypt.hash("admin123", 10);
+  // Use SEED_ADMIN_PASSWORD if provided, otherwise generate a random one and
+  // print it once. (It used to be a hard-coded "admin123" in every database.)
+  // Only applies when the admin user doesn't exist yet — upsert never
+  // overwrites an existing admin's password.
+  const generatedPassword = !process.env.SEED_ADMIN_PASSWORD;
+  const adminPassword =
+    process.env.SEED_ADMIN_PASSWORD ||
+    require("crypto").randomBytes(12).toString("base64url");
+  const hashedPassword = await bcrypt.hash(adminPassword, 10);
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: "admin@nextgen.com" },
+    select: { id: true },
+  });
   await prisma.user.upsert({
     where: { email: "admin@nextgen.com" },
     update: {},
@@ -327,7 +339,16 @@ async function main() {
       roleId: adminRole.id,
     },
   });
-  console.log("  ✅ Default admin user seeded (username: admin / admin123)");
+  if (existingAdmin) {
+    console.log("  ✅ Admin user already exists — password left unchanged");
+  } else if (generatedPassword) {
+    console.log(
+      `  ✅ Admin user created — username: admin  password: ${adminPassword}\n` +
+        "     (shown once; change it after first login)",
+    );
+  } else {
+    console.log("  ✅ Admin user created with SEED_ADMIN_PASSWORD (username: admin)");
+  }
 
   console.log("🎉 Seeding complete!");
 }

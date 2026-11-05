@@ -1,3 +1,4 @@
+import styles from "../TicketDetailModal.module.css";
 import React from "react";
 import SelectWithLabel from "../../../../../components/SelectWithLabel";
 import CustomIcon from "../../../../../components/CustomIcon";
@@ -36,7 +37,8 @@ const TicketAssignments: React.FC<TicketAssignmentsProps> = ({
 }) => {
   return (
     <>
-      {/* Assignment */}
+      {/* Assignee & QA Assignee in 2 columns */}
+      <div className={styles.twoColumnRow}>
       <SelectWithLabel
         label="Assignee"
         name="assigneeId"
@@ -172,6 +174,7 @@ const TicketAssignments: React.FC<TicketAssignmentsProps> = ({
           })()}
         />
       )}
+      </div>
 
       {/* Labels */}
       <SelectWithLabel

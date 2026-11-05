@@ -9,6 +9,18 @@ import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptio
 import styles from "./Requests.module.css";
 import type { User } from "../../types";
 
+export const formatRequestType = (type: string) => {
+  const map: Record<string, string> = {
+    HALFDAY_LEAVE: "Half-Day Leave",
+    FULLDAY_LEAVE: "Full-Day Leave",
+    VACATION: "Vacation",
+    WFH: "Work From Home",
+    REIMBURSEMENT: "Reimbursement",
+    OTHER: "Other / Custom",
+  };
+  return map[type] || type.replace(/_/g, " ");
+};
+
 export const getRequestColumns = (
   user: User | null,
   hasPermission: (permPath: string) => boolean,
@@ -19,7 +31,7 @@ export const getRequestColumns = (
     header: "Type",
     key: "type",
     render: (r) => (
-      <div className={styles.typeBadge}>{r.type.replace("_", " ")}</div>
+      <div className={styles.typeBadge}>{formatRequestType(r.type)}</div>
     ),
   },
   {
@@ -31,6 +43,26 @@ export const getRequestColumns = (
           {r.user?.fullname || "Anonymous"}
         </span>
         <span className={styles.userEmail}>{r.email || r.user?.email}</span>
+      </div>
+    ),
+  },
+  {
+    header: "Approved By",
+    key: "approvedBy",
+    render: (r) => (
+      <div className={styles.userInfo}>
+        {r.approvedBy ? (
+          <>
+            <span className={styles.userName}>{r.approvedBy.fullname}</span>
+            {r.approvedBy.email && (
+              <span className={styles.userEmail}>{r.approvedBy.email}</span>
+            )}
+          </>
+        ) : (
+          <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+            —
+          </span>
+        )}
       </div>
     ),
   },

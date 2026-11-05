@@ -48,6 +48,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
     ticket?.status?.name === StatusName.CLOSED;
 
   const { user } = useAuth();
+  const [activeMobileTab, setActiveMobileTab] = useState<"details" | "chat">("details");
   const isClient = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
   const isQA = user?.role?.roleType === ROLE_TYPE.QA;
   const { showNotification, setIsLoading } = useNotification();
@@ -545,7 +546,19 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
 
   const HeaderAction = () => {
     return (
-      <CustomDropdownMenu
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <CustomButton
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            onClose();
+            navigate(`/tickets/${displayTicket.id}`);
+          }}
+          title="Open Full Page"
+          icon={<CustomIcon name="Maximize2" size={16} />}
+          style={{ padding: 6, borderRadius: 8, color: "var(--text-muted)" }}
+        />
+        <CustomDropdownMenu
         items={[
           {
             label: "Copy Ticket ID",
@@ -591,7 +604,8 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               ]
             : []),
         ]}
-      />
+        />
+      </div>
     );
   };
 
@@ -636,9 +650,45 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           <ModalSkeleton />
         ) : (
           <div className={styles.modalContainer}>
+            {canViewComments && (
+              <div className={styles.mobileTabBar}>
+                <button
+                  type="button"
+                  className={`${styles.mobileTabButton} ${
+                    activeMobileTab === "details" ? styles.mobileTabActive : ""
+                  }`}
+                  onClick={() => setActiveMobileTab("details")}
+                >
+                  <CustomIcon name="FileText" size={16} />
+                  <span>Details</span>
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.mobileTabButton} ${
+                    activeMobileTab === "chat" ? styles.mobileTabActive : ""
+                  }`}
+                  onClick={() => setActiveMobileTab("chat")}
+                >
+                  <CustomIcon name="MessageSquare" size={16} />
+                  <span>Chat</span>
+                  {(fullTicketData?.comments?.length || 0) > 0 && (
+                    <span className={styles.mobileTabBadge}>
+                      {fullTicketData.comments.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+
             <div className={styles.grid}>
               {/* Left Column: Details */}
-              <div className={styles.leftColumn}>
+              <div
+                className={`${styles.leftColumn} ${
+                  activeMobileTab === "details"
+                    ? styles.tabVisibleOnMobile
+                    : styles.tabHiddenOnMobile
+                }`}
+              >
                 <ClientDecisionBanner
                   isClient={isClient}
                   isTicketOwner={isTicketOwner}
@@ -690,9 +740,14 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
                 />
               </div>
 
-              {/* Right Column: Comments */}
+              {/* Right Column: Comments / Chat */}
               {canViewComments && (
                 <CommentSection
+                  className={
+                    activeMobileTab === "chat"
+                      ? styles.tabVisibleOnMobile
+                      : styles.tabHiddenOnMobile
+                  }
                   fullTicketData={fullTicketData}
                   user={user}
                   canCreateComments={canCreateComments}

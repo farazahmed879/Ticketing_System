@@ -32,14 +32,14 @@ export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
             value={month}
             onChange={setMonth}
             options={months}
-            style={{ width: 125 }}
+            style={{ width: 180 }}
             placeholder="Month"
           />
           <CustomSelect
             value={year}
             onChange={setYear}
             options={years}
-            style={{ width: 125 }}
+            style={{ width: 150 }}
             placeholder="Year"
           />
         </div>
@@ -72,8 +72,8 @@ export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
           ))}
         </div>
       </div>
-      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <div
+      <div className="view-mode-switcher" style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <div className="view-mode-switcher"
           style={{
             display: "flex",
             gap: 4,

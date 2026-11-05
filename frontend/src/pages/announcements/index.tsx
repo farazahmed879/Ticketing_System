@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
-import { socket } from "../../services/socket";
 import { useNotification } from "../../context/NotificationContext";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useAuth } from "../../context/AuthContext";
@@ -20,6 +19,7 @@ import StandardListLayout from "../../components/StandardListLayout";
 import { getAnnouncementColumns, type Announcement } from "./columns";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
+import { useListViewMode } from "../../utils/helpers";
 
 const AnnouncementList: React.FC = () => {
   const { user } = useAuth();
@@ -40,9 +40,7 @@ const AnnouncementList: React.FC = () => {
   const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "grid">(
-    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
-  );
+  const [viewMode, setViewMode] = useListViewMode();
   const { showNotification, setIsLoading } = useNotification();
 
   const { data: announcementsData, isLoading: loading } = useQuery({
@@ -89,7 +87,6 @@ const AnnouncementList: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
       queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
-      socket.emit("announcement:updated");
       showNotification(
         "success",
         editingAnnouncement
@@ -125,7 +122,6 @@ const AnnouncementList: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
       queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
-      socket.emit("announcement:updated");
       showNotification("success", "Announcement deleted successfully");
       setIsDeleteModalOpen(false);
       setAnnouncementToDelete(null);
@@ -196,7 +192,7 @@ const AnnouncementList: React.FC = () => {
               icon={<CustomIcon name="Search" size={18} />}
               containerStyle={{ width: "350px" }}
             />
-            <div
+            <div className="view-mode-switcher"
               style={{
                 display: "flex",
                 gap: 4,

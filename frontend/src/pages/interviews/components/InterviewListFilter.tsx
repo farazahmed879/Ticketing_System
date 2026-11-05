@@ -164,7 +164,7 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
           </div>
         </div>
 
-        <div
+        <div className="view-mode-switcher"
           style={{
             display: "flex",
             gap: 4,

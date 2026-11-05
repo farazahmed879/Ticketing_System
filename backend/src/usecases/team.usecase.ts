@@ -3,18 +3,21 @@ import { userRepository } from "../repositories/user.repository";
 import prisma from "../prisma";
 import { RoleType } from "../utils/constants";
 
-// Managers cannot be team members or the team lead. Throws if any of the given
-// user ids belong to a manager.
+// Clients and super admins cannot be team members or the team lead (managers are allowed).
+// Throws if any of the given user ids belong to those roles.
 async function assertNoManagers(userIds: (string | undefined | null)[]) {
   const ids = Array.from(new Set(userIds.filter(Boolean) as string[]));
   if (!ids.length) return;
   const managers = await prisma.user.findMany({
-    where: { id: { in: ids }, role: { roleType: RoleType.AGENT } },
+    where: {
+      id: { in: ids },
+      role: { roleType: { in: [RoleType.CUSTOMER, RoleType.ADMIN] } },
+    },
     select: { fullname: true },
   });
   if (managers.length) {
     const names = managers.map((m) => m.fullname).join(", ");
-    throw new Error(`Managers cannot be added to a team: ${names}.`);
+    throw new Error(`Clients and super admins cannot be added to a team: ${names}.`);
   }
 }
 

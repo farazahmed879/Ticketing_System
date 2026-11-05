@@ -27,6 +27,7 @@ const CommentSection = ({
   openLightbox,
   commentSendDisabled = false,
   isSubmittingComment = false,
+  className = "",
 }: any) => {
   const commentFileInputRef = useRef<HTMLInputElement>(null);
   const listEndRef = useRef<HTMLDivElement>(null);
@@ -57,7 +58,7 @@ const CommentSection = ({
 
   return (
     <div
-      className={`${styles.commentsContainer} ${cs.thread}`}
+      className={`${styles.commentsContainer} ${cs.thread} ${className}`}
       style={
         isInternal
           ? {

@@ -91,3 +91,136 @@
     min-height: auto;
   }
 }
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.headerBadgesRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.headerBadges {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .ticketModal {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .headerBadgesRow {
+    gap: 8px !important;
+  }
+
+  .headerBadges {
+    width: 100% !important;
+    gap: 8px !important;
+  }
+}
+
+.mobileTabBar {
+  display: none;
+  background: var(--bg-input);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 14px;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mobileTabButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobileTabActive {
+  background: var(--accent-primary);
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+}
+
+.mobileTabBadge {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.mobileTabButton:not(.mobileTabActive) .mobileTabBadge {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .mobileTabBar {
+    display: flex !important;
+  }
+
+  .tabHiddenOnMobile {
+    display: none !important;
+  }
+
+  .tabVisibleOnMobile {
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  .commentsContainer {
+    border-left: none !important;
+    border-top: none !important;
+    padding-left: 0 !important;
+    padding-top: 0 !important;
+    height: 100% !important;
+    min-height: 440px !important;
+    flex: 1 !important;
+  }
+
+  .commentsList {
+    max-height: 52vh !important;
+    min-height: 250px !important;
+  }
+}
+
+.twoColumnRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  align-items: flex-start;
+}

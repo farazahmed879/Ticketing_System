@@ -114,7 +114,7 @@ export const requestController = {
 
       const { status, message } = req.body;
       const { request: updatedRequest, notification } =
-        await requestUsecase.updateRequestStatus(id as string, status, message);
+        await requestUsecase.updateRequestStatus(id as string, status, message, user.id);
 
       // Emit notification to the user
       const io = req.app.get("io");

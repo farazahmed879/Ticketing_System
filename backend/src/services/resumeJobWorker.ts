@@ -50,8 +50,16 @@ async function handleJob(job: LeasedJob): Promise<void> {
   }
 }
 
-export function startResumeJobWorker() {
-  if (process.env.DISABLE_IN_PROCESS_WORKER === "true") {
+/**
+ * Starts the resume queue processor. This is the ONLY implementation; it runs
+ * either inside the web server (default) or in the dedicated worker process
+ * (src/worker.ts, `npm run worker`), which passes { dedicated: true }.
+ *
+ * When you run the dedicated worker, set DISABLE_IN_PROCESS_WORKER=true on the
+ * web server so a crashing resume can't take the API down with it.
+ */
+export function startResumeJobWorker(opts: { dedicated?: boolean } = {}) {
+  if (!opts.dedicated && process.env.DISABLE_IN_PROCESS_WORKER === "true") {
     console.log("[resume-worker] in-process worker disabled by DISABLE_IN_PROCESS_WORKER env");
     return;
   }
@@ -84,4 +92,23 @@ export function startResumeJobWorker() {
 
 export function stopResumeJobWorker() {
   isRunning = false;
+}
+
+/** Number of jobs currently being processed. */
+export function resumeJobsInFlight() {
+  return inFlight;
+}
+
+/**
+ * Stop leasing new jobs and wait (up to timeoutMs) for in-flight ones to
+ * finish. Jobs still running at the deadline keep their lease and are retried
+ * by the next worker once it expires.
+ */
+export async function drainResumeJobWorker(timeoutMs = 60_000) {
+  stopResumeJobWorker();
+  const deadline = Date.now() + timeoutMs;
+  while (inFlight > 0 && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  return inFlight;
 }

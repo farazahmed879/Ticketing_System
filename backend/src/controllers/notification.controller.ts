@@ -22,7 +22,7 @@ export const notificationController = {
 
   async markRead(req: AuthRequest, res: Response) {
     try {
-      await notificationUsecase.markRead(req.params.id as string);
+      await notificationUsecase.markRead(req.params.id as string, req.user!.id);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });

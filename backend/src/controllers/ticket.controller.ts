@@ -101,7 +101,7 @@ export const ticketController = {
         }
       });
     } catch (error: any) {
-      const status =
+      const status = error.message === "Ticket not found" ? 404 :
         error.message.includes("permission") ||
         error.message.includes("You can only update")
           ? 403
@@ -124,7 +124,7 @@ export const ticketController = {
 
       res.json({ success: true, ...result });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(error.message === "Ticket not found" ? 404 : 500).json({ success: false, error: error.message });
     }
   },
 
@@ -180,13 +180,13 @@ export const ticketController = {
         }
       });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(error.message === "Ticket not found" ? 404 : 500).json({ success: false, error: error.message });
     }
   },
 
   async getTicketHistory(req: AuthRequest, res: Response) {
     try {
-      const result = await ticketUsecase.getTicketHistory(req.query);
+      const result = await ticketUsecase.getTicketHistory(req.query, req.user);
       res.json({ success: true, ...result });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
@@ -201,7 +201,7 @@ export const ticketController = {
       );
       res.json({ success: true, history });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      res.status(error.message === "Ticket not found" ? 404 : 500).json({ success: false, error: error.message });
     }
   },
 };

@@ -1,13 +1,22 @@
 import { Response } from "express";
 import { AuthRequest } from "../types";
 import { timesheetUsecase } from "../usecases/timesheet.usecase";
+import { RoleType } from "../utils/constants";
+
+// Timesheet reviewers (same set as the approval routes) may read anyone's
+// entries/report; everyone else is pinned to their own, whatever ?userId= says.
+const REVIEW_ROLES: string[] = [RoleType.AGENT, RoleType.ADMIN, RoleType.HR];
+const resolveTargetUserId = (req: AuthRequest, userId: unknown) => {
+  const self = req.user?.id;
+  if (typeof userId !== "string" || !userId || userId === self) return self;
+  return REVIEW_ROLES.includes(req.user?.role ?? "") ? userId : self;
+};
 
 export const timesheetController = {
   async getEntries(req: AuthRequest, res: Response) {
     try {
       const { startDate, endDate, userId } = req.query;
-      const targetUserId =
-        (typeof userId === "string" ? userId : undefined) || req.user?.id;
+      const targetUserId = resolveTargetUserId(req, userId);
 
       if (!targetUserId)
         return res.status(401).json({ message: "Unauthorized" });
@@ -62,7 +71,13 @@ export const timesheetController = {
       );
       res.json({ success: true, entry });
     } catch (error: any) {
-      const status = error.message.includes("Insufficient leave balance") ? 400 : 500;
+      const status = error.message.includes("Insufficient leave balance")
+        ? 400
+        : error.message.includes("review your own")
+          ? 403
+          : error.message === "Timesheet entry not found"
+            ? 404
+            : 500;
       res.status(status).json({ success: false, error: error.message });
     }
   },
@@ -77,11 +92,19 @@ export const timesheetController = {
       const entry = await timesheetUsecase.rejectEntry(
         req.params.id as string,
         reason,
-        roleType as string
+        roleType as string,
+        agentId,
       );
       res.json({ success: true, entry });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      const status = error.message.includes("Insufficient leave balance")
+        ? 400
+        : error.message.includes("review your own")
+          ? 403
+          : error.message === "Timesheet entry not found"
+            ? 404
+            : 500;
+      res.status(status).json({ success: false, error: error.message });
     }
   },
 
@@ -95,6 +118,7 @@ export const timesheetController = {
         month: month as string,
         year: year as string,
         roleType: roleType as string,
+        excludeUserId: req.user?.id,
       });
       res.json({ success: true, entries });
     } catch (error: any) {
@@ -105,8 +129,7 @@ export const timesheetController = {
   async getMonthlyReport(req: AuthRequest, res: Response) {
     try {
       const { month, year, userId } = req.query;
-      const targetUserId =
-        (typeof userId === "string" ? userId : undefined) || req.user?.id;
+      const targetUserId = resolveTargetUserId(req, userId);
 
       if (!targetUserId)
         return res.status(401).json({ message: "Unauthorized" });
@@ -130,9 +153,23 @@ export const timesheetController = {
       const counts = await timesheetUsecase.getPendingCounts(
         month as string,
         year as string,
-        roleType as string
+        roleType as string,
+        req.user?.id,
       );
       res.json({ success: true, counts });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
+  async getUnfilledUsers(req: AuthRequest, res: Response) {
+    try {
+      const { month, year } = req.query;
+      const data = await timesheetUsecase.getUnfilledUsers(
+        month as string,
+        year as string
+      );
+      res.json({ success: true, ...data });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }

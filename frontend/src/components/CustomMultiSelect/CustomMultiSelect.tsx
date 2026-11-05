@@ -117,6 +117,7 @@ const CustomMultiSelect = <T extends FieldValues = any>({
           opt.sublabel.toLowerCase().includes(search.toLowerCase())),
     );
 
+    const isRequired = Boolean(required || rules?.required);
     const selectedOptions = options.filter((opt) => value.includes(opt.value));
 
     return (
@@ -128,7 +129,7 @@ const CustomMultiSelect = <T extends FieldValues = any>({
         {label && (
           <label className={styles.label}>
             {label}
-            {required && (
+            {isRequired && (
               <span style={{ color: "var(--accent-danger)", marginLeft: 4 }}>
                 *
               </span>
@@ -142,7 +143,7 @@ const CustomMultiSelect = <T extends FieldValues = any>({
           autoComplete="off"
           style={{ opacity: 0, width: 0, height: 0, position: "absolute" }}
           value={value.join(",")}
-          required={required}
+          required={isRequired}
           readOnly
         />
 

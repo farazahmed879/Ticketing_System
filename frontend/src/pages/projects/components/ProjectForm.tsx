@@ -61,11 +61,15 @@ const ProjectForm: React.FC<ProjectFormProps> = ({
   const clientOptions = clients.map((c) => ({
     value: c.id,
     label: c.fullname,
+    sublabel: c.email,
+    image: c.image,
   }));
 
   const managerOptions = managers.map((m) => ({
     value: m.id,
     label: m.fullname,
+    sublabel: m.email,
+    image: m.image,
   }));
 
   const teamOptions = teams.map((t) => ({

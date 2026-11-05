@@ -25,6 +25,7 @@ import CreateTicketModal from "../components/CreateTicketModal";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import { BoardSkeleton } from "../../../components/CustomSkeleton/CustomSkeleton";
 import ColumnStatus from "./ColumnStatus";
+import { useTouchDrag } from "./useTouchDrag";
 import { useScrollSnap } from "./useScrollSnap";
 import StandardListLayout from "../../../components/StandardListLayout";
 import ListAndKanbanSwitcher from "../components/ListAndKanbanSwitcher";
@@ -325,14 +326,11 @@ const TicketBoard: React.FC = () => {
     }
     return true;
   };
-  const handleDrop = async (
-    e: React.DragEvent,
+  const executeTicketMove = (
+    ticketId: string,
     statusId: string,
     targetStatusName: string,
   ) => {
-    const ticketId = e.dataTransfer.getData("ticketId");
-    if (!ticketId) return;
-
     let ticket: Ticket | undefined;
     let currentColumn: any;
     for (const col of columns) {
@@ -359,8 +357,6 @@ const TicketBoard: React.FC = () => {
 
     if (!isAllowedToUpdatedTheTicketStatus(ticket, targetStatusName)) return;
 
-    
-
     handleUpdateStatus({
       ticketId,
       statusId,
@@ -371,6 +367,30 @@ const TicketBoard: React.FC = () => {
       ownerId: ticket.owner?.id,
     });
   };
+
+  const handleDrop = async (
+    e: React.DragEvent,
+    statusId: string,
+    targetStatusName: string,
+  ) => {
+    const ticketId = e.dataTransfer.getData("ticketId");
+    if (!ticketId) return;
+    executeTicketMove(ticketId, statusId, targetStatusName);
+  };
+
+  const {
+    draggingTicket,
+    ghostPos,
+    hoveredColumnId,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    handleTouchCancel,
+  } = useTouchDrag({
+    onDrop: (ticketId, statusId, targetStatusName) => {
+      executeTicketMove(ticketId, statusId, targetStatusName);
+    },
+  });
 
   const handleUpdateStatus = (body: any) =>
     handleStatusChange(body, user, {
@@ -659,6 +679,44 @@ const TicketBoard: React.FC = () => {
 
   return (
     <div className={styles.boardContainer}>
+      {draggingTicket && ghostPos && (
+        <div
+          className={styles.touchDragGhost}
+          style={{
+            left: `${ghostPos.x}px`,
+            top: `${ghostPos.y}px`,
+          }}
+        >
+          <div
+            className={styles.miniPriorityDot}
+            style={{
+              background:
+                draggingTicket.priority?.color || "var(--accent-primary)",
+            }}
+          />
+          <span
+            style={{
+              fontWeight: 700,
+              fontSize: "0.82rem",
+              color: "var(--text-primary)",
+            }}
+          >
+            #{draggingTicket.uid}
+          </span>
+          <span
+            style={{
+              fontSize: "0.8rem",
+              color: "var(--text-secondary)",
+              maxWidth: 150,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {draggingTicket.subject}
+          </span>
+        </div>
+      )}
       {loading ? (
         <BoardSkeleton />
       ) : (
@@ -756,6 +814,13 @@ const TicketBoard: React.FC = () => {
                       setIsDeleteModalOpen={setIsDeleteModalOpen}
                       showNotification={showNotification}
                       user={user}
+                      columns={columns}
+                      onMoveTicket={executeTicketMove}
+                      onTouchStart={handleTouchStart}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
+                      onTouchCancel={handleTouchCancel}
+                      hoveredColumnId={hoveredColumnId}
                     />
                   );
                 })}

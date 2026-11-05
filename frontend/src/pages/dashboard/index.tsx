@@ -13,7 +13,8 @@ import { useNavigate } from "react-router-dom";
 import { DashboardSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 
 // Sub-components
-import StatsCards from "./components/StatsCards";
+import StatsCards, { type StatCard } from "./components/StatsCards";
+import RecentTicketsSection from "./components/RecentTicketsSection";
 import AnnouncementSection from "./components/AnnouncementSection";
 import ReviewsSection from "./components/ReviewsSection";
 import NewHiresSection from "./components/NewHiresSection";
@@ -69,35 +70,50 @@ const Dashboard: React.FC = () => {
     (ann: { type: string }) => ann.type === AnnouncementType.MOMENT,
   );
 
-  const isHR = user?.role?.roleType === ROLE_TYPE.HR;
+  const roleType = user?.role?.roleType;
+  const isHR = roleType === ROLE_TYPE.HR;
+  const showLeaderboard = roleType === ROLE_TYPE.ADMIN || isHR;
+  // HR's dashboard has no ticket stats, so it doesn't get a ticket feed either.
+  const showRecentTickets = !isHR;
+  const recentTickets = dashboardData?.recentTickets || [];
 
-  const allCards = [
+  const total = stats?.totalTickets ?? 0;
+  const pct = (n?: number) =>
+    total > 0 && n !== undefined ? Math.round((n / total) * 100) : null;
+  const openPct = pct(stats?.openTickets);
+  const resolvedPct = pct(stats?.resolvedTickets);
+
+  const allCards: StatCard[] = [
     {
       label: "Total Tickets",
       value: stats?.totalTickets,
-      icon: <CustomIcon name="Ticket" size={24} />,
+      icon: <CustomIcon name="Ticket" size={18} />,
       color: "var(--accent-primary)",
+      caption: "All tickets you can see",
       onClick: () => navigate("/tickets/board"),
     },
     {
       label: "Open Tickets",
       value: stats?.openTickets,
-      icon: <CustomIcon name="Clock" size={24} />,
+      icon: <CustomIcon name="Clock" size={18} />,
       color: "var(--accent-warning)",
+      caption: openPct !== null ? `${openPct}% of all tickets` : undefined,
       onClick: () => navigate("/tickets/board"),
     },
     {
       label: "Resolved",
       value: stats?.resolvedTickets,
-      icon: <CustomIcon name="CheckCircle2" size={24} />,
+      icon: <CustomIcon name="CheckCircle2" size={18} />,
       color: "var(--accent-success)",
+      caption: resolvedPct !== null ? `${resolvedPct}% resolution rate` : undefined,
       onClick: () => navigate("/tickets/board"),
     },
     {
       label: "Total Users",
       value: stats?.users,
-      icon: <CustomIcon name="Users" size={24} />,
+      icon: <CustomIcon name="Users" size={18} />,
       color: "var(--accent-secondary)",
+      caption: "Across the organisation",
     },
   ];
 
@@ -105,33 +121,82 @@ const Dashboard: React.FC = () => {
     ? allCards.filter((card) => card.label === "Total Users")
     : allCards;
 
-  if (user?.role?.roleType === ROLE_TYPE.CUSTOMER) {
+  if (roleType === ROLE_TYPE.CUSTOMER) {
     return <CustomerDashboard stats={stats} moments={moments} />;
   }
 
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const firstName = user?.fullname?.split(" ")[0];
+  const today = new Date().toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
-    <div className="animate-fade-in">
+    <div className={`${styles.dashboard} animate-fade-in`}>
+      <header className={styles.pageHeader}>
+        <div>
+          <p className={styles.pageDate}>{today}</p>
+          <h1 className={styles.pageTitle}>
+            {greeting}
+            {firstName ? `, ${firstName}` : ""}
+          </h1>
+        </div>
+        {showRecentTickets && (
+          <button
+            type="button"
+            className={styles.headerAction}
+            onClick={() => navigate("/tickets/board")}
+          >
+            <CustomIcon name="KanbanSquare" size={16} />
+            Open ticket board
+          </button>
+        )}
+      </header>
+
       <StatsCards cards={cards} />
 
-      {/* Row 1: General Announcements & Client Reviews */}
-      <div className={styles.heroSection}>
-        <AnnouncementSection announcements={generalAnnouncements} t={t} />
-        <ReviewsSection reviews={reviews} />
-      </div>
+      {showRecentTickets ? (
+        <>
+          {/* Work: recent tickets (+ recruiter leaderboard for Admin) */}
+          <div className={showLeaderboard ? styles.splitRow : styles.singleRow}>
+            <RecentTicketsSection tickets={recentTickets} />
+            {showLeaderboard && <LeaderboardSection />}
+          </div>
 
-      {/* Row 2: New Hires & Moments of Joy */}
-      <div className={styles.heroSection}>
-        <NewHiresSection newHires={newHires} />
-        <MomentsSection moments={moments} seenMomentIds={seenMomentIds} />
-      </div>
+          {/* Company feed */}
+          <div className={styles.twoColRow}>
+            <AnnouncementSection announcements={generalAnnouncements} t={t} />
+            <ReviewsSection reviews={reviews} />
+          </div>
 
-      <div className={styles.mainGrid}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          {/* Mini Leaderboard Preview */}
-          {(user?.role?.roleType === ROLE_TYPE.ADMIN ||
-            user?.role?.roleType === ROLE_TYPE.HR) && <LeaderboardSection />}
-        </div>
-      </div>
+          {/* People */}
+          <div className={styles.twoColRow}>
+            <NewHiresSection newHires={newHires} />
+            <MomentsSection moments={moments} seenMomentIds={seenMomentIds} />
+          </div>
+        </>
+      ) : (
+        <>
+          {/* HR: people first — new hires beside the recruiter leaderboard */}
+          <div className={styles.twoColRow}>
+            <NewHiresSection newHires={newHires} />
+            {showLeaderboard && <LeaderboardSection />}
+          </div>
+
+          <div className={styles.twoColRow}>
+            <AnnouncementSection announcements={generalAnnouncements} t={t} />
+            <ReviewsSection reviews={reviews} />
+          </div>
+
+          <div className={styles.singleRow}>
+            <MomentsSection moments={moments} seenMomentIds={seenMomentIds} />
+          </div>
+        </>
+      )}
     </div>
   );
 };

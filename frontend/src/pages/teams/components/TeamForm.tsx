@@ -25,28 +25,34 @@ const TeamForm: React.FC<TeamFormProps> = ({
   onSubmit,
   users,
 }) => {
-  const { handleSubmit, control, reset } = useForm<TeamFormData>({
-    defaultValues: {
-      name: "",
-      description: "",
-      teamLeadId: "",
-      memberIds: [],
-    },
-  });
+  const { handleSubmit, control, reset, watch, setValue } =
+    useForm<TeamFormData>({
+      defaultValues: {
+        name: "",
+        description: "",
+        teamLeadId: "",
+        memberIds: [],
+      },
+    });
+
+  const selectedTeamLeadId = watch("teamLeadId");
+  const selectedMemberIds = watch("memberIds");
 
   useEffect(() => {
     if (initialData) {
+      const leadId =
+        initialData.teamLeadId || (initialData as any).teamLead?.id || "";
+      const members =
+        initialData.memberIds ||
+        (initialData as any).members?.map((m: any) => m.id) ||
+        [];
       reset({
         name: initialData.name,
         description: initialData.description || "",
         // The list/my-team APIs return lean objects without the scalar IDs,
         // so fall back to deriving them from the relation objects.
-        teamLeadId:
-          initialData.teamLeadId || (initialData as any).teamLead?.id || "",
-        memberIds:
-          initialData.memberIds ||
-          (initialData as any).members?.map((m: any) => m.id) ||
-          [],
+        teamLeadId: leadId,
+        memberIds: members.filter((id: string) => id !== leadId),
       });
     } else {
       reset({
@@ -58,15 +64,38 @@ const TeamForm: React.FC<TeamFormProps> = ({
     }
   }, [initialData, reset]);
 
-  // Managers cannot be added to a team (neither as members nor as lead).
+  // If a user is selected as Team Lead, automatically remove them from Team Members
+  useEffect(() => {
+    if (
+      selectedTeamLeadId &&
+      Array.isArray(selectedMemberIds) &&
+      selectedMemberIds.includes(selectedTeamLeadId)
+    ) {
+      setValue(
+        "memberIds",
+        selectedMemberIds.filter((id) => id !== selectedTeamLeadId),
+      );
+    }
+  }, [selectedTeamLeadId, selectedMemberIds, setValue]);
+
+  // Clients and super admins cannot be added to a team (managers are allowed).
   const userOptions = users
-    .filter((u) => u.role?.roleType !== ROLE_TYPE.AGENT)
+    .filter(
+      (u) =>
+        u.role?.roleType !== ROLE_TYPE.CUSTOMER &&
+        u.role?.roleType !== ROLE_TYPE.ADMIN &&
+        !u.role?.isAdmin,
+    )
     .map((u) => ({
       value: u.id,
       label: u.fullname,
       sublabel: u.email,
       image: u.image,
     }));
+
+  const memberOptions = userOptions.filter(
+    (opt) => opt.value !== selectedTeamLeadId,
+  );
 
   return (
     <form
@@ -96,7 +125,7 @@ const TeamForm: React.FC<TeamFormProps> = ({
         control={control}
         label="Team Members"
         placeholder="Select members..."
-        options={userOptions}
+        options={memberOptions}
       />
 
       <TaskDescriptionEditor

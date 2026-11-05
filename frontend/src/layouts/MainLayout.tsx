@@ -26,6 +26,7 @@ const MainLayout: React.FC = () => {
   const location = useLocation();
   const queryClient = useQueryClient();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [notifications, setNotifications] = React.useState<any[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
@@ -49,6 +50,10 @@ const MainLayout: React.FC = () => {
       }
     }
   }, [user?.id, user?.mustChangePassword]);
+
+  React.useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -154,22 +159,22 @@ const MainLayout: React.FC = () => {
       setUnreadCount((prev) => prev + 1);
     });
 
-      // Listen for real-time ticket updates to update live counts and lists
-      socket.on("ticket:updated", () => {
-        queryClient.invalidateQueries({ queryKey: ["tickets"] });
-        queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
-        queryClient.invalidateQueries({ queryKey: ["projects"] });
-        queryClient.invalidateQueries({ queryKey: ["customerProjects"] });
-        queryClient.invalidateQueries({ queryKey: ["ticket-metadata"] });
-        queryClient.invalidateQueries({ queryKey: ["ticket-board-metadata"] });
-      });
+    // Listen for real-time ticket updates to update live counts and lists
+    socket.on("ticket:updated", () => {
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["customerProjects"] });
+      queryClient.invalidateQueries({ queryKey: ["ticket-metadata"] });
+      queryClient.invalidateQueries({ queryKey: ["ticket-board-metadata"] });
+    });
 
-      return () => {
-        socket.off("notifications:update");
-        socket.off("notifications:new");
-        socket.off("ticket:updated");
-      };
-    }, [user, showNotification, location.pathname, queryClient]);
+    return () => {
+      socket.off("notifications:update");
+      socket.off("notifications:new");
+      socket.off("ticket:updated");
+    };
+  }, [user, showNotification, location.pathname, queryClient]);
 
   const handleMarkAsRead = async (id: string) => {
     socket.emit("notifications:markRead", id);
@@ -259,15 +264,34 @@ const MainLayout: React.FC = () => {
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
         unreadMessageCount={notifications.filter((n) => n.unread && n.type === "message").length}
+        isMobileOpen={isMobileMenuOpen}
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
+
+      {isMobileMenuOpen && (
+        <div
+          className={styles.mobileBackdrop}
+          onClick={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
       <main className={styles.mainContent}>
         <header
           className={`${styles.topbar} ${scrolled ? styles.topbarScrolled : ""}`}
         >
-          <div style={{ fontSize: "1.2rem", fontWeight: 600 }}>
-            {/* {t("topbar.overview")} */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              className={styles.burgerButton}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle navigation menu"
+              type="button"
+            >
+              <CustomIcon name={isMobileMenuOpen ? "X" : "Menu"} size={20} />
+            </button>
+            <span className={styles.mobileBrand}>Jami Partners</span>
           </div>
+
           <div
             style={{ display: "flex", gap: 20, alignItems: "center" }}
             ref={notificationRef}

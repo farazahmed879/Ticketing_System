@@ -30,6 +30,7 @@ export const API_ROUTES = {
     REJECT: (id: string) => `/timesheets/reject/${id}`,
     PENDING: "/timesheets/pending",
     PENDING_COUNTS: "/timesheets/pending-counts",
+    UNFILLED_USERS: "/timesheets/unfilled-users",
     REPORT: "/timesheets/report",
   },
 

@@ -6,10 +6,15 @@ import CustomIcon from "../../../components/CustomIcon";
 import Modal from "../../../components/Modal";
 import styles from "../Dashboard.module.css";
 import CustomImage from "../../../components/CustomImage";
+import SectionHeader from "./SectionHeader";
+import EmptyState from "./EmptyState";
 
 interface NewHiresSectionProps {
   newHires: any[];
 }
+
+const isFresh = (date: string) =>
+  isToday(new Date(date)) || isYesterday(new Date(date));
 
 const NewHiresSection: React.FC<NewHiresSectionProps> = ({ newHires }) => {
   const navigate = useNavigate();
@@ -20,130 +25,80 @@ const NewHiresSection: React.FC<NewHiresSectionProps> = ({ newHires }) => {
     navigate(`/profile/${hire.id}`);
   };
 
-  const renderHireCard = (hire: any) => (
-    <div
-      key={hire.id}
-      className={`${styles.newHireCard} ${(isToday(new Date(hire.createdAt)) || isYesterday(new Date(hire.createdAt))) ? styles.featuredNewHire : ''}`}
-      onClick={() => goToProfile(hire)}
-      style={{ cursor: "pointer" }}
-    >
-      <div className={styles.avatarWrapper}>
-        {hire.image ? (
-          <CustomImage
-            src={hire.image}
-            alt={hire.fullname}
-            className={styles.hireAvatar}
-          />
-        ) : (
-          <div className={styles.avatarPlaceholder} style={{ background: `linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)` }}>
-            {hire.fullname.charAt(0)}
-          </div>
-        )}
-        {(isToday(new Date(hire.createdAt)) || isYesterday(new Date(hire.createdAt))) && (
-          <span className={styles.newBadge}>NEW</span>
-        )}
-      </div>
-
-      <div className={styles.newHireInfo}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-          <h4 className={styles.hireName} style={{ margin: 0 }}>{hire.fullname}</h4>
-          {hire.role?.name && (
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "2px 8px",
-                borderRadius: 10,
-                fontSize: "0.65rem",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-                color: "var(--accent-primary)",
-                background: "rgba(var(--accent-primary-rgb, 99, 102, 241), 0.12)",
-                border: "1px solid rgba(var(--accent-primary-rgb, 99, 102, 241), 0.25)",
-                lineHeight: 1.4,
-              }}
-            >
-              <CustomIcon name="Shield" size={10} />
-              {hire.role.name}
+  const renderHireCard = (hire: any) => {
+    const fresh = isFresh(hire.createdAt);
+    return (
+      <button
+        key={hire.id}
+        type="button"
+        className={`${styles.personRow} ${fresh ? styles.personRowFresh : ""}`}
+        onClick={() => goToProfile(hire)}
+      >
+        <span className={styles.avatarWrapper}>
+          {hire.image ? (
+            <CustomImage src={hire.image} alt="" className={styles.hireAvatar} />
+          ) : (
+            <span className={styles.avatarPlaceholder} aria-hidden="true">
+              {hire.fullname?.charAt(0)}
             </span>
           )}
-        </div>
-        <p className={styles.hireTitle}>{hire.title || 'Team Member'}</p>
-        <div className={styles.hireMeta}>
-          <CustomIcon name="Clock" size={10} />
-          <span>{timeAgo(hire.createdAt)}</span>
-        </div>
-      </div>
-
-      <div className={styles.popperIcon}>
+          {fresh && <span className={styles.newBadge}>NEW</span>}
+        </span>
+        <span className={styles.personInfo}>
+          <span className={styles.personNameLine}>
+            <span className={styles.hireName}>{hire.fullname}</span>
+            {hire.role?.name && (
+              <span className={styles.roleChip}>{hire.role.name}</span>
+            )}
+          </span>
+          <span className={styles.personSub}>
+            {hire.title || "Team Member"}
+            <span className={styles.dot} aria-hidden="true">·</span>
+            joined {timeAgo(hire.createdAt)}
+          </span>
+        </span>
         <CustomIcon
-          name="PartyPopper"
-          color="var(--accent-success)"
-          size={20}
+          name="ChevronRight"
+          size={16}
+          className={styles.rowChevron}
         />
-      </div>
-    </div>
-  );
+      </button>
+    );
+  };
 
   return (
     <>
-      <div className={`${styles.welcomeSection} glass-card`} style={{ padding: "18px" }}>
-        <div className={styles.welcomeHeader}>
-          <div className={styles.welcomeTitle}>
-            <CustomIcon name="Sparkles" size={24} />
-            <h2>New Team Members</h2>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {newHires.length > 0 && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500, margin: 0 }}>
-                {newHires.length} new hires in last 7 days
-              </p>
-            )}
-            <button
-              className={styles.expandSectionBtn}
-              onClick={() => setIsExpanded(true)}
-              title="Expand"
-              disabled={newHires.length === 0}
-            >
-              <CustomIcon name="Maximize2" size={16} />
-            </button>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <section className={`${styles.section} glass-card`}>
+        <SectionHeader
+          icon="Sparkles"
+          tone="var(--accent-success)"
+          title="New Team Members"
+          meta={newHires.length > 0 ? `${newHires.length} this week` : undefined}
+          onExpand={() => setIsExpanded(true)}
+          expandDisabled={newHires.length === 0}
+        />
+        <div className={styles.personList}>
           {newHires.length > 0 ? (
             newHires.slice(0, 3).map(renderHireCard)
           ) : (
-            <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              No new hires this week
-            </div>
+            <EmptyState
+              icon="UserPlus"
+              title="No new hires this week"
+              hint="We're always looking for talented people to join our growing team."
+            />
           )}
         </div>
-
-        <p
-          style={{
-            marginTop: "16px",
-            fontSize: "0.85rem",
-            color: "var(--text-muted)",
-            lineHeight: "1.4",
-          }}
-        >
-          {newHires.length > 0
-            ? "We're thrilled to have new members join Jami Partners! Let's build something amazing together."
-            : "We're always looking for talented people to join our growing team."}
-        </p>
-
-        <button
-          className={styles.expandBtn}
-          onClick={() => setIsExpanded(true)}
-          disabled={newHires.length === 0}
-          style={{ opacity: newHires.length === 0 ? 0.5 : 1 }}
-        >
-          View All New Hires <CustomIcon name="Maximize2" size={14} />
-        </button>
-      </div>
+        {newHires.length > 3 && (
+          <button
+            type="button"
+            className={styles.sectionFooterBtn}
+            onClick={() => setIsExpanded(true)}
+          >
+            View all {newHires.length} new hires
+            <CustomIcon name="ArrowRight" size={14} />
+          </button>
+        )}
+      </section>
 
       <Modal
         isOpen={isExpanded}
@@ -151,13 +106,11 @@ const NewHiresSection: React.FC<NewHiresSectionProps> = ({ newHires }) => {
         title="Our Growing Team"
         maxWidth="720px"
       >
-        <div className={styles.newHiresGridExpanded} style={{ marginTop: 0, marginBottom: 16 }}>
+        <div className={styles.newHiresGridExpanded}>
           {newHires.length > 0 ? (
             newHires.map(renderHireCard)
           ) : (
-            <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem', gridColumn: "1 / -1" }}>
-              No new hires this week
-            </div>
+            <EmptyState icon="UserPlus" title="No new hires this week" />
           )}
         </div>
       </Modal>

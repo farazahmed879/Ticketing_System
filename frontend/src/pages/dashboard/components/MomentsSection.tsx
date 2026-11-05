@@ -8,6 +8,8 @@ import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import CustomImage from "../../../components/CustomImage";
 import { FormattedTaskDescription } from "../../timesheet/components/TaskDescriptionEditor";
+import SectionHeader from "./SectionHeader";
+import EmptyState from "./EmptyState";
 
 interface MomentsSectionProps {
   moments: any[];
@@ -92,48 +94,43 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
 
   const renderSectionContent = (isOverlay = false) => (
     <>
-      <div className={styles.welcomeHeader}>
-        <div className={styles.welcomeTitle} style={{ color: "var(--accent-secondary)" }}>
-          <CustomIcon name="Sparkles" size={24} />
-          <h2>Moments of Joy</h2>
-        </div>
-        {!isOverlay && (
-          <button
-            className={styles.expandSectionBtn}
-            onClick={() => setIsSectionExpanded(true)}
-            title="Expand"
-          >
-            <CustomIcon name="Maximize2" size={16} />
-          </button>
-        )}
-      </div>
+      <SectionHeader
+        icon="PartyPopper"
+        tone="var(--accent-secondary)"
+        title="Moments of Joy"
+        meta={moments.length > 0 ? moments.length : undefined}
+        onExpand={isOverlay ? undefined : () => setIsSectionExpanded(true)}
+        expandDisabled={moments.length === 0}
+      />
       <div className={styles.momentsList}>
         {moments.length > 0 ? (
-          moments.map((mom) => (
+          (isOverlay ? moments : moments.slice(0, 3)).map((mom) => (
             <div
               key={mom.id}
               className={styles.momentCard}
               onClick={() => setSelectedMoment(mom)}
-              style={{ cursor: "pointer" }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelectedMoment(mom);
+                }
+              }}
+              role="button"
+              tabIndex={0}
             >
+              <h4 className={styles.momentTitle}>{mom.title}</h4>
+              <FormattedTaskDescription
+                content={mom.description}
+                className={`${styles.momentText} ${isOverlay ? "" : styles.clamp2}`}
+              />
               <div className={styles.momentHeader}>
                 <div className={styles.momentAuthor}>
                   {mom.author?.image ? (
                     <CustomImage src={mom.author.image} alt="" className={styles.momentAvatar} />
                   ) : (
-                    <div
-                      className={styles.momentAvatar}
-                      style={{
-                        background: "var(--accent-secondary)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "white",
-                        fontSize: "10px",
-                      }}
-                    >
+                    <span className={styles.momentAvatar} aria-hidden="true">
                       {mom.author?.fullname?.charAt(0)}
-                    </div>
+                    </span>
                   )}
                   <span className={styles.momentAuthorName}>{mom.author?.fullname}</span>
                 </div>
@@ -141,15 +138,14 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
                   {timeAgo(mom.createdAt || mom.date)}
                 </span>
               </div>
-              <h4 className={styles.momentTitle}>{mom.title}</h4>
-              <FormattedTaskDescription content={mom.description} className={styles.momentText} />
             </div>
           ))
         ) : (
-          <div className={styles.emptyMoments}>
-            <div className={styles.sparklesIcon}>✨</div>
-            <p>Share some fun moments with the team!</p>
-          </div>
+          <EmptyState
+            icon="PartyPopper"
+            title="No moments yet"
+            hint="Share some fun moments with the team!"
+          />
         )}
       </div>
     </>
@@ -157,9 +153,9 @@ const MomentsSection: React.FC<MomentsSectionProps> = ({ moments, seenMomentIds 
 
   return (
     <>
-      <div className={`${styles.momentsSection} glass-card`}>
+      <section className={`${styles.section} glass-card`}>
         {renderSectionContent()}
-      </div>
+      </section>
 
       {isSectionExpanded &&
         ReactDOM.createPortal(

@@ -77,7 +77,17 @@ export const timesheetUsecase = {
     return timesheetRepository.findEntryById(entry.id);
   },
 
+  /** Self-review is blocked: a reviewer must not approve/reject their own entry. */
+  async assertNotOwnEntry(id: string, reviewerId: string) {
+    const entry = await timesheetRepository.findEntryById(id);
+    if (!entry) throw new Error("Timesheet entry not found");
+    if (entry.userId === reviewerId) {
+      throw new Error("You can't review your own timesheet entry. Another reviewer must approve it.");
+    }
+  },
+
   async approveEntry(id: string, agentId: string, roleType: string) {
+    await this.assertNotOwnEntry(id, agentId);
     const isHr = roleType === "hr";
     const data: any = {};
 
@@ -136,7 +146,9 @@ export const timesheetUsecase = {
     return timesheetRepository.updateEntryStatus(id, data);
   },
 
-  async rejectEntry(id: string, reason?: string, roleType?: string) {
+  async rejectEntry(id: string, reason?: string, roleType?: string, reviewerId?: string) {
+    if (!reviewerId) throw new Error("Unauthorized");
+    await this.assertNotOwnEntry(id, reviewerId);
     const isHr = roleType === "hr";
     const data: any = {
       notes: reason ? `REJECTED: ${reason}` : undefined,
@@ -207,7 +219,7 @@ export const timesheetUsecase = {
       entries,
     };
   },
-  async getReviewEntries(filters: { status?: string; userId?: string; month?: string; year?: string; roleType?: string }) {
+  async getReviewEntries(filters: { status?: string; userId?: string; month?: string; year?: string; roleType?: string; excludeUserId?: string }) {
     let startDate: Date | undefined;
     let endDate: Date | undefined;
 
@@ -231,7 +243,7 @@ export const timesheetUsecase = {
     });
   },
   
-  async getPendingCounts(month?: string, year?: string, roleType?: string) {
+  async getPendingCounts(month?: string, year?: string, roleType?: string, excludeUserId?: string) {
     let startDate: Date | undefined;
     let endDate: Date | undefined;
 
@@ -247,6 +259,6 @@ export const timesheetUsecase = {
       }
     }
 
-    return timesheetRepository.getPendingCounts(startDate, endDate, roleType);
+    return timesheetRepository.getPendingCounts(startDate, endDate, roleType, excludeUserId);
   },
 };

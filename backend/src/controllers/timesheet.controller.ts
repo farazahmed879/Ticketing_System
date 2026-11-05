@@ -71,7 +71,13 @@ export const timesheetController = {
       );
       res.json({ success: true, entry });
     } catch (error: any) {
-      const status = error.message.includes("Insufficient leave balance") ? 400 : 500;
+      const status = error.message.includes("Insufficient leave balance")
+        ? 400
+        : error.message.includes("review your own")
+          ? 403
+          : error.message === "Timesheet entry not found"
+            ? 404
+            : 500;
       res.status(status).json({ success: false, error: error.message });
     }
   },
@@ -86,11 +92,19 @@ export const timesheetController = {
       const entry = await timesheetUsecase.rejectEntry(
         req.params.id as string,
         reason,
-        roleType as string
+        roleType as string,
+        agentId,
       );
       res.json({ success: true, entry });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      const status = error.message.includes("Insufficient leave balance")
+        ? 400
+        : error.message.includes("review your own")
+          ? 403
+          : error.message === "Timesheet entry not found"
+            ? 404
+            : 500;
+      res.status(status).json({ success: false, error: error.message });
     }
   },
 
@@ -104,6 +118,7 @@ export const timesheetController = {
         month: month as string,
         year: year as string,
         roleType: roleType as string,
+        excludeUserId: req.user?.id,
       });
       res.json({ success: true, entries });
     } catch (error: any) {
@@ -138,7 +153,8 @@ export const timesheetController = {
       const counts = await timesheetUsecase.getPendingCounts(
         month as string,
         year as string,
-        roleType as string
+        roleType as string,
+        req.user?.id,
       );
       res.json({ success: true, counts });
     } catch (error: any) {

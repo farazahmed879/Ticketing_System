@@ -182,8 +182,8 @@ describe("leave approval", () => {
     leave("APPROVED");
     db.users.get("u1")!.leaves = 4;
     await Promise.all([
-      timesheetUsecase.rejectEntry("e1", "no", "hr"),
-      timesheetUsecase.rejectEntry("e1", "no", "hr"),
+      timesheetUsecase.rejectEntry("e1", "no", "hr", "hr1"),
+      timesheetUsecase.rejectEntry("e1", "no", "hr", "hr1"),
     ]);
     expect(db.users.get("u1")!.leaves).toBe(5);
     expect(db.entries.get("e1").hrApproved).toBe("REJECTED");
@@ -192,8 +192,39 @@ describe("leave approval", () => {
   it("approve -> reject -> approve nets out to one deduction", async () => {
     leave();
     await timesheetUsecase.approveEntry("e1", "hr1", "hr");
-    await timesheetUsecase.rejectEntry("e1", "oops", "hr");
+    await timesheetUsecase.rejectEntry("e1", "oops", "hr", "hr1");
     await timesheetUsecase.approveEntry("e1", "hr1", "hr");
+    expect(db.users.get("u1")!.leaves).toBe(4);
+  });
+});
+
+describe("self-review", () => {
+  beforeEach(() => {
+    db.users.set("u1", { leaves: 5 });
+    db.entries.set("e1", {
+      id: "e1",
+      userId: "u1",
+      entryType: "FULL_DAY_LEAVE",
+      hrApproved: "PENDING",
+    });
+  });
+
+  it("a reviewer cannot approve their own leave (no deduction, still pending)", async () => {
+    await expect(timesheetUsecase.approveEntry("e1", "u1", "hr")).rejects.toThrow(
+      /review your own/,
+    );
+    expect(db.entries.get("e1").hrApproved).toBe("PENDING");
+    expect(db.users.get("u1")!.leaves).toBe(5);
+  });
+
+  it("a reviewer cannot reject their own entry", async () => {
+    await expect(
+      timesheetUsecase.rejectEntry("e1", "x", "hr", "u1"),
+    ).rejects.toThrow(/review your own/);
+  });
+
+  it("a different reviewer can", async () => {
+    await timesheetUsecase.approveEntry("e1", "hr2", "hr");
     expect(db.users.get("u1")!.leaves).toBe(4);
   });
 });

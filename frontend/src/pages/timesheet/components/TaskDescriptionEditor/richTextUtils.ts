@@ -1,3 +1,5 @@
+import { sanitizeRichHtml } from "../../../../utils/sanitizeHtml";
+
 const HTML_TAG_REGEX =
   /<\/?(strong|b|em|i|code|ul|ol|li|div|p|br|span|input)\b/i;
 
@@ -109,13 +111,18 @@ export function toEditorHtml(value?: string | null): string {
   if (!cleaned.trim()) return "";
 
   if (!isRichHtml(cleaned)) {
-    return markdownToHtml(cleaned);
+    // markdownToHtml escapes all text itself; sanitize anyway as a backstop.
+    return sanitizeRichHtml(markdownToHtml(cleaned));
   }
+
+  // Stored values come from the server and may have been crafted by another
+  // user, so strip anything executable before it is parsed into a DOM.
+  const safe = sanitizeRichHtml(cleaned);
 
   // Also convert any remaining inline markdown or stacked `• ` inside HTML
   if (typeof document !== "undefined") {
     const container = document.createElement("div");
-    container.innerHTML = cleaned;
+    container.innerHTML = safe;
 
     // Ensure task list items have proper attributes and no stacked bullets
     container.querySelectorAll("ol > li").forEach((li) => {
@@ -135,7 +142,7 @@ export function toEditorHtml(value?: string | null): string {
     return container.innerHTML;
   }
 
-  return cleaned;
+  return safe;
 }
 
 /**

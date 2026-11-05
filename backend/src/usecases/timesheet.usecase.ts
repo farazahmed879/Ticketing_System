@@ -90,21 +90,46 @@ export const timesheetUsecase = {
     if (isHr) {
       const existing = await timesheetRepository.findEntryById(id);
       const days = existing ? LEAVE_DAYS_BY_ENTRY_TYPE[existing.entryType || ""] : undefined;
-      if (existing && days && existing.hrApproved !== "APPROVED") {
-        const user = await prisma.user.findUnique({
-          where: { id: existing.userId },
-          select: { leaves: true },
+      if (existing && days) {
+        // Race-safe leave deduction without a transaction. The old code read
+        // the status and balance, then wrote — two concurrent approvals both
+        // passed the checks and deducted twice.
+        //
+        // 1. Atomically claim the "not approved -> APPROVED" transition. Only
+        //    one concurrent approver can win; an already-approved entry is a
+        //    no-op (no second deduction).
+        const claimed = await prisma.timesheetEntry.updateMany({
+          where: {
+            id,
+            OR: [
+              { hrApproved: { not: "APPROVED" } },
+              { hrApproved: { isSet: false } },
+            ],
+          },
+          data: { hrApproved: "APPROVED" },
         });
-        const currentBalance = user?.leaves ?? 0;
-        if (currentBalance < days) {
-          throw new Error(
-            `Insufficient leave balance. Requested ${days} day(s), available ${currentBalance}.`,
-          );
+
+        if (claimed.count === 1) {
+          // 2. Deduct only if the balance covers it, in the same write.
+          const debited = await prisma.user.updateMany({
+            where: { id: existing.userId, leaves: { gte: days } },
+            data: { leaves: { decrement: days } },
+          });
+          if (debited.count === 0) {
+            // 3. Not enough balance: undo the claim and report.
+            await prisma.timesheetEntry.update({
+              where: { id },
+              data: { hrApproved: existing.hrApproved ?? "PENDING" },
+            });
+            const user = await prisma.user.findUnique({
+              where: { id: existing.userId },
+              select: { leaves: true },
+            });
+            throw new Error(
+              `Insufficient leave balance. Requested ${days} day(s), available ${user?.leaves ?? 0}.`,
+            );
+          }
         }
-        await prisma.user.update({
-          where: { id: existing.userId },
-          data: { leaves: { decrement: days } },
-        });
       }
     }
 
@@ -125,11 +150,19 @@ export const timesheetUsecase = {
     if (isHr) {
       const existing = await timesheetRepository.findEntryById(id);
       const days = existing ? LEAVE_DAYS_BY_ENTRY_TYPE[existing.entryType || ""] : undefined;
-      if (existing && days && existing.hrApproved === "APPROVED") {
-        await prisma.user.update({
-          where: { id: existing.userId },
-          data: { leaves: { increment: days } },
+      if (existing && days) {
+        // Refund only if THIS call flips APPROVED -> REJECTED, so concurrent
+        // rejections can't refund the same leave twice.
+        const unapproved = await prisma.timesheetEntry.updateMany({
+          where: { id, hrApproved: "APPROVED" },
+          data: { hrApproved: "REJECTED" },
         });
+        if (unapproved.count === 1) {
+          await prisma.user.update({
+            where: { id: existing.userId },
+            data: { leaves: { increment: days } },
+          });
+        }
       }
     }
 

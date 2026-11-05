@@ -339,8 +339,7 @@ export const interviewUsecase = {
     }
 
     for (const interviewerId of interviewerIds) {
-      const count = await ticketRepository.count({});
-      const uid = count + 1000;
+      const uid = await ticketRepository.nextTicketUid();
 
       await (prisma as any).ticket.create({
         data: {

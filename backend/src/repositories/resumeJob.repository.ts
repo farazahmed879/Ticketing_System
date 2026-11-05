@@ -34,6 +34,7 @@ export const resumeJobRepository = {
    * attempts and stamps the lease in the same operation.
    */
   async leaseNext() {
+    await this.failExhaustedStaleJobs();
     const staleCutoff = new Date(Date.now() - RESUME_JOB_LEASE_MS);
     const result: any = await prisma.$runCommandRaw({
       findAndModify: "ResumeJob",
@@ -63,6 +64,29 @@ export const resumeJobRepository = {
     const id = typeof rawId === "object" ? rawId?.$oid : rawId;
     if (!id) return null;
     return prisma.resumeJob.findUnique({ where: { id } });
+  },
+
+  /**
+   * A worker that crashes on a job's LAST attempt never calls markFailed, and
+   * leaseNext won't re-claim it (attempts are used up) — so it used to sit in
+   * "processing" forever, also counting against the user's upload backpressure
+   * limit. Fail such jobs once their lease has expired.
+   */
+  async failExhaustedStaleJobs() {
+    const staleCutoff = new Date(Date.now() - RESUME_JOB_LEASE_MS);
+    return prisma.resumeJob.updateMany({
+      where: {
+        status: "processing",
+        leasedAt: { lt: staleCutoff },
+        attempts: { gte: RESUME_JOB_MAX_ATTEMPTS },
+      },
+      data: {
+        status: "failed",
+        error:
+          "Processing stopped unexpectedly and the retry limit was reached. Please upload this file again.",
+        leasedAt: null,
+      },
+    });
   },
 
   async markDone(id: string, candidateId: string, candidateName: string) {

@@ -15,7 +15,56 @@ const mapTicketStatusAndPriority = (ticket: any) => {
   return { ...ticket, status, priority };
 };
 
+const TICKET_UID_COUNTER = "ticketUid";
+const FIRST_TICKET_UID = 1000;
+
 export const ticketRepository = {
+  /**
+   * Next human-readable ticket number (#1000, #1001, ...), allocated
+   * atomically from a `counters` document so concurrent creates can never get
+   * the same number. (It used to be `count + 1000`, which collided on the
+   * unique `uid` index whenever two tickets were created at the same moment.)
+   *
+   * On first use the counter is seeded from the highest existing uid, so
+   * numbering continues where it left off.
+   */
+  async nextTicketUid(): Promise<number> {
+    const increment = async (): Promise<number | null> => {
+      const res: any = await prisma.$runCommandRaw({
+        findAndModify: "counters",
+        query: { _id: TICKET_UID_COUNTER },
+        update: { $inc: { seq: 1 } },
+        new: true,
+      });
+      const seq = res?.value?.seq;
+      return typeof seq === "number" ? seq : null;
+    };
+
+    const seq = await increment();
+    if (seq !== null) return seq;
+
+    // Counter doesn't exist yet: seed it at the current max uid. If two
+    // processes seed at once, the second insert hits a duplicate _id and is
+    // reported in writeErrors (not thrown) — either way the counter exists.
+    const max = await prisma.ticket.findFirst({
+      orderBy: { uid: "desc" },
+      select: { uid: true },
+    });
+    await prisma.$runCommandRaw({
+      insert: "counters",
+      documents: [
+        {
+          _id: TICKET_UID_COUNTER,
+          seq: Math.max(max?.uid ?? 0, FIRST_TICKET_UID - 1),
+        },
+      ],
+    });
+
+    const seeded = await increment();
+    if (seeded === null) throw new Error("Could not allocate a ticket number");
+    return seeded;
+  },
+
   async findMany(where: any, skip: number, take: number) {
     const tickets = await prisma.ticket.findMany({
       where,

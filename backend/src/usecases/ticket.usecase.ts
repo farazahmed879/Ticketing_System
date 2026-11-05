@@ -326,8 +326,7 @@ export const ticketUsecase = {
   },
 
   async createTicket(data: any, user: any) {
-    const count = await ticketRepository.count({});
-    const uid = count + 1000;
+    const uid = await ticketRepository.nextTicketUid();
 
     let finalStatusId = data.statusId;
 

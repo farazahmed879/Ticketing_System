@@ -28,6 +28,43 @@ export const config = {
       fullname: "Ali Raza",
       title: "Software Engineer",
     },
+    // Staff roles. All demo accounts use @tutorial.local, which is how cleanup finds them.
+    lead: {
+      email: "demo.lead@tutorial.local",
+      username: "demo.lead",
+      fullname: "Usman Tariq",
+      title: "Team Lead",
+    },
+    qa: {
+      email: "demo.qa@tutorial.local",
+      username: "demo.qa",
+      fullname: "Hina Javed",
+      title: "QA Engineer",
+    },
+    manager: {
+      email: "demo.manager@tutorial.local",
+      username: "demo.manager",
+      fullname: "Bilal Ahmed",
+      title: "Project Manager",
+    },
+    hr: {
+      email: "demo.hr@tutorial.local",
+      username: "demo.hr",
+      fullname: "Ayesha Khan",
+      title: "HR Executive",
+    },
+    // Created on camera in the admin video (and removed by cleanup).
+    newHire: {
+      email: "demo.newhire@tutorial.local",
+      username: "demo.newhire",
+      fullname: "Zara Hussain",
+      title: "Frontend Developer",
+    },
+    candidate: {
+      name: "Omar Siddiqui",
+      email: "omar.candidate@tutorial.local",
+      position: "Backend Developer",
+    },
     teamName: "Tutorial Demo Team",
     projectName: "Tutorial Demo – Website Revamp",
     ticketPrefix: "[Demo]",

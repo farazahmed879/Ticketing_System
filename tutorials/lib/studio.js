@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { config } from "../config.js";
 import { login } from "./api.js";
+import { synth, voiceConfig } from "./voice.js";
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms * config.pace));
 
@@ -76,7 +77,9 @@ export async function openSession(browser, { as, videoName, outDir }) {
   fs.mkdirSync(rawDir, { recursive: true });
 
   let token = null;
-  if (as) {
+  if (as === "admin") {
+    ({ token } = await login(config.admin.identifier, config.admin.password));
+  } else if (as) {
     ({ token } = await login(config.demo[as].username, config.demo.password));
   }
 
@@ -96,11 +99,20 @@ export async function openSession(browser, { as, videoName, outDir }) {
   }, token);
 
   const page = await context.newPage();
+  const t0 = Date.now(); // video recording starts with the page
+  // Accounts still on a default password get a "Change Default Password" dialog
+  // that blocks the page. "Remind Me Later" dismisses it without changing anything.
+  await page.addLocatorHandler(
+    page.getByRole("button", { name: /remind me later/i }),
+    async (btn) => {
+      await btn.click();
+    },
+  );
   // Storyboard: a screenshot at every caption, for reviewing a take quickly.
   const storyDir = path.join(outDir, "storyboard", videoName);
   fs.rmSync(storyDir, { recursive: true, force: true });
   fs.mkdirSync(storyDir, { recursive: true });
-  const s = new Studio(page, storyDir);
+  const s = new Studio(page, storyDir, t0);
 
   return {
     page,
@@ -113,6 +125,11 @@ export async function openSession(browser, { as, videoName, outDir }) {
         const target = path.join(outDir, `${videoName}.webm`);
         await video.saveAs(target);
         await video.delete();
+        // Cue sheet: when each caption/title appeared — used by voiceover.js.
+        fs.writeFileSync(
+          path.join(outDir, `${videoName}.cues.json`),
+          JSON.stringify({ video: `${videoName}.webm`, cues: s.cues }, null, 2),
+        );
         return target;
       }
     },
@@ -120,10 +137,30 @@ export async function openSession(browser, { as, videoName, outDir }) {
 }
 
 export class Studio {
-  constructor(page, storyDir) {
+  constructor(page, storyDir, t0 = Date.now()) {
     this.page = page;
     this.storyDir = storyDir;
     this.shot = 0;
+    this.t0 = t0;
+    this.cues = [];
+  }
+
+  /** Records a narration cue; returns how long (ms) the narration needs on screen. */
+  async cue(kind, text, shownAt = Date.now()) {
+    let needMs = 0;
+    if (voiceConfig.enabled) {
+      // Generate before showing, so the cached clip's length is known up front.
+      const { duration } = await synth(text);
+      needMs = duration * 1000 + 350;
+    }
+    this.cues.push({ t: (shownAt - this.t0) / 1000, kind, text });
+    return needMs;
+  }
+
+  /** Waits until at least `needMs` have passed since `start`. */
+  async holdFor(start, needMs) {
+    const left = needMs - (Date.now() - start);
+    if (left > 0) await new Promise((r) => setTimeout(r, left));
   }
 
   async snap(label) {
@@ -137,24 +174,103 @@ export class Studio {
     return wait(ms);
   }
 
-  async goto(route) {
+  /** `quick`: return as soon as the HTML is parsed (show a title card over the load). */
+  async goto(route, { quick = false } = {}) {
     await this.page.goto(config.appUrl + route, { waitUntil: "domcontentloaded" });
+    if (this.privacyRule) await this.applyPrivacy();
+    if (quick) return;
     await this.page.waitForLoadState("networkidle").catch(() => {});
     await this.dismissPopups();
   }
 
+  /**
+   * Privacy filter for the shared database: hides list rows/cards that don't
+   * mention one of the `allow` strings (demo names, emails, ticket subjects),
+   * so real people's data never appears on camera. Stays on until
+   * privacy(null); re-applied after every goto().
+   */
+  async privacy(allow, selectors = DEFAULT_PRIVATE_ROWS) {
+    this.privacyRule = allow ? { allow, selectors } : null;
+    await this.applyPrivacy();
+  }
+
+  async applyPrivacy() {
+    await this.page.evaluate((rule) => {
+      window.__tutPrivacy?.disconnect();
+      document.querySelectorAll("[data-tut-hidden]").forEach((el) => {
+        el.style.display = el.dataset.tutHidden === "-" ? "" : el.dataset.tutHidden;
+        delete el.dataset.tutHidden;
+      });
+      if (!rule) return;
+      const allow = rule.allow.map((a) => a.toLowerCase());
+      const scan = () => {
+        for (const el of document.querySelectorAll(rule.selectors.join(","))) {
+          if (el.dataset.tutHidden !== undefined) continue;
+          const text = (el.textContent || "").toLowerCase();
+          if (!text.trim() || allow.some((a) => text.includes(a))) continue;
+          el.dataset.tutHidden = el.style.display || "-";
+          el.style.display = "none";
+        }
+      };
+      scan();
+      window.__tutPrivacy = new MutationObserver(scan);
+      window.__tutPrivacy.observe(document.documentElement, { childList: true, subtree: true });
+    }, this.privacyRule);
+  }
+
+  /** Closes the open modal with its X button (the app's Modal ignores Escape). */
+  async closeModal() {
+    const x = this.page.locator('button[class*="closeBtn"]').filter({ visible: true }).last();
+    if (await x.count()) await this.click(x, { after: 800 });
+  }
+
+  /** Picks an option in the select next to a sidebar/form label (exact label text). */
+  async pickByLabel(label, option, { scope } = {}) {
+    const root = scope || this.page;
+    const lbl = root
+      .locator("label, span")
+      .filter({ hasText: new RegExp("^\\s*" + escapeRe(label) + "\\s*\\*?\\s*$") })
+      .filter({ visible: true })
+      .first();
+    const trigger = lbl.locator("xpath=..").locator('[class*="trigger"]').first();
+    await this.click(trigger, { after: 700 });
+    const search = this.page.locator('[class*="dropdown"] input').filter({ visible: true }).first();
+    if (await search.count()) {
+      await search.pressSequentially(option.split(" ")[0], { delay: 60 * config.pace });
+      await wait(500);
+    }
+    const opt = this.page.locator('[class*="dropdown"] [class*="option"]').filter({ hasText: option }).first();
+    await this.click(opt, { after: 800 });
+  }
+
   /** Full-screen intro/outro card. */
-  async titleCard(kicker, title, subtitle = "", ms = 3200) {
+  async titleCard(kicker, title, subtitle = "", ms = 3200, { during } = {}) {
+    // Show the card first (it may be covering a page that is still loading),
+    // then fetch its narration; the cue is timed from when it appeared.
+    const start = Date.now();
     await this.page.evaluate(
-      ([k, t, s]) => {
+      ([k, t, s, instant]) => {
         const el = document.getElementById("__tut_title");
         if (!el) return;
         el.innerHTML = `<div class="k">${k}</div><div class="t">${t}</div><div class="s">${s}</div>`;
-        el.classList.add("show");
+        if (instant) {
+          el.style.transition = "none";
+          el.classList.add("show");
+          el.offsetHeight; // apply without animating, then restore the fade-out
+          el.style.transition = "";
+        } else el.classList.add("show");
       },
-      [kicker, title, subtitle],
+      [kicker, title, subtitle, !!during],
     );
-    await wait(ms);
+    const needMs = await this.cue(
+      "title",
+      !subtitle ? title : /[.!?]$/.test(title) ? `${title} ${subtitle}` : `${title}. ${subtitle}`,
+      start,
+    );
+    // `during` runs while the card hides the page, e.g. loading and filtering a
+    // list so real records never appear on camera.
+    await Promise.all([wait(ms), during ? during().then(() => this.dismissPopups()) : null]);
+    await this.holdFor(start, needMs);
     await this.page.evaluate(() =>
       document.getElementById("__tut_title")?.classList.remove("show"),
     );
@@ -163,6 +279,8 @@ export class Studio {
 
   /** Bottom-of-screen subtitle. Stays until the next caption or clearCaption(). */
   async caption(text, ms = 2600) {
+    const needMs = await this.cue("caption", text);
+    const start = Date.now();
     await this.page.evaluate((t) => {
       const el = document.getElementById("__tut_caption");
       if (!el) return;
@@ -172,6 +290,7 @@ export class Studio {
     await wait(Math.min(ms, 400));
     await this.snap(text);
     await wait(Math.max(0, ms - 400));
+    await this.holdFor(start, needMs);
   }
 
   async clearCaption() {
@@ -268,6 +387,17 @@ export class Studio {
   /** Close Moments-of-Joy / announcement popups and toasts if they appear. */
   async dismissPopups() {
     await wait(600);
+    // The "Default Password Detected" banner (shown to accounts on a default
+    // password): close it with its own X, which only hides it for this session.
+    const banner = this.page
+      .locator("div")
+      .filter({ hasText: "Default Password Detected" })
+      .filter({ has: this.page.locator("button") })
+      .last();
+    if (await banner.count()) {
+      await banner.locator("button").last().click().catch(() => {});
+      await wait(400);
+    }
     for (let i = 0; i < 3; i++) {
       const close = this.page.locator('button[title="Close"]:visible').first();
       if (await close.count()) {
@@ -281,6 +411,9 @@ export class Studio {
     await wait(ms);
   }
 }
+
+// Rows and cards that can list real people's data.
+const DEFAULT_PRIVATE_ROWS = ["tbody tr"];
 
 function escapeRe(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

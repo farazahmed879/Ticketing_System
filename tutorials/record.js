@@ -8,11 +8,16 @@ import { fileURLToPath } from "node:url";
 import { launchBrowser, openSession } from "./lib/studio.js";
 import client from "./journeys/client.js";
 import employee from "./journeys/employee.js";
+import lead from "./journeys/lead.js";
+import qa from "./journeys/qa.js";
+import manager from "./journeys/manager.js";
+import hr from "./journeys/hr.js";
+import admin from "./journeys/admin.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.join(here, "videos");
 const filter = process.argv[2] || "";
-const journeys = [...client, ...employee].filter((j) => j.id.includes(filter));
+const journeys = [...client, ...employee, ...lead, ...qa, ...manager, ...hr, ...admin].filter((j) => j.id.includes(filter));
 
 const statePath = path.join(here, ".demo-state.json");
 if (!fs.existsSync(statePath)) {

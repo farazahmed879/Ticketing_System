@@ -261,4 +261,116 @@ export const timesheetUsecase = {
 
     return timesheetRepository.getPendingCounts(startDate, endDate, roleType, excludeUserId);
   },
+
+  async getUnfilledUsers(month?: string, year?: string) {
+    // Policy rule: starts from first November 2026 (2026-11-01)
+    const POLICY_START = startOfDay(new Date(2026, 10, 1));
+    const now = new Date();
+    const today = startOfDay(now);
+
+    let startDate = POLICY_START;
+    let endDate = today;
+
+    if (year !== undefined && month !== undefined && month !== "all" && year !== "all") {
+      const y = parseInt(year);
+      const m = parseInt(month);
+      const monthStart = startOfMonth(new Date(y, m));
+      const monthEnd = endOfMonth(new Date(y, m));
+
+      startDate = monthStart < POLICY_START ? POLICY_START : monthStart;
+      endDate = monthEnd > today ? today : monthEnd;
+    }
+
+    if (startDate > endDate) {
+      return {
+        startDate: startDate.toISOString().split("T")[0],
+        endDate: endDate.toISOString().split("T")[0],
+        totalWorkingDays: 0,
+        unfilledUserIds: [],
+        userMissingDays: {},
+      };
+    }
+
+    // Collect Mon-Fri working days in range (YYYY-MM-DD)
+    const workingDays: string[] = [];
+    const cur = new Date(startDate);
+    while (cur <= endDate) {
+      const dayOfWeek = cur.getDay(); // 0 = Sun, 6 = Sat
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        const y = cur.getFullYear();
+        const m = String(cur.getMonth() + 1).padStart(2, "0");
+        const d = String(cur.getDate()).padStart(2, "0");
+        workingDays.push(`${y}-${m}-${d}`);
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    if (workingDays.length === 0) {
+      return {
+        startDate: startDate.toISOString().split("T")[0],
+        endDate: endDate.toISOString().split("T")[0],
+        totalWorkingDays: 0,
+        unfilledUserIds: [],
+        userMissingDays: {},
+      };
+    }
+
+    // Non-deleted users
+    const users = await prisma.user.findMany({
+      where: { deleted: false },
+      select: { id: true },
+    });
+
+    // Timesheet entries in the date range (buffer +- 1 day for any timezone offset)
+    const entries = await prisma.timesheetEntry.findMany({
+      where: {
+        date: {
+          gte: new Date(startDate.getTime() - 24 * 60 * 60 * 1000),
+          lte: new Date(endDate.getTime() + 48 * 60 * 60 * 1000),
+        },
+      },
+      select: {
+        userId: true,
+        date: true,
+      },
+    });
+
+    const userFilledDates = new Map<string, Set<string>>();
+    entries.forEach((e) => {
+      if (!userFilledDates.has(e.userId)) {
+        userFilledDates.set(e.userId, new Set());
+      }
+      const set = userFilledDates.get(e.userId)!;
+      const dt = new Date(e.date);
+      set.add(dt.toISOString().split("T")[0]);
+      const ly = dt.getFullYear();
+      const lm = String(dt.getMonth() + 1).padStart(2, "0");
+      const ld = String(dt.getDate()).padStart(2, "0");
+      set.add(`${ly}-${lm}-${ld}`);
+    });
+
+    const unfilledUserIds: string[] = [];
+    const userMissingDays: Record<string, { count: number; missingDates: string[] }> = {};
+
+    users.forEach((u) => {
+      const filledSet = userFilledDates.get(u.id) || new Set();
+      const missingDates = workingDays.filter((wd) => !filledSet.has(wd));
+
+      if (missingDates.length > 0) {
+        unfilledUserIds.push(u.id);
+        userMissingDays[u.id] = {
+          count: missingDates.length,
+          missingDates,
+        };
+      }
+    });
+
+    return {
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: endDate.toISOString().split("T")[0],
+      totalWorkingDays: workingDays.length,
+      unfilledUserIds,
+      userMissingDays,
+    };
+  },
 };

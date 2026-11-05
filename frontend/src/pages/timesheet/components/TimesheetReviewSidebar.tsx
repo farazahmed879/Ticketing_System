@@ -13,24 +13,57 @@ export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
   selectedUserId,
   setSelectedUserId,
   pendingCounts,
+  unfilledData,
 }) => {
+  const unfilledCount = unfilledData?.unfilledUserIds?.length || 0;
+
   return (
     <>
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          marginBottom: 20,
+          justifyContent: "space-between",
+          marginBottom: 16,
         }}
       >
-        <CustomIcon name="Users" size={20} color="var(--accent-primary)" />
-        <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
-          Team Members
-        </h3>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <CustomIcon name="Users" size={20} color="var(--accent-primary)" />
+          <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
+            Team Members
+          </h3>
+        </div>
+        {unfilledCount > 0 && (
+          <div
+            title={`${unfilledCount} user(s) have not filled timesheet since Nov 1, 2026`}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              fontSize: "0.72rem",
+              fontWeight: 600,
+              color: "#ef4444",
+              background: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              padding: "2px 8px",
+              borderRadius: 12,
+            }}
+          >
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: "#ef4444",
+                boxShadow: "0 0 6px #ef4444",
+              }}
+            />
+            {unfilledCount} Unfilled
+          </div>
+        )}
       </div>
 
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 14 }}>
         <CustomInput
           placeholder="Search members..."
           value={userSearch}
@@ -105,111 +138,206 @@ export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
             gap: 8,
           }}
         >
-          {filteredUsers.map((u: any) => (
-            <CustomButton
-              key={u.id}
-              onClick={() => setSelectedUserId(u.id)}
-              variant="ghost"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "10px 12px",
-                borderRadius: 12,
-                border: "1px solid",
-                borderColor:
-                  selectedUserId === u.id
-                    ? "var(--accent-primary)"
-                    : "transparent",
-                background:
-                  selectedUserId === u.id
-                    ? "rgba(124, 58, 237, 0.1)"
-                    : "transparent",
-                color:
-                  selectedUserId === u.id
-                    ? "var(--accent-primary)"
-                    : "var(--text-secondary)",
-                cursor: "pointer",
-                textAlign: "left",
-                transition: "all 0.2s",
-                width: "100%",
-                justifyContent: "flex-start",
-              }}
-            >
-              <div
+          {filteredUsers.map((u: any) => {
+            const isUnfilled = unfilledData?.unfilledUserIds?.includes(u.id);
+            const missingInfo = unfilledData?.userMissingDays?.[u.id];
+
+            return (
+              <CustomButton
+                key={u.id}
+                onClick={() => setSelectedUserId(u.id)}
+                variant="ghost"
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                  background: "rgba(255,255,255,0.05)",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  border: "1px solid var(--border-glass)",
+                  gap: 12,
+                  padding: "10px 12px",
+                  borderRadius: 12,
+                  border: "1px solid",
+                  borderColor:
+                    selectedUserId === u.id
+                      ? "var(--accent-primary)"
+                      : isUnfilled
+                        ? "rgba(239, 68, 68, 0.2)"
+                        : "transparent",
+                  background:
+                    selectedUserId === u.id
+                      ? "rgba(124, 58, 237, 0.1)"
+                      : "transparent",
+                  color:
+                    selectedUserId === u.id
+                      ? "var(--accent-primary)"
+                      : "var(--text-secondary)",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  transition: "all 0.2s",
+                  width: "100%",
+                  justifyContent: "flex-start",
                 }}
               >
-                {u.image ? (
-                  <CustomImage
-                    src={u.image}
-                    alt=""
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                ) : (
-                  <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>
-                    {u.fullname.charAt(0)}
-                  </span>
-                )}
-              </div>
-              <div style={{ flex: 1, overflow: "hidden", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
+                {/* Avatar with Red Circle Indication Badge */}
+                <div style={{ position: "relative", flexShrink: 0 }}>
                   <div
                     style={{
-                      fontWeight: 600,
-                      fontSize: "0.85rem",
-                      whiteSpace: "nowrap",
+                      width: 32,
+                      height: 32,
+                      borderRadius: "50%",
                       overflow: "hidden",
-                      textOverflow: "ellipsis",
+                      background: "rgba(255,255,255,0.05)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: isUnfilled
+                        ? "1px solid rgba(239, 68, 68, 0.6)"
+                        : "1px solid var(--border-glass)",
                     }}
                   >
-                    {u.fullname}
+                    {u.image ? (
+                      <CustomImage
+                        src={u.image}
+                        alt=""
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <span style={{ fontSize: "0.8rem", fontWeight: 700 }}>
+                        {u.fullname?.charAt(0) || "U"}
+                      </span>
+                    )}
                   </div>
-                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                    {u.role?.name}
-                  </div>
+                  {/* Red Circle Indicator on Avatar */}
+                  {isUnfilled && (
+                    <span
+                      title={`Timesheet not filled (${missingInfo?.count || 1} day${(missingInfo?.count || 1) > 1 ? "s" : ""} missing since Nov 1, 2026)`}
+                      style={{
+                        position: "absolute",
+                        top: -2,
+                        right: -2,
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        background: "#ef4444",
+                        border: "2px solid var(--bg-card, #1e1e2d)",
+                        boxShadow: "0 0 6px rgba(239, 68, 68, 0.9)",
+                        zIndex: 2,
+                      }}
+                    />
+                  )}
                 </div>
-                {pendingCounts && pendingCounts[u.id] > 0 && (
-                  <div
-                    style={{
-                      background: "var(--accent-warning)",
-                      color: "#fff",
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      padding: "2px 6px",
-                      borderRadius: 10,
-                      marginLeft: 8,
-                    }}
-                  >
-                    {pendingCounts[u.id]}
-                  </div>
-                )}
-              </div>
-              {selectedUserId === u.id && (
+
                 <div
                   style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: "50%",
-                    background: "var(--accent-primary)",
+                    flex: 1,
+                    overflow: "hidden",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 6,
                   }}
-                />
-              )}
-            </CustomButton>
-          ))}
+                >
+                  <div style={{ minWidth: 0, overflow: "hidden" }}>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: "0.85rem",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {u.fullname}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.7rem",
+                        color: "var(--text-muted)",
+                      }}
+                    >
+                      {u.role?.name}
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {/* Red circle tag with missing days count */}
+                    {isUnfilled && (
+                      <div
+                        title={`Timesheet not filled (${missingInfo?.count || 1} working day${(missingInfo?.count || 1) > 1 ? "s" : ""} missing since Nov 1, 2026)`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                          background: "rgba(239, 68, 68, 0.12)",
+                          border: "1px solid rgba(239, 68, 68, 0.35)",
+                          borderRadius: 10,
+                          padding: "2px 6px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: "50%",
+                            background: "#ef4444",
+                            boxShadow: "0 0 5px #ef4444",
+                            display: "inline-block",
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            color: "#ef4444",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {missingInfo?.count}d
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Pending review count badge */}
+                    {pendingCounts && pendingCounts[u.id] > 0 && (
+                      <div
+                        title={`${pendingCounts[u.id]} pending review`}
+                        style={{
+                          background: "var(--accent-warning)",
+                          color: "#fff",
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          padding: "2px 6px",
+                          borderRadius: 10,
+                        }}
+                      >
+                        {pendingCounts[u.id]}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {selectedUserId === u.id && (
+                  <div
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: "var(--accent-primary)",
+                      flexShrink: 0,
+                    }}
+                  />
+                )}
+              </CustomButton>
+            );
+          })}
           {filteredUsers.length === 0 && (
             <div
               style={{

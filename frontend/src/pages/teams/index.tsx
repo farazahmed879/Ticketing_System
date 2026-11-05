@@ -20,6 +20,7 @@ import CustomImage from "../../components/CustomImage";
 import StandardListLayout from "../../components/StandardListLayout";
 import { getTeamColumns } from "./columns";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import { useListViewMode } from "../../utils/helpers";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 
 const TeamList: React.FC = () => {
@@ -30,9 +31,7 @@ const TeamList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "grid">(
-    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
-  );
+  const [viewMode, setViewMode] = useListViewMode();
 
   const { showNotification, setIsLoading } = useNotification();
   const { user } = useAuth();
@@ -72,7 +71,10 @@ const TeamList: React.FC = () => {
       const usersRes = await api.get(API_ROUTES.USERS.BASE + "?limit=1000");
       const allUsers = usersRes.data.accounts || [];
       return allUsers.filter(
-        (u: any) => u.role?.roleType !== ROLE_TYPE.CUSTOMER,
+        (u: any) =>
+          u.role?.roleType !== ROLE_TYPE.CUSTOMER &&
+          u.role?.roleType !== ROLE_TYPE.ADMIN &&
+          !u.role?.isAdmin,
       );
     },
     enabled: isModalOpen,
@@ -208,7 +210,7 @@ const TeamList: React.FC = () => {
               icon={<CustomIcon name="Search" size={18} />}
               containerStyle={{ width: "350px" }}
             />
-            <div
+            <div className="view-mode-switcher"
               style={{
                 display: "flex",
                 gap: 4,

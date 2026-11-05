@@ -15,6 +15,7 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 import StandardListLayout from "../../components/StandardListLayout";
 import { getRoleColumns } from "./columns";
 import RoleCard from "./components/RoleCard";
+import { useListViewMode } from "../../utils/helpers";
 
 const RoleList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -30,9 +31,7 @@ const RoleList: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [viewMode, setViewMode] = useState<"list" | "grid">(
-    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
-  );
+  const [viewMode, setViewMode] = useListViewMode();
 
   const { data: rolesData, isLoading: loading } = useQuery({
     queryKey: ["roles", currentPage, itemsPerPage],
@@ -160,8 +159,8 @@ const RoleList: React.FC = () => {
           </div>
         }
         filters={
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <div
+          <div className="view-mode-switcher" style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div className="view-mode-switcher"
               style={{
                 display: "flex",
                 gap: 4,

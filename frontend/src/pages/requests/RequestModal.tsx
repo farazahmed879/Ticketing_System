@@ -9,6 +9,15 @@ import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import type { UserRequest } from "../../types";
 
+export const REQUEST_TYPE_OPTIONS = [
+  { value: "HALFDAY_LEAVE", label: "Half-Day Leave" },
+  { value: "FULLDAY_LEAVE", label: "Full-Day Leave" },
+  { value: "VACATION", label: "Vacation" },
+  { value: "WFH", label: "Work From Home (WFH)" },
+  { value: "REIMBURSEMENT", label: "Reimbursement" },
+  { value: "OTHER", label: "Other / Custom" },
+];
+
 interface RequestModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,7 +32,11 @@ const RequestModal: React.FC<RequestModalProps> = ({
   const { control, handleSubmit, reset, watch } = useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const todayIso = new Date().toISOString().split("T")[0];
+  const watchedType = watch("type");
   const watchedStart = watch("startDate");
+  const isSingleDate =
+    watchedType === "HALFDAY_LEAVE" || watchedType === "REIMBURSEMENT";
+  const isReimbursement = watchedType === "REIMBURSEMENT";
 
   const onSubmit = async (data: any) => {
     try {
@@ -33,7 +46,9 @@ const RequestModal: React.FC<RequestModalProps> = ({
         message: data.message,
         data: {
           startDate: data.startDate,
-          endDate: data.endDate,
+          endDate: isSingleDate
+            ? data.startDate
+            : data.endDate || data.startDate,
         },
       });
       onSuccess(res.data.request);
@@ -57,34 +72,44 @@ const RequestModal: React.FC<RequestModalProps> = ({
           control={control}
           label="Request Type"
           placeholder="Select request type"
-          options={[
-            { value: "HALFDAY_LEAVE", label: "Half-Day Leave" },
-            { value: "FULLDAY_LEAVE", label: "Full-Day Leave" },
-            { value: "VACATION", label: "Vacation" },
-            { value: "OTHER", label: "Other / Custom" },
-          ]}
+          options={REQUEST_TYPE_OPTIONS}
           rules={{ required: "Request type is required" }}
         />
 
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
-        >
+        {isSingleDate ? (
           <CustomInput
             name="startDate"
             control={control}
             type="date"
-            label="Start Date"
-            min={todayIso}
-            rules={{ required: "Start date is required" }}
+            label={isReimbursement ? "Expense Date" : "Date"}
+            min={isReimbursement ? undefined : todayIso}
+            rules={{
+              required: `${
+                isReimbursement ? "Expense date" : "Date"
+              } is required`,
+            }}
           />
-          <CustomInput
-            name="endDate"
-            control={control}
-            type="date"
-            label="End Date"
-            min={watchedStart || todayIso}
-          />
-        </div>
+        ) : (
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
+          >
+            <CustomInput
+              name="startDate"
+              control={control}
+              type="date"
+              label="Start Date"
+              min={todayIso}
+              rules={{ required: "Start date is required" }}
+            />
+            <CustomInput
+              name="endDate"
+              control={control}
+              type="date"
+              label="End Date"
+              min={watchedStart || todayIso}
+            />
+          </div>
+        )}
 
         <TaskDescriptionEditor
           name="message"

@@ -17,6 +17,7 @@ import { getDepartmentColumns } from "./columns";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import styles from "./DepartmentList.module.css";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
+import { useListViewMode } from "../../utils/helpers";
 
 const DepartmentList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -33,9 +34,7 @@ const DepartmentList: React.FC = () => {
   // Pagination State
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage] = useState(10);
-  const [viewMode, setViewMode] = useState<"list" | "grid">(
-    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
-  );
+  const [viewMode, setViewMode] = useListViewMode();
 
   const { data: departmentData, isLoading: loading } = useQuery({
     queryKey: ["departments"],
@@ -179,7 +178,7 @@ const DepartmentList: React.FC = () => {
               icon={<CustomIcon name="Search" size={18} />}
               containerStyle={{ width: "350px" }}
             />
-            <div
+            <div className="view-mode-switcher"
               style={{
                 display: "flex",
                 gap: 4,

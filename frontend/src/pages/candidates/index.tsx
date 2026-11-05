@@ -28,7 +28,7 @@ import { ROLE_TYPE } from "../roles/roleConstants";
 
 import StandardListLayout from "../../components/StandardListLayout";
 import { getCandidateColumns, statusBadgeVariant } from "./columns";
-import { formatDate } from "../../utils/helpers";
+import { formatDate , useListViewMode } from "../../utils/helpers";
 import CustomBadge from "../../components/CustomBadge";
 import CustomImage from "../../components/CustomImage";
 import styles from "./CandidateList.module.css";
@@ -71,9 +71,7 @@ const CandidateList: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
-  const [viewMode, setViewMode] = useState<"list" | "grid">(
-    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
-  );
+  const [viewMode, setViewMode] = useListViewMode();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [candidateToDelete, setCandidateToDelete] = useState<string | null>(
@@ -641,7 +639,7 @@ const CandidateList: React.FC = () => {
                 </div>
               )}
             </div>
-            <div className={styles.viewModeToggle}>
+            <div className={`${styles.viewModeToggle} view-mode-switcher`}>
               <CustomButton
                 variant={viewMode === "list" ? "primary" : "ghost"}
                 className={styles.viewModeBtn}

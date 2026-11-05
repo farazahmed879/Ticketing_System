@@ -24,6 +24,7 @@ const TeamModal: React.FC<TeamModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={team ? "Edit Team" : "Add New Team"}
+      maxWidth="750px"
       footer={
         <div
           style={{

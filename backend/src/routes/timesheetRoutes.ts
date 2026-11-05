@@ -14,6 +14,10 @@ router.get('/pending', authMiddleware, checkRole(reviewRoles), timesheetControll
 
 // Get counts of pending timesheets grouped by user
 router.get('/pending-counts', authMiddleware, checkRole(reviewRoles), timesheetController.getPendingCounts);
+
+// Get users who have not filled timesheet starting from 1st Nov 2026
+router.get('/unfilled-users', authMiddleware, checkRole(reviewRoles), timesheetController.getUnfilledUsers);
+
 router.post('/approve/:id', authMiddleware, checkRole(reviewRoles), timesheetController.approveEntry);
 router.post('/reject/:id', authMiddleware, checkRole(reviewRoles), timesheetController.rejectEntry);
 

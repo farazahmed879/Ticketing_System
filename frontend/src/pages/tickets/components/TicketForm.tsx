@@ -166,7 +166,10 @@ const TicketForm: React.FC<TicketFormProps> = ({
               width: "100%",
             }}
           >
-            <span>Subject</span>
+            <span>
+              Subject
+              <span style={{ color: "var(--accent-danger)", marginLeft: 4 }}>*</span>
+            </span>
             <span
               style={{
                 fontSize: "0.75rem",
@@ -210,6 +213,7 @@ const TicketForm: React.FC<TicketFormProps> = ({
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <label style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>
           Priority
+          <span style={{ color: "var(--accent-danger)", marginLeft: 4 }}>*</span>
         </label>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           {priorities.map((p) => (

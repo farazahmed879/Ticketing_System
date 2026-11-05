@@ -21,6 +21,7 @@ import { TimesheetReviewFilter } from "./components/TimesheetReviewFilter";
 import { TimesheetReviewSidebar } from "./components/TimesheetReviewSidebar";
 import { useTimesheetReviewColumns } from "./components/TimesheetReviewColumns";
 import { TimesheetReviewCard } from "./components/TimesheetReviewCard";
+import { getDefaultListView } from "../../utils/helpers";
 
 export default function TimesheetReview() {
   const { user } = useAuth();
@@ -36,9 +37,7 @@ export default function TimesheetReview() {
   const [month, setMonth] = useState<string>(new Date().getMonth().toString());
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
   const [userSearch, setUserSearch] = useState("");
-  const [viewMode, setViewMode] = useState<"list" | "grid">(
-    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
-  );
+  const [viewMode, setViewMode] = useState<"list" | "grid">(getDefaultListView());
 
   const { data: usersData } = useQuery({
     queryKey: ["users", "timesheet-review"],
@@ -108,12 +107,26 @@ export default function TimesheetReview() {
     },
   });
 
+  const { data: unfilledData, refetch: refetchUnfilled } = useQuery({
+    queryKey: ["timesheets", "unfilled-users", month, year],
+    queryFn: async () => {
+      const res = await api.get(API_ROUTES.TIMESHEETS.UNFILLED_USERS, {
+        params: {
+          month: month === "all" ? undefined : month,
+          year: year === "all" ? undefined : year,
+        },
+      });
+      return res.data;
+    },
+  });
+
   const entries: TimesheetEntry[] = entriesData || [];
 
   // Refetch the current view directly (invalidation alone gives no visible
   // feedback and depends on key-prefix matching).
   const fetchEntries = () => {
     refetch();
+    refetchUnfilled();
   };
 
   const filteredUsers = users.filter(
@@ -297,6 +310,35 @@ export default function TimesheetReview() {
                         ?.name
                     }
                   </CustomBadge>
+                  {selectedUserId && unfilledData?.unfilledUserIds?.includes(selectedUserId) && (
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        background: "rgba(239, 68, 68, 0.12)",
+                        border: "1px solid rgba(239, 68, 68, 0.35)",
+                        padding: "3px 10px",
+                        borderRadius: 12,
+                        fontSize: "0.75rem",
+                        color: "#ef4444",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          background: "#ef4444",
+                          boxShadow: "0 0 6px #ef4444",
+                        }}
+                      />
+                      Timesheet Not Filled (
+                      {unfilledData.userMissingDays?.[selectedUserId]?.count || 1} day
+                      {(unfilledData.userMissingDays?.[selectedUserId]?.count || 1) > 1 ? "s" : ""} missing since Nov 1, 2026)
+                    </div>
+                  )}
                 </div>
                 <div
                   style={{
@@ -423,6 +465,7 @@ export default function TimesheetReview() {
             selectedUserId={selectedUserId}
             setSelectedUserId={setSelectedUserId}
             pendingCounts={pendingCountsData}
+            unfilledData={unfilledData}
           />
         </div>
       </div>

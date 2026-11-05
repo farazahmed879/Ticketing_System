@@ -257,3 +257,35 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+@media (max-width: 768px) {
+  .trigger {
+    min-height: 36px !important;
+    padding: 0 10px !important;
+    border-radius: 8px !important;
+  }
+
+  .label {
+    font-size: 0.78rem !important;
+    margin-bottom: 3px !important;
+  }
+
+  .placeholder,
+  .currentValue span {
+    font-size: 0.82rem !important;
+  }
+
+  .arrow {
+    margin-left: 6px !important;
+  }
+
+  .option {
+    padding: 7px 10px !important;
+    font-size: 0.82rem !important;
+  }
+
+  .avatar {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}

@@ -27,6 +27,11 @@ export interface TimesheetReviewSidebarProps {
   selectedUserId: string | null;
   setSelectedUserId: (v: string | null) => void;
   pendingCounts?: Record<string, number>;
+  unfilledData?: {
+    unfilledUserIds: string[];
+    userMissingDays: Record<string, { count: number; missingDates: string[] }>;
+    totalWorkingDays?: number;
+  };
 }
 
 export interface TimesheetReviewModalProps {

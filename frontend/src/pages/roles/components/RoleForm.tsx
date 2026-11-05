@@ -205,6 +205,7 @@ const RoleForm = forwardRef<any, RoleFormProps>(
               }
               error={errors.name}
               label="Role Name"
+              required
               placeholder="e.g. Support Manager"
               disabled={isCoreAdmin}
             />

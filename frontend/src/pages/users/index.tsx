@@ -21,6 +21,7 @@ import UserCard from "./components/user-card";
 
 import { getRoleStyle, getUserColumns } from "./columns";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import { useListViewMode } from "../../utils/helpers";
 
 const UserList: React.FC = () => {
   const navigate = useNavigate();
@@ -40,9 +41,7 @@ const UserList: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [viewMode, setViewMode] = useState<"list" | "grid">(
-    (localStorage.getItem("defaultListView") as "list" | "grid") || "list",
-  );
+  const [viewMode, setViewMode] = useListViewMode();
 
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -242,7 +241,7 @@ const UserList: React.FC = () => {
               ]}
               style={{ width: 200 }}
             />
-            <div
+            <div className="view-mode-switcher"
               style={{
                 display: "flex",
                 gap: 4,

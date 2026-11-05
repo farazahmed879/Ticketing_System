@@ -161,4 +161,17 @@ export const timesheetController = {
       res.status(500).json({ success: false, error: error.message });
     }
   },
+
+  async getUnfilledUsers(req: AuthRequest, res: Response) {
+    try {
+      const { month, year } = req.query;
+      const data = await timesheetUsecase.getUnfilledUsers(
+        month as string,
+        year as string
+      );
+      res.json({ success: true, ...data });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
 };

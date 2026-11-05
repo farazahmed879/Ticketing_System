@@ -25,15 +25,14 @@ import StandardListLayout from "../../components/StandardListLayout";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import ListAndKanbanSwitcher from "./components/ListAndKanbanSwitcher";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
-import { truncateString, copyToClipboard } from "../../utils/helpers";
+import { truncateString, copyToClipboard , getDefaultListView } from "../../utils/helpers";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import { displayStatusForUser } from "./shared/ticketDecisions";
 
 const TicketList: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
-  const defaultMode =
-    (localStorage.getItem("defaultListView") as "list" | "grid") || "list";
+  const defaultMode = getDefaultListView();
   const viewMode =
     (searchParams.get("view") as "list" | "grid" | "board") || defaultMode;
   const [search, setSearch] = useState("");

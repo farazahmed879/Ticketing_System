@@ -297,6 +297,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
             name="entryType"
             control={control}
             label="Day Type"
+            required
             options={ENTRY_TYPE_OPTIONS}
             disabled={isApproved}
           />
@@ -468,6 +469,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                                 name={`tasks.${index}.projectId` as const}
                                 control={control}
                                 label="Project"
+                                required
                                 placeholder="Select Project"
                                 options={[
                                   { value: MISC_PROJECT, label: "Miscellaneous" },

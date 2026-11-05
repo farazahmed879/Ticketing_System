@@ -1,5 +1,6 @@
 import CustomIcon from "./CustomIcon";
 import CustomSelect from "./CustomSelect";
+import styles from "./SelectWithLabel.module.css";
 
 const SelectWithLabel = ({
   icon = "Tag",
@@ -14,35 +15,19 @@ const SelectWithLabel = ({
   name = "",
   canAssign = false,
   dummyLabel = "",
-  showSearch = false,
+  showSearch = true,
+  required = false,
+  rules,
 }: any) => {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-      }}
-    >
-      <label
-        style={{
-          fontSize: "0.9rem",
-          color: "var(--text-secondary)",
-          fontWeight: 600,
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-        }}
-      >
-        <CustomIcon name={icon} size={18} color={iconColor} /> {label}
+    <div className={styles.container}>
+      <label className={styles.label}>
+        <CustomIcon name={icon} size={15} color={iconColor} /> {label}
+        {Boolean(required || rules?.required) && (
+          <span style={{ color: "var(--accent-danger)" }}>*</span>
+        )}
       </label>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
-      >
+      <div className={styles.fieldWrapper}>
         {canAssign && (
           <CustomSelect
             name={name}
@@ -57,31 +42,19 @@ const SelectWithLabel = ({
           />
         )}
         {!canAssign && (
-          <div
-            className="glass-card"
-            style={{
-              padding: 12,
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              minHeight: 64,
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid var(--border-glass)",
-              borderRadius: 12,
-            }}
-          >
+          <div className={`${styles.readOnlyCard} glass-card`}>
             {dummyLabel ? (
               multiple ? (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {dummyLabel.split(",").map((tag: string) => (
                     tag.trim() ? (
                       <span
                         key={tag}
                         style={{
-                          padding: "4px 10px",
+                          padding: "2px 8px",
                           borderRadius: "6px",
                           background: "rgba(255,255,255,0.05)",
-                          fontSize: "0.8rem",
+                          fontSize: "0.78rem",
                           color: "var(--text-primary)",
                           border: "1px solid var(--border-glass)",
                         }}
@@ -94,33 +67,13 @@ const SelectWithLabel = ({
               ) : (
                 <>
                   <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: "50%",
-                      background: "rgba(6, 182, 212, 0.1)",
-                      color: iconColor,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: 700,
-                      fontSize: "1rem",
-                      flexShrink: 0,
-                    }}
+                    className={styles.avatar}
+                    style={{ color: iconColor }}
                   >
                     {dummyLabel.charAt(0)}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        fontSize: "0.85rem",
-                        color: "var(--text-primary)",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                      }}
-                    >
+                    <div className={styles.dummyLabelText}>
                       {dummyLabel}
                     </div>
                   </div>
@@ -130,7 +83,7 @@ const SelectWithLabel = ({
               <div
                 style={{
                   color: "var(--text-muted)",
-                  fontSize: "0.85rem",
+                  fontSize: "0.8rem",
                   fontStyle: "italic",
                 }}
               >
@@ -143,4 +96,5 @@ const SelectWithLabel = ({
     </div>
   );
 };
+
 export default SelectWithLabel;

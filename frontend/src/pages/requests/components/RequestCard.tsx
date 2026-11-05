@@ -8,6 +8,7 @@ import {
   getTaskDescriptionPlainText,
 } from "../../timesheet/components/TaskDescriptionEditor";
 import styles from "../Requests.module.css";
+import { formatRequestType } from "../columns";
 import type { User, UserRequest } from "../../../types";
 
 interface RequestCardProps {
@@ -55,7 +56,7 @@ const RequestCard = ({
           gap: 8,
         }}
       >
-        <div className={styles.typeBadge}>{data.type.replace("_", " ")}</div>
+        <div className={styles.typeBadge}>{formatRequestType(data.type)}</div>
         <CustomBadge
           variant={
             data.status === "APPROVED"
@@ -84,6 +85,23 @@ const RequestCard = ({
           {data.email || data.user?.email}
         </span>
       </div>
+
+      {data.approvedBy?.fullname && (
+        <div
+          style={{
+            fontSize: "0.8rem",
+            color: "var(--text-muted)",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <span>Approved by:</span>
+          <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+            {data.approvedBy.fullname}
+          </span>
+        </div>
+      )}
 
       <div
         title={getTaskDescriptionPlainText(data.message)}

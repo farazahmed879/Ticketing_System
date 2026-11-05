@@ -5,6 +5,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomBadge from "../../../components/CustomBadge";
 import CustomButton from "../../../components/CustomButton";
 import { ROLE_TYPE } from "../../roles/roleConstants";
+import { getEntryTypeLabel, isZeroHourEntryType } from "../entryTypes";
 import type { TimesheetEntry } from "../../../types";
 
 interface UseTimesheetReviewColumnsProps {
@@ -108,6 +109,17 @@ export const useTimesheetReviewColumns = ({
         >
           {e.totalHours}h
         </div>
+      ),
+    },
+    {
+      header: "Day Type",
+      key: "entryType",
+      render: (e: TimesheetEntry) => (
+        <CustomBadge
+          variant={isZeroHourEntryType(e.entryType) ? "info" : "neutral"}
+        >
+          {getEntryTypeLabel(e.entryType)}
+        </CustomBadge>
       ),
     },
     {

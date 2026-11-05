@@ -41,11 +41,36 @@
   background: var(--accent-secondary);
 }
 
+.logoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 26px;
+}
+
+.mobileCloseBtn {
+  display: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.mobileCloseBtn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .logo {
   font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  margin-bottom: 26px;
+  margin-bottom: 0;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -87,7 +112,6 @@
   background: rgba(124, 58, 237, 0.1);
   border-color: rgba(124, 58, 237, 0.2);
 }
-
 
 .navLink {
   display: flex;
@@ -301,10 +325,7 @@
 }
 
 /*
- * Narrow the (expanded) sidebar on laptop-sized viewports so it doesn't eat
- * the screen on 14" displays. `:not(.sidebarCollapsed)` keeps the collapsed
- * rail at its fixed 80px. The mainContent margin in MainLayout.module.css is
- * kept in sync at the same breakpoints.
+ * Responsive widths for laptop and tablet/mobile viewports
  */
 @media (max-width: 1440px) {
   .sidebar:not(.sidebarCollapsed) {
@@ -317,5 +338,34 @@
   .sidebar:not(.sidebarCollapsed) {
     width: 200px;
     padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px !important;
+    max-width: 82vw;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+    padding: 20px 16px;
+  }
+
+  .sidebarMobileOpen {
+    transform: translateX(0) !important;
+    box-shadow: 10px 0 35px rgba(0, 0, 0, 0.5);
+  }
+
+  .collapseToggle {
+    display: none !important;
+  }
+
+  .mobileCloseBtn {
+    display: inline-flex;
   }
 }

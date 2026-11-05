@@ -413,3 +413,10 @@ textarea:focus {
 .hover-glow:hover {
   color: var(--accent-primary);
 }
+
+/* Hide view-mode switch button on mobile, defaulting view to grid */
+@media (max-width: 768px) {
+  .view-mode-switcher {
+    display: none !important;
+  }
+}

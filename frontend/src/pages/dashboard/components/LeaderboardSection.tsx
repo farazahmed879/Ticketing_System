@@ -4,6 +4,11 @@ import { API_ROUTES } from "../../../utils/apiRoutes";
 import CustomIcon from "../../../components/CustomIcon";
 import Modal from "../../../components/Modal";
 import styles from "../Dashboard.module.css";
+import SectionHeader from "./SectionHeader";
+import EmptyState from "./EmptyState";
+
+// Gold / silver / bronze for the top three.
+const MEDAL = ["#f5b301", "#9aa4b2", "#c9824a"];
 
 const LeaderboardPreview: React.FC = () => {
   const [data, setData] = useState<any[]>([]);
@@ -19,76 +24,63 @@ const LeaderboardPreview: React.FC = () => {
   }, []);
 
   const renderList = (isOverlay = false) => {
-    const listToRender = isOverlay ? data : data.slice(0, 5);
-    if (loading) return <p>Loading...</p>;
+    if (loading) {
+      return (
+        <div className={styles.rankList} aria-busy="true">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className={styles.rankSkeleton} />
+          ))}
+        </div>
+      );
+    }
+    const list = isOverlay ? data : data.slice(0, 5);
+    if (list.length === 0) {
+      return (
+        <EmptyState
+          icon="Trophy"
+          title="No rankings yet"
+          hint="Recruiter ratings will appear here."
+        />
+      );
+    }
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {listToRender.map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "12px 0",
-                  borderBottom:
-                    index === listToRender.length - 1 ? "none" : "1px solid var(--border-glass)",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "50%",
-                      background:
-                        index === 0
-                          ? "var(--accent-warning)"
-                          : "rgba(255,255,255,0.05)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {index + 1}
-                  </div>
-                  <span style={{ fontSize: "0.95rem", color: "var(--text-primary)" }}>
-                    {item.name}
-                  </span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <CustomIcon
-                    name="Star"
-                    size={14}
-                    color="var(--accent-warning)"
-                  />
-                  <span style={{ fontWeight: 600 }}>{item.averageRating} pts</span>
-                </div>
-              </div>
-            ))}
-          </div>
+      <ol className={styles.rankList}>
+        {list.map((item, index) => (
+          <li key={`${item.name}-${index}`} className={styles.rankRow}>
+            <span
+              className={`${styles.rankBadge} ${index < 3 ? styles.rankBadgeTop : ""}`}
+              style={
+                index < 3
+                  ? ({ "--tone": MEDAL[index] } as React.CSSProperties)
+                  : undefined
+              }
+            >
+              {index + 1}
+            </span>
+            <span className={styles.rankName}>{item.name}</span>
+            <span className={styles.rankScore}>
+              <CustomIcon name="Star" size={13} fill="currentColor" />
+              {Number(item.averageRating ?? 0).toFixed(1)}
+            </span>
+          </li>
+        ))}
+      </ol>
     );
   };
 
   return (
     <>
-      <div className={`${styles.recentTickets} glass-card`}>
-        <div className={styles.sectionHeader}>
-          <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)" }}>
-            Top Recruiters
-          </h2>
-          <button
-            className={styles.expandSectionBtn}
-            onClick={() => setIsExpanded(true)}
-            title="Expand"
-          >
-            <CustomIcon name="Maximize2" size={16} />
-          </button>
-        </div>
+      <section className={`${styles.section} glass-card`}>
+        <SectionHeader
+          icon="Trophy"
+          tone="var(--accent-warning)"
+          title="Top Recruiters"
+          meta="avg. rating"
+          onExpand={() => setIsExpanded(true)}
+          expandDisabled={!loading && data.length === 0}
+        />
         {renderList(false)}
-      </div>
+      </section>
 
       <Modal
         isOpen={isExpanded}
@@ -96,9 +88,7 @@ const LeaderboardPreview: React.FC = () => {
         title="Top Recruiters"
         maxWidth="720px"
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, paddingBottom: 16 }}>
-          {renderList(true)}
-        </div>
+        <div style={{ paddingBottom: 16 }}>{renderList(true)}</div>
       </Modal>
     </>
   );

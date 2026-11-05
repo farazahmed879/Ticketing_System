@@ -1,49 +1,59 @@
 import React from "react";
 import styles from "../Dashboard.module.css";
 
-import type { StatsCardsProps } from "../../../types";
+export interface StatCard {
+  label: string;
+  value?: number | null;
+  icon: React.ReactNode;
+  /** Accent colour (CSS value) for the icon tile */
+  color: string;
+  /** One line of context under the number, e.g. "15% of all tickets" */
+  caption?: string;
+  onClick?: () => void;
+}
 
-const StatsCards: React.FC<StatsCardsProps> = ({ cards }) => {
+const StatsCards: React.FC<{ cards: StatCard[] }> = ({ cards }) => {
   return (
     <div className={styles.statsGrid}>
-      {cards.map((card, i) => (
-        <div
-          key={i}
-          className={`${styles.premiumStatCard} glass-card animate-slide-up`}
-          style={{
-            animationDelay: `${i * 0.1}s`,
-            borderLeft: `4px solid ${card.color}`,
-            cursor: card.onClick ? "pointer" : "default",
-          }}
-          onClick={card.onClick}
-        >
-          <div className={styles.statInfo}>
-            <span className={styles.statLabel}>{card.label}</span>
-            <div className={styles.statValueWrapper}>
-              <h2 className={styles.statValue}>{card.value || 0}</h2>
-              {/* Optional: Add a small trend indicator or secondary info here if needed */}
+      {cards.map((card, i) => {
+        const body = (
+          <>
+            <div className={styles.statTop}>
+              <span className={styles.statLabel}>{card.label}</span>
+              <span
+                className={styles.statIconWrapper}
+                style={{ "--tone": card.color } as React.CSSProperties}
+                aria-hidden="true"
+              >
+                {card.icon}
+              </span>
             </div>
-          </div>
-
-          <div
-            className={styles.statIconWrapper}
-            style={{
-              color: card.color,
-              background: `linear-gradient(135deg, ${card.color}20 0%, ${card.color}05 100%)`,
-              boxShadow: `0 8px 20px ${card.color}15`,
-            }}
+            <div className={styles.statValue}>
+              {(card.value ?? 0).toLocaleString()}
+            </div>
+            {card.caption && (
+              <div className={styles.statCaption}>{card.caption}</div>
+            )}
+          </>
+        );
+        const className = `${styles.statCard} glass-card animate-slide-up`;
+        const style = { animationDelay: `${i * 0.06}s` };
+        return card.onClick ? (
+          <button
+            key={card.label}
+            type="button"
+            className={`${className} ${styles.statCardClickable}`}
+            style={style}
+            onClick={card.onClick}
           >
-            {card.icon}
+            {body}
+          </button>
+        ) : (
+          <div key={card.label} className={className} style={style}>
+            {body}
           </div>
-
-          <div
-            className={styles.statGlow}
-            style={{
-              background: `radial-gradient(circle at center, ${card.color}10 0%, transparent 70%)`,
-            }}
-          />
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

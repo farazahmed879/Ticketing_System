@@ -72,7 +72,8 @@ export async function launchBrowser() {
  * @param {'client'|'employee'|null} opts.as  pre-authenticate as this demo user (null = logged out)
  * @param {string} opts.videoName  output file name without extension
  */
-export async function openSession(browser, { as, videoName, outDir }) {
+/** `webmDir`: where the finished .webm goes (defaults to outDir; cues + storyboard stay in outDir). */
+export async function openSession(browser, { as, videoName, outDir, webmDir = outDir }) {
   const rawDir = path.join(outDir, ".raw");
   fs.mkdirSync(rawDir, { recursive: true });
 
@@ -122,7 +123,8 @@ export async function openSession(browser, { as, videoName, outDir }) {
       await page.waitForTimeout(800);
       await context.close();
       if (video) {
-        const target = path.join(outDir, `${videoName}.webm`);
+        fs.mkdirSync(webmDir, { recursive: true });
+        const target = path.join(webmDir, `${videoName}.webm`);
         await video.saveAs(target);
         await video.delete();
         // Cue sheet: when each caption/title appeared — used by voiceover.js.

@@ -55,7 +55,7 @@ Uses the system Microsoft Edge, so no browser download is needed (`TUT_BROWSER` 
 ```bash
 npm run cleanup        # wipe previous demo tickets/timesheets/chats (keeps demo accounts)
 npm run seed           # demo accounts for every role, team, project, tickets, timesheets, requests, a candidate
-npm run record         # all videos  → tutorials/videos/*.webm
+npm run record         # all videos  → tutorials/videos/webm-videos/*.webm
 npm run record:client  # or just one role
 node record.js employee-03   # or a single journey
 ```
@@ -67,7 +67,7 @@ so a second recording without re-seeding will look different.
 Options (env vars): `TUT_HEADLESS=false` to watch the browser, `TUT_PACE=0.7` for a faster pace,
 `TUT_APP_URL` / `TUT_API_URL` to point at another environment.
 
-If a journey fails, you get `videos/<id>.FAILED.png` and `.FAILED.webm` showing where it stopped.
+If a journey fails, you get `videos/<id>.FAILED.png` and `videos/webm-videos/<id>.FAILED.webm` showing where it stopped.
 
 ### Privacy on camera
 Manager, HR and admin screens list real company data. Those journeys call `s.privacy([...])`, which hides
@@ -97,7 +97,7 @@ manager and HR accounts have real permissions on the shared database and a known
 ## Voice-over & MP4
 
 ```bash
-npm run voiceover            # every videos/*.webm → videos/*.mp4 with narration
+npm run voiceover            # every videos/webm-videos/*.webm → videos/mp4-videos/*.mp4 with narration
 node voiceover.js client-02  # or just one
 ```
 

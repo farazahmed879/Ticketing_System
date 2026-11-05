@@ -15,7 +15,8 @@ import hr from "./journeys/hr.js";
 import admin from "./journeys/admin.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const outDir = path.join(here, "videos");
+const outDir = path.join(here, "videos"); // cue sheets, storyboards, failure screenshots
+const webmDir = path.join(outDir, "webm-videos"); // recordings (voiceover.js reads them here)
 const filter = process.argv[2] || "";
 const journeys = [...client, ...employee, ...lead, ...qa, ...manager, ...hr, ...admin].filter((j) => j.id.includes(filter));
 
@@ -30,7 +31,7 @@ const browser = await launchBrowser();
 let failed = 0;
 for (const j of journeys) {
   process.stdout.write(`● ${j.id} … `);
-  const session = await openSession(browser, { as: j.as, videoName: j.id, outDir });
+  const session = await openSession(browser, { as: j.as, videoName: j.id, outDir, webmDir });
   try {
     await j.run(session.s, session.page, state);
     const file = await session.finish();
@@ -41,12 +42,12 @@ for (const j of journeys) {
     await session.page.screenshot({ path: shot }).catch(() => {});
     await session.finish().catch(() => {});
     try {
-      fs.renameSync(path.join(outDir, `${j.id}.webm`), path.join(outDir, `${j.id}.FAILED.webm`));
+      fs.renameSync(path.join(webmDir, `${j.id}.webm`), path.join(webmDir, `${j.id}.FAILED.webm`));
     } catch {}
     console.log(`FAILED: ${e.message.split("\n")[0]}\n   screenshot: ${path.relative(here, shot)}`);
   }
 }
 await browser.close();
 fs.rmSync(path.join(outDir, ".raw"), { recursive: true, force: true });
-console.log(failed ? `\n${failed} journey(s) failed.` : "\nAll videos recorded → tutorials/videos/");
+console.log(failed ? `\n${failed} journey(s) failed.` : "\nAll videos recorded → tutorials/videos/webm-videos/");
 process.exit(failed ? 1 : 0);

@@ -18,6 +18,7 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 import styles from "./DepartmentList.module.css";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 import { useListViewMode } from "../../utils/helpers";
+import CustomTooltip from "../../components/CustomTooltip";
 
 const DepartmentList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -285,20 +286,24 @@ const DepartmentList: React.FC = () => {
                     style={{ display: "flex", gap: 4 }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <CustomButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(d)}
-                      icon={<CustomIcon name="Edit2" size={14} />}
-                      style={{ padding: 6, minHeight: "auto" }}
-                    />
-                    <CustomButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteClick(d.id)}
-                      icon={<CustomIcon name="Trash2" size={14} />}
-                      style={{ padding: 6, minHeight: "auto", color: "var(--accent-danger)" }}
-                    />
+                    <CustomTooltip text="Edit">
+                      <CustomButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(d)}
+                        icon={<CustomIcon name="Edit2" size={14} />}
+                        style={{ padding: 6, minHeight: "auto" }}
+                      />
+                    </CustomTooltip>
+                    <CustomTooltip text="Delete">
+                      <CustomButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteClick(d.id)}
+                        icon={<CustomIcon name="Trash2" size={14} />}
+                        style={{ padding: 6, minHeight: "auto", color: "var(--accent-danger)" }}
+                      />
+                    </CustomTooltip>
                   </div>
                 </div>
 

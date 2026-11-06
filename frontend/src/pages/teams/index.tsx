@@ -16,6 +16,8 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 import styles from "./MyTeam.module.css";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
 import CustomImage from "../../components/CustomImage";
+import CustomTooltip from "../../components/CustomTooltip";
+import Highlight from "../../components/Highlight";
 
 import StandardListLayout from "../../components/StandardListLayout";
 import { getTeamColumns } from "./columns";
@@ -334,7 +336,7 @@ const TeamList: React.FC = () => {
                           margin: 0,
                         }}
                       >
-                        {t.name}
+                        <Highlight text={t.name} query={search} />
                       </h3>
                       <span
                         className="text-xs-muted"
@@ -349,24 +351,28 @@ const TeamList: React.FC = () => {
                       style={{ display: "flex", gap: 4 }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <CustomButton
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(t)}
-                        icon={<CustomIcon name="Edit2" size={14} />}
-                        style={{ padding: 6, minHeight: "auto" }}
-                      />
-                      <CustomButton
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteClick(t.id)}
-                        icon={<CustomIcon name="Trash2" size={14} />}
-                        style={{
-                          padding: 6,
-                          minHeight: "auto",
-                          color: "var(--accent-danger)",
-                        }}
-                      />
+                      <CustomTooltip text="Edit">
+                        <CustomButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(t)}
+                          icon={<CustomIcon name="Edit2" size={14} />}
+                          style={{ padding: 6, minHeight: "auto" }}
+                        />
+                      </CustomTooltip>
+                      <CustomTooltip text="Delete">
+                        <CustomButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteClick(t.id)}
+                          icon={<CustomIcon name="Trash2" size={14} />}
+                          style={{
+                            padding: 6,
+                            minHeight: "auto",
+                            color: "var(--accent-danger)",
+                          }}
+                        />
+                      </CustomTooltip>
                     </div>
                   )}
                 </div>

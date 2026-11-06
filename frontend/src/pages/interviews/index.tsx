@@ -16,11 +16,16 @@ import CustomPagination from "../../components/CustomPagination";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import CustomBadge from "../../components/CustomBadge";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
-import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
 
 import StandardListLayout from "../../components/StandardListLayout";
-import { getInterviewColumns, statusBadgeVariant } from "./columns";
+import {
+  getInterviewColumns,
+  statusBadgeVariant,
+  InterviewActions,
+  formatInterviewDate,
+  formatInterviewTime,
+} from "./columns";
 import { InterviewListHeader } from "./components/InterviewListHeader";
 import { InterviewListFilter } from "./components/InterviewListFilter";
 import { ROLE_TYPE } from "../roles/roleConstants";
@@ -266,22 +271,15 @@ const InterviewList: React.FC = () => {
               flex: 1,
               overflowY: "auto",
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(320px, 100%), 1fr))",
               gap: 16,
               padding: "4px 0",
               alignContent: "start",
             }}
           >
             {interviews.map((i: Interview) => {
-              const dateVal = new Date(i.scheduledAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              });
-              const timeVal = new Date(i.scheduledAt).toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              });
+              const dateVal = formatInterviewDate(i.scheduledAt);
+              const timeVal = formatInterviewTime(i.scheduledAt);
               return (
                 <div
                   key={i.id}
@@ -299,10 +297,11 @@ const InterviewList: React.FC = () => {
                     border: "1px solid var(--border-glass)",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 8 }}>
+                    <div style={{ display: "flex", gap: 12, alignItems: "center", minWidth: 0 }}>
                       <div
                         style={{
+                          flexShrink: 0,
                           width: 38,
                           height: 38,
                           borderRadius: "50%",
@@ -317,7 +316,7 @@ const InterviewList: React.FC = () => {
                       >
                         {i.candidate.name.charAt(0)}
                       </div>
-                      <div>
+                      <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
                         <h3 style={{ fontSize: "1.05rem", fontWeight: 600, margin: 0 }}>
                           {i.candidate.name}
                         </h3>
@@ -335,27 +334,18 @@ const InterviewList: React.FC = () => {
                         style={{ display: "flex", gap: 2, marginLeft: 6 }}
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {canUpdateInterviews && (
-                          <CustomButton
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingInterview(i);
-                              setIsModalOpen(true);
-                            }}
-                            icon={<CustomIcon name="Edit2" size={14} />}
-                            style={{ padding: 6, minHeight: "auto" }}
-                          />
-                        )}
-                        {canDeleteInterviews && (
-                          <CustomButton
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteClick(i.id)}
-                            icon={<CustomIcon name="Trash2" size={14} />}
-                            style={{ padding: 6, minHeight: "auto", color: "var(--accent-danger)" }}
-                          />
-                        )}
+                        <InterviewActions
+                          interview={i}
+                          canUpdate={!!canUpdateInterviews}
+                          canDelete={!!canDeleteInterviews}
+                          onEdit={(iv) => {
+                            setEditingInterview(iv);
+                            setIsModalOpen(true);
+                          }}
+                          onDelete={handleDeleteClick}
+                          iconSize={14}
+                          buttonStyle={{ padding: 6, minHeight: "auto" }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -364,7 +354,7 @@ const InterviewList: React.FC = () => {
                     <span className="text-xs-muted" style={{ display: "block", marginBottom: 4, fontWeight: 600 }}>
                       Interview Details
                     </span>
-                    <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-primary)" }}>{i.title}</span>
+                    <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-primary)", overflowWrap: "anywhere" }}>{i.title}</span>
                   </div>
 
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -394,7 +384,7 @@ const InterviewList: React.FC = () => {
                           name: pm.user.fullname,
                           image: pm.user.image,
                         }))}
-                        limit={3}
+                        limit={4}
                         size={24}
                       />
                     </div>

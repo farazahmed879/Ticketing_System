@@ -12,6 +12,7 @@ import AnnouncementModal from "./components/AnnouncementModal";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import CustomPagination from "../../components/CustomPagination";
 import CustomBadge from "../../components/CustomBadge";
+import CustomTooltip from "../../components/CustomTooltip";
 import { format } from "date-fns";
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS, AnnouncementType } from "../../utils/constants";
 
@@ -322,7 +323,7 @@ const AnnouncementList: React.FC = () => {
                           {ann.title}
                         </h3>
                         <span className="text-xs-muted" style={{ display: "block", marginTop: 2 }}>
-                          {format(new Date(ann.date), "MMM dd, yyyy")}
+                          Scheduled {format(new Date(ann.date), "MMM dd, yyyy")}
                         </span>
                       </div>
                     </div>
@@ -332,20 +333,24 @@ const AnnouncementList: React.FC = () => {
                         {ann.type.toUpperCase()}
                       </CustomBadge>
                       <div style={{ display: "flex", gap: 2, marginLeft: 6 }}>
-                        <CustomButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(ann)}
-                          icon={<CustomIcon name="Edit2" size={14} />}
-                          style={{ padding: 6, minHeight: "auto" }}
-                        />
-                        <CustomButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(ann.id)}
-                          icon={<CustomIcon name="Trash2" size={14} />}
-                          style={{ padding: 6, minHeight: "auto", color: "var(--accent-danger)" }}
-                        />
+                        <CustomTooltip text={`Edit ${entityName}`}>
+                          <CustomButton
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(ann)}
+                            icon={<CustomIcon name="Edit2" size={14} />}
+                            style={{ padding: 6, minHeight: "auto" }}
+                          />
+                        </CustomTooltip>
+                        <CustomTooltip text={`Delete ${entityName}`}>
+                          <CustomButton
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(ann.id)}
+                            icon={<CustomIcon name="Trash2" size={14} />}
+                            style={{ padding: 6, minHeight: "auto", color: "var(--accent-danger)" }}
+                          />
+                        </CustomTooltip>
                       </div>
                     </div>
                   </div>

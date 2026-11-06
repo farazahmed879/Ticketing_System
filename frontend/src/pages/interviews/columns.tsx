@@ -1,3 +1,4 @@
+import type React from "react";
 import type { TableColumn } from "../../components/types";
 import type { Interview } from "../../types";
 import CustomBadge from "../../components/CustomBadge";
@@ -37,6 +38,61 @@ const formatTime = (dateStr: string) => {
     minute: "2-digit",
   });
 };
+
+export const formatInterviewDate = formatDate;
+export const formatInterviewTime = formatTime;
+
+/** "Actions" column cell — reused on the grid card so both views share the
+ *  same buttons, handlers and permission gating. */
+export const InterviewActions = ({
+  interview: i,
+  canUpdate,
+  canDelete,
+  onEdit,
+  onDelete,
+  iconSize = 17,
+  buttonStyle,
+}: {
+  interview: Interview;
+  canUpdate: boolean;
+  canDelete: boolean;
+  onEdit: (interview: Interview) => void;
+  onDelete: (id: string) => void;
+  iconSize?: number;
+  buttonStyle?: React.CSSProperties;
+}) => (
+  <div className={styles.actions}>
+    {canUpdate && (
+      <CustomTooltip text="Edit">
+        <CustomButton
+          variant="ghost"
+          size="sm"
+          icon={<CustomIcon name="Edit2" size={iconSize} />}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(i);
+          }}
+          style={buttonStyle}
+        />
+      </CustomTooltip>
+    )}
+
+    {canDelete && (
+      <CustomTooltip text="Delete">
+        <CustomButton
+          variant="ghost"
+          size="sm"
+          icon={<CustomIcon name="Trash2" size={iconSize} />}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(i.id);
+          }}
+          style={{ ...buttonStyle, color: "var(--accent-danger)" }}
+        />
+      </CustomTooltip>
+    )}
+  </div>
+);
 
 export const getInterviewColumns = (
   canUpdateInterviews: boolean,
@@ -114,37 +170,16 @@ export const getInterviewColumns = (
     header: "Actions",
     key: "actions",
     render: (i) => (
-      <div className={styles.actions}>
-        {canUpdateInterviews && (
-          <CustomTooltip text="Edit">
-            <CustomButton
-              variant="ghost"
-              size="sm"
-              icon={<CustomIcon name="Edit2" size={17} />}
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditingInterview(i);
-                setIsModalOpen(true);
-              }}
-            />
-          </CustomTooltip>
-        )}
-
-        {canDeleteInterviews && (
-          <CustomTooltip text="Delete">
-            <CustomButton
-              variant="ghost"
-              size="sm"
-              icon={<CustomIcon name="Trash2" size={17} />}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(i.id);
-              }}
-              style={{ color: "var(--accent-danger)" }}
-            />
-          </CustomTooltip>
-        )}
-      </div>
+      <InterviewActions
+        interview={i}
+        canUpdate={canUpdateInterviews}
+        canDelete={canDeleteInterviews}
+        onEdit={(iv) => {
+          setEditingInterview(iv);
+          setIsModalOpen(true);
+        }}
+        onDelete={handleDelete}
+      />
     ),
   },
 ];

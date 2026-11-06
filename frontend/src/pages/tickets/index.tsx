@@ -250,6 +250,54 @@ const TicketList: React.FC = () => {
     deleteMutation.mutate(ticketToDelete);
   };
 
+  // Row actions — shared by the table's actions column and the grid card so
+  // both views expose the same items, handlers and admin-only Delete.
+  const getTicketMenuItems = (t: Ticket) => [
+    {
+      label: "Copy Ticket ID",
+      icon: "Hash",
+      onClick: async () => {
+        const ok = await copyToClipboard(String(t.uid));
+        showNotification(
+          ok ? "success" : "error",
+          ok ? "Ticket ID copied" : "Failed to copy ticket ID",
+        );
+      },
+    },
+    {
+      label: "Copy Ticket URL",
+      icon: "Link",
+      onClick: async () => {
+        const url = `${window.location.origin}/tickets/${t.id}`;
+        const ok = await copyToClipboard(url);
+        showNotification(
+          ok ? "success" : "error",
+          ok ? "Ticket URL copied" : "Failed to copy ticket URL",
+        );
+      },
+    },
+    {
+      label: "Open Full Page",
+      icon: "ExternalLink",
+      onClick: () => {
+        navigate(`/tickets/${t.id}`);
+      },
+    },
+    ...(user?.role?.roleType === ROLE_TYPE.ADMIN
+      ? [
+          {
+            label: "Delete",
+            icon: "Trash2",
+            onClick: () => {
+              setTicketToDelete(t.id);
+              setIsDeleteModalOpen(true);
+            },
+            danger: true,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <>
       <StandardListLayout
@@ -591,55 +639,7 @@ const TicketList: React.FC = () => {
                 render: (t) => (
                   <div onClick={(e) => e.stopPropagation()}>
                     <CustomDropdownMenu
-                      items={[
-                        {
-                          label: "Copy Ticket ID",
-                          icon: "Hash",
-                          onClick: async () => {
-                            const ok = await copyToClipboard(String(t.uid));
-                            showNotification(
-                              ok ? "success" : "error",
-                              ok
-                                ? "Ticket ID copied"
-                                : "Failed to copy ticket ID",
-                            );
-                          },
-                        },
-                        {
-                          label: "Copy Ticket URL",
-                          icon: "Link",
-                          onClick: async () => {
-                            const url = `${window.location.origin}/tickets/${t.id}`;
-                            const ok = await copyToClipboard(url);
-                            showNotification(
-                              ok ? "success" : "error",
-                              ok
-                                ? "Ticket URL copied"
-                                : "Failed to copy ticket URL",
-                            );
-                          },
-                        },
-                        {
-                          label: "Open Full Page",
-                          icon: "ExternalLink",
-                          onClick: () => {
-                            navigate(`/tickets/${t.id}`);
-                          },
-                        },
-                        ...(user?.role?.roleType === ROLE_TYPE.ADMIN
-                          ? [
-                              {
-                                label: "Delete",
-                                icon: "Trash2",
-                                onClick: () => {
-                                  setTicketToDelete(t.id);
-                                  setIsDeleteModalOpen(true);
-                                },
-                                danger: true,
-                              },
-                            ]
-                          : []),
-                      ]}
+                      items={getTicketMenuItems(t)}
                       triggerSize={16}
                     />
                   </div>
@@ -681,7 +681,7 @@ const TicketList: React.FC = () => {
               flex: 1,
               overflowY: "auto",
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(320px, 100%), 1fr))",
               gap: 16,
               padding: "4px 0",
               alignContent: "start",
@@ -734,7 +734,7 @@ const TicketList: React.FC = () => {
                           fontWeight: 700,
                         }}
                       >
-                        #{t.uid}
+                        #<Highlight text={String(t.uid)} query={search} />
                       </span>
                       <CustomBadge color={t.priority.color}>
                         {t.priority.name}
@@ -752,55 +752,7 @@ const TicketList: React.FC = () => {
                         onClick={(e) => e.stopPropagation()}
                       >
                         <CustomDropdownMenu
-                          items={[
-                            {
-                              label: "Copy Ticket ID",
-                              icon: "Hash",
-                              onClick: async () => {
-                                const ok = await copyToClipboard(String(t.uid));
-                                showNotification(
-                                  ok ? "success" : "error",
-                                  ok
-                                    ? "Ticket ID copied"
-                                    : "Failed to copy ticket ID",
-                                );
-                              },
-                            },
-                            {
-                              label: "Copy Ticket URL",
-                              icon: "Link",
-                              onClick: async () => {
-                                const url = `${window.location.origin}/tickets/${t.id}`;
-                                const ok = await copyToClipboard(url);
-                                showNotification(
-                                  ok ? "success" : "error",
-                                  ok
-                                    ? "Ticket URL copied"
-                                    : "Failed to copy ticket URL",
-                                );
-                              },
-                            },
-                            {
-                              label: "Open Full Page",
-                              icon: "ExternalLink",
-                              onClick: () => {
-                                navigate(`/tickets/${t.id}`);
-                              },
-                            },
-                            ...(user?.role?.roleType === ROLE_TYPE.ADMIN
-                              ? [
-                                  {
-                                    label: "Delete",
-                                    icon: "Trash2",
-                                    onClick: () => {
-                                      setTicketToDelete(t.id);
-                                      setIsDeleteModalOpen(true);
-                                    },
-                                    danger: true,
-                                  },
-                                ]
-                              : []),
-                          ]}
+                          items={getTicketMenuItems(t)}
                           triggerSize={16}
                         />
                       </div>
@@ -814,9 +766,10 @@ const TicketList: React.FC = () => {
                         fontWeight: 600,
                         margin: "0 0 6px 0",
                         color: "var(--text-primary)",
+                        overflowWrap: "anywhere",
                       }}
                     >
-                      {t.subject}
+                      <Highlight text={t.subject} query={search} />
                     </h3>
                     <div
                       style={{ display: "flex", alignItems: "center", gap: 6 }}

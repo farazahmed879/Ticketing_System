@@ -1,0 +1,93 @@
+/* Role create/edit form: details on the left, permissions matrix on the right */
+.form {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 0;
+  height: 70vh;
+  margin: -24px; /* Offset modal content padding */
+}
+
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  padding: 24px 30px 24px 24px;
+  height: 100%;
+  min-width: 0;
+}
+
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border-left: 1px solid var(--border-glass);
+  padding: 24px 24px 24px 30px;
+  overflow-y: auto;
+  height: 100%;
+  min-width: 0;
+}
+
+.matrixHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: 12px;
+}
+
+.moduleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+}
+
+.moduleActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+}
+
+@media (max-width: 1024px) {
+  .form {
+    grid-template-columns: 320px 1fr;
+  }
+
+  .leftCol {
+    padding: 20px 20px 20px 24px;
+  }
+
+  .rightCol {
+    padding: 20px 24px 20px 20px;
+  }
+}
+
+/* Phones: modal is full-screen (content padding 14px 16px), stack the columns */
+@media (max-width: 768px) {
+  .form {
+    grid-template-columns: 1fr;
+    height: auto;
+    margin: -14px -16px;
+  }
+
+  .leftCol,
+  .rightCol {
+    height: auto;
+    overflow-y: visible;
+    padding: 16px;
+    gap: 20px;
+  }
+
+  .rightCol {
+    border-left: none;
+    border-top: 1px solid var(--border-glass);
+  }
+
+  .moduleActions {
+    gap: 8px 16px;
+  }
+}

@@ -21,9 +21,11 @@ import { TimesheetReviewFilter } from "./components/TimesheetReviewFilter";
 import { TimesheetReviewSidebar } from "./components/TimesheetReviewSidebar";
 import { useTimesheetReviewColumns } from "./components/TimesheetReviewColumns";
 import { TimesheetReviewCard } from "./components/TimesheetReviewCard";
+import { canApproveTimesheetEntry } from "./components/TimesheetReviewCells";
 import { getDefaultListView } from "../../utils/helpers";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 import type { ReviewPeriod } from "./types";
+import styles from "./Timesheet.module.css";
 
 export default function TimesheetReview() {
   const { user } = useAuth();
@@ -238,44 +240,14 @@ export default function TimesheetReview() {
         />
       }
     >
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 320px",
-          gap: 24,
-          alignItems: "stretch",
-          flex: 1,
-          minHeight: 0,
-          overflow: "hidden",
-        }}
-      >
+      <div className={styles.reviewGrid}>
         {/* Main Content: Table */}
-        <div
-          className="glass-card"
-          style={{
-            padding: 24,
-            minHeight: 0,
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
+        <div className={`glass-card ${styles.reviewMainCard}`}>
           {selectedUserId && (
-            <div
-              className="animate-fade-in"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 20,
-                padding: "16px 20px",
-                background: "rgba(124, 58, 237, 0.05)",
-                borderRadius: 16,
-                border: "1px solid rgba(124, 58, 237, 0.1)",
-                marginBottom: 24,
-              }}
-            >
+            <div className={`animate-fade-in ${styles.reviewUserBanner}`}>
               <div
                 style={{
+                  flexShrink: 0,
                   width: 54,
                   height: 54,
                   borderRadius: "50%",
@@ -316,8 +288,8 @@ export default function TimesheetReview() {
                   </div>
                 )}
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div className={styles.reviewUserBannerInfo}>
+                <div className={styles.reviewUserBannerTitle}>
                   <h2
                     style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700 }}
                   >
@@ -359,25 +331,12 @@ export default function TimesheetReview() {
                     </div>
                   )}
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 15,
-                    marginTop: 4,
-                    color: "var(--text-muted)",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  <span
-                    style={{ display: "flex", alignItems: "center", gap: 6 }}
-                  >
+                <div className={styles.reviewUserBannerMeta}>
+                  <span>
                     <CustomIcon name="Mail" size={14} />
                     {users.find((u: any) => u.id === selectedUserId)?.email}
                   </span>
-                  <span
-                    style={{ display: "flex", alignItems: "center", gap: 6 }}
-                  >
+                  <span>
                     <CustomIcon name="Calendar" size={14} />
                     {period === "today"
                       ? "Today"
@@ -392,6 +351,7 @@ export default function TimesheetReview() {
                 size="sm"
                 onClick={() => setSelectedUserId(null)}
                 icon={<CustomIcon name="X" size={16} />}
+                className={styles.reviewUserBannerClose}
                 style={{
                   borderRadius: "50%",
                   width: 32,
@@ -402,7 +362,7 @@ export default function TimesheetReview() {
             </div>
           )}
 
-          <div style={{ flex: 1, overflow: "auto", paddingRight: 4 }}>
+          <div className={styles.reviewScroll}>
             {viewMode === "list" ? (
               <CustomTable
                 columns={columns}
@@ -437,25 +397,15 @@ export default function TimesheetReview() {
                   : `No ${selectedStatus.toLowerCase()} timesheets found`}
               </div>
             ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                  gap: 16,
-                  padding: "4px 0",
-                }}
-              >
+              <div className={styles.reviewCardsGrid}>
                 {entries.map((entry) => (
                   <TimesheetReviewCard
                     key={entry.id}
                     entry={entry}
-                    canApprove={
-                      ((user?.role?.roleType === ROLE_TYPE.AGENT ||
-                        user?.role?.roleType === ROLE_TYPE.ADMIN) &&
-                        entry.managerApproved === "PENDING") ||
-                      (user?.role?.roleType === ROLE_TYPE.HR &&
-                        entry.hrApproved === "PENDING")
-                    }
+                    canApprove={canApproveTimesheetEntry(
+                      entry,
+                      user?.role?.roleType,
+                    )}
                     onView={(e) => {
                       setSelectedEntry(e);
                       setIsModalOpen(true);
@@ -468,16 +418,7 @@ export default function TimesheetReview() {
           </div>
         </div>
 
-        <div
-          className="glass-card"
-          style={{
-            padding: 24,
-            minHeight: 0,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
-        >
+        <div className={`glass-card ${styles.reviewSidebarCard}`}>
           <TimesheetReviewSidebar
             userSearch={userSearch}
             setUserSearch={setUserSearch}

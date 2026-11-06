@@ -118,7 +118,21 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             {p.teams.map((t) => t.name).join(", ")}
           </span>
         )}
-        <div className="flex-wrap-4" style={{ marginTop: 2 }}>
+        <div
+          className="flex-wrap-4"
+          style={{ marginTop: 2, alignItems: "center" }}
+        >
+          <span
+            style={{
+              fontSize: "0.68rem",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.03em",
+              marginRight: 2,
+            }}
+          >
+            Clients
+          </span>
           {p.clients?.length ? (
             p.clients.map((c) => (
               <span key={c.id} className="chip">

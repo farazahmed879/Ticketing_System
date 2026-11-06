@@ -1,5 +1,7 @@
 .container {
   height: calc(100vh - 90px);
+  height: calc(100dvh - 90px);
+  min-height: 0;
   display: grid;
   grid-template-columns: 320px 1fr;
   gap: 1px;
@@ -89,6 +91,7 @@
   display: flex;
   flex-direction: column;
   max-width: 72%;
+  min-width: 0;
 }
 
 .messageOwn {
@@ -564,6 +567,7 @@
 }
 
 .userSelectItem {
+  min-width: 0;
   padding: 12px 16px;
   display: flex;
   align-items: center;
@@ -790,6 +794,526 @@
 .mentionButton:hover {
   color: var(--accent-primary);
   background: rgba(var(--primary-rgb), 0.1);
+}
+
+/* ------------------------------------------------------------------ */
+/* Layout pieces (moved out of inline styles)                          */
+/* ------------------------------------------------------------------ */
+
+.skeletonSpan {
+  grid-column: 1 / -1;
+  min-height: 0;
+  height: 100%;
+}
+
+.listTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listHeaderActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.listSearch {
+  padding: 16px 24px;
+}
+
+.listEmpty {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+.avatarWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.convAvatar,
+.headerAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.headerAvatar {
+  width: 40px;
+  height: 40px;
+}
+
+.convAvatar.avatarGroup {
+  border-radius: 12px;
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.headerAvatar.avatarGroup {
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.convBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.convTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.convName {
+  font-weight: 600;
+  font-size: 0.95rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.convTime {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.convBottomRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.convPreview {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Chat header */
+.backButton {
+  display: none !important;
+  padding: 6px !important;
+  flex-shrink: 0;
+  color: var(--text-primary);
+}
+
+.headerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.headerName {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerStatus {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerStatusOnline {
+  color: var(--accent-success, #22c55e);
+}
+
+.headerStatusLink {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.moreMenu {
+  position: absolute;
+  top: 100%;
+  right: 40px;
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 12px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 150px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Empty state (no conversation selected) */
+.emptyState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+}
+
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* Reply quote inside a bubble */
+.replyQuote {
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid var(--primary);
+  color: var(--text-color);
+  opacity: 0.8;
+  cursor: pointer;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.replyQuoteAuthor {
+  color: var(--primary);
+}
+
+/* Composer */
+.composerError {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 8px;
+}
+
+.replyPreview {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  border-left: 3px solid var(--primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.replyPreviewBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.replyPreviewTitle {
+  font-size: 0.8rem;
+  color: var(--primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.replyPreviewText {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-color);
+  opacity: 0.8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.composerForm {
+  display: flex;
+  /* Buttons stay at the bottom while a multi-line message grows upward */
+  align-items: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+
+.emojiArea {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Line the 36px icon buttons up with the bottom of the 40px input row */
+.composerForm > .attachButton,
+.composerForm > .emojiArea {
+  margin-bottom: 2px;
+}
+
+.composerInput {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  min-height: 40px;
+  max-height: 140px; /* ~5 lines, then it scrolls */
+  overflow-y: auto;
+  resize: none;
+  box-sizing: border-box;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 9px 16px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+/* New-chat user picker */
+.userPickList {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.userPickInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.userPickName {
+  font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  overflow-wrap: anywhere;
+}
+
+.userPickEmail {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Group modals reuse .userSelectItem with an inline flex:1 text column */
+.userSelectItem > div:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive                                                          */
+/* ------------------------------------------------------------------ */
+
+/* Match the compacted MainLayout chrome (topbar 52px + page padding) */
+@media (max-width: 1440px) {
+  .container {
+    height: calc(100vh - 80px);
+    height: calc(100dvh - 80px);
+  }
+}
+
+@media (max-width: 1280px) {
+  .container {
+    height: calc(100vh - 76px);
+    height: calc(100dvh - 76px);
+    grid-template-columns: 290px minmax(0, 1fr);
+  }
+}
+
+/* Tablet: narrow the list column instead of squashing the thread */
+@media (max-width: 1024px) {
+  .container {
+    grid-template-columns: 250px minmax(0, 1fr);
+  }
+
+  .listHeader {
+    padding: 16px;
+  }
+
+  .listSearch {
+    padding: 12px 16px;
+  }
+
+  .conversationItem {
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  .convAvatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .chatHeader {
+    padding: 12px 16px;
+  }
+
+  .messagesContainer {
+    padding: 18px 16px;
+  }
+
+  .messageWrapper {
+    max-width: 80%;
+  }
+
+  .chatInput {
+    padding: 12px 16px 14px;
+  }
+
+  .composerForm {
+    gap: 8px;
+  }
+}
+
+/* Phone: master/detail, list OR thread at full width */
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: minmax(0, 1fr);
+    /* topbar 52px + page padding 12px top/bottom */
+    height: calc(100vh - 76px);
+    height: calc(100dvh - 76px);
+    border-radius: 12px;
+  }
+
+  .hasActiveConv .conversationList {
+    display: none;
+  }
+
+  .container:not(.hasActiveConv) .chatArea {
+    display: none;
+  }
+
+  .activeItem {
+    border-right: none;
+  }
+
+  .backButton {
+    display: inline-flex !important;
+  }
+
+  .closeChatButton {
+    display: none !important;
+  }
+
+  .chatHeader {
+    padding: 10px 10px 10px 6px;
+    gap: 8px;
+  }
+
+  /* Dropdowns anchor to the full-width header instead of the icon group */
+  .chatHeader {
+    position: relative;
+  }
+
+  .headerActions {
+    gap: 2px;
+    position: static;
+  }
+
+  .moreMenu {
+    right: 8px;
+    margin-top: 4px;
+  }
+
+  /* Shared-files dropdown: span the header instead of a fixed 320px */
+  .filesPanel {
+    left: 8px;
+    right: 8px;
+    width: auto;
+    margin-top: 4px;
+    max-height: 60dvh;
+    overflow-y: auto;
+  }
+
+  .messagesContainer {
+    padding: 14px 10px;
+  }
+
+  .messageWrapper {
+    max-width: 85%;
+  }
+
+  .messageBubble {
+    padding: 9px 12px;
+    font-size: 0.92rem;
+  }
+
+  /* A definite width keeps the nowrap filename from sizing the bubble */
+  .fileCard {
+    width: min(240px, 62vw);
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .fileCardName {
+    min-width: 0;
+  }
+
+  .attachmentSingle img {
+    max-width: min(260px, 100%);
+    max-height: 260px;
+  }
+
+  .attachmentGrid {
+    width: min(240px, 62vw);
+  }
+
+  .scrollBottomBtn {
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .chatInput {
+    padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .composerForm {
+    gap: 4px;
+  }
+
+  /* 16px keeps iOS Safari from zooming in when the input is focused */
+  .composerInput {
+    font-size: 16px;
+    padding: 9px 12px;
+  }
+
+  /* No hover on touch: keep reply/delete reachable */
+  .messageActions {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .userPickList {
+    max-height: none;
+  }
 }
 
 

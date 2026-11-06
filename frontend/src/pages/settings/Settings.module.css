@@ -268,6 +268,11 @@
   .formGrid {
     grid-template-columns: 1fr;
   }
+
+  /* layout spacer next to Current Password is only needed in the 2-col grid */
+  .formGrid > div:empty {
+    display: none;
+  }
 }
 
 .formField {
@@ -350,4 +355,425 @@
 .submitBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ---------- Moved from inline styles ---------- */
+.title {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: var(--text-muted);
+}
+
+.container > * {
+  min-width: 0;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.subHeading {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.languageGroup {
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: 24px;
+  margin-bottom: 32px;
+}
+
+.languageHeading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.languageHeading label {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.langOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.langFlag {
+  font-size: 1.2rem;
+}
+
+/* Notification preference rows: text on the left, On/Off toggle on the right */
+.prefSectionAdmin {
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: 24px;
+}
+
+.prefDivider {
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.prefRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.prefText {
+  flex: 1;
+  min-width: 0;
+}
+
+.settingGroup .prefLabel {
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.prefDesc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.prefError {
+  font-size: 0.75rem;
+  color: var(--accent-danger);
+  margin: 4px 0 0 0;
+  font-weight: 500;
+}
+
+.prefToggle {
+  flex: 0 0 auto;
+  width: 200px;
+  max-width: 200px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1024px) {
+  .container {
+    grid-template-columns: 200px 1fr;
+    gap: 20px;
+  }
+
+  .content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    margin-bottom: 20px;
+  }
+
+  .container {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* Side-nav becomes a horizontally scrollable tab bar */
+  .sidebar {
+    flex-direction: row;
+    padding: 6px;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tabBtn {
+    flex: 0 0 auto;
+    width: auto !important;
+    white-space: nowrap;
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  .content {
+    padding: 16px;
+    min-height: 0;
+  }
+
+  .profileContent {
+    min-height: 0;
+  }
+
+  .sectionHeader {
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .themeToggleGrid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .themeOption {
+    padding: 12px;
+  }
+
+  .presetsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+  }
+
+  .presetPreview {
+    height: 44px;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .securityGrid {
+    gap: 20px;
+  }
+
+  .securityCard {
+    padding: 16px;
+  }
+
+  .languageGroup {
+    margin-bottom: 24px;
+  }
+
+  /* Label + toggle rows stack */
+  .prefRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .prefToggle {
+    width: 100%;
+    max-width: none;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ---------- Phone: compact sizing (smaller type, tighter buttons) ---------- */
+@media (max-width: 768px) {
+  .title {
+    font-size: 1.15rem;
+  }
+
+  .subtitle {
+    font-size: 0.78rem;
+  }
+
+  .header {
+    margin-bottom: 14px;
+  }
+
+  .container {
+    gap: 12px;
+  }
+
+  /* Tab bar */
+  .sidebar {
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .tabBtn {
+    padding: 7px 11px;
+    gap: 6px;
+    font-size: 0.8rem;
+    border-radius: 8px;
+  }
+
+  .tabBtn svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .content {
+    padding: 14px;
+  }
+
+  /* Section title */
+  .sectionHeader {
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .sectionHeader svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .sectionHeader h3 {
+    font-size: 1rem;
+  }
+
+  .sectionHeader p {
+    font-size: 0.75rem;
+  }
+
+  .settingGroup {
+    margin-bottom: 18px;
+  }
+
+  .settingGroup label,
+  .formField label {
+    font-size: 0.78rem;
+  }
+
+  .subHeading {
+    font-size: 0.88rem;
+    margin-bottom: 12px;
+  }
+
+  .subHeading svg,
+  .languageHeading svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .languageHeading {
+    margin-bottom: 10px;
+  }
+
+  .languageHeading label {
+    font-size: 0.88rem;
+  }
+
+  .languageGroup,
+  .prefSectionAdmin {
+    padding-bottom: 16px;
+    margin-bottom: 18px;
+  }
+
+  .hint,
+  .prefDesc {
+    font-size: 0.72rem;
+  }
+
+  .settingGroup .prefLabel {
+    font-size: 0.85rem;
+    margin-bottom: 2px;
+  }
+
+  .prefRow {
+    gap: 8px;
+  }
+
+  .prefDivider {
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+  }
+
+  /* All buttons inside the panel (shared CustomButton) */
+  .content :global(button) {
+    font-size: 0.78rem;
+    padding: 7px 12px;
+    gap: 6px;
+  }
+
+  .content :global(button) svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Option tiles: On/Off, language, theme mode, retention days */
+  .themeToggleGrid {
+    gap: 8px;
+  }
+
+  .content .themeOption {
+    padding: 8px 10px;
+    gap: 6px;
+    border-radius: 9px;
+    font-size: 0.78rem;
+  }
+
+  .langFlag {
+    font-size: 0.9rem;
+  }
+
+  /* Colours & presets */
+  .colorPicker {
+    width: 34px;
+    height: 34px;
+  }
+
+  .colorInput {
+    font-size: 0.78rem;
+  }
+
+  .presetsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+  }
+
+  .content .presetCard {
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .presetPreview {
+    height: 28px;
+  }
+
+  .presetCard span {
+    font-size: 0.72rem;
+  }
+
+  /* Security cards & inputs */
+  .securityGrid {
+    gap: 14px;
+  }
+
+  .securityCard {
+    padding: 14px;
+  }
+
+  .securityCard h4 {
+    font-size: 0.92rem;
+  }
+
+  .content div:has(> input:not([type="color"]):not([type="hidden"])) {
+    min-height: 38px;
+  }
+
+  .content input {
+    font-size: 0.82rem;
+  }
+
+  .actions {
+    margin-top: 18px;
+    padding-top: 14px;
+    gap: 8px;
+  }
+
+  .content .saveBtn,
+  .content .resetBtn,
+  .content .submitBtn {
+    padding: 7px 14px;
+    font-size: 0.78rem;
+  }
 }

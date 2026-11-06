@@ -1,5 +1,6 @@
 .container {
   max-width: 1200px;
+  min-width: 0;
 }
 
 .topBar {
@@ -32,13 +33,27 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 16px;
   margin-bottom: 20px;
+}
+
+.headerLead {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.headerText {
+  min-width: 0;
 }
 
 .headerTitle {
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 4px;
+  overflow-wrap: anywhere;
 }
 
 .headerMeta {
@@ -54,24 +69,32 @@
   gap: 6px;
   font-size: 0.85rem;
   color: var(--text-secondary);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.metaItem > svg {
+  flex-shrink: 0;
 }
 
 .statusActions {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .mainGrid {
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: minmax(0, 1fr) 400px;
   gap: 24px;
   align-items: start;
 }
 
 @media (max-width: 1024px) {
   .mainGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -79,6 +102,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-width: 0;
 }
 
 /* Candidate Card */
@@ -106,6 +130,8 @@
 
 .candidateDetails {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .candidateName {
@@ -136,12 +162,13 @@
 
 .panelGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
   gap: 12px;
   margin-bottom: 24px;
 }
 
 .panelCard {
+  min-width: 0;
   padding: 14px;
   display: flex;
   align-items: center;
@@ -180,6 +207,7 @@
 .panelName {
   font-weight: 500;
   font-size: 0.9rem;
+  overflow-wrap: break-word;
 }
 
 .panelRole {
@@ -215,7 +243,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
 }
 
 .ratingLabel {
@@ -264,6 +293,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
   margin-bottom: 14px;
 }
 
@@ -271,6 +302,14 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+}
+
+.feedbackVerdict {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .feedbackAvatar {
@@ -284,11 +323,12 @@
   font-weight: 600;
   font-size: 0.75rem;
   color: white;
+  flex-shrink: 0;
 }
 
 .feedbackRatings {
   display: flex;
-  gap: 20px;
+  gap: 10px 20px;
   flex-wrap: wrap;
   margin-bottom: 12px;
 }
@@ -320,6 +360,7 @@
   padding: 12px;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.05);
+  overflow-wrap: anywhere;
 }
 
 .overallScore {
@@ -339,7 +380,7 @@
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
   gap: 16px;
 }
 
@@ -364,4 +405,72 @@
   font-size: 0.78rem;
   color: var(--text-muted);
   margin-top: 4px;
+}
+
+/* ===== Phone ===== */
+@media (max-width: 768px) {
+  .headerCard {
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .headerTop {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerLead {
+    gap: 14px;
+  }
+
+  .headerTitle {
+    font-size: 1.25rem;
+  }
+
+  .headerMeta {
+    gap: 8px 16px;
+  }
+
+  .statusActions {
+    padding-left: 54px; /* align with title: back button (40) + gap */
+  }
+
+  .mainGrid,
+  .leftCol,
+  .rightCol {
+    gap: 16px;
+  }
+
+  .candidateCard {
+    flex-wrap: wrap;
+    padding: 16px;
+    margin-bottom: 0;
+  }
+
+  .candidateDetails {
+    flex-basis: calc(100% - 66px);
+  }
+
+  .candidateCard > button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .summaryCard,
+  .feedbackFormCard {
+    padding: 18px;
+    margin-bottom: 0;
+  }
+
+  .summaryItem {
+    padding: 12px 8px;
+  }
+
+  .feedbackCard {
+    padding: 16px;
+  }
+
+  .ratingChip {
+    padding: 4px 10px;
+  }
 }

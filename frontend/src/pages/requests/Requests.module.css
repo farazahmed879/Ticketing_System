@@ -2,6 +2,28 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.filterRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.filterRow > :first-child {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  /* status filter pills scroll sideways instead of overflowing */
+  .filterRow > :first-child {
+    flex: 0 1 auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
 }
 
 .filters {

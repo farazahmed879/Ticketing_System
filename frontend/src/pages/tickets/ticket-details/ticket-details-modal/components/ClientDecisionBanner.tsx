@@ -2,6 +2,7 @@ import React from "react";
 import CustomButton from "../../../../../components/CustomButton";
 import CustomIcon from "../../../../../components/CustomIcon";
 import { StatusName } from "../../../../../utils/constants";
+import styles from "../TicketDetailModal.module.css";
 import type { TicketDetail } from "../../../../../types";
 
 interface ClientDecisionBannerProps {
@@ -34,16 +35,10 @@ const ClientDecisionBanner: React.FC<ClientDecisionBannerProps> = ({
   if (statusName === StatusName.NEW) {
     return (
       <div
-        className="glass-card"
-        style={{
-          padding: 20,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderLeft: "4px solid var(--accent-danger)",
-        }}
+        className={`glass-card ${styles.decisionBanner}`}
+        style={{ borderLeft: "4px solid var(--accent-danger)" }}
       >
-        <div>
+        <div className={styles.decisionBannerText}>
           <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
             Cancel Ticket
           </h3>
@@ -87,16 +82,10 @@ const ClientDecisionBanner: React.FC<ClientDecisionBannerProps> = ({
 
     return (
       <div
-        className="glass-card"
-        style={{
-          padding: 20,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderLeft: "4px solid var(--accent-success)",
-        }}
+        className={`glass-card ${styles.decisionBanner}`}
+        style={{ borderLeft: "4px solid var(--accent-success)" }}
       >
-        <div>
+        <div className={styles.decisionBannerText}>
           <h3 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
             Review Required
           </h3>
@@ -129,7 +118,7 @@ const ClientDecisionBanner: React.FC<ClientDecisionBannerProps> = ({
             </span>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
+        <div className={styles.decisionBannerActions}>
           <CustomButton
             variant="outline"
             onClick={() => handleClientDecision("unsatisfied")}

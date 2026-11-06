@@ -1,32 +1,18 @@
 import React from "react";
 import CustomSkeleton from "../../../../../components/CustomSkeleton";
+import styles from "../TicketDetailModal.module.css";
 
 const ModalSkeleton: React.FC = () => {
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1.6fr 1fr",
-        gap: 30,
-        padding: "10px 0",
-        flex: 1,
-        minHeight: 0,
-      }}
-    >
+    <div className={styles.skeletonGrid}>
       {/* Left Skeleton */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-        <div style={{ display: "flex", gap: 12 }}>
+      <div className={styles.skeletonLeft}>
+        <div className={styles.skeletonChips}>
           <CustomSkeleton width={140} height={36} borderRadius={8} />
           <CustomSkeleton width={180} height={36} borderRadius={8} />
           <CustomSkeleton width={160} height={36} borderRadius={8} />
         </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 20,
-          }}
-        >
+        <div className={styles.skeletonForm}>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <CustomSkeleton width={100} height={14} />
             <CustomSkeleton width="100%" height={200} borderRadius={12} />
@@ -49,15 +35,7 @@ const ModalSkeleton: React.FC = () => {
         </div>
       </div>
       {/* Right Skeleton (Comments) */}
-      <div
-        style={{
-          borderLeft: "1px solid var(--border-glass)",
-          paddingLeft: 24,
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-        }}
-      >
+      <div className={styles.skeletonComments}>
         <CustomSkeleton width={140} height={18} />
         {Array.from({ length: 4 }).map((_, i) => (
           <div

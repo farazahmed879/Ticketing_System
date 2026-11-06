@@ -90,9 +90,8 @@ const TicketDetailComments: React.FC<TicketDetailCommentsProps> = ({
               }}
             >
               <div
-                className={`${cs.card} ${isOwnComment ? cs.cardOwn : ""}`}
+                className={`${cs.card} ${isOwnComment ? cs.cardOwn : ""} ${styles.bubble}`}
                 style={{
-                  maxWidth: "78%",
                   padding: "10px 14px",
                   borderBottomRightRadius: isOwnComment ? 4 : 16,
                   borderBottomLeftRadius: isOwnComment ? 16 : 4,

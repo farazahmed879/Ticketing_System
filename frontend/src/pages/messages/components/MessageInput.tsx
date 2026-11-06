@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
 import styles from "../Messages.module.css";
@@ -38,7 +38,25 @@ const MessageInput: React.FC<MessageInputProps> = ({
 }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiAreaRef = useRef<HTMLDivElement>(null);
-  const textInputRef = useRef<HTMLInputElement>(null);
+  const textInputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Grow the box with its content (up to the CSS max-height), and shrink it
+  // back after a message is sent.
+  useLayoutEffect(() => {
+    const el = textInputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [newMessage]);
+
+  // Enter sends; Shift+Enter inserts a new line. Ignore Enter while an IME
+  // (e.g. Urdu/Chinese input) is still composing a character.
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      e.currentTarget.form?.requestSubmit();
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -75,43 +93,17 @@ const MessageInput: React.FC<MessageInputProps> = ({
   return (
     <div className={styles.chatInput}>
       {attachmentError && (
-        <div
-          style={{
-            color: "#ef4444",
-            fontSize: "0.85rem",
-            marginBottom: 8,
-            padding: "8px 12px",
-            background: "rgba(239, 68, 68, 0.1)",
-            borderRadius: 8,
-          }}
-        >
+        <div className={styles.composerError}>
           {attachmentError}
         </div>
       )}
       {replyingTo && (
-        <div
-          style={{
-            marginBottom: 12,
-            padding: "8px 12px",
-            background: "rgba(0,0,0,0.1)",
-            borderRadius: 8,
-            borderLeft: "3px solid var(--primary)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-          }}
-        >
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "0.8rem", color: "var(--primary)" }}>
+        <div className={styles.replyPreview}>
+          <div className={styles.replyPreviewBody}>
+            <div className={styles.replyPreviewTitle}>
               Replying to {replyingTo.sender?.fullname || "Someone"}
             </div>
-            <span
-              style={{
-                fontSize: "0.85rem",
-                color: "var(--text-color)",
-                opacity: 0.8,
-              }}
-            >
+            <span className={styles.replyPreviewText}>
               {replyingTo.body?.substring(0, 50) || "Attachment"}
             </span>
           </div>
@@ -125,7 +117,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         </div>
       )}
       {attachments.length > 0 && (
-        <div className={styles.attachmentPreviewContainer}>
+        <div className={styles.attachmentPreviewBar}>
           {attachments.map((src, idx) => {
             const { isImage, name } = parseChatAttachment(src);
             return isImage ? (
@@ -163,7 +155,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           })}
         </div>
       )}
-      <form onSubmit={onSendMessage} style={{ display: "flex", gap: 12 }}>
+      <form onSubmit={onSendMessage} className={styles.composerForm}>
         <input
           type="file"
           accept={CHAT_ACCEPT_ATTRIBUTE}
@@ -185,7 +177,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           className={styles.attachButton}
           icon={<CustomIcon name="Paperclip" size={18} />}
         />
-        <div ref={emojiAreaRef} style={{ position: "relative" }}>
+        <div ref={emojiAreaRef} className={styles.emojiArea}>
           <CustomButton
             type="button"
             variant="ghost"
@@ -204,22 +196,15 @@ const MessageInput: React.FC<MessageInputProps> = ({
           />
           {showEmojiPicker && <EmojiPicker onSelect={insertEmoji} />}
         </div>
-        <input
-          type="text"
+        <textarea
           ref={textInputRef}
+          rows={1}
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          style={{
-            flex: 1,
-            background: "var(--bg-tertiary)",
-            border: "1px solid var(--border-color)",
-            borderRadius: 12,
-            padding: "0 16px",
-            color: "var(--text-primary)",
-            outline: "none",
-            fontSize: "1rem",
-          }}
+          onKeyDown={handleKeyDown}
+          className={styles.composerInput}
+          aria-label="Message (Shift+Enter for a new line)"
         />
         <CustomButton
           type="submit"

@@ -542,15 +542,23 @@ const Messages: React.FC = () => {
     return (
       <div className={`${styles.container} animate-fade-in`}>
         {/* .container is a 320px/1fr grid — span both columns */}
-        <div style={{ gridColumn: "1 / -1", minHeight: 0, height: "100%" }}>
+        <div className={styles.skeletonSpan}>
           <ChatSkeleton />
         </div>
       </div>
     );
   }
 
+  // On phones the page is master/detail: the list shows until a conversation
+  // is open, then the thread takes over (see .hasActiveConv in the CSS).
+  const hasOpenConv = !!(activeConv && selectedConv);
+
   return (
-    <div className={`${styles.container} animate-fade-in`}>
+    <div
+      className={`${styles.container} ${
+        hasOpenConv ? styles.hasActiveConv : ""
+      } animate-fade-in`}
+    >
       <ConversationSidebar
         conversations={conversations}
         activeConv={activeConv}
@@ -611,17 +619,7 @@ const Messages: React.FC = () => {
             />
           </>
         ) : (
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "var(--text-muted)",
-              background: "var(--bg-secondary)",
-            }}
-          >
+          <div className={styles.emptyState}>
             {isCustomer ? (
               <CustomIcon
                 name="Headset"
@@ -640,7 +638,7 @@ const Messages: React.FC = () => {
                 ? "Need help? Contact our support team."
                 : "Select a conversation to start chatting"}
             </p>
-            <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+            <div className={styles.emptyActions}>
               <CustomButton
                 variant="gradient"
                 style={{ padding: "10px 24px" }}

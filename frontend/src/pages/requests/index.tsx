@@ -148,14 +148,7 @@ const Requests: React.FC = () => {
           </div>
         }
         filters={
-          <div className="view-mode-switcher"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 16,
-            }}
-          >
+          <div className={styles.filterRow}>
             <CustomFilterBar
               activeOption={filter}
               onChange={setFilter}

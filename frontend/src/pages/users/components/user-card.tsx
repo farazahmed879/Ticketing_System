@@ -104,6 +104,28 @@ const UserCard = ({
           color: "var(--text-secondary)",
         }}
       >
+        {data.companyEmail && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              minWidth: 0,
+            }}
+            title={`Company email: ${data.companyEmail}`}
+          >
+            <CustomIcon name="Building2" size={14} />
+            <span
+              style={{
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {data.companyEmail}
+            </span>
+          </div>
+        )}
         <div
           style={{
             display: "flex",
@@ -111,10 +133,12 @@ const UserCard = ({
             gap: 8,
             minWidth: 0,
           }}
+          title={data.email}
         >
           <CustomIcon name="Mail" size={14} />
           <span
             style={{
+              color: data.companyEmail ? "var(--text-muted)" : undefined,
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -139,6 +163,18 @@ const UserCard = ({
           title={data.emergencyContact || ""}
         >
           <CustomIcon name="LifeBuoy" size={14} />
+          <span
+            style={{
+              fontSize: "0.68rem",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.03em",
+              color: "var(--text-muted)",
+              flexShrink: 0,
+            }}
+          >
+            Emergency
+          </span>
           <span
             style={{
               color: "var(--text-muted)",

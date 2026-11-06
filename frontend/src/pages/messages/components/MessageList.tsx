@@ -129,20 +129,8 @@ const MessageList: React.FC<MessageListProps> = ({
                 } ${isEmojiOnlyMsg ? styles.messageBubbleEmojiOnly : ""}`}
               >
                 {msg.replyTo && (
-                  <div
-                    style={{
-                      fontSize: "0.75rem",
-                      padding: "6px 10px",
-                      marginBottom: 8,
-                      background: "rgba(0,0,0,0.1)",
-                      borderRadius: 4,
-                      borderLeft: "3px solid var(--primary)",
-                      color: "var(--text-color)",
-                      opacity: 0.8,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <strong style={{ color: "var(--primary)" }}>
+                  <div className={styles.replyQuote}>
+                    <strong className={styles.replyQuoteAuthor}>
                       {msg.replyTo.sender?.fullname || "Someone"}:
                     </strong>{" "}
                     {msg.replyTo.body?.substring(0, 50) || "Attachment"}

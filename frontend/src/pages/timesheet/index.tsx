@@ -154,7 +154,7 @@ const Timesheet: React.FC = () => {
         </CustomButton>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <div className={styles.calendarSwitchers}>
         {/* Monthly / Weekly Filter Switcher */}
         <div className={styles.viewSwitcher}>
           <CustomButton
@@ -687,7 +687,7 @@ const Timesheet: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={`${styles.fontXl} ${styles.fw700}`}>My Timesheet</h1>
-        <div className={`${styles.flexRow} ${styles.gap12}`}>
+        <div className={styles.headerActions}>
           <CustomButton
             variant="secondary"
             icon={<CustomIcon name="FileText" size={18} />}

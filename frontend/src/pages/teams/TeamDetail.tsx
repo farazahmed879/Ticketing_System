@@ -9,6 +9,7 @@ import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import type { Team } from "../../types";
 import CustomImage from "../../components/CustomImage";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
+import styles from "./TeamDetail.module.css";
 
 const getInitials = (name?: string) =>
   (name || "?")
@@ -48,20 +49,9 @@ const TeamDetail: React.FC = () => {
     );
 
   return (
-    <div
-      className="animate-fade-in"
-      style={{ display: "flex", flexDirection: "column", gap: 24 }}
-    >
+    <div className={`animate-fade-in ${styles.page}`}>
       {/* Header card */}
-      <div
-        className="glass-card"
-        style={{
-          padding: 30,
-          display: "flex",
-          alignItems: "center",
-          gap: 24,
-        }}
-      >
+      <div className={`glass-card ${styles.headerCard}`}>
         <CustomButton
           variant="ghost"
           onClick={() => navigate(-1)}
@@ -73,35 +63,14 @@ const TeamDetail: React.FC = () => {
             borderRadius: "12px",
             background: "rgba(255, 255, 255, 0.05)",
             border: "1px solid var(--border-glass)",
+            flexShrink: 0,
           }}
         />
-        <div
-          style={{
-            width: 72,
-            height: 72,
-            borderRadius: 16,
-            background:
-              "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "white",
-            boxShadow: "0 4px 15px rgba(124, 58, 237, 0.3)",
-          }}
-        >
+        <div className={styles.headerIcon}>
           <CustomIcon name="ShieldCheck" size={32} />
         </div>
-        <div style={{ flex: 1 }}>
-          <h2
-            style={{
-              fontSize: "1.4rem",
-              fontWeight: 800,
-              margin: 0,
-              color: "var(--text-primary)",
-            }}
-          >
-            {team.name}
-          </h2>
+        <div className={styles.headerText}>
+          <h2 className={styles.title}>{team.name}</h2>
           <div
             style={{
               display: "flex",
@@ -129,25 +98,16 @@ const TeamDetail: React.FC = () => {
             )}
           </div>
           {team.description && (
-            <p
-              style={{
-                color: "var(--text-secondary)",
-                margin: "12px 0 0 0",
-                fontSize: "0.95rem",
-                lineHeight: 1.6,
-              }}
-            >
+            <p className={styles.description}>
               <FormattedTaskDescription content={team.description} />
             </p>
           )}
         </div>
       </div>
 
-      <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: 24 }}
-      >
+      <div className={styles.layout}>
         {/* Members */}
-        <div className="glass-card" style={{ padding: 24 }}>
+        <div className={`glass-card ${styles.card}`}>
           <div
             style={{
               display: "flex",
@@ -208,7 +168,7 @@ const TeamDetail: React.FC = () => {
                       getInitials(m.fullname)
                     )}
                   </div>
-                  <div style={{ minWidth: 0 }}>
+                  <div className={styles.itemText}>
                     <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>
                       {m.fullname}
                     </div>
@@ -232,9 +192,9 @@ const TeamDetail: React.FC = () => {
         </div>
 
         {/* Sidebar: Team Lead + Projects */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        <div className={`${styles.column} ${styles.sidebar}`}>
           {team.teamLead && (
-            <div className="glass-card" style={{ padding: 24 }}>
+            <div className={`glass-card ${styles.card}`}>
               <div
                 style={{
                   display: "flex",
@@ -295,14 +255,17 @@ const TeamDetail: React.FC = () => {
                     getInitials(team.teamLead.fullname)
                   )}
                 </div>
-                <span style={{ fontSize: "0.95rem", fontWeight: 500 }}>
+                <span
+                  className={styles.itemText}
+                  style={{ fontSize: "0.95rem", fontWeight: 500 }}
+                >
                   {team.teamLead.fullname}
                 </span>
               </div>
             </div>
           )}
 
-          <div className="glass-card" style={{ padding: 24 }}>
+          <div className={`glass-card ${styles.card}`}>
             <div
               style={{
                 display: "flex",
@@ -336,12 +299,15 @@ const TeamDetail: React.FC = () => {
                       border: "1px solid var(--border-glass)",
                       cursor: "pointer",
                       fontSize: "0.9rem",
+                      minWidth: 0,
+                      overflowWrap: "anywhere",
                     }}
                   >
                     <CustomIcon
                       name="FolderKanban"
                       size={14}
                       color="var(--accent-primary)"
+                      style={{ flexShrink: 0 }}
                     />
                     {p.name}
                   </div>

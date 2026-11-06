@@ -20,6 +20,7 @@ import {
   QA_PERMISSIONS,
 } from "../roleConstants";
 import type { RoleFormProps } from "../types";
+import styles from "./RoleForm.module.css";
 
 const RoleForm = forwardRef<any, RoleFormProps>(
   ({ initialData, statuses, onSubmit }, ref) => {
@@ -177,25 +178,10 @@ const RoleForm = forwardRef<any, RoleFormProps>(
       <form
         id="role-form"
         onSubmit={onLocalSubmit}
-        style={{
-          display: "grid",
-          gridTemplateColumns: "400px 1fr",
-          gap: 0,
-          height: "70vh",
-          margin: "-24px" /* Offset modal content padding */,
-        }}
+        className={styles.form}
       >
         {/* Left Column: Basic Info & Role Type */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 24,
-            overflowY: "auto",
-            padding: "24px 30px 24px 24px",
-            height: "100%",
-          }}
-        >
+        <div className={styles.leftCol}>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <CustomInput
               name="name"
@@ -336,26 +322,8 @@ const RoleForm = forwardRef<any, RoleFormProps>(
         </div>
 
         {/* Right Column: Permissions Matrix */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 20,
-            borderLeft: "1px solid var(--border-glass)",
-            padding: "24px 24px 24px 30px",
-            overflowY: "auto",
-            height: "100%",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              borderBottom: "1px solid var(--border-glass)",
-              paddingBottom: 12,
-            }}
-          >
+        <div className={styles.rightCol}>
+          <div className={styles.matrixHeader}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <CustomIcon
                 name="Shield"
@@ -403,13 +371,7 @@ const RoleForm = forwardRef<any, RoleFormProps>(
                   background: "rgba(255,255,255,0.01)",
                 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
+                <div className={styles.moduleRow}>
                   <span
                     style={{
                       fontWeight: 700,
@@ -419,7 +381,7 @@ const RoleForm = forwardRef<any, RoleFormProps>(
                   >
                     {module.label}
                   </span>
-                  <div style={{ display: "flex", gap: 20 }}>
+                  <div className={styles.moduleActions}>
                     {module.actions.map((action) => (
                       <label
                         key={action}

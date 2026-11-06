@@ -229,7 +229,7 @@ const InterviewDetail: React.FC = () => {
       {/* Header Card */}
       <div className={`glass-card ${styles.headerCard}`}>
         <div className={styles.headerTop}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 20 }}>
+          <div className={styles.headerLead}>
             <CustomButton
               variant="ghost"
               onClick={() => navigate("/interviews")}
@@ -238,12 +238,13 @@ const InterviewDetail: React.FC = () => {
                 width: 40, 
                 height: 40, 
                 padding: 0, 
+                flexShrink: 0,
                 borderRadius: '12px',
                 background: 'rgba(255, 255, 255, 0.05)',
                 border: '1px solid var(--border-glass)'
               }}
             />
-            <div>
+            <div className={styles.headerText}>
               <h1 className={styles.headerTitle}>{interview.title}</h1>
             <div className={styles.headerMeta}>
               <span className={styles.metaItem}>
@@ -351,7 +352,7 @@ const InterviewDetail: React.FC = () => {
                       pm.user.fullname.charAt(0)
                     )}
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div className={styles.panelName}>{pm.user.fullname}</div>
                     <div className={styles.panelRole}>
                       {pm.user.role?.name || "Team Member"}
@@ -575,7 +576,7 @@ const InterviewDetail: React.FC = () => {
                     <div className={styles.feedbackAvatar}>
                       {f.interviewer.fullname.charAt(0)}
                     </div>
-                    <div>
+                    <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
                       <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>
                         {f.interviewer.fullname}
                       </div>
@@ -589,9 +590,7 @@ const InterviewDetail: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 10 }}
-                  >
+                  <div className={styles.feedbackVerdict}>
                     <CustomBadge
                       variant={
                         f.recommendation.includes("Hire") &&

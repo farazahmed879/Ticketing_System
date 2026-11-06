@@ -4,6 +4,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import CustomBadge from "../../../components/CustomBadge";
 import type { Candidate } from "../../../types";
+import styles from "./CandidateDetail.module.css";
 
 interface CandidateDetailHeaderProps {
   candidate: Candidate;
@@ -32,138 +33,43 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
   const navigate = useNavigate();
 
   return (
-    <div
-      className="glass-card"
-      style={{
-        padding: "30px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+    <div className={`glass-card ${styles.header}`}>
+      <div className={styles.headerMain}>
         <CustomButton
           variant="ghost"
           onClick={() => navigate("/candidates")}
           icon={<CustomIcon name="ArrowLeft" size={20} />}
-          style={{ 
-            width: 40, 
-            height: 40, 
-            padding: 0, 
-            borderRadius: '12px',
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid var(--border-glass)'
-          }}
+          className={styles.backButton}
         />
-        <div
-          style={{
-            width: 70,
-            height: 70,
-            borderRadius: "50%",
-            background:
-              "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "1.4rem",
-            fontWeight: 800,
-            color: "white",
-            boxShadow: "0 4px 15px rgba(124, 58, 237, 0.3)",
-          }}
-        >
-          {candidate.name.charAt(0)}
-        </div>
-        <div>
-          <h1
-            style={{
-              fontSize: "2.2rem",
-              fontWeight: 800,
-              margin: 0,
-              color: "var(--text-primary)",
-            }}
-          >
-            {candidate.name}
-          </h1>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              marginTop: 12,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span
-                style={{
-                  color: "var(--accent-primary)",
-                  fontSize: "1.1rem",
-                  fontWeight: 600,
-                }}
-              >
-                {candidate.position}
-              </span>
+        <div className={styles.avatar}>{candidate.name.charAt(0)}</div>
+        <div className={styles.headerInfo}>
+          <h1 className={styles.name}>{candidate.name}</h1>
+          <div className={styles.metaRow}>
+            <div className={styles.positionGroup}>
+              <span className={styles.position}>{candidate.position}</span>
               <CustomBadge variant={statusBadgeVariant(candidate.status)}>
                 {candidate.status}
               </CustomBadge>
             </div>
-            <div
-              style={{
-                width: 1,
-                height: 20,
-                background: "var(--border-glass)",
-              }}
-            />
-            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  color: "var(--text-secondary)",
-                  fontSize: "0.95rem",
-                }}
-              >
+            <div className={styles.contactList}>
+              <div className={styles.contactItem}>
                 <CustomIcon name="Mail" size={16} />
                 {candidate.email}
               </div>
               {candidate.phone && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    color: "var(--text-secondary)",
-                    fontSize: "0.95rem",
-                  }}
-                >
+                <div className={styles.contactItem}>
                   <CustomIcon name="Phone" size={16} />
                   {candidate.phone}
                 </div>
               )}
               {candidate.address && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    color: "var(--text-secondary)",
-                    fontSize: "0.95rem",
-                  }}
-                >
+                <div className={styles.contactItem}>
                   <CustomIcon name="MapPin" size={16} />
                   {candidate.address}
                 </div>
               )}
               {candidate.cnic && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    color: "var(--text-secondary)",
-                    fontSize: "0.95rem",
-                  }}
-                >
+                <div className={styles.contactItem}>
                   <CustomIcon name="CreditCard" size={16} />
                   {candidate.cnic}
                 </div>
@@ -175,42 +81,15 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
           {(candidate.linkedin ||
             candidate.github ||
             candidate.portfolio) && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                marginTop: 16,
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  fontWeight: 600,
-                }}
-              >
-                Professional Links:
-              </span>
-              <div style={{ display: "flex", gap: 12 }}>
+            <div className={styles.linksRow}>
+              <span className={styles.rowLabel}>Professional Links:</span>
+              <div className={styles.links}>
                 {candidate.linkedin && (
                   <a
                     href={candidate.linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover-glow"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      color: "#0077b5",
-                      fontSize: "0.9rem",
-                      fontWeight: 600,
-                      textDecoration: "none",
-                      background: "rgba(0,119,181,0.1)",
-                      padding: "4px 10px",
-                      borderRadius: 6,
-                    }}
+                    className={`hover-glow ${styles.socialLink} ${styles.linkedin}`}
                   >
                     <CustomIcon name="Linkedin" size={16} />
                     LinkedIn
@@ -221,19 +100,7 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
                     href={candidate.github}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover-glow"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      color: "var(--text-primary)",
-                      fontSize: "0.9rem",
-                      fontWeight: 600,
-                      textDecoration: "none",
-                      background: "rgba(255,255,255,0.05)",
-                      padding: "4px 10px",
-                      borderRadius: 6,
-                    }}
+                    className={`hover-glow ${styles.socialLink} ${styles.github}`}
                   >
                     <CustomIcon name="Github" size={16} />
                     GitHub
@@ -244,19 +111,7 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
                     href={candidate.portfolio}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover-glow"
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                      color: "var(--accent-primary)",
-                      fontSize: "0.9rem",
-                      fontWeight: 600,
-                      textDecoration: "none",
-                      background: "rgba(124, 58, 237, 0.1)",
-                      padding: "4px 10px",
-                      borderRadius: 6,
-                    }}
+                    className={`hover-glow ${styles.socialLink} ${styles.portfolio}`}
                   >
                     <CustomIcon name="Globe" size={16} />
                     Portfolio
@@ -268,24 +123,8 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
 
           {/* Meta Tags */}
           {candidate.metaTags && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                marginTop: 16,
-                flexWrap: "wrap",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  fontWeight: 600,
-                }}
-              >
-                Tags:
-              </span>
+            <div className={styles.tagsRow}>
+              <span className={styles.rowLabel}>Tags:</span>
               {candidate.metaTags.split(",").map((tag, i) => (
                 <CustomBadge
                   key={i}
@@ -303,7 +142,7 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
           )}
         </div>
       </div>
-      <div style={{ display: "flex", gap: 12 }}>
+      <div className={styles.headerActions}>
         {candidate.resumeUrl && (
           <CustomButton
             variant="gradient"

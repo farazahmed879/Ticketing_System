@@ -23,6 +23,7 @@ import type { User, Role, UserFormData } from "../../../types";
 import CustomImage from "../../../components/CustomImage";
 import { ROLE_TYPE } from "../../roles/roleConstants";
 import { useAuth } from "../../../context/AuthContext";
+import styles from "./UserForm.module.css";
 
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2 MB upload cap
 
@@ -243,17 +244,10 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
       }}
     >
       {/* STEPPER INDICATOR */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 40,
-          marginBottom: 10,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div className={styles.stepper}>
+        <div className={styles.stepItem}>
           <div
+            className={styles.stepCircle}
             style={{
               width: 32,
               height: 32,
@@ -290,8 +284,9 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
               step === 2 ? "var(--primary-gradient)" : "var(--border-color)",
           }}
         ></div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className={styles.stepItem}>
           <div
+            className={styles.stepCircle}
             style={{
               width: 32,
               height: 32,
@@ -509,13 +504,7 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
                 placeholder="John Doe"
                 required
               />
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 16,
-                }}
-              >
+              <div className={styles.row}>
                 <CustomInput
                   name="username"
                   control={control}
@@ -538,13 +527,7 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
                   inputMode="numeric"
                 />
               </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 16,
-                }}
-              >
+              <div className={styles.row}>
                 <CustomInput
                   name="email"
                   control={control}
@@ -579,13 +562,7 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
                   }
                 />
               </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 16,
-                }}
-              >
+              <div className={styles.row}>
                 <CustomInput
                   name="password"
                   control={control}
@@ -620,13 +597,7 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
                   }
                 />
               </div>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 16,
-                }}
-              >
+              <div className={styles.row}>
                 <PhoneInput
                   name="primaryContact"
                   countryCodeName="primaryContactCode"
@@ -676,24 +647,12 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
               </h3>
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 20,
-              }}
-            >
+            <div className={styles.columns}>
               {/* Professional info */}
               <div
-                style={{ display: "flex", flexDirection: "column", gap: 16 }}
+                className={styles.column}
               >
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 12,
-                  }}
-                >
+                <div className={`${styles.row} ${styles.rowTight}`}>
                   <CustomInput
                     name="title"
                     control={control}
@@ -712,13 +671,7 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
                     disabled={isClientRole}
                   />
                 </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 12,
-                  }}
-                >
+                <div className={`${styles.row} ${styles.rowTight}`}>
                   <CustomInput
                     name="nationality"
                     control={control}
@@ -740,13 +693,7 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
                 />
 
                 {!isClientRole && (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 12,
-                    }}
-                  >
+                  <div className={`${styles.row} ${styles.rowTight}`}>
                     <CustomSelect
                       name="employeeType"
                       control={control}
@@ -811,7 +758,7 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
               </div>
 
               <div
-                style={{ display: "flex", flexDirection: "column", gap: 16 }}
+                className={styles.column}
               >
                 <CustomInput
                   name="emergencyContact"
@@ -819,13 +766,7 @@ const UserForm = forwardRef<UserFormHandle, UserFormProps>(function UserForm(
                   label={!isClientRole ? "Emergency Contact" : undefined}
                   placeholder="Emergency Contact"
                 />
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 12,
-                  }}
-                >
+                <div className={`${styles.row} ${styles.rowTight}`}>
                   <CustomInput
                     name="linkedInUrl"
                     control={control}

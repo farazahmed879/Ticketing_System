@@ -27,16 +27,7 @@ const TicketDetailHeader: React.FC<TicketDetailHeaderProps> = ({
   return (
     <>
       <div className={styles.ticketHeader}>
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            flexWrap: "wrap",
-            minWidth: 0,
-          }}
-        >
+        <div className={styles.headerMain}>
           <CustomButton
             variant="ghost"
             onClick={() => navigate(-1)}
@@ -57,7 +48,7 @@ const TicketDetailHeader: React.FC<TicketDetailHeaderProps> = ({
               value={subjectDraft}
               onChange={(e) => setSubjectDraft(e.target.value)}
               className={styles.titleInput}
-              style={{ marginBottom: 0, flex: 1, minWidth: 200 }}
+              style={{ marginBottom: 0 }}
             />
           ) : (
             <h1 className={styles.title} style={{ marginBottom: 0 }}>
@@ -70,20 +61,7 @@ const TicketDetailHeader: React.FC<TicketDetailHeaderProps> = ({
           {ticket.wasFailed && (
             <span
               title="This ticket was marked as Failed/Returned at some point"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "2px 10px",
-                borderRadius: 20,
-                fontSize: "0.7rem",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-                color: "var(--accent-danger)",
-                background: "rgba(239, 68, 68, 0.12)",
-                border: "1px solid rgba(239, 68, 68, 0.4)",
-              }}
+              className={styles.returnedBadge}
             >
               <CustomIcon name="Flag" size={12} />
               Returned

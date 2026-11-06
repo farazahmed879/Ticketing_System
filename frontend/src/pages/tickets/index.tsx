@@ -285,7 +285,6 @@ const TicketList: React.FC = () => {
                   border: "none",
                   background: "transparent",
                   padding: 0,
-                  flex: "none",
                 }}
               >
                 <CustomInput
@@ -306,7 +305,7 @@ const TicketList: React.FC = () => {
                     }
                   }}
                   icon={<CustomIcon name="Search" size={18} />}
-                  containerStyle={{ width: "350px", paddingLeft: "0px" }}
+                  containerStyle={{ width: "350px", maxWidth: "100%", paddingLeft: "0px" }}
                 />
               </div>
               <div className={styles.filterAnchor}>

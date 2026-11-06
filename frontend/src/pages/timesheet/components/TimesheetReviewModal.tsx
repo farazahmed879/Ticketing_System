@@ -5,6 +5,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import { FormattedTaskDescription } from "./TaskDescriptionEditor";
 import type { TimesheetReviewModalProps } from "../types";
+import styles from "../Timesheet.module.css";
 import { getEntryTypeLabel, getLeaveDaysForEntryType, isZeroHourEntryType } from "../entryTypes";
 
 const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
@@ -43,6 +44,9 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
             style={{
               display: "flex",
               justifyContent: "space-between",
+              alignItems: "center",
+              gap: 12,
+              flexWrap: "wrap",
               marginBottom: isZeroHourDay ? 12 : 8,
             }}
           >
@@ -132,22 +136,17 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
           {entry.tasks.map((t, i) => (
             <div
               key={i}
-              className="glass-card"
-              style={{
-                padding: 12,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
+              className={`glass-card ${styles.reviewModalTaskRow}`}
             >
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div className={styles.reviewModalTaskBody}>
                 <div>
                   <FormattedTaskDescription content={t.description} style={{ fontSize: "0.9rem" }} />
                 </div>
                 <div
                   style={{
                     display: "flex",
-                    gap: 12,
+                    flexWrap: "wrap",
+                    gap: "4px 12px",
                     fontSize: "0.75rem",
                     color: "var(--text-muted)",
                   }}
@@ -169,7 +168,7 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
                   )}
                 </div>
               </div>
-              <strong style={{ color: "var(--accent-primary)" }}>
+              <strong style={{ color: "var(--accent-primary)", flexShrink: 0 }}>
                 {t.hours}h
               </strong>
             </div>
@@ -198,21 +197,16 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
               borderRadius: 8,
               background: "rgba(255,255,255,0.05)",
               border: "1px solid var(--border-glass)",
-              color: "white",
+              color: "var(--text-primary)",
               resize: "none",
+              boxSizing: "border-box",
+              fontFamily: "inherit",
             }}
             rows={3}
           />
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 12,
-            marginTop: 10,
-          }}
-        >
+        <div className={styles.reviewModalActions}>
           <CustomButton
             variant="secondary"
             onClick={() => onReject(entry.id)}

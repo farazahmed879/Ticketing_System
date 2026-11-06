@@ -3,6 +3,7 @@ import CustomSelect from "../../../components/CustomSelect";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
 import type { TimesheetReviewFilterProps, ReviewPeriod } from "../types";
+import styles from "../Timesheet.module.css";
 
 const PERIOD_TABS: { value: ReviewPeriod; label: string }[] = [
   { value: "today", label: "Today" },
@@ -27,18 +28,9 @@ export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
   setViewMode,
 }) => {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
-    >
-      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <div
-          className="glass-card"
-          style={{ display: "flex", padding: 4, borderRadius: 12 }}
-        >
+    <div className={styles.reviewFilterBar}>
+      <div className={styles.reviewFilterGroup}>
+        <div className={`glass-card ${styles.reviewSegment}`}>
           {PERIOD_TABS.map((tab) => (
             <CustomButton
               key={tab.value}
@@ -58,27 +50,24 @@ export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
           ))}
         </div>
         {period === "month" && (
-          <div style={{ display: "flex", gap: 8 }}>
+          <div className={styles.reviewSelects}>
             <CustomSelect
               value={month}
               onChange={setMonth}
               options={months}
-              style={{ width: 180 }}
+              className={styles.reviewSelectMonth}
               placeholder="Month"
             />
             <CustomSelect
               value={year}
               onChange={setYear}
               options={years}
-              style={{ width: 150 }}
+              className={styles.reviewSelectYear}
               placeholder="Year"
             />
           </div>
         )}
-        <div
-          className="glass-card"
-          style={{ display: "flex", padding: 4, borderRadius: 12 }}
-        >
+        <div className={`glass-card ${styles.reviewSegment}`}>
           {[
             { value: "PENDING", label: "Pending" },
             { value: "MANAGER_APPROVED", label: "Manager Approved" },

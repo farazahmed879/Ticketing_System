@@ -2,10 +2,9 @@ import React from "react";
 import { format } from "date-fns";
 import CustomImage from "../../../components/CustomImage";
 import CustomIcon from "../../../components/CustomIcon";
-import CustomBadge from "../../../components/CustomBadge";
 import CustomButton from "../../../components/CustomButton";
 import type { TimesheetEntry } from "../../../types";
-import { getEntryTypeLabel, isZeroHourEntryType } from "../entryTypes";
+import { ReviewApprovalStatus, ReviewHoursType } from "./TimesheetReviewCells";
 
 interface TimesheetReviewCardProps {
   entry: TimesheetEntry;
@@ -13,12 +12,6 @@ interface TimesheetReviewCardProps {
   onView: (entry: TimesheetEntry) => void;
   onApprove: (id: string) => void;
 }
-
-const statusVariant = (status?: string) =>
-  status === "APPROVED" ? "success" : status === "REJECTED" ? "danger" : "warning";
-
-const statusLabel = (status?: string) =>
-  status === "APPROVED" ? "Approved" : status === "REJECTED" ? "Rejected" : "Pending";
 
 export const TimesheetReviewCard: React.FC<TimesheetReviewCardProps> = ({
   entry,
@@ -88,21 +81,10 @@ export const TimesheetReviewCard: React.FC<TimesheetReviewCardProps> = ({
             {entry.user?.email}
           </div>
         </div>
-        <div
-          style={{
-            padding: "4px 10px",
-            borderRadius: 8,
-            background: "rgba(124, 58, 237, 0.1)",
-            color: "var(--accent-primary)",
-            fontWeight: 700,
-            flexShrink: 0,
-            whiteSpace: "nowrap",
-          }}
-        >
-          {isZeroHourEntryType(entry.entryType)
-            ? getEntryTypeLabel(entry.entryType)
-            : `${entry.totalHours}h`}
-        </div>
+        <ReviewHoursType
+          entry={entry}
+          style={{ alignItems: "flex-end", flexShrink: 0 }}
+        />
       </div>
 
       <div
@@ -121,11 +103,6 @@ export const TimesheetReviewCard: React.FC<TimesheetReviewCardProps> = ({
         <span style={{ color: "var(--text-muted)" }}>
           · {format(new Date(entry.date), "EEEE")}
         </span>
-        {!isZeroHourEntryType(entry.entryType) && (
-          <span style={{ color: "var(--text-muted)" }}>
-            · {getEntryTypeLabel(entry.entryType)}
-          </span>
-        )}
       </div>
 
       <div
@@ -138,24 +115,7 @@ export const TimesheetReviewCard: React.FC<TimesheetReviewCardProps> = ({
           borderTop: "1px solid var(--border-glass)",
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", width: 60 }}>
-              Manager
-            </span>
-            <CustomBadge variant={statusVariant(entry.managerApproved)}>
-              {statusLabel(entry.managerApproved)}
-            </CustomBadge>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", width: 60 }}>
-              HR
-            </span>
-            <CustomBadge variant={statusVariant(entry.hrApproved)}>
-              {statusLabel(entry.hrApproved)}
-            </CustomBadge>
-          </div>
-        </div>
+        <ReviewApprovalStatus entry={entry} />
         <div style={{ display: "flex", gap: 8 }} onClick={(e) => e.stopPropagation()}>
           <CustomButton
             variant="ghost"
@@ -164,6 +124,7 @@ export const TimesheetReviewCard: React.FC<TimesheetReviewCardProps> = ({
             icon={<CustomIcon name="Eye" size={16} />}
             style={{ padding: "8px" }}
             title="Review"
+            aria-label="Review timesheet"
           />
           {canApprove && (
             <CustomButton
@@ -173,6 +134,7 @@ export const TimesheetReviewCard: React.FC<TimesheetReviewCardProps> = ({
               icon={<CustomIcon name="CheckCircle2" size={16} />}
               style={{ color: "var(--accent-success)", padding: "8px" }}
               title="Approve"
+              aria-label="Approve timesheet"
             />
           )}
         </div>

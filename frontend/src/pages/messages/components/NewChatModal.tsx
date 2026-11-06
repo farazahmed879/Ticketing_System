@@ -45,15 +45,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
           }
           icon={<CustomIcon name="Search" size={18} />}
         />
-        <div
-          style={{
-            maxHeight: "400px",
-            overflowY: "auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
-        >
+        <div className={styles.userPickList}>
           {isLoading ? (
             <UserListSkeleton />
           ) : filteredUsers.length > 0 ? (
@@ -95,15 +87,8 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
                     <span className={styles.onlineDot} />
                   )}
                 </div>
-                <div>
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
+                <div className={styles.userPickInfo}>
+                  <div className={styles.userPickName}>
                     {u.fullname}
                     {onlineUserIds.has(u.id) && (
                       <span className={styles.onlineTag}>Online</span>
@@ -124,9 +109,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
                       {u.role?.name}
                     </span>
                   </div>
-                  <div
-                    style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}
-                  >
+                  <div className={styles.userPickEmail}>
                     {u.email}
                   </div>
                 </div>

@@ -396,3 +396,36 @@
     animation: fadeIn 0.2s ease;
   }
 }
+
+/* Notification dropdown (top bar). Sizes are inline, hence !important. */
+.notifDropdown {
+  max-width: calc(100vw - 24px);
+}
+
+@media (max-width: 768px) {
+  /* Anchored to the bell it would run off the left edge; pin it to the
+     viewport just under the top bar instead. */
+  .notifDropdown {
+    position: fixed !important;
+    top: 60px !important;
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    max-width: none;
+    max-height: calc(100dvh - 76px) !important;
+    border-radius: 14px !important;
+  }
+
+  .notifDropdown > div:first-child {
+    padding: 12px 14px !important;
+  }
+
+  .notifDropdown > div:nth-child(2) > div {
+    padding: 12px 14px !important;
+  }
+
+  .notifDropdown > button:last-child {
+    padding: 12px !important;
+    font-size: 0.8rem !important;
+  }
+}

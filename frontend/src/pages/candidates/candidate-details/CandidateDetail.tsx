@@ -10,6 +10,7 @@ import ConfirmationModal from "../../../components/ConfirmationModal";
 import { CandidateDetailHeader } from "./CandidateDetailHeader.tsx";
 import { CandidateProfileTab } from "./CandidateProfileTab.tsx";
 import { CandidateHiringTab } from "./CandidateHiringTab.tsx";
+import styles from "./CandidateDetail.module.css";
 
 const CandidateDetail: React.FC = () => {
   const queryClient = useQueryClient();
@@ -86,10 +87,7 @@ const CandidateDetail: React.FC = () => {
   }
 
   return (
-    <div
-      className="animate-fade-in"
-      style={{ display: "flex", flexDirection: "column", gap: 24 }}
-    >
+    <div className={`animate-fade-in ${styles.page}`}>
 
       <CandidateDetailHeader
         candidate={candidate}
@@ -98,26 +96,16 @@ const CandidateDetail: React.FC = () => {
       />
 
       {/* Tabs Navigation */}
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          borderBottom: "1px solid var(--border-glass)",
-          padding: "0 10px",
-        }}
-      >
+      <div className={styles.tabs}>
         <CustomButton
           onClick={() => setActiveTab("profile")}
           variant="ghost"
+          className={styles.tab}
           style={{
-            padding: "12px 24px",
             borderBottom:
               activeTab === "profile"
                 ? "3px solid var(--accent-primary)"
                 : "3px solid transparent",
-            borderRadius: "8px 8px 0 0",
-            fontWeight: 600,
-            fontSize: "1rem",
             color: activeTab === "profile" ? "var(--accent-primary)" : "var(--text-muted)"
           }}
         >
@@ -126,15 +114,12 @@ const CandidateDetail: React.FC = () => {
         <CustomButton
           onClick={() => setActiveTab("hiring")}
           variant="ghost"
+          className={styles.tab}
           style={{
-            padding: "12px 24px",
             borderBottom:
               activeTab === "hiring"
                 ? "3px solid var(--accent-primary)"
                 : "3px solid transparent",
-            borderRadius: "8px 8px 0 0",
-            fontWeight: 600,
-            fontSize: "1rem",
             color: activeTab === "hiring" ? "var(--accent-primary)" : "var(--text-muted)"
           }}
         >

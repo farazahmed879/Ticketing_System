@@ -43,7 +43,7 @@ const Row = ({
     ) : (
       <CustomIcon name={icon || "Tag"} size={16} />
     )}
-    <span>{text}</span>
+    <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{text}</span>
   </div>
 );
 

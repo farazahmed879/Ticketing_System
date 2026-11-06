@@ -2,7 +2,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 24px;
+}
+
+.pageTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
 }
 
 .actions {
@@ -70,7 +77,7 @@
   border-radius: 12px;
   display: flex;
   align-items: center;
-  justify_content: center;
+  justify-content: center;
   flex-shrink: 0;
   border: 1px solid var(--border-glass);
 }
@@ -83,7 +90,9 @@
 .itemHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
+  gap: 4px 12px;
+  flex-wrap: wrap;
   margin-bottom: 4px;
 }
 
@@ -91,6 +100,8 @@
   font-weight: 700;
   font-size: 1rem;
   color: var(--text-primary);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .time {
@@ -103,6 +114,7 @@
   color: var(--text-secondary);
   line-height: 1.5;
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .itemActions {
@@ -121,4 +133,76 @@
 
 .emptyState p {
   font-size: 1.1rem;
+}
+
+.time {
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .header {
+    margin-bottom: 14px;
+  }
+
+  .pageTitle {
+    font-size: 1.15rem;
+  }
+
+  .actions {
+    gap: 8px;
+  }
+
+  .actionBtn {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    gap: 6px;
+    border-radius: 8px;
+  }
+
+  .actionBtn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .notificationItem {
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .iconContainer {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+
+  .iconContainer svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .title {
+    font-size: 0.86rem;
+  }
+
+  .time {
+    font-size: 0.68rem;
+  }
+
+  .message {
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  /* The whole row is tappable; the chevron just eats width */
+  .itemActions {
+    display: none;
+  }
+
+  .emptyState {
+    padding: 48px 20px;
+  }
+
+  .emptyState p {
+    font-size: 0.9rem;
+  }
 }

@@ -96,7 +96,7 @@
 }
 
 .search {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 160px;
   position: relative;
 }
@@ -116,4 +116,27 @@
 .createBtn:hover {
   filter: brightness(1.1);
   box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+}
+
+@media (max-width: 768px) {
+  /* Switcher + Filters on the first line, search full-width below. */
+  .filters {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .filterAnchor {
+    margin-left: auto;
+  }
+  .search {
+    order: 3;
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .search > * {
+    width: 100% !important;
+  }
+  .advancedPanel {
+    width: min(340px, calc(100vw - 32px));
+    max-height: calc(100dvh - 220px);
+  }
 }

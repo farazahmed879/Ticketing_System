@@ -3,6 +3,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomBadge from "../../../components/CustomBadge";
 import { formatDate } from "../../../utils/helpers";
 import type { Candidate } from "../../../types";
+import styles from "./CandidateDetail.module.css";
 
 interface CandidateProfileTabProps {
   candidate: Candidate;
@@ -46,6 +47,7 @@ const NoteEntry: React.FC<{
         fontSize: "0.9rem",
         lineHeight: 1.5,
         whiteSpace: "pre-wrap",
+        overflowWrap: "anywhere",
       }}
     >
       {content}
@@ -58,8 +60,8 @@ export const CandidateProfileTab: React.FC<CandidateProfileTabProps> = ({
 }) => {
   const notes = candidate.notesLog || [];
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 24 }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 24 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 24, minWidth: 0 }}>
         {(notes.length > 0 || candidate.notes) && (
           <div className="glass-card" style={{ padding: 24 }}>
             <h3
@@ -99,23 +101,9 @@ export const CandidateProfileTab: React.FC<CandidateProfileTabProps> = ({
           </div>
         )}
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 24,
-          }}
-        >
+        <div className={styles.twoCol}>
           {/* Left Column */}
-          <div
-            className="glass-card"
-            style={{
-              padding: 24,
-              display: "flex",
-              flexDirection: "column",
-              gap: 24,
-            }}
-          >
+          <div className={`glass-card ${styles.sectionCard}`}>
             <div>
               <div
                 style={{
@@ -134,14 +122,7 @@ export const CandidateProfileTab: React.FC<CandidateProfileTabProps> = ({
                   Objective / Summary
                 </h3>
               </div>
-              <p
-                style={{
-                  color: "var(--text-secondary)",
-                  lineHeight: 1.6,
-                  fontSize: "0.95rem",
-                  whiteSpace: "pre-wrap",
-                }}
-              >
+              <p className={styles.bodyText}>
                 {candidate.objective || "No objective provided."}
               </p>
             </div>
@@ -216,29 +197,14 @@ export const CandidateProfileTab: React.FC<CandidateProfileTabProps> = ({
                   Work Experience
                 </h3>
               </div>
-              <p
-                style={{
-                  color: "var(--text-secondary)",
-                  lineHeight: 1.6,
-                  fontSize: "0.95rem",
-                  whiteSpace: "pre-wrap",
-                }}
-              >
+              <p className={styles.bodyText}>
                 {candidate.workExperience || "No work experience details."}
               </p>
             </div>
           </div>
 
           {/* Right Column */}
-          <div
-            className="glass-card"
-            style={{
-              padding: 24,
-              display: "flex",
-              flexDirection: "column",
-              gap: 24,
-            }}
-          >
+          <div className={`glass-card ${styles.sectionCard}`}>
             <div>
               <div
                 style={{
@@ -257,14 +223,7 @@ export const CandidateProfileTab: React.FC<CandidateProfileTabProps> = ({
                   Technical Skills
                 </h3>
               </div>
-              <p
-                style={{
-                  color: "var(--text-secondary)",
-                  lineHeight: 1.6,
-                  fontSize: "0.95rem",
-                  whiteSpace: "pre-wrap",
-                }}
-              >
+              <p className={styles.bodyText}>
                 {candidate.technicalSkills || "No technical skills listed."}
               </p>
             </div>
@@ -295,14 +254,7 @@ export const CandidateProfileTab: React.FC<CandidateProfileTabProps> = ({
                       Projects
                     </h3>
                   </div>
-                  <p
-                    style={{
-                      color: "var(--text-secondary)",
-                      lineHeight: 1.6,
-                      fontSize: "0.95rem",
-                      whiteSpace: "pre-wrap",
-                    }}
-                  >
+                  <p className={styles.bodyText}>
                     {candidate.projects}
                   </p>
                 </div>

@@ -292,13 +292,7 @@ const TicketSettingsSection = () => {
       {autoCloseEnabled && (
         <div className={styles.settingGroup}>
           <label>Auto-Close After</label>
-          <p
-            style={{
-              fontSize: "0.85rem",
-              color: "var(--text-muted)",
-              marginBottom: 12,
-            }}
-          >
+          <p className={styles.hint}>
             Tickets in "Resolved" or "Approved" status will be automatically
             closed after this period if the client does not close them.
           </p>
@@ -493,67 +487,23 @@ const NotificationSettingsSection: React.FC = () => {
       </div>
 
       {/* Personal preferences */}
-      <div
-        style={{
-          marginBottom: isAdmin ? "32px" : "0px",
-          borderBottom: isAdmin ? "1px solid var(--border-glass)" : "none",
-          paddingBottom: isAdmin ? "24px" : "0px",
-        }}
-      >
-        <h4
-          style={{
-            marginBottom: "20px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            fontWeight: 600,
-            color: "var(--text-primary)",
-          }}
-        >
+      <div className={isAdmin ? styles.prefSectionAdmin : undefined}>
+        <h4 className={styles.subHeading}>
           <CustomIcon name="Settings" size={16} /> Personal Preferences
         </h4>
 
-        <div
-          className={styles.settingGroup}
-          style={{
-            borderBottom: "1px solid var(--border-glass)",
-            paddingBottom: "16px",
-            marginBottom: "16px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "24px",
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <label
-                style={{
-                  margin: "0 0 4px 0",
-                  color: "var(--text-primary)",
-                  fontWeight: 500,
-                }}
-              >
+        <div className={`${styles.settingGroup} ${styles.prefDivider}`}>
+          <div className={styles.prefRow}>
+            <div className={styles.prefText}>
+              <label className={styles.prefLabel}>
                 Email Notifications
               </label>
-              <p
-                style={{
-                  fontSize: "0.8rem",
-                  color: "var(--text-muted)",
-                  margin: 0,
-                }}
-              >
+              <p className={styles.prefDesc}>
                 Receive email alerts for important updates and ticket
                 assignments
               </p>
             </div>
-            <div
-              className={styles.themeToggleGrid}
-              style={{ maxWidth: "200px" }}
-            >
+            <div className={`${styles.themeToggleGrid} ${styles.prefToggle}`}>
               <CustomButton
                 variant={emailAlerts ? "secondary" : "ghost"}
                 className={`${styles.themeOption} ${emailAlerts ? styles.themeOptionActive : ""}`}
@@ -572,46 +522,17 @@ const NotificationSettingsSection: React.FC = () => {
           </div>
         </div>
 
-        <div
-          className={styles.settingGroup}
-          style={{
-            borderBottom: "1px solid var(--border-glass)",
-            paddingBottom: "16px",
-            marginBottom: "16px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "24px",
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <label
-                style={{
-                  margin: "0 0 4px 0",
-                  color: "var(--text-primary)",
-                  fontWeight: 500,
-                }}
-              >
+        <div className={`${styles.settingGroup} ${styles.prefDivider}`}>
+          <div className={styles.prefRow}>
+            <div className={styles.prefText}>
+              <label className={styles.prefLabel}>
                 Sound Alerts
               </label>
-              <p
-                style={{
-                  fontSize: "0.8rem",
-                  color: "var(--text-muted)",
-                  margin: 0,
-                }}
-              >
+              <p className={styles.prefDesc}>
                 Play notification sounds for real-time inbox messages
               </p>
             </div>
-            <div
-              className={styles.themeToggleGrid}
-              style={{ maxWidth: "200px" }}
-            >
+            <div className={`${styles.themeToggleGrid} ${styles.prefToggle}`}>
               <CustomButton
                 variant={soundAlerts ? "secondary" : "ghost"}
                 className={`${styles.themeOption} ${soundAlerts ? styles.themeOptionActive : ""}`}
@@ -631,42 +552,16 @@ const NotificationSettingsSection: React.FC = () => {
         </div>
 
         <div className={styles.settingGroup}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "24px",
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <label
-                style={{
-                  margin: "0 0 4px 0",
-                  color: "var(--text-primary)",
-                  fontWeight: 500,
-                }}
-              >
+          <div className={styles.prefRow}>
+            <div className={styles.prefText}>
+              <label className={styles.prefLabel}>
                 Desktop Notifications
               </label>
-              <p
-                style={{
-                  fontSize: "0.8rem",
-                  color: "var(--text-muted)",
-                  margin: 0,
-                }}
-              >
+              <p className={styles.prefDesc}>
                 Show banner alerts on screen when background updates occur
               </p>
               {permissionError && (
-                <p
-                  style={{
-                    fontSize: "0.75rem",
-                    color: "var(--accent-danger)",
-                    margin: "4px 0 0 0",
-                    fontWeight: 500,
-                  }}
-                >
+                <p className={styles.prefError}>
                   {permissionError}
                 </p>
               )}
@@ -687,10 +582,7 @@ const NotificationSettingsSection: React.FC = () => {
                 </CustomButton>
               )}
             </div>
-            <div
-              className={styles.themeToggleGrid}
-              style={{ maxWidth: "200px" }}
-            >
+            <div className={`${styles.themeToggleGrid} ${styles.prefToggle}`}>
               <CustomButton
                 variant={desktopAlerts ? "secondary" : "ghost"}
                 className={`${styles.themeOption} ${desktopAlerts ? styles.themeOptionActive : ""}`}
@@ -713,16 +605,7 @@ const NotificationSettingsSection: React.FC = () => {
       {/* Global cleanup (Admins only) */}
       {isAdmin && (
         <div>
-          <h4
-            style={{
-              marginBottom: "20px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              fontWeight: 600,
-              color: "var(--text-primary)",
-            }}
-          >
+          <h4 className={styles.subHeading}>
             <CustomIcon name="Database" size={16} /> Global Notification
             Retention (Admin Only)
           </h4>
@@ -752,13 +635,7 @@ const NotificationSettingsSection: React.FC = () => {
           {retentionEnabled && (
             <div className={styles.settingGroup}>
               <label>Delete Notifications After</label>
-              <p
-                style={{
-                  fontSize: "0.85rem",
-                  color: "var(--text-muted)",
-                  marginBottom: 12,
-                }}
-              >
+              <p className={styles.hint}>
                 All user notifications stored in the database will be
                 permanently deleted after this retention period.
               </p>
@@ -890,10 +767,10 @@ const Settings: React.FC = () => {
   return (
     <div className="animate-fade-in">
       <div className={styles.header}>
-        <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>
+        <h1 className={styles.title}>
           {t("settings.title")}
         </h1>
-        <p style={{ color: "var(--text-muted)" }}>{t("settings.subtitle")}</p>
+        <p className={styles.subtitle}>{t("settings.subtitle")}</p>
       </div>
 
       <div className={styles.container}>
@@ -930,30 +807,14 @@ const Settings: React.FC = () => {
                 </div>
               </div>
 
-              <div
-                className={styles.settingGroup}
-                style={{
-                  borderBottom: "1px solid var(--border-glass)",
-                  paddingBottom: "24px",
-                  marginBottom: "32px",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    marginBottom: "16px",
-                  }}
-                >
+              <div className={`${styles.settingGroup} ${styles.languageGroup}`}>
+                <div className={styles.languageHeading}>
                   <CustomIcon
                     name="Languages"
                     size={20}
                     color="var(--accent-primary)"
                   />
-                  <label
-                    style={{ margin: 0, fontSize: "1rem", fontWeight: 600 }}
-                  >
+                  <label>
                     {t("settings.language")}
                   </label>
                 </div>
@@ -966,14 +827,8 @@ const Settings: React.FC = () => {
                       setCurrentLang("en");
                     }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                      }}
-                    >
-                      <span style={{ fontSize: "1.2rem" }}>🇺🇸</span>
+                    <div className={styles.langOption}>
+                      <span className={styles.langFlag}>🇺🇸</span>
                       <span>{t("languages.en")}</span>
                     </div>
                   </CustomButton>
@@ -985,14 +840,8 @@ const Settings: React.FC = () => {
                       setCurrentLang("ar");
                     }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                      }}
-                    >
-                      <span style={{ fontSize: "1.2rem" }}>🇸🇦</span>
+                    <div className={styles.langOption}>
+                      <span className={styles.langFlag}>🇸🇦</span>
                       <span>{t("languages.ar")}</span>
                     </div>
                   </CustomButton>
@@ -1004,14 +853,8 @@ const Settings: React.FC = () => {
                       setCurrentLang("ur");
                     }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                      }}
-                    >
-                      <span style={{ fontSize: "1.2rem" }}>🇵🇰</span>
+                    <div className={styles.langOption}>
+                      <span className={styles.langFlag}>🇵🇰</span>
                       <span>{t("languages.ur")}</span>
                     </div>
                   </CustomButton>

@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomBadge from "../../../components/CustomBadge";
 import type { Candidate } from "../../../types";
+import styles from "./CandidateDetail.module.css";
 
 interface CandidateHiringTabProps {
   candidate: Candidate;
@@ -19,15 +20,7 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
       style={{ display: "flex", flexDirection: "column", gap: 24 }}
     >
       {interviews.length > 0 ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 32,
-            position: "relative",
-            paddingLeft: 40,
-          }}
-        >
+        <div className={styles.timeline}>
           <div
             style={{
               position: "absolute",
@@ -41,7 +34,7 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
           />
 
           {interviews.map((interview: any, index: number) => (
-            <div key={interview.id} style={{ position: "relative" }}>
+            <div key={interview.id} style={{ position: "relative", minWidth: 0 }}>
               <div
                 style={{
                   position: "absolute",
@@ -70,46 +63,29 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
                 className="glass-card"
                 style={{ padding: 0, overflow: "hidden" }}
               >
-                <div
-                  style={{
-                    padding: "20px 24px",
-                    background: "rgba(255,255,255,0.02)",
-                    borderBottom: "1px solid var(--border-glass)",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <div>
-                    <h3
-                      style={{
-                        margin: 0,
-                        fontSize: "1.2rem",
-                        fontWeight: 700,
-                      }}
-                    >
+                <div className={styles.interviewHeader}>
+                  <div className={styles.interviewHeaderText}>
+                    <h3 className={styles.interviewTitle}>
                       {interview.title}
                     </h3>
-                    <div
-                      style={{
-                        color: "var(--text-muted)",
-                        fontSize: "0.85rem",
-                        marginTop: 4,
-                      }}
-                    >
-                      <CustomIcon
-                        name="Calendar"
-                        size={14}
-                        style={{ marginRight: 6 }}
-                      />
-                      {format(new Date(interview.scheduledAt), "PPP p")}
+                    <div className={styles.interviewMeta}>
+                      <span className={styles.metaGroup}>
+                        <CustomIcon
+                          name="Calendar"
+                          size={14}
+                          style={{ marginRight: 6 }}
+                        />
+                        {format(new Date(interview.scheduledAt), "PPP p")}
+                      </span>
                       <span style={{ margin: "0 10px" }}>•</span>
-                      <CustomIcon
-                        name="Clock"
-                        size={14}
-                        style={{ marginRight: 6 }}
-                      />
-                      {interview.duration} mins
+                      <span className={styles.metaGroup}>
+                        <CustomIcon
+                          name="Clock"
+                          size={14}
+                          style={{ marginRight: 6 }}
+                        />
+                        {interview.duration} mins
+                      </span>
                     </div>
                   </div>
                   <CustomBadge
@@ -123,7 +99,7 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
                   </CustomBadge>
                 </div>
 
-                <div style={{ padding: 24 }}>
+                <div className={styles.interviewBody}>
                   <h4
                     style={{
                       margin: "0 0 16px 0",
@@ -134,24 +110,9 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
                     Panel Feedback
                   </h4>
                   {interview.feedbacks?.length > 0 ? (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(400px, 1fr))",
-                        gap: 20,
-                      }}
-                    >
+                    <div className={styles.feedbackGrid}>
                       {interview.feedbacks.map((fb: any) => (
-                        <div
-                          key={fb.id}
-                          style={{
-                            padding: 16,
-                            borderRadius: 12,
-                            background: "rgba(255,255,255,0.01)",
-                            border: "1px solid var(--border-glass)",
-                          }}
-                        >
+                        <div key={fb.id} className={styles.feedbackCard}>
                           <div
                             style={{
                               display: "flex",
@@ -164,6 +125,7 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
                               style={{
                                 width: 32,
                                 height: 32,
+                                flexShrink: 0,
                                 borderRadius: "50%",
                                 background: "var(--bg-input)",
                                 display: "flex",
@@ -175,7 +137,7 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
                             >
                               {fb.interviewer.fullname.charAt(0)}
                             </div>
-                            <div style={{ flex: 1 }}>
+                            <div style={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}>
                               <div
                                 style={{
                                   fontSize: "0.9rem",
@@ -224,26 +186,11 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
                             >
                               Comments
                             </span>
-                            <p
-                              style={{
-                                margin: 0,
-                                fontSize: "0.85rem",
-                                color: "var(--text-secondary)",
-                                lineHeight: 1.5,
-                              }}
-                            >
+                            <p className={styles.feedbackComment}>
                               {fb.comments || "No comments provided."}
                             </p>
                           </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              borderTop: "1px solid var(--border-glass)",
-                              paddingTop: 10,
-                            }}
-                          >
+                          <div className={styles.recommendationRow}>
                             <span
                               style={{
                                 fontSize: "0.8rem",
@@ -288,8 +235,7 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
         </div>
       ) : (
         <div
-          className="glass-card"
-          style={{ padding: 60, textAlign: "center" }}
+          className={`glass-card ${styles.emptyState}`}
         >
           <div
             style={{

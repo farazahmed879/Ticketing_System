@@ -41,14 +41,15 @@ const TimesheetReport: React.FC = () => {
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
   return (
-    <div className={styles.container}>
-      <div className={`${styles.flexBetween} ${styles.mb24}`} style={{ marginTop: 16 }}>
-        <div className={`${styles.flexRow} ${styles.alignCenter} ${styles.gap16}`}>
+    <div className={styles.reportContainer}>
+      <div className={styles.reportHeader}>
+        <div className={styles.reportTitleGroup}>
           <CustomButton
             variant="ghost"
             onClick={() => navigate("/timesheet")}
             icon={<CustomIcon name="ArrowLeft" size={20} />}
             style={{ 
+              flexShrink: 0,
               width: 40, 
               height: 40, 
               padding: 0, 
@@ -64,18 +65,18 @@ const TimesheetReport: React.FC = () => {
             </p>
           </div>
         </div>
-        <div className={`${styles.flexRow} ${styles.gap12}`}>
+        <div className={styles.reportControls}>
           <CustomSelect
             value={month.toString()}
             onChange={(val) => setMonth(parseInt(val))}
             options={months.map((m, i) => ({ value: i.toString(), label: m }))}
-            style={{ width: 150 }}
+            className={styles.reportSelectMonth}
           />
           <CustomSelect
             value={year.toString()}
             onChange={(val) => setYear(parseInt(val))}
             options={years.map(y => ({ value: y.toString(), label: y.toString() }))}
-            style={{ width: 120 }}
+            className={styles.reportSelectYear}
           />
           <CustomButton variant="secondary" icon={<CustomIcon name="Download" size={18} />}>
             Export PDF
@@ -110,9 +111,10 @@ const TimesheetReport: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, marginTop: 24 }}>
-        <div className="glass-card" style={{ padding: 24 }}>
+      <div className={styles.reportGrid}>
+        <div className={`glass-card ${styles.reportCard}`}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 20 }}>Daily Breakdown</h3>
+          <div className={styles.tableScroll}>
           <CustomTable
             columns={[
               { 
@@ -187,9 +189,10 @@ const TimesheetReport: React.FC = () => {
             data={report?.entries || []}
             loading={loading}
           />
+          </div>
         </div>
 
-        <div className="glass-card" style={{ padding: 24 }}>
+        <div className={`glass-card ${styles.reportCard}`}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 20 }}>Project Distribution</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {loading ? (
@@ -205,8 +208,8 @@ const TimesheetReport: React.FC = () => {
             ) : (
               report?.projectBreakdown.map((p, i) => (
                 <div key={i}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '0.9rem' }}>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{p.name}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 8, fontSize: '0.9rem' }}>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 500, minWidth: 0, overflowWrap: 'anywhere' }}>{p.name}</span>
                     <span style={{ fontWeight: 700 }}>{p.hours}h</span>
                   </div>
                   <div style={{ height: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden' }}>

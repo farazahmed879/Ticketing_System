@@ -88,22 +88,10 @@ const Profile: React.FC = () => {
     );
 
   return (
-    <div
-      className="animate-fade-in"
-      style={{ display: "flex", flexDirection: "column", gap: 24 }}
-    >
+    <div className={`animate-fade-in ${styles.page}`}>
       {/* Header Card */}
-      <div
-        className="glass-card"
-        style={{
-          padding: "30px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 16,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+      <div className={`glass-card ${styles.headerCard}`}>
+        <div className={styles.headerMain}>
           {id && (
             <CustomButton
               variant="ghost"
@@ -116,10 +104,12 @@ const Profile: React.FC = () => {
                 borderRadius: "12px",
                 background: "rgba(255, 255, 255, 0.05)",
                 border: "1px solid var(--border-glass)",
+                flexShrink: 0,
               }}
             />
           )}
           <div
+            className={styles.avatarHero}
             style={{
               width: 80,
               height: 80,
@@ -152,25 +142,9 @@ const Profile: React.FC = () => {
               user.fullname.charAt(0)
             )}
           </div>
-          <div>
-            <h1
-              style={{
-                fontSize: "2.2rem",
-                fontWeight: 800,
-                margin: 0,
-                color: "var(--text-primary)",
-              }}
-            >
-              {user.fullname}
-            </h1>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                marginTop: 8,
-              }}
-            >
+          <div className={styles.headerText}>
+            <h1 className={styles.name}>{user.fullname}</h1>
+            <div className={styles.headerMeta}>
               <span
                 style={{
                   color: "var(--text-secondary)",
@@ -212,7 +186,7 @@ const Profile: React.FC = () => {
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
+        <div className={styles.headerActions}>
           {user.primaryResumeUrl && (
             <CustomButton
               variant="gradient"
@@ -234,13 +208,11 @@ const Profile: React.FC = () => {
         </div>
       </div>
 
-      <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: 24 }}
-      >
+      <div className={styles.layout}>
         {/* Main Content */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        <div className={styles.column}>
           {/* Bio / About */}
-          <div className="glass-card" style={{ padding: 24 }}>
+          <div className={`glass-card ${styles.panel}`}>
             <div
               style={{
                 display: "flex",
@@ -267,7 +239,7 @@ const Profile: React.FC = () => {
           </div>
 
           {/* Professional Information */}
-          <div className="glass-card" style={{ padding: 24 }}>
+          <div className={`glass-card ${styles.panel}`}>
             <div
               style={{
                 display: "flex",
@@ -286,13 +258,7 @@ const Profile: React.FC = () => {
               </h3>
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 24,
-              }}
-            >
+            <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
                 <label>Department</label>
                 <span>{user.department?.name || "Operations"}</span>
@@ -350,7 +316,7 @@ const Profile: React.FC = () => {
           </div>
 
           {/* Personal Information */}
-          <div className="glass-card" style={{ padding: 24 }}>
+          <div className={`glass-card ${styles.panel}`}>
             <div
               style={{
                 display: "flex",
@@ -369,13 +335,7 @@ const Profile: React.FC = () => {
               </h3>
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 24,
-              }}
-            >
+            <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
                 <label>Full Name</label>
                 <span>{user.fullname}</span>
@@ -397,9 +357,9 @@ const Profile: React.FC = () => {
         </div>
 
         {/* Sidebar */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        <div className={`${styles.column} ${styles.sidebar}`}>
           {/* Contact Info */}
-          <div className="glass-card" style={{ padding: 24 }}>
+          <div className={`glass-card ${styles.panel}`}>
             <h3
               style={{
                 margin: 0,
@@ -413,7 +373,7 @@ const Profile: React.FC = () => {
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ display: "flex", gap: 12 }}>
                 <CustomIcon name="Mail" size={18} color="var(--text-muted)" />
-                <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                   <span
                     style={{
                       fontSize: "0.75rem",
@@ -423,7 +383,7 @@ const Profile: React.FC = () => {
                   >
                     PERSONAL EMAIL
                   </span>
-                  <span style={{ fontSize: "0.95rem" }}>{user.email}</span>
+                  <span className={styles.contactValue}>{user.email}</span>
                 </div>
               </div>
               {user.companyEmail && (
@@ -433,7 +393,7 @@ const Profile: React.FC = () => {
                     size={18}
                     color="var(--accent-primary)"
                   />
-                  <div style={{ display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                     <span
                       style={{
                         fontSize: "0.75rem",
@@ -443,7 +403,7 @@ const Profile: React.FC = () => {
                     >
                       COMPANY EMAIL
                     </span>
-                    <span style={{ fontSize: "0.95rem" }}>
+                    <span className={styles.contactValue}>
                       {user.companyEmail}
                     </span>
                   </div>
@@ -451,7 +411,7 @@ const Profile: React.FC = () => {
               )}
               <div style={{ display: "flex", gap: 12 }}>
                 <CustomIcon name="Phone" size={18} color="var(--text-muted)" />
-                <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                   <span
                     style={{
                       fontSize: "0.75rem",
@@ -461,7 +421,7 @@ const Profile: React.FC = () => {
                   >
                     PRIMARY CONTACT
                   </span>
-                  <span style={{ fontSize: "0.95rem" }}>
+                  <span className={styles.contactValue}>
                     {user.primaryContact || "-"}
                   </span>
                 </div>
@@ -472,7 +432,7 @@ const Profile: React.FC = () => {
                   size={18}
                   color="var(--text-muted)"
                 />
-                <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                   <span
                     style={{
                       fontSize: "0.75rem",
@@ -482,14 +442,14 @@ const Profile: React.FC = () => {
                   >
                     SECONDARY CONTACT
                   </span>
-                  <span style={{ fontSize: "0.95rem" }}>
+                  <span className={styles.contactValue}>
                     {user.secondaryContact || "-"}
                   </span>
                 </div>
               </div>
               <div style={{ display: "flex", gap: 12 }}>
                 <CustomIcon name="MapPin" size={18} color="var(--text-muted)" />
-                <div style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
                   <span
                     style={{
                       fontSize: "0.75rem",
@@ -499,7 +459,7 @@ const Profile: React.FC = () => {
                   >
                     ADDRESS
                   </span>
-                  <span style={{ fontSize: "0.95rem" }}>
+                  <span className={styles.contactValue}>
                     {user.address || "-"}
                   </span>
                 </div>
@@ -509,7 +469,7 @@ const Profile: React.FC = () => {
 
           {/* Social / Professional Links */}
           {(user.linkedInUrl || user.gitUrl) && (
-            <div className="glass-card" style={{ padding: 24 }}>
+            <div className={`glass-card ${styles.panel}`}>
               <h3
                 style={{
                   margin: 0,
@@ -572,7 +532,7 @@ const Profile: React.FC = () => {
 
           {/* Emergency Contact */}
           {user.emergencyContact && (
-            <div className="glass-card" style={{ padding: 24 }}>
+            <div className={`glass-card ${styles.panel}`}>
               <h3
                 style={{
                   margin: 0,

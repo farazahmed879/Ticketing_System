@@ -5,6 +5,7 @@ import CustomButton from "../../../components/CustomButton";
 import CustomImage from "../../../components/CustomImage";
 
 import type { TimesheetReviewSidebarProps } from "../types";
+import styles from "../Timesheet.module.css";
 
 export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
   userSearch,
@@ -19,14 +20,7 @@ export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
 
   return (
     <>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 16,
-        }}
-      >
+      <div className={styles.rvSideHeader}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <CustomIcon name="Users" size={20} color="var(--accent-primary)" />
           <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700 }}>
@@ -63,7 +57,7 @@ export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
         )}
       </div>
 
-      <div style={{ marginBottom: 14 }}>
+      <div className={styles.rvSideSearch}>
         <CustomInput
           placeholder="Search members..."
           value={userSearch}
@@ -74,19 +68,13 @@ export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
         />
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          flex: 1,
-          minHeight: 0,
-          overflow: "hidden",
-        }}
-      >
+      {/* On narrow screens this block turns into a horizontal user picker
+          (see .rvSidePicker in Timesheet.module.css). */}
+      <div className={styles.rvSidePicker}>
         <CustomButton
           onClick={() => setSelectedUserId(null)}
           variant="ghost"
+          className={styles.rvSideUserBtn}
           style={{
             display: "flex",
             alignItems: "center",
@@ -128,16 +116,7 @@ export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
           <span style={{ fontWeight: 600 }}>All Users</span>
         </CustomButton>
 
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            paddingRight: 8,
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
-        >
+        <div className={styles.rvSideList}>
           {filteredUsers.map((u: any) => {
             const isUnfilled = unfilledData?.unfilledUserIds?.includes(u.id);
             const missingInfo = unfilledData?.userMissingDays?.[u.id];
@@ -147,6 +126,7 @@ export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
                 key={u.id}
                 onClick={() => setSelectedUserId(u.id)}
                 variant="ghost"
+                className={styles.rvSideUserBtn}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -228,18 +208,10 @@ export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
                   )}
                 </div>
 
-                <div
-                  style={{
-                    flex: 1,
-                    overflow: "hidden",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
+                <div className={styles.rvSideUserInfo}>
                   <div style={{ minWidth: 0, overflow: "hidden" }}>
                     <div
+                      className={styles.rvSideUserName}
                       style={{
                         fontWeight: 600,
                         fontSize: "0.85rem",
@@ -326,6 +298,7 @@ export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
 
                 {selectedUserId === u.id && (
                   <div
+                    className={styles.rvSideSelectedDot}
                     style={{
                       width: 6,
                       height: 6,

@@ -45,8 +45,8 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   return (
     <div className={styles.conversationList}>
       <div className={styles.listHeader}>
-        <h2 style={{ fontSize: "1.2rem", fontWeight: 700 }}>Jami Chat</h2>
-        <div style={{ display: "flex", gap: 6 }}>
+        <h2 className={styles.listTitle}>Jami Chat</h2>
+        <div className={styles.listHeaderActions}>
           {canManageGroup && (
             <CustomButton
               variant="ghost"
@@ -80,7 +80,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         </div>
       </div>
 
-      <div style={{ padding: "16px 24px" }}>
+      <div className={styles.listSearch}>
         <CustomInput
           placeholder="Search chats..."
           value={searchTerm}
@@ -101,21 +101,11 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
               }`}
               onClick={() => onSelectConv(conv.id)}
             >
-              <div style={{ position: "relative", flexShrink: 0 }}>
+              <div className={styles.avatarWrap}>
                 <div
-                  className="glass-card"
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: conv.isGroup ? 12 : "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    overflow: "hidden",
-                    background: conv.isGroup
-                      ? "rgba(124,58,237,0.15)"
-                      : undefined,
-                  }}
+                  className={`glass-card ${styles.convAvatar} ${
+                    conv.isGroup ? styles.avatarGroup : ""
+                  }`}
                 >
                   {conv.isGroup ? (
                     <CustomIcon
@@ -143,44 +133,23 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                     <span className={styles.onlineDot} />
                   )}
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: 4,
-                  }}
-                >
-                  <span style={{ fontWeight: 600, fontSize: "0.95rem" }}>
+              <div className={styles.convBody}>
+                <div className={styles.convTopRow}>
+                  <span
+                    className={styles.convName}
+                    title={
+                      (conv.isGroup ? conv.name : conv.partner?.fullname) ||
+                      undefined
+                    }
+                  >
                     {conv.isGroup ? conv.name : conv.partner?.fullname}
                   </span>
-                  <span
-                    style={{
-                      fontSize: "0.75rem",
-                      color: "var(--text-muted)",
-                    }}
-                  >
+                  <span className={styles.convTime}>
                     {format(new Date(conv.updatedAt), "HH:mm")}
                   </span>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--text-muted)",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      flex: 1,
-                    }}
-                  >
+                <div className={styles.convBottomRow}>
+                  <div className={styles.convPreview}>
                     {conv.recentMessage}
                   </div>
                   {unreadCounts[conv.id] > 0 && (
@@ -193,13 +162,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             </div>
           ))
         ) : (
-          <div
-            style={{
-              textAlign: "center",
-              padding: 40,
-              color: "var(--text-muted)",
-            }}
-          >
+          <div className={styles.listEmpty}>
             {searchTerm ? "No chats found" : "No conversations yet"}
           </div>
         )}

@@ -508,13 +508,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
           minWidth: 0,
         }}
       >
-        <span
-          style={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
+        <span className={styles.titleText}>
           {`Ticket #${displayTicket.uid}: ${displayTicket.subject}`}
         </span>
         {displayTicket?.wasFailed && (

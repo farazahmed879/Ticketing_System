@@ -220,6 +220,8 @@ const ProjectList: React.FC = () => {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              flexWrap: "wrap",
+              gap: 12,
             }}
           >
             <div>
@@ -240,7 +242,7 @@ const ProjectList: React.FC = () => {
           </div>
         }
         filters={
-          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
             <CustomInput
               placeholder="Search projects..."
               value={searchInput}
@@ -259,7 +261,7 @@ const ProjectList: React.FC = () => {
                 }
               }}
               icon={<CustomIcon name="Search" size={18} />}
-              containerStyle={{ width: "350px" }}
+              containerStyle={{ width: "350px", maxWidth: "100%" }}
             />
             <CustomSelect
               value={statusFilter}
@@ -270,7 +272,7 @@ const ProjectList: React.FC = () => {
                 ...PROJECT_STATUS_OPTIONS,
               ]}
               icon={<CustomIcon name="Activity" size={18} />}
-              style={{ minWidth: 200 }}
+              style={{ minWidth: 200, maxWidth: "100%" }}
             />
             <div className="view-mode-switcher"
               style={{
@@ -352,7 +354,7 @@ const ProjectList: React.FC = () => {
               flex: 1,
               overflowY: "auto",
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(300px, 100%), 1fr))",
               gap: 16,
               padding: "4px 0",
               alignContent: "start",

@@ -181,6 +181,8 @@ const UserList: React.FC = () => {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              flexWrap: "wrap",
+              gap: 12,
             }}
           >
             <div>
@@ -204,7 +206,7 @@ const UserList: React.FC = () => {
           </div>
         }
         filters={
-          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
             <CustomInput
               placeholder="Search users..."
               value={searchInput}
@@ -223,7 +225,7 @@ const UserList: React.FC = () => {
                 }
               }}
               icon={<CustomIcon name="Search" size={18} />}
-              containerStyle={{ width: "350px" }}
+              containerStyle={{ width: "350px", maxWidth: "100%" }}
             />
             <CustomSelect
               value={roleFilter}
@@ -239,7 +241,7 @@ const UserList: React.FC = () => {
                   label: r.name,
                 })),
               ]}
-              style={{ width: 200 }}
+              style={{ width: 200, maxWidth: "100%" }}
             />
             <div className="view-mode-switcher"
               style={{
@@ -320,7 +322,7 @@ const UserList: React.FC = () => {
               flex: 1,
               overflowY: "auto",
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))",
               gap: 16,
               padding: "4px 0",
             }}

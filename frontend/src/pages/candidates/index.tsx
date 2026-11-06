@@ -27,7 +27,13 @@ import { useAuth } from "../../context/AuthContext";
 import { ROLE_TYPE } from "../roles/roleConstants";
 
 import StandardListLayout from "../../components/StandardListLayout";
-import { getCandidateColumns, statusBadgeVariant } from "./columns";
+import {
+  getCandidateColumns,
+  statusBadgeVariant,
+  CandidateActions,
+  CandidateInterviewCount,
+  formatCandidateLocation,
+} from "./columns";
 import { formatDate , useListViewMode } from "../../utils/helpers";
 import CustomBadge from "../../components/CustomBadge";
 import CustomImage from "../../components/CustomImage";
@@ -699,7 +705,7 @@ const CandidateList: React.FC = () => {
               flex: 1,
               overflowY: "auto",
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(320px, 100%), 1fr))",
               gap: 16,
               padding: "4px 0",
               alignContent: "start",
@@ -722,10 +728,11 @@ const CandidateList: React.FC = () => {
                   border: "1px solid var(--border-glass)",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 8 }}>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center", minWidth: 0 }}>
                     <div
                       style={{
+                        flexShrink: 0,
                         width: 38,
                         height: 38,
                         borderRadius: "50%",
@@ -740,7 +747,7 @@ const CandidateList: React.FC = () => {
                     >
                       {c.name.charAt(0)}
                     </div>
-                    <div>
+                    <div className={styles.cardTitle}>
                       <h3 style={{ fontSize: "1.05rem", fontWeight: 600, margin: 0 }}>
                         {c.name}
                       </h3>
@@ -758,37 +765,16 @@ const CandidateList: React.FC = () => {
                       style={{ display: "flex", gap: 2, marginLeft: 6 }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {!c.isConverted && (
-                        <CustomButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setCandidateToConvert(c.id);
-                            setIsConvertModalOpen(true);
-                          }}
-                          icon={<CustomIcon name="UserPlus" size={14} />}
-                          style={{ padding: 6, minHeight: "auto", color: "var(--accent-success)" }}
-                        />
-                      )}
-                      <CustomButton
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setCurrentEditingId(c.id);
+                      <CandidateActions
+                        candidate={c}
+                        onConvert={handleConvertClick}
+                        onEdit={(id) => {
+                          setCurrentEditingId(id);
                           setIsModalOpen(true);
                         }}
-                        icon={<CustomIcon name="Edit2" size={14} />}
-                        style={{ padding: 6, minHeight: "auto" }}
-                      />
-                      <CustomButton
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setCandidateToDelete(c.id);
-                          setIsDeleteModalOpen(true);
-                        }}
-                        icon={<CustomIcon name="Trash2" size={14} />}
-                        style={{ padding: 6, minHeight: "auto", color: "var(--accent-danger)" }}
+                        onDelete={handleDelete}
+                        iconSize={14}
+                        buttonStyle={{ padding: 6, minHeight: "auto" }}
                       />
                     </div>
                   </div>
@@ -800,7 +786,7 @@ const CandidateList: React.FC = () => {
                       <span className="text-xs-muted" style={{ fontWeight: 600 }}>AI Match Score</span>
                       <span className="text-xs" style={{ fontWeight: 700, color: "var(--accent-primary)" }}>{c.matchScore || 0}%</span>
                     </div>
-                    <div style={{ width: "100%", height: 6, background: "rgba(255,255,255,0.05)", borderRadius: 3, overflow: "hidden" }}>
+                    <div style={{ width: "100%", height: 6, background: "var(--border-glass)", borderRadius: 3, overflow: "hidden" }}>
                       <div
                         style={{
                           height: "100%",
@@ -810,38 +796,40 @@ const CandidateList: React.FC = () => {
                         }}
                       />
                     </div>
+                    <span className={styles.cardLabel} style={{ marginTop: 6 }}>
+                      Why It Matched
+                    </span>
+                    {c.matchReason ? (
+                      <span className={styles.cardReason} title={c.matchReason}>
+                        {c.matchReason}
+                      </span>
+                    ) : (
+                      <span className="text-sm-secondary">—</span>
+                    )}
                   </div>
                 )}
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <CustomIcon name="Mail" size={14} color="var(--text-muted)" />
-                    <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                    <span className={styles.cardText} title={c.email}>
                       {c.email}
                     </span>
                   </div>
-                  {c.phone && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <CustomIcon name="Phone" size={14} color="var(--text-muted)" />
-                      <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                        {c.phone}
-                      </span>
-                    </div>
-                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <CustomIcon name="Phone" size={14} color="var(--text-muted)" />
+                    <span className={styles.cardText}>{c.phone || "—"}</span>
+                  </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <CustomIcon name="MapPin" size={14} color="var(--text-muted)" />
-                    <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-                      {c.city
-                        ? c.nationality
-                          ? `${c.city}, ${c.nationality}`
-                          : c.city
-                        : c.nationality || c.address || "No location provided"}
+                    <span className={styles.cardText}>
+                      {formatCandidateLocation(c) || "No location provided"}
                     </span>
                   </div>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-glass)", paddingTop: 12 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div className={styles.cardFooter}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                     {c.createdBy?.image ? (
                       <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden" }}>
                         <CustomImage src={c.createdBy.image} alt={c.createdBy.fullname} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -870,10 +858,15 @@ const CandidateList: React.FC = () => {
                       <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-primary)" }}>
                         {c.createdBy?.fullname || "System"}
                       </span>
-                      <span className="text-xs-muted" style={{ fontSize: "0.65rem" }}>
+                      <span className="text-xs-muted" style={{ fontSize: "0.65rem", whiteSpace: "nowrap" }}>
                         {formatDate(c.createdAt)}
                       </span>
                     </div>
+                  </div>
+
+                  <div className={styles.cardInterviews} title="Interviews">
+                    <span className={styles.cardLabel}>Interviews</span>
+                    <CandidateInterviewCount candidate={c} />
                   </div>
 
                   <div onClick={(e) => e.stopPropagation()}>

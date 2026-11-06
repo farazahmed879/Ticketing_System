@@ -10,6 +10,7 @@ import CustomTable from "../../components/CustomTable";
 import type { Department, Team, Project } from "../../types";
 import type { TableColumn } from "../../components/types";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
+import styles from "./DepartmentDetail.module.css";
 
 const DepartmentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -149,19 +150,10 @@ const DepartmentDetail: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: "20px 40px", display: "flex", flexDirection: "column", gap: 30 }}>
+    <div className={styles.page}>
       {/* Header card */}
-      <div
-        className="glass-card"
-        style={{
-          padding: 30,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 24,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+      <div className={`glass-card ${styles.headerCard}`}>
+        <div className={styles.headerMain}>
           <CustomButton
             variant="ghost"
             onClick={() => navigate("/departments")}
@@ -173,35 +165,14 @@ const DepartmentDetail: React.FC = () => {
               borderRadius: "12px",
               background: "rgba(255, 255, 255, 0.05)",
               border: "1px solid var(--border-glass)",
+              flexShrink: 0,
             }}
           />
-          <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: 16,
-              background:
-                "linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
-              boxShadow: "0 4px 15px rgba(124, 58, 237, 0.3)",
-            }}
-          >
+          <div className={styles.headerIcon}>
             <CustomIcon name="Building2" size={32} />
           </div>
-          <div>
-            <h1
-              style={{
-                fontSize: "1.4rem",
-                fontWeight: 800,
-                margin: 0,
-                color: "var(--text-primary)",
-              }}
-            >
-              {department.name}
-            </h1>
+          <div className={styles.headerText}>
+            <h1 className={styles.title}>{department.name}</h1>
             <p
               style={{
                 color: "var(--text-muted)",
@@ -213,7 +184,7 @@ const DepartmentDetail: React.FC = () => {
             </p>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
+        <div className={styles.headerActions}>
           <CustomButton
             variant="outline"
             icon={<CustomIcon name="Edit2" size={18} />}
@@ -223,25 +194,27 @@ const DepartmentDetail: React.FC = () => {
           </CustomButton>
         </div>
       </div>
-      <div className="glass-card" style={{ padding: 24, display: "flex", flexDirection: "column", gap: 16 }}>
+      <div className={`glass-card ${styles.about}`}>
         <h3 style={{ margin: 0, fontSize: "1.2rem" }}>About Department</h3>
-        <p style={{ color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 }}>
+        <p className={styles.aboutText}>
           {department.description ? <FormattedTaskDescription content={department.description} /> : "No description provided for this department."}
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 30 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
+      <div className={styles.tables}>
+        <div className={styles.tableBlock}>
           <h3 style={{ margin: 0, fontSize: "1.1rem" }}>Associated Teams</h3>
           <CustomTable
+            className={styles.tableScroll}
             columns={teamColumns}
             data={department.teams || []}
             emptyMessage="No teams associated with this department"
           />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 15 }}>
+        <div className={styles.tableBlock}>
           <h3 style={{ margin: 0, fontSize: "1.1rem" }}>Associated Projects</h3>
           <CustomTable
+            className={styles.tableScroll}
             columns={projectColumns}
             data={department.projects || []}
             emptyMessage="No projects associated with this department"

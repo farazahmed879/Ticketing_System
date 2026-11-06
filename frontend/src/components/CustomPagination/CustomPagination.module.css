@@ -164,17 +164,77 @@
   font-size: 0.8rem;
 }
 
+/* Phone/tablet: everything on one compact line —
+   [10 ▾]  11–20 of 487          « ‹ 2 › »  */
 @media (max-width: 768px) {
   .paginationContainer {
-    flex-direction: column;
-    gap: 20px;
-    align-items: center;
-    text-align: center;
-    padding: 24px 20px;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
   }
-  
+
   .leftSection {
-    flex-direction: column;
-    gap: 16px;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .sizeLabel {
+    display: none;
+  }
+
+  .pageSize {
+    gap: 0;
+  }
+
+  .sizeTrigger {
+    min-width: 46px;
+    padding: 3px 7px;
+    gap: 4px;
+    font-size: 0.75rem;
+    border-radius: 7px;
+  }
+
+  .sizeTrigger:hover {
+    transform: none;
+  }
+
+  .sizeOption {
+    padding: 9px 10px;
+    font-size: 0.8rem;
+  }
+
+  .info {
+    font-size: 0.72rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .info span {
+    margin: 0;
+  }
+
+  .controls {
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .pageBtn {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    border-radius: 7px;
+    font-size: 0.75rem;
+  }
+
+  .pageBtn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .pageBtn:hover:not(:disabled) {
+    transform: none;
   }
 }

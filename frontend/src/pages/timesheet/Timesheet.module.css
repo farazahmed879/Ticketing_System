@@ -1218,3 +1218,928 @@
   }
 }
 
+
+/* =========================================================
+   Responsive helpers (page header, review & report layouts)
+   ========================================================= */
+.header {
+  flex-wrap: wrap;
+  gap: 10px 12px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.calendarSwitchers {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Grid children must be allowed to shrink below their content width. */
+.taskInputsGrid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 120px;
+}
+
+.taskInputsGridNoTicket {
+  grid-template-columns: minmax(0, 1fr) 120px;
+}
+
+.modalTopRow {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.footerLeft,
+.footerRight {
+  flex-wrap: wrap;
+}
+
+/* ---------- Timesheet Review ---------- */
+.reviewGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.reviewMainCard {
+  padding: 24px;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewSidebarCard {
+  padding: 24px;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.reviewScroll {
+  flex: 1;
+  overflow: auto;
+  padding-right: 4px;
+  min-width: 0;
+}
+
+.reviewCardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.reviewUserBanner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  background: rgba(124, 58, 237, 0.05);
+  border-radius: 16px;
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.reviewUserBannerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.reviewUserBannerTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.reviewUserBannerMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px 15px;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.reviewUserBannerMeta > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.reviewFilterBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.reviewFilterGroup {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.reviewSegment {
+  display: flex;
+  padding: 4px;
+  border-radius: 12px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.reviewSegment::-webkit-scrollbar {
+  display: none;
+}
+
+.reviewSegment > * {
+  flex-shrink: 0;
+}
+
+.reviewSelects {
+  display: flex;
+  gap: 8px;
+}
+
+.reviewSelectMonth {
+  width: 180px;
+}
+
+.reviewSelectYear {
+  width: 150px;
+}
+
+.reviewModalTaskRow {
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.reviewModalTaskBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.reviewModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Timesheet Report ---------- */
+.reportContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  height: calc(100vh - 88px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 12px;
+  box-sizing: border-box;
+}
+
+.reportHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 16px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.reportTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.reportControls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.reportSelectMonth {
+  width: 150px;
+}
+
+.reportSelectYear {
+  width: 120px;
+}
+
+.reportGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 12px;
+}
+
+.reportCard {
+  padding: 24px;
+  min-width: 0;
+}
+
+.tableScroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 1024px) {
+  .reportGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 1.25rem;
+  }
+
+  .headerActions {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .headerActions > * {
+    flex: 1 1 auto;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .calendarSection {
+    padding: 12px;
+  }
+
+  .controls,
+  .calendarSwitchers {
+    justify-content: center;
+  }
+
+  .weeklyCalendarGrid {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 10px 8px;
+  }
+
+  .weeklyDayCell {
+    min-height: 110px;
+    padding: 10px;
+  }
+
+  .calendarGrid {
+    gap: 4px;
+  }
+
+  .dayCell:not(.weeklyDayCell) {
+    min-height: 64px;
+    padding: 5px;
+  }
+
+  .dayCell:not(.weeklyDayCell) .hoursBadge {
+    font-size: 0.64rem;
+    padding: 1px 4px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dayCell:not(.weeklyDayCell) .weeklyTaskIndicator {
+    display: none;
+  }
+
+  .dayHeader {
+    font-size: 0.62rem;
+    letter-spacing: 0.02em;
+  }
+
+  .logPanelCard {
+    padding: 14px 14px 0 14px;
+  }
+
+  .logPanelFormBody {
+    padding-right: 0;
+  }
+
+  .modalTopRow,
+  .taskInputsGrid,
+  .taskInputsGridNoTicket {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .taskAccordionHeader {
+    padding: 10px;
+  }
+
+  .taskAccordionBody {
+    padding: 12px 10px 14px 10px;
+  }
+
+  .taskDescPreview {
+    max-width: 100%;
+    flex-basis: 100%;
+  }
+
+  .stickyFooter {
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    margin-left: -14px;
+    margin-right: -14px;
+  }
+
+  .footerLeft,
+  .footerRight {
+    width: 100%;
+  }
+
+  .footerRight {
+    justify-content: space-between;
+  }
+
+  .footerLeft:empty {
+    display: none;
+  }
+
+  .childTaskCardTop {
+    align-items: flex-start;
+  }
+
+  /* The day table scrolls sideways on phones; keep the expanded task
+     breakdown pinned to the visible width so its text stays readable. */
+  .expandedChildContainer {
+    position: sticky;
+    left: 0;
+    max-width: calc(100vw - 52px);
+    box-sizing: border-box;
+  }
+
+  /* Review (layout + table-to-card reflow live in the review block at the end) */
+
+  .reviewUserBanner {
+    gap: 12px;
+    padding: 12px 44px 12px 12px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+  }
+
+  .reviewUserBannerTitle h2 {
+    font-size: 1.05rem !important;
+  }
+
+  .reviewUserBannerClose {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+
+  .reviewFilterBar,
+  .reviewFilterGroup {
+    gap: 8px;
+  }
+
+  .reviewSegment {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .reviewSegment > * {
+    flex: 1 1 auto;
+    padding: 8px 10px !important;
+  }
+
+  .reviewFilterGroup,
+  .reviewSelects {
+    width: 100%;
+  }
+
+  .reviewSelectMonth,
+  .reviewSelectYear {
+    width: auto;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .reviewModalTaskRow {
+    align-items: flex-start;
+  }
+
+  .reviewModalActions > * {
+    flex: 1 1 auto;
+  }
+
+  /* Report */
+  .reportContainer {
+    height: auto;
+    overflow: visible;
+  }
+
+  .reportControls {
+    width: 100%;
+  }
+
+  .reportSelectMonth,
+  .reportSelectYear {
+    width: auto;
+    flex: 1 1 120px;
+    min-width: 0;
+  }
+
+  .reportGrid {
+    gap: 14px;
+  }
+
+  .reportCard {
+    padding: 14px;
+  }
+}
+
+/* Keep report table columns readable; the wrapper scrolls instead. */
+.tableScroll :global(table) {
+  min-width: 620px;
+}
+
+/* =========================================================
+   Timesheet Approvals (/timesheet/review): table fit, picker,
+   and phone card reflow
+   ========================================================= */
+
+/* --- Table columns (5 condensed columns that fit without x-scroll) --- */
+.reviewScroll :global(table) {
+  table-layout: auto;
+}
+
+.reviewScroll :global(td) {
+  vertical-align: middle;
+}
+
+/* max-width: 0 lets the user column absorb the remaining width and
+   ellipsize the email instead of forcing the table wider than its card. */
+.rvColUser {
+  width: 40%;
+  max-width: 0;
+}
+
+.rvColDate,
+.rvColHours,
+.rvColStatus {
+  white-space: nowrap;
+}
+
+.rvColActions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.rvUserCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.rvAvatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--border-glass);
+}
+
+.rvUserText {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.rvUserName {
+  font-weight: 600;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.rvUserEmail {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.rvHoursCell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.rvHoursPill {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+
+.rvTypeBadge {
+  font-size: 0.66rem !important;
+  padding: 2px 8px !important;
+  white-space: nowrap;
+}
+
+.rvStatusCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rvStatusLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rvStatusLabel {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  min-width: 52px;
+}
+
+.rvActionsCell {
+  display: inline-flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+/* --- Team members sidebar --- */
+.rvSideHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.rvSideSearch {
+  margin-bottom: 14px;
+}
+
+.rvSidePicker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rvSideList {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rvSideUserInfo {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+/* --- Tight laptops / tablet landscape (sidebar still visible) --- */
+@media (max-width: 1280px) {
+  .reviewGrid {
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 16px;
+  }
+
+  .reviewMainCard,
+  .reviewSidebarCard {
+    padding: 16px;
+  }
+
+  .reviewScroll :global(th),
+  .reviewScroll :global(td) {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+/* Below ~1100px there is no room for a 280px column beside the table:
+   the team list becomes a compact horizontal picker above the entries. */
+@media (max-width: 1100px) {
+  .reviewGrid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .reviewSidebarCard {
+    order: -1;
+    padding: 12px 14px;
+    overflow: visible;
+  }
+
+  .rvSideHeader {
+    margin-bottom: 10px;
+  }
+
+  .rvSideSearch {
+    margin-bottom: 10px;
+  }
+
+  .rvSidePicker {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  .rvSideList {
+    flex: 0 0 auto;
+    flex-direction: row;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .rvSideUserBtn {
+    width: auto !important;
+    flex: 0 0 auto;
+    max-width: 240px;
+    margin-bottom: 0 !important;
+    padding: 8px 12px !important;
+    gap: 8px !important;
+  }
+
+  .rvSideUserInfo {
+    overflow: visible;
+  }
+
+  .rvSideUserName {
+    max-width: 130px;
+  }
+
+  .rvSideSelectedDot {
+    display: none;
+  }
+}
+
+.rvDateMain {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Small laptops: condense the table so all five columns fit. */
+@media (max-width: 1180px) {
+  .rvAvatar {
+    display: none;
+  }
+
+  .rvStatusLabel {
+    min-width: 0;
+    width: 52px;
+  }
+}
+
+/* Tablet landscape (sidebar still visible, ~820-960px): not enough width
+   for a 5-column table, so each row becomes a card in a 2-up grid. */
+@media (max-width: 960px) {
+  .reviewScroll :global(table),
+  .reviewScroll :global(tbody) {
+    display: block;
+    width: 100%;
+  }
+
+  .reviewScroll :global(tbody) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+    gap: 10px;
+  }
+
+  .reviewScroll :global(thead) {
+    display: none;
+  }
+
+  .reviewScroll :global(tr) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "user user"
+      "date hours"
+      "status actions";
+    gap: 10px 12px;
+    padding: 12px;
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    background: var(--bg-card);
+  }
+
+  .reviewScroll :global(td) {
+    display: block;
+    padding: 0 !important;
+    border: none !important;
+    width: auto !important;
+    min-width: 0;
+  }
+
+  .reviewScroll :global(td[colspan]) {
+    grid-column: 1 / -1;
+  }
+
+  .reviewScroll .rvColUser {
+    grid-area: user;
+    width: auto;
+    max-width: none;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid var(--border-glass) !important;
+  }
+
+  .rvAvatar {
+    display: flex;
+  }
+
+  .rvColDate {
+    grid-area: date;
+    white-space: normal;
+  }
+
+  .rvColHours {
+    grid-area: hours;
+  }
+
+  .rvHoursCell {
+    align-items: flex-end;
+  }
+
+  .rvColStatus {
+    grid-area: status;
+    white-space: normal;
+  }
+
+  .rvColActions {
+    grid-area: actions;
+    align-self: end;
+  }
+
+  .rvActionsCell > * {
+    min-width: 40px;
+    min-height: 40px;
+    border: 1px solid var(--border-glass) !important;
+  }
+}
+
+/* --- Phones: table rows reflow into stacked cards --- */
+@media (max-width: 768px) {
+  .reviewGrid {
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    overflow: visible;
+    gap: 12px;
+  }
+
+  .reviewMainCard {
+    padding: 10px;
+    overflow: visible;
+  }
+
+  .reviewSidebarCard {
+    padding: 12px;
+  }
+
+  .reviewScroll {
+    flex: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .reviewScroll :global(table),
+  .reviewScroll :global(tbody) {
+    display: block;
+    width: 100%;
+  }
+
+  .reviewScroll :global(thead) {
+    display: none;
+  }
+
+  .reviewScroll :global(tr) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "user user"
+      "date hours"
+      "status actions";
+    gap: 10px 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    background: var(--bg-card);
+  }
+
+  .reviewScroll :global(tr:last-child) {
+    margin-bottom: 0;
+  }
+
+  .reviewScroll :global(td) {
+    display: block;
+    padding: 0 !important;
+    border: none !important;
+    width: auto !important;
+    min-width: 0;
+  }
+
+  /* Empty / loading rows keep a simple single-cell layout. */
+  .reviewScroll :global(td[colspan]) {
+    grid-column: 1 / -1;
+  }
+
+  .reviewScroll .rvColUser {
+    grid-area: user;
+    width: auto;
+    max-width: none;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid var(--border-glass) !important;
+  }
+
+  .rvColDate {
+    grid-area: date;
+    white-space: normal;
+  }
+
+  .rvColHours {
+    grid-area: hours;
+  }
+
+  .rvHoursCell {
+    align-items: flex-end;
+  }
+
+  .rvColStatus {
+    grid-area: status;
+    white-space: normal;
+  }
+
+  .rvColActions {
+    grid-area: actions;
+    align-self: end;
+  }
+
+  .rvActionsCell > * {
+    min-width: 40px;
+    min-height: 40px;
+    border: 1px solid var(--border-glass) !important;
+  }
+}

@@ -1,3 +1,4 @@
+import type React from "react";
 import type { TableColumn } from "../../components/types";
 import type { Candidate } from "../../types";
 import type { NavigateFunction } from "react-router-dom";
@@ -25,6 +26,98 @@ export const statusBadgeVariant = (status: string) => {
       return "neutral" as const;
   }
 };
+
+/** Location text shared by the table "Location" column and the grid card. */
+export const formatCandidateLocation = (c: Candidate): string =>
+  c.city
+    ? c.nationality
+      ? `${c.city}, ${c.nationality}`
+      : c.city
+    : c.nationality || c.address || "";
+
+/** "Interviews" column cell — reused on the grid card. */
+export const CandidateInterviewCount = ({
+  candidate,
+}: {
+  candidate: Candidate;
+}) => (
+  <span className={styles.interviewCount}>
+    <CustomIcon name="CalendarCheck" size={14} />
+    {candidate._count?.interviews || 0}
+  </span>
+);
+
+/** "Match Score" column cell (AI mode) — reused on the grid card. */
+export const CandidateMatchScore = ({ score }: { score?: number }) => (
+  <div className="flex-row">
+    <div className={styles.matchScoreBg}>
+      <div
+        className={styles.matchScoreBar}
+        style={{ width: `${score || 0}%` }}
+      />
+    </div>
+    <span className="text-sm font-semibold">{score || 0}%</span>
+  </div>
+);
+
+/** "Actions" column cell — reused on the grid card so both views share
+ *  the same buttons, handlers and gating. */
+export const CandidateActions = ({
+  candidate: c,
+  onConvert,
+  onEdit,
+  onDelete,
+  iconSize = 18,
+  buttonStyle,
+}: {
+  candidate: Candidate;
+  onConvert: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
+  iconSize?: number;
+  buttonStyle?: React.CSSProperties;
+}) => (
+  <div className={styles.actions}>
+    {!c.isConverted && (
+      <CustomTooltip text="Convert to User">
+        <CustomButton
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onConvert(c.id);
+          }}
+          icon={<CustomIcon name="UserPlus" size={iconSize} />}
+          style={{ ...buttonStyle, color: "var(--accent-success)" }}
+        />
+      </CustomTooltip>
+    )}
+    <CustomTooltip text="Edit">
+      <CustomButton
+        variant="ghost"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit(c.id);
+        }}
+        icon={<CustomIcon name="Edit2" size={iconSize} />}
+        style={buttonStyle}
+      />
+    </CustomTooltip>
+    <CustomTooltip text="Delete">
+      <CustomButton
+        variant="ghost"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(c.id);
+        }}
+        icon={<CustomIcon name="Trash2" size={iconSize} />}
+        style={{ ...buttonStyle, color: "var(--accent-danger)" }}
+      />
+    </CustomTooltip>
+  </div>
+);
 
 export const getCandidateColumns = (
   handleConvertClick: (id: string) => void,
@@ -70,23 +163,14 @@ export const getCandidateColumns = (
       key: "location",
       render: (c) => (
         <span className="text-base-sm text-secondary">
-          {c.city
-            ? c.nationality
-              ? `${c.city}, ${c.nationality}`
-              : c.city
-            : c.nationality || c.address || "—"}
+          {formatCandidateLocation(c) || "—"}
         </span>
       ),
     },
     {
       header: "Interviews",
       key: "interviews",
-      render: (c) => (
-        <span className={styles.interviewCount}>
-          <CustomIcon name="CalendarCheck" size={14} />
-          {c._count?.interviews || 0}
-        </span>
-      ),
+      render: (c) => <CandidateInterviewCount candidate={c} />,
     },
     {
       header: "Created By",
@@ -159,46 +243,15 @@ export const getCandidateColumns = (
       header: "Actions",
       key: "actions",
       render: (c) => (
-        <div className={styles.actions}>
-          {!c.isConverted && (
-            <CustomTooltip text="Convert to User">
-              <CustomButton
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleConvertClick(c.id);
-                }}
-                icon={<CustomIcon name="UserPlus" size={18} />}
-                style={{ color: "var(--accent-success)" }}
-              />
-            </CustomTooltip>
-          )}
-          <CustomTooltip text="Edit">
-            <CustomButton
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentEditingId(c.id);
-                setIsModalOpen(true);
-              }}
-              icon={<CustomIcon name="Edit2" size={18} />}
-            />
-          </CustomTooltip>
-          <CustomTooltip text="Delete">
-            <CustomButton
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(c.id);
-              }}
-              icon={<CustomIcon name="Trash2" size={18} />}
-              style={{ color: "var(--accent-danger)" }}
-            />
-          </CustomTooltip>
-        </div>
+        <CandidateActions
+          candidate={c}
+          onConvert={handleConvertClick}
+          onEdit={(id) => {
+            setCurrentEditingId(id);
+            setIsModalOpen(true);
+          }}
+          onDelete={handleDelete}
+        />
       ),
     },
   ];
@@ -207,17 +260,7 @@ export const getCandidateColumns = (
     columns.splice(3, 0, {
       header: "Match Score",
       key: "matchScore",
-      render: (c: any) => (
-        <div className="flex-row">
-          <div className={styles.matchScoreBg}>
-            <div
-              className={styles.matchScoreBar}
-              style={{ width: `${c.matchScore || 0}%` }}
-            />
-          </div>
-          <span className="text-sm font-semibold">{c.matchScore || 0}%</span>
-        </div>
-      ),
+      render: (c: any) => <CandidateMatchScore score={c.matchScore} />,
     },
     {
       header: "Why It Matched",

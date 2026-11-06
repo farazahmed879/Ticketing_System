@@ -383,7 +383,7 @@ const MainLayout: React.FC = () => {
 
               {isNotificationOpen && (
                 <div
-                  className="animate-fade-in"
+                  className={`animate-fade-in ${styles.notifDropdown}`}
                   style={{
                     position: "absolute",
                     top: "calc(100% + 12px)",
@@ -513,6 +513,7 @@ const MainLayout: React.FC = () => {
                                     fontSize: "0.85rem",
                                     color: "var(--text-primary)",
                                     marginBottom: 2,
+                                    overflowWrap: "anywhere",
                                   }}
                                 >
                                   {n.title}
@@ -523,6 +524,7 @@ const MainLayout: React.FC = () => {
                                     color: "var(--text-secondary)",
                                     lineHeight: 1.4,
                                     marginBottom: 4,
+                                    overflowWrap: "anywhere",
                                   }}
                                 >
                                   {n.message}

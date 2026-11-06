@@ -68,21 +68,20 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 
   return (
     <header className={styles.chatHeader}>
-      <div style={{ position: "relative", flexShrink: 0 }}>
+      <CustomButton
+        variant="ghost"
+        size="sm"
+        className={styles.backButton}
+        onClick={onCloseChat}
+        title="Back to chats"
+        aria-label="Back to chats"
+        icon={<CustomIcon name="ArrowLeft" size={20} />}
+      />
+      <div className={styles.avatarWrap}>
         <div
-          className="glass-card"
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: selectedConv.isGroup ? 10 : "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            overflow: "hidden",
-            background: selectedConv.isGroup
-              ? "rgba(124,58,237,0.15)"
-              : undefined,
-          }}
+          className={`glass-card ${styles.headerAvatar} ${
+            selectedConv.isGroup ? styles.avatarGroup : ""
+          }`}
         >
           {selectedConv.isGroup ? (
             <CustomIcon name="Users" size={20} color="var(--accent-primary)" />
@@ -102,19 +101,23 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
         {partnerOnline && <span className={styles.onlineDot} />}
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 600 }}>
+      <div className={styles.headerInfo}>
+        <div
+          className={styles.headerName}
+          title={
+            (selectedConv.isGroup
+              ? selectedConv.name
+              : selectedConv.partner?.fullname) || undefined
+          }
+        >
           {selectedConv.isGroup
             ? selectedConv.name
             : selectedConv.partner?.fullname}
         </div>
         <div
-          style={{
-            fontSize: "0.75rem",
-            color: partnerOnline ? "var(--accent-success, #22c55e)" : "var(--text-muted)",
-            cursor: selectedConv.isGroup ? "pointer" : "default",
-            textDecoration: selectedConv.isGroup ? "underline" : "none",
-          }}
+          className={`${styles.headerStatus} ${
+            partnerOnline ? styles.headerStatusOnline : ""
+          } ${selectedConv.isGroup ? styles.headerStatusLink : ""}`}
           onClick={() => selectedConv.isGroup && onViewMembers()}
         >
           {selectedConv.isGroup
@@ -126,10 +129,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               : "Offline"}
         </div>
       </div>
-      <div
-        ref={moreOptionsRef}
-        style={{ display: "flex", gap: 8, position: "relative" }}
-      >
+      <div ref={moreOptionsRef} className={styles.headerActions}>
         <CustomButton
           variant="ghost"
           size="sm"
@@ -191,23 +191,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         />
 
         {showMoreOptions && (
-          <div
-            className="glass-card"
-            style={{
-              position: "absolute",
-              top: "100%",
-              right: 40,
-              marginTop: 8,
-              padding: 8,
-              borderRadius: 12,
-              zIndex: 100,
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              minWidth: 150,
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-            }}
-          >
+          <div className={`glass-card ${styles.moreMenu}`}>
             <CustomButton
               variant="ghost"
               size="sm"
@@ -228,6 +212,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <CustomButton
           variant="ghost"
           size="sm"
+          className={styles.closeChatButton}
           style={{ padding: 8 }}
           onClick={onCloseChat}
           title="Close Chat"

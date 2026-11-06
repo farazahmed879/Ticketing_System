@@ -2,11 +2,14 @@ import { format } from "date-fns";
 import { useMemo } from "react";
 import CustomImage from "../../../components/CustomImage";
 import CustomIcon from "../../../components/CustomIcon";
-import CustomBadge from "../../../components/CustomBadge";
 import CustomButton from "../../../components/CustomButton";
-import { ROLE_TYPE } from "../../roles/roleConstants";
-import { getEntryTypeLabel, isZeroHourEntryType } from "../entryTypes";
+import {
+  ReviewApprovalStatus,
+  ReviewHoursType,
+  canApproveTimesheetEntry,
+} from "./TimesheetReviewCells";
 import type { TimesheetEntry } from "../../../types";
+import styles from "../Timesheet.module.css";
 
 interface UseTimesheetReviewColumnsProps {
   setSelectedEntry: (e: TimesheetEntry) => void;
@@ -21,29 +24,14 @@ export const useTimesheetReviewColumns = ({
   handleApprove,
   userRoleType,
 }: UseTimesheetReviewColumnsProps) => {
-  const isHr = userRoleType === ROLE_TYPE.HR;
-  const isManager =
-    userRoleType === ROLE_TYPE.AGENT || userRoleType === ROLE_TYPE.ADMIN;
-
   return useMemo(() => [
     {
       header: "User",
       key: "user",
+      className: styles.rvColUser,
       render: (e: TimesheetEntry) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.05)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              overflow: "hidden",
-              border: "1px solid var(--border-glass)",
-            }}
-          >
+        <div className={styles.rvUserCell}>
+          <div className={styles.rvAvatar}>
             {e.user?.image ? (
               <CustomImage
                 src={e.user.image}
@@ -58,16 +46,9 @@ export const useTimesheetReviewColumns = ({
               <CustomIcon name="User" size={18} color="var(--text-muted)" />
             )}
           </div>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: "0.9rem" }}>
-              {e.user?.fullname}
-            </div>
-            <div
-              style={{
-                fontSize: "0.75rem",
-                color: "var(--text-muted)",
-              }}
-            >
+          <div className={styles.rvUserText}>
+            <div className={styles.rvUserName}>{e.user?.fullname}</div>
+            <div className={styles.rvUserEmail} title={e.user?.email}>
               {e.user?.email}
             </div>
           </div>
@@ -77,9 +58,10 @@ export const useTimesheetReviewColumns = ({
     {
       header: "Date",
       key: "date",
+      className: styles.rvColDate,
       render: (e: TimesheetEntry) => (
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <span style={{ fontWeight: 600 }}>
+          <span className={styles.rvDateMain}>
             {format(new Date(e.date), "MMM dd, yyyy")}
           </span>
           <span
@@ -94,81 +76,25 @@ export const useTimesheetReviewColumns = ({
       ),
     },
     {
-      header: "Hours",
+      // Hours and day type share a column so the table fits without
+      // horizontal scrolling on laptops and tablets.
+      header: "Hours / Type",
       key: "totalHours",
-      render: (e: TimesheetEntry) => (
-        <div
-          style={{
-            display: "inline-flex",
-            padding: "4px 10px",
-            borderRadius: 8,
-            background: "rgba(124, 58, 237, 0.1)",
-            color: "var(--accent-primary)",
-            fontWeight: 700,
-          }}
-        >
-          {e.totalHours}h
-        </div>
-      ),
+      className: styles.rvColHours,
+      render: (e: TimesheetEntry) => <ReviewHoursType entry={e} />,
     },
     {
-      header: "Day Type",
-      key: "entryType",
-      render: (e: TimesheetEntry) => (
-        <CustomBadge
-          variant={isZeroHourEntryType(e.entryType) ? "info" : "neutral"}
-        >
-          {getEntryTypeLabel(e.entryType)}
-        </CustomBadge>
-      ),
-    },
-    {
-      header: "Manager Status",
-      key: "managerStatus",
-      render: (e: TimesheetEntry) => (
-        <CustomBadge
-          variant={
-            e.managerApproved === "APPROVED"
-              ? "success"
-              : e.managerApproved === "REJECTED"
-                ? "danger"
-                : "warning"
-          }
-        >
-          {e.managerApproved === "APPROVED"
-            ? "Approved"
-            : e.managerApproved === "REJECTED"
-              ? "Rejected"
-              : "Pending"}
-        </CustomBadge>
-      ),
-    },
-    {
-      header: "HR Status",
-      key: "hrStatus",
-      render: (e: TimesheetEntry) => (
-        <CustomBadge
-          variant={
-            e.hrApproved === "APPROVED"
-              ? "success"
-              : e.hrApproved === "REJECTED"
-                ? "danger"
-                : "warning"
-          }
-        >
-          {e.hrApproved === "APPROVED"
-            ? "Approved"
-            : e.hrApproved === "REJECTED"
-              ? "Rejected"
-              : "Pending"}
-        </CustomBadge>
-      ),
+      header: "Status",
+      key: "status",
+      className: styles.rvColStatus,
+      render: (e: TimesheetEntry) => <ReviewApprovalStatus entry={e} />,
     },
     {
       header: "Actions",
       key: "actions",
+      className: styles.rvColActions,
       render: (e: TimesheetEntry) => (
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className={styles.rvActionsCell}>
           <CustomButton
             variant="ghost"
             size="sm"
@@ -177,15 +103,18 @@ export const useTimesheetReviewColumns = ({
               setIsModalOpen(true);
             }}
             icon={<CustomIcon name="Eye" size={16} />}
+            title="Review"
+            aria-label="Review timesheet"
             style={{ padding: "8px" }}
           />
-          {((isManager && e.managerApproved === "PENDING") ||
-            (isHr && e.hrApproved === "PENDING")) && (
+          {canApproveTimesheetEntry(e, userRoleType) && (
             <CustomButton
               variant="ghost"
               size="sm"
               onClick={() => handleApprove(e.id)}
               icon={<CustomIcon name="CheckCircle2" size={16} />}
+              title="Approve"
+              aria-label="Approve timesheet"
               style={{
                 color: "var(--accent-success)",
                 padding: "8px",
@@ -195,5 +124,5 @@ export const useTimesheetReviewColumns = ({
         </div>
       ),
     },
-  ], [isHr, isManager, handleApprove, setIsModalOpen, setSelectedEntry]);
+  ], [userRoleType, handleApprove, setIsModalOpen, setSelectedEntry]);
 };

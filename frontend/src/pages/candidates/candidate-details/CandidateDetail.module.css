@@ -1,0 +1,410 @@
+/* ===== Page shell ===== */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+/* ===== Header ===== */
+.header {
+  padding: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  min-width: 0;
+}
+
+.headerMain {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.header .backButton {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+  flex-shrink: 0;
+}
+
+.headerInfo {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.name {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+  line-height: 1.2;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin-top: 12px;
+}
+
+.positionGroup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.position {
+  color: var(--accent-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Contacts get their own row so long emails/addresses wrap cleanly. */
+.contactList {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  min-width: 0;
+  flex-basis: 100%;
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.contactItem > svg {
+  flex-shrink: 0;
+}
+
+.linksRow,
+.tagsRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  margin-top: 16px;
+}
+
+.rowLabel {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.socialLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.linkedin {
+  color: #0077b5;
+  background: rgba(0, 119, 181, 0.1);
+}
+
+.github {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.portfolio {
+  color: var(--accent-primary);
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ===== Tabs ===== */
+.tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-glass);
+  padding: 0 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs .tab {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 12px 24px;
+  border-radius: 8px 8px 0 0;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+/* ===== Profile tab ===== */
+.twoCol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.sectionCard {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.bodyText {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ===== Hiring tab ===== */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  position: relative;
+  padding-left: 40px;
+}
+
+.interviewHeader {
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border-glass);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.interviewHeaderText {
+  min-width: 0;
+  flex: 1 1 240px;
+}
+
+.interviewTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.interviewMeta {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.interviewBody {
+  padding: 24px;
+}
+
+.feedbackGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+  gap: 20px;
+}
+
+.feedbackCard {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border-glass);
+  min-width: 0;
+}
+
+.feedbackComment {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.recommendationRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  border-top: 1px solid var(--border-glass);
+  padding-top: 10px;
+}
+
+.emptyState {
+  padding: 60px;
+  text-align: center;
+}
+
+/* ===== Tablet ===== */
+@media (max-width: 1024px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions {
+    padding-left: 134px; /* line up under the name: back (40) + avatar (70) + 2 gaps */
+  }
+}
+
+/* ===== Phone ===== */
+@media (max-width: 768px) {
+  .page {
+    gap: 16px;
+  }
+
+  .header {
+    padding: 18px;
+    gap: 16px;
+  }
+
+  .headerMain {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 1.15rem;
+  }
+
+  .headerInfo {
+    flex-basis: 100%;
+  }
+
+  .name {
+    font-size: 1.5rem;
+  }
+
+  .position {
+    font-size: 1rem;
+  }
+
+  .contactList {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .contactItem {
+    font-size: 0.88rem;
+  }
+
+  .headerActions {
+    padding-left: 0;
+  }
+
+  .headerActions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .tabs {
+    padding: 0;
+    gap: 4px;
+  }
+
+  .tabs .tab {
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+
+  .twoCol {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .sectionCard {
+    padding: 18px;
+    gap: 20px;
+  }
+
+  .timeline {
+    gap: 24px;
+  }
+
+  .interviewHeader {
+    padding: 16px;
+  }
+
+  .interviewTitle {
+    font-size: 1.05rem;
+  }
+
+  .interviewBody {
+    padding: 16px;
+  }
+
+  .emptyState {
+    padding: 36px 20px;
+  }
+}
+
+.headerActions:empty {
+  display: none;
+}
+
+.metaGroup {
+  display: inline-flex;
+  align-items: center;
+}

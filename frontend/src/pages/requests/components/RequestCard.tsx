@@ -86,22 +86,43 @@ const RequestCard = ({
         </span>
       </div>
 
-      {data.approvedBy?.fullname && (
-        <div
-          style={{
-            fontSize: "0.8rem",
-            color: "var(--text-muted)",
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <span>Approved by:</span>
-          <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
-            {data.approvedBy.fullname}
-          </span>
-        </div>
-      )}
+      <div
+        style={{
+          fontSize: "0.8rem",
+          color: "var(--text-muted)",
+          display: "flex",
+          alignItems: "baseline",
+          flexWrap: "wrap",
+          columnGap: 6,
+          minWidth: 0,
+        }}
+      >
+        <span>Approved by:</span>
+        {data.approvedBy ? (
+          <>
+            <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+              {data.approvedBy.fullname}
+            </span>
+            {data.approvedBy.email && (
+              <span
+                className={styles.userEmail}
+                title={data.approvedBy.email}
+                style={{
+                  minWidth: 0,
+                  maxWidth: "100%",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {data.approvedBy.email}
+              </span>
+            )}
+          </>
+        ) : (
+          <span>—</span>
+        )}
+      </div>
 
       <div
         title={getTaskDescriptionPlainText(data.message)}
@@ -130,7 +151,7 @@ const RequestCard = ({
         }}
       >
         <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-          {timeAgo(data.createdAt)}
+          Requested {timeAgo(data.createdAt)}
         </span>
         <div style={{ display: "flex", gap: 4 }}>
           {canReview && (

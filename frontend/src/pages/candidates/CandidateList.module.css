@@ -304,3 +304,53 @@
   justify-content: center;
 }
 
+
+/* ---- Grid card (mirrors the table columns) ---- */
+.cardLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.cardTitle {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cardText {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardReason {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-top: 1px solid var(--border-glass);
+  padding-top: 12px;
+}
+
+.cardInterviews {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}

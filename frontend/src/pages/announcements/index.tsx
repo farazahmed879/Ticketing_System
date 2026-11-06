@@ -322,7 +322,7 @@ const AnnouncementList: React.FC = () => {
                         <h3 style={{ fontSize: "1.05rem", fontWeight: 600, margin: 0 }}>
                           {ann.title}
                         </h3>
-                        <span className="text-xs-muted" style={{ display: "block", marginTop: 2 }}>
+                        <span className="text-xs-muted" style={{ display: "block", marginTop: 2, whiteSpace: "nowrap" }}>
                           Scheduled {format(new Date(ann.date), "MMM dd, yyyy")}
                         </span>
                       </div>

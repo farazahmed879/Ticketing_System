@@ -86,21 +86,30 @@ const RequestCard = ({
         </span>
       </div>
 
-      <div
-        style={{
-          fontSize: "0.8rem",
-          color: "var(--text-muted)",
-          display: "flex",
-          alignItems: "baseline",
-          flexWrap: "wrap",
-          columnGap: 6,
-          minWidth: 0,
-        }}
-      >
-        <span>Approved by:</span>
+      <div className={styles.userInfo} style={{ minWidth: 0 }}>
+        <span
+          style={{
+            fontSize: "0.68rem",
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "0.03em",
+            color: "var(--text-muted)",
+            marginBottom: 2,
+          }}
+        >
+          Approved by
+        </span>
         {data.approvedBy ? (
           <>
-            <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+            <span
+              className={styles.userName}
+              style={{
+                fontSize: "0.85rem",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
               {data.approvedBy.fullname}
             </span>
             {data.approvedBy.email && (
@@ -108,8 +117,6 @@ const RequestCard = ({
                 className={styles.userEmail}
                 title={data.approvedBy.email}
                 style={{
-                  minWidth: 0,
-                  maxWidth: "100%",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -120,7 +127,9 @@ const RequestCard = ({
             )}
           </>
         ) : (
-          <span>—</span>
+          <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+            —
+          </span>
         )}
       </div>
 

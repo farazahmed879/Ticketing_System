@@ -56,3 +56,26 @@
   }
 }
 
+
+/* Phone: page headers (title + action buttons) wrap instead of pushing the
+   buttons off-screen. Pages lay these out with inline flex, hence !important. */
+@media (max-width: 768px) {
+  .headerSlot > div {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+
+  .headerSlot > div > div:last-child {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    max-width: 100%;
+  }
+
+  .headerSlot h1 {
+    font-size: 1.2rem !important;
+  }
+
+  .headerSlot p {
+    font-size: 0.8rem;
+  }
+}

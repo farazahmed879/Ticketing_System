@@ -196,3 +196,11 @@
   min-width: 160px;
   position: relative;
 }
+
+@media (max-width: 768px) {
+  /* Keep the floating filter panel on screen */
+  .advancedPanel {
+    width: min(340px, calc(100vw - 32px));
+    max-height: calc(100dvh - 220px);
+  }
+}

@@ -831,28 +831,15 @@ const CandidateList: React.FC = () => {
                 <div className={styles.cardFooter}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                     {c.createdBy?.image ? (
-                      <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden" }}>
+                      <div style={{ width: 24, height: 24, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
                         <CustomImage src={c.createdBy.image} alt={c.createdBy.fullname} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       </div>
                     ) : c.createdBy ? (
-                      <div
-                        style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: "50%",
-                          background: "var(--bg-glass)",
-                          color: "var(--text-primary)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "0.75rem",
-                          fontWeight: 700,
-                        }}
-                      >
+                      <div className={styles.creatorAvatar} style={{ width: 24, height: 24, fontSize: "0.75rem", flexShrink: 0 }}>
                         {c.createdBy.fullname.charAt(0)}
                       </div>
                     ) : (
-                      <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", color: "var(--text-muted)" }}>—</div>
+                      <div className={styles.creatorPlaceholder} style={{ width: 24, height: 24, fontSize: "0.75rem", flexShrink: 0 }}>—</div>
                     )}
                     <div style={{ display: "flex", flexDirection: "column" }}>
                       <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-primary)" }}>

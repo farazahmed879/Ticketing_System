@@ -75,7 +75,10 @@ export const getDepartmentColumns = (
           <CustomButton
             variant="ghost"
             size="sm"
-            onClick={() => handleEdit(d)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit(d);
+            }}
             icon={<CustomIcon name="Edit2" size={16} />}
           />
         </CustomTooltip>
@@ -83,7 +86,10 @@ export const getDepartmentColumns = (
           <CustomButton
             variant="ghost"
             size="sm"
-            onClick={() => handleDelete(d.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(d.id);
+            }}
             icon={<CustomIcon name="Trash2" size={16} />}
             style={{ color: "var(--accent-danger)" }}
           />

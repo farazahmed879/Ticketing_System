@@ -17,7 +17,8 @@ import {
   showDesktopNotification,
   playNotificationSound,
 } from "../utils/desktopNotifications";
-import { useCanInstallApp, promptInstallApp } from "../utils/installPrompt";
+import { useInstallOption, promptInstallApp } from "../utils/installPrompt";
+import InstallInstructionsModal from "../components/InstallInstructionsModal";
 
 const MainLayout: React.FC = () => {
   const { user } = useAuth();
@@ -38,7 +39,8 @@ const MainLayout: React.FC = () => {
   const notificationRef = React.useRef<HTMLDivElement>(null);
   // Only true in browsers that support installing (Chrome/Edge) and when the
   // app isn't already installed.
-  const canInstallApp = useCanInstallApp();
+  const installOption = useInstallOption();
+  const [isInstallHelpOpen, setIsInstallHelpOpen] = React.useState(false);
 
   // Automatically prompt user to change password if they are using default/initial password
   React.useEffect(() => {
@@ -300,21 +302,40 @@ const MainLayout: React.FC = () => {
             style={{ display: "flex", gap: 20, alignItems: "center" }}
             ref={notificationRef}
           >
-            {canInstallApp && (
+            {installOption && (
               <CustomButton
                 variant="secondary"
                 size="sm"
                 type="button"
-                icon={<CustomIcon name="MonitorDown" size={16} />}
+                className={styles.installBtn}
+                icon={
+                  <CustomIcon
+                    name={installOption === "ios" ? "Smartphone" : "MonitorDown"}
+                    size={16}
+                  />
+                }
                 onClick={async () => {
-                  if (await promptInstallApp()) {
-                    showNotification("success", "App installed on your device");
+                  if (installOption === "prompt") {
+                    if (await promptInstallApp()) {
+                      showNotification("success", "App installed on your device");
+                    }
+                  } else {
+                    // Safari has no install dialog: show the manual steps.
+                    setIsInstallHelpOpen(true);
                   }
                 }}
-                title="Install this app on your desktop"
+                title="Install this app on your device"
+                aria-label="Install App"
               >
-                Install App
+                <span className={styles.installLabel}>Install App</span>
               </CustomButton>
+            )}
+            {(installOption === "ios" || installOption === "mac") && (
+              <InstallInstructionsModal
+                isOpen={isInstallHelpOpen}
+                onClose={() => setIsInstallHelpOpen(false)}
+                platform={installOption}
+              />
             )}
             <div style={{ position: "relative" }}>
               <button

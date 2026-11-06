@@ -9,6 +9,35 @@ import { getTaskDescriptionPlainText } from "../timesheet/components/TaskDescrip
 import styles from "./columns.module.css";
 import CustomImage from "../../components/CustomImage";
 
+/** Team lead avatar + name; shared by the table column and the grid card. */
+export const TeamLeadCell = ({ team }: { team: Team }) => (
+  <div className={styles.leadCell}>
+    {team.teamLead ? (
+      <>
+        <div className={styles.leadAvatar}>
+          {team.teamLead.image ? (
+            <CustomImage src={team.teamLead.image} alt={team.teamLead.fullname} />
+          ) : (
+            <CustomAvatarStack
+              items={[
+                {
+                  id: team.teamLead.id,
+                  name: team.teamLead.fullname?.charAt(0),
+                },
+              ]}
+              limit={3}
+              size={26}
+            />
+          )}
+        </div>
+        <span className="text-sm">{team.teamLead.fullname}</span>
+      </>
+    ) : (
+      <span className="text-sm-muted">No Team Lead</span>
+    )}
+  </div>
+);
+
 export const getTeamColumns = (
   search: string,
   canManageTeams: boolean,
@@ -45,31 +74,7 @@ export const getTeamColumns = (
     header: "Team Lead",
     key: "teamLead",
     render: (t) => (
-      <div className={styles.leadCell}>
-        {t.teamLead ? (
-          <>
-            <div className={styles.leadAvatar}>
-              {t.teamLead.image ? (
-                <CustomImage src={t.teamLead.image} alt={t.teamLead.fullname} />
-              ) : (
-                <CustomAvatarStack
-                  items={[
-                    {
-                      id: t.teamLead.id,
-                      name: t.teamLead.fullname?.charAt(0),
-                    },
-                  ]}
-                  limit={3}
-                  size={26}
-                />
-              )}
-            </div>
-            <span className="text-sm">{t.teamLead.fullname}</span>
-          </>
-        ) : (
-          <span className="text-sm-muted">No Team Lead</span>
-        )}
-      </div>
+      <TeamLeadCell team={t} />
     ),
   },
   {

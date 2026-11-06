@@ -40,6 +40,8 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
           style={{
             display: "flex",
             alignItems: "center",
+            flexWrap: "wrap",
+            minWidth: 0,
             gap: "12px", // optional spacing
           }}
         >
@@ -49,7 +51,9 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
               border: "none",
               background: "transparent",
               padding: 0,
-              flex: "none",
+              flex: "0 1 auto",
+              minWidth: 0,
+              maxWidth: "100%",
             }}
           >
             <CustomInput
@@ -68,7 +72,7 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
                 }
               }}
               icon={<CustomIcon name="Search" size={18} />}
-              containerStyle={{ width: "350px", paddingLeft: "0px" }}
+              containerStyle={{ width: "350px", maxWidth: "100%", paddingLeft: "0px" }}
             />
           </div>
           <div className={styles.filterAnchor}>

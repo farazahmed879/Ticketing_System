@@ -34,15 +34,19 @@ const RoleCard = ({ data, handleEdit, handleDelete }: RoleCardProps) => {
         borderRadius: 14,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div
+        style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}
+      >
         <CustomIcon
           name="Shield"
           size={20}
+          style={{ flexShrink: 0 }}
           color={
             data.isAdmin ? "var(--accent-danger)" : "var(--accent-primary)"
           }
         />
         <span
+          title={data.name}
           style={{
             fontWeight: 700,
             fontSize: "0.95rem",

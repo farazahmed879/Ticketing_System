@@ -15,12 +15,11 @@ import { useAuth } from "../../context/AuthContext";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import styles from "./MyTeam.module.css";
 import CustomAvatarStack from "../../components/CustomAvatarStack";
-import CustomImage from "../../components/CustomImage";
 import CustomTooltip from "../../components/CustomTooltip";
 import Highlight from "../../components/Highlight";
 
 import StandardListLayout from "../../components/StandardListLayout";
-import { getTeamColumns } from "./columns";
+import { getTeamColumns, TeamLeadCell } from "./columns";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import { useListViewMode } from "../../utils/helpers";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
@@ -408,72 +407,7 @@ const TeamList: React.FC = () => {
                     >
                       Team Lead
                     </span>
-                    {t.teamLead ? (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 24,
-                            height: 24,
-                            borderRadius: "50%",
-                            overflow: "hidden",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          {t.teamLead.image ? (
-                            <CustomImage
-                              src={t.teamLead.image}
-                              alt={t.teamLead.fullname}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                              }}
-                            />
-                          ) : (
-                            <div
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                background: "var(--bg-glass)",
-                                color: "var(--text-primary)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: "0.75rem",
-                                fontWeight: 700,
-                              }}
-                            >
-                              {t.teamLead.fullname?.charAt(0)}
-                            </div>
-                          )}
-                        </div>
-                        <span
-                          style={{
-                            fontSize: "0.8rem",
-                            color: "var(--text-primary)",
-                          }}
-                        >
-                          {t.teamLead.fullname}
-                        </span>
-                      </div>
-                    ) : (
-                      <span
-                        style={{
-                          fontSize: "0.8rem",
-                          color: "var(--text-muted)",
-                        }}
-                      >
-                        None
-                      </span>
-                    )}
+                    <TeamLeadCell team={t} />
                   </div>
 
                   <div>

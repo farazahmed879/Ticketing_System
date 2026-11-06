@@ -30,6 +30,7 @@ import { InterviewListHeader } from "./components/InterviewListHeader";
 import { InterviewListFilter } from "./components/InterviewListFilter";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import { getDefaultListView } from "../../utils/helpers";
+import styles from "./InterviewList.module.css";
 
 const InterviewList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -300,19 +301,8 @@ const InterviewList: React.FC = () => {
                   <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 8 }}>
                     <div style={{ display: "flex", gap: 12, alignItems: "center", minWidth: 0 }}>
                       <div
-                        style={{
-                          flexShrink: 0,
-                          width: 38,
-                          height: 38,
-                          borderRadius: "50%",
-                          background: "var(--bg-glass)",
-                          color: "var(--text-primary)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: 700,
-                          fontSize: "1.1rem",
-                        }}
+                        className={styles.candidateAvatar}
+                        style={{ width: 38, height: 38, fontSize: "1rem" }}
                       >
                         {i.candidate.name.charAt(0)}
                       </div>

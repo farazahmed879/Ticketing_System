@@ -429,3 +429,14 @@
     font-size: 0.8rem !important;
   }
 }
+
+/* Install App button: icon-only on phones so the top bar doesn't crowd */
+@media (max-width: 768px) {
+  .installBtn {
+    padding: 7px !important;
+  }
+
+  .installLabel {
+    display: none;
+  }
+}

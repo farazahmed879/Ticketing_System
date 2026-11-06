@@ -57,18 +57,27 @@ const UserCard = ({
             style={{
               fontWeight: 700,
               fontSize: "0.95rem",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
               display: "flex",
               alignItems: "center",
               gap: 8,
+              minWidth: 0,
             }}
           >
-            {data.fullname}
+            <span
+              title={data.fullname}
+              style={{
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                minWidth: 0,
+              }}
+            >
+              {data.fullname}
+            </span>
             {data.isLead && (
               <span
                 style={{
+                  flexShrink: 0,
                   fontSize: "0.6rem",
                   padding: "1px 5px",
                   borderRadius: 4,
@@ -114,7 +123,7 @@ const UserCard = ({
             }}
             title={`Company email: ${data.companyEmail}`}
           >
-            <CustomIcon name="Building2" size={14} />
+            <CustomIcon name="Building2" size={14} style={{ flexShrink: 0 }} />
             <span
               style={{
                 whiteSpace: "nowrap",
@@ -135,7 +144,7 @@ const UserCard = ({
           }}
           title={data.email}
         >
-          <CustomIcon name="Mail" size={14} />
+          <CustomIcon name="Mail" size={14} style={{ flexShrink: 0 }} />
           <span
             style={{
               color: data.companyEmail ? "var(--text-muted)" : undefined,
@@ -148,7 +157,7 @@ const UserCard = ({
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <CustomIcon name="Phone" size={14} />
+          <CustomIcon name="Phone" size={14} style={{ flexShrink: 0 }} />
           <span style={{ color: "var(--text-muted)" }}>
             {data.primaryContact || data.mobileNumber || "—"}
           </span>
@@ -162,7 +171,7 @@ const UserCard = ({
           }}
           title={data.emergencyContact || ""}
         >
-          <CustomIcon name="LifeBuoy" size={14} />
+          <CustomIcon name="LifeBuoy" size={14} style={{ flexShrink: 0 }} />
           <span
             style={{
               fontSize: "0.68rem",

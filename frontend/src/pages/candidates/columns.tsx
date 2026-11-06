@@ -224,10 +224,7 @@ export const getCandidateColumns = (
       key: "matchReason",
       render: (c: any) =>
         c.matchReason ? (
-          <div className={styles.notesContainer}>
-            <span className={styles.notesText}>{c.matchReason}</span>
-            <div className={styles.notesTooltip}>{c.matchReason}</div>
-          </div>
+          <span className={styles.matchReason}>{c.matchReason}</span>
         ) : (
           <span className="text-sm-secondary">—</span>
         ),

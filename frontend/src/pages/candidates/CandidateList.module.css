@@ -79,6 +79,18 @@
   transform: translateX(-50%) translateY(-4px);
 }
 
+/* AI match reason: short (≤20 words), so show it in full instead of a
+   tooltip, which the table's scroll container clips. */
+.matchReason {
+  display: block;
+  min-width: 240px;
+  max-width: 320px;
+  white-space: normal;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
 /* Filter bar buttons matching the exact height & border-radius of the search bar */
 .filterBarBtn {
   height: 48px !important;

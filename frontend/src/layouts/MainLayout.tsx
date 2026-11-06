@@ -17,6 +17,7 @@ import {
   showDesktopNotification,
   playNotificationSound,
 } from "../utils/desktopNotifications";
+import { useCanInstallApp, promptInstallApp } from "../utils/installPrompt";
 
 const MainLayout: React.FC = () => {
   const { user } = useAuth();
@@ -35,6 +36,9 @@ const MainLayout: React.FC = () => {
   const [isBannerDismissed, setIsBannerDismissed] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const notificationRef = React.useRef<HTMLDivElement>(null);
+  // Only true in browsers that support installing (Chrome/Edge) and when the
+  // app isn't already installed.
+  const canInstallApp = useCanInstallApp();
 
   // Automatically prompt user to change password if they are using default/initial password
   React.useEffect(() => {
@@ -296,6 +300,22 @@ const MainLayout: React.FC = () => {
             style={{ display: "flex", gap: 20, alignItems: "center" }}
             ref={notificationRef}
           >
+            {canInstallApp && (
+              <CustomButton
+                variant="secondary"
+                size="sm"
+                type="button"
+                icon={<CustomIcon name="MonitorDown" size={16} />}
+                onClick={async () => {
+                  if (await promptInstallApp()) {
+                    showNotification("success", "App installed on your device");
+                  }
+                }}
+                title="Install this app on your desktop"
+              >
+                Install App
+              </CustomButton>
+            )}
             <div style={{ position: "relative" }}>
               <button
                 className={`glass-card notification-button${unreadCount > 0 ? " has-unread" : ""}`}

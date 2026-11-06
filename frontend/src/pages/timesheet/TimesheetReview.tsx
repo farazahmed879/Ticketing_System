@@ -22,6 +22,8 @@ import { TimesheetReviewSidebar } from "./components/TimesheetReviewSidebar";
 import { useTimesheetReviewColumns } from "./components/TimesheetReviewColumns";
 import { TimesheetReviewCard } from "./components/TimesheetReviewCard";
 import { getDefaultListView } from "../../utils/helpers";
+import { format, startOfWeek, endOfWeek } from "date-fns";
+import type { ReviewPeriod } from "./types";
 
 export default function TimesheetReview() {
   const { user } = useAuth();
@@ -36,6 +38,28 @@ export default function TimesheetReview() {
   const [selectedStatus, setSelectedStatus] = useState<string>("PENDING");
   const [month, setMonth] = useState<string>(new Date().getMonth().toString());
   const [year, setYear] = useState<string>(new Date().getFullYear().toString());
+  const [period, setPeriod] = useState<ReviewPeriod>("month");
+
+  // Query params for the selected period: an exact day range for Today /
+  // This Week (weeks start Monday), otherwise the month/year dropdowns.
+  const periodParams = (() => {
+    const now = new Date();
+    if (period === "today") {
+      const d = format(now, "yyyy-MM-dd");
+      return { from: d, to: d };
+    }
+    if (period === "week") {
+      return {
+        from: format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd"),
+        to: format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd"),
+      };
+    }
+    return {
+      month: month === "all" ? undefined : month,
+      year: year === "all" ? undefined : year,
+    };
+  })();
+  const periodKey = JSON.stringify(periodParams);
   const [userSearch, setUserSearch] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "grid">(getDefaultListView());
 
@@ -49,6 +73,7 @@ export default function TimesheetReview() {
             ROLE_TYPE.EMPLOYEE,
             ROLE_TYPE.HR,
             ROLE_TYPE.ADMIN,
+            ROLE_TYPE.QA,
           ],
           limit: -1,
         },
@@ -70,8 +95,7 @@ export default function TimesheetReview() {
       "pending",
       selectedStatus,
       selectedUserId,
-      month,
-      year,
+      periodKey,
     ],
     queryFn: async () => {
       const res = await api.get(API_ROUTES.TIMESHEETS.PENDING, {
@@ -79,8 +103,7 @@ export default function TimesheetReview() {
           // "ALL" tab → no status filter, the backend returns every entry.
           status: selectedStatus === "ALL" ? undefined : selectedStatus,
           userId: selectedUserId || undefined,
-          month: month === "all" ? undefined : month,
-          year: year === "all" ? undefined : year,
+          ...periodParams,
         },
       });
       return res.data.entries;
@@ -88,13 +111,10 @@ export default function TimesheetReview() {
   });
 
   const { data: pendingCountsData } = useQuery({
-    queryKey: ["timesheets", "pendingCounts", month, year],
+    queryKey: ["timesheets", "pendingCounts", periodKey],
     queryFn: async () => {
       const res = await api.get(API_ROUTES.TIMESHEETS.PENDING_COUNTS, {
-        params: {
-          month: month === "all" ? undefined : month,
-          year: year === "all" ? undefined : year,
-        },
+        params: periodParams,
       });
       // Convert [{ userId: "123", _count: { id: 2 } }] into { "123": 2 }
       const countsMap: Record<string, number> = {};
@@ -108,13 +128,10 @@ export default function TimesheetReview() {
   });
 
   const { data: unfilledData, refetch: refetchUnfilled } = useQuery({
-    queryKey: ["timesheets", "unfilled-users", month, year],
+    queryKey: ["timesheets", "unfilled-users", periodKey],
     queryFn: async () => {
       const res = await api.get(API_ROUTES.TIMESHEETS.UNFILLED_USERS, {
-        params: {
-          month: month === "all" ? undefined : month,
-          year: year === "all" ? undefined : year,
-        },
+        params: periodParams,
       });
       return res.data;
     },
@@ -210,6 +227,8 @@ export default function TimesheetReview() {
           year={year}
           setYear={setYear}
           years={years}
+          period={period}
+          setPeriod={setPeriod}
           selectedStatus={selectedStatus}
           setSelectedStatus={setSelectedStatus}
           onRefresh={fetchEntries}
@@ -360,10 +379,11 @@ export default function TimesheetReview() {
                     style={{ display: "flex", alignItems: "center", gap: 6 }}
                   >
                     <CustomIcon name="Calendar" size={14} />
-                    {month === "all"
-                      ? "All Time"
-                      : months.find((m) => m.value === month)?.label}{" "}
-                    {year}
+                    {period === "today"
+                      ? "Today"
+                      : period === "week"
+                        ? "This Week"
+                        : `${month === "all" ? "All Months" : months.find((m) => m.value === month)?.label} ${year === "all" ? "All Years" : year}`}
                   </span>
                 </div>
               </div>

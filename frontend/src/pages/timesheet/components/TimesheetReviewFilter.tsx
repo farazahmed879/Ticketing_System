@@ -2,9 +2,17 @@ import React from "react";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
-import type { TimesheetReviewFilterProps } from "../types";
+import type { TimesheetReviewFilterProps, ReviewPeriod } from "../types";
+
+const PERIOD_TABS: { value: ReviewPeriod; label: string }[] = [
+  { value: "today", label: "Today" },
+  { value: "week", label: "This Week" },
+  { value: "month", label: "Month" },
+];
 
 export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
+  period,
+  setPeriod,
   month,
   setMonth,
   months,
@@ -27,22 +35,46 @@ export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
       }}
     >
       <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <div style={{ display: "flex", gap: 8 }}>
-          <CustomSelect
-            value={month}
-            onChange={setMonth}
-            options={months}
-            style={{ width: 180 }}
-            placeholder="Month"
-          />
-          <CustomSelect
-            value={year}
-            onChange={setYear}
-            options={years}
-            style={{ width: 150 }}
-            placeholder="Year"
-          />
+        <div
+          className="glass-card"
+          style={{ display: "flex", padding: 4, borderRadius: 12 }}
+        >
+          {PERIOD_TABS.map((tab) => (
+            <CustomButton
+              key={tab.value}
+              variant={period === tab.value ? "gradient" : "ghost"}
+              onClick={() => setPeriod(tab.value)}
+              style={{
+                borderRadius: 8,
+                height: "auto",
+                padding: "8px 16px",
+                fontWeight: 600,
+                transition: "all 0.2s",
+                border: "none",
+              }}
+            >
+              {tab.label}
+            </CustomButton>
+          ))}
         </div>
+        {period === "month" && (
+          <div style={{ display: "flex", gap: 8 }}>
+            <CustomSelect
+              value={month}
+              onChange={setMonth}
+              options={months}
+              style={{ width: 180 }}
+              placeholder="Month"
+            />
+            <CustomSelect
+              value={year}
+              onChange={setYear}
+              options={years}
+              style={{ width: 150 }}
+              placeholder="Year"
+            />
+          </div>
+        )}
         <div
           className="glass-card"
           style={{ display: "flex", padding: 4, borderRadius: 12 }}
@@ -72,8 +104,12 @@ export const TimesheetReviewFilter: React.FC<TimesheetReviewFilterProps> = ({
           ))}
         </div>
       </div>
-      <div className="view-mode-switcher" style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <div className="view-mode-switcher"
+      <div
+        className="view-mode-switcher"
+        style={{ display: "flex", gap: 12, alignItems: "center" }}
+      >
+        <div
+          className="view-mode-switcher"
           style={{
             display: "flex",
             gap: 4,

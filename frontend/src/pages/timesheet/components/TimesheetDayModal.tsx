@@ -489,10 +489,13 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
                     projectId: "",
                     ticketId: "",
                   });
-                  setExpandedTasks((prev) => ({
-                    ...prev,
-                    [nextIdx]: true,
-                  }));
+                  // Collapse every existing task so only the new one is open.
+                  // Explicit `false` is needed because task #1 defaults to
+                  // expanded when it has no entry in the map.
+                  const next: Record<number, boolean> = {};
+                  for (let i = 0; i < nextIdx; i++) next[i] = false;
+                  next[nextIdx] = true;
+                  setExpandedTasks(next);
                 }}
               >
                 Add Another Task

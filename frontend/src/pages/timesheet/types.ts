@@ -49,7 +49,11 @@ export interface TimesheetReviewHeaderProps {
   onBack: () => void;
 }
 
+export type ReviewPeriod = "today" | "week" | "month";
+
 export interface TimesheetReviewFilterProps {
+  period: ReviewPeriod;
+  setPeriod: (v: ReviewPeriod) => void;
   month: string;
   setMonth: (v: string) => void;
   months: { value: string; label: string }[];

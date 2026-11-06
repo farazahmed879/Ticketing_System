@@ -120,36 +120,38 @@ const Timesheet: React.FC = () => {
 
   const renderHeader = () => (
     <div className={styles.controls}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-        <button
-          type="button"
-          className={styles.calendarCollapseBtn}
-          onClick={() => setIsCalendarCollapsed(true)}
-          title="Collapse Calendar"
-          aria-label="Collapse Calendar"
+      {/* Centered cluster: prev, title, next, then Today */}
+      <div className={styles.dateNavRow}>
+        <CustomButton
+          variant="secondary"
+          size="sm"
+          onClick={handlePrev}
+          title="Previous"
+          aria-label="Previous"
         >
-          <CustomIcon name="ChevronRight" size={16} />
-        </button>
+          <CustomIcon name="ChevronLeft" size={20} />
+        </CustomButton>
         <h2 className={styles.monthYear}>{getDateTitle()}</h2>
-        <div className={styles.navButtons}>
-          <CustomButton variant="secondary" size="sm" onClick={handlePrev}>
-            <CustomIcon name="ChevronLeft" size={20} />
-          </CustomButton>
-          <CustomButton
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              const today = new Date();
-              setCurrentDate(today);
-              setSelectedDate(today);
-            }}
-          >
-            Today
-          </CustomButton>
-          <CustomButton variant="secondary" size="sm" onClick={handleNext}>
-            <CustomIcon name="ChevronRight" size={20} />
-          </CustomButton>
-        </div>
+        <CustomButton
+          variant="secondary"
+          size="sm"
+          onClick={handleNext}
+          title="Next"
+          aria-label="Next"
+        >
+          <CustomIcon name="ChevronRight" size={20} />
+        </CustomButton>
+        <CustomButton
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            const today = new Date();
+            setCurrentDate(today);
+            setSelectedDate(today);
+          }}
+        >
+          Today
+        </CustomButton>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
@@ -773,6 +775,24 @@ const Timesheet: React.FC = () => {
           />
         </div>
 
+        {/* Edge toggle: sits half on the calendar card's left border (like
+            the sidebar toggle). Lives outside the card because the card
+            scrolls and would clip it. */}
+        <div className={styles.calendarToggleAnchor}>
+          <button
+            type="button"
+            className={styles.calendarEdgeToggle}
+            onClick={() => setIsCalendarCollapsed((c) => !c)}
+            title={isCalendarCollapsed ? "Expand Calendar" : "Collapse Calendar"}
+            aria-label={isCalendarCollapsed ? "Expand Calendar" : "Collapse Calendar"}
+          >
+            <CustomIcon
+              name={isCalendarCollapsed ? "ChevronLeft" : "ChevronRight"}
+              size={14}
+            />
+          </button>
+        </div>
+
         {/* Right Section (40% or Collapsed): Calendar or Table View */}
         <div
           className={`glass-card ${styles.calendarSection} ${
@@ -783,18 +803,6 @@ const Timesheet: React.FC = () => {
         >
           {isCalendarCollapsed ? (
             <div className={styles.collapsedCalendarRail}>
-              <button
-                type="button"
-                className={styles.calendarExpandBtn}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsCalendarCollapsed(false);
-                }}
-                title="Expand Calendar"
-                aria-label="Expand Calendar"
-              >
-                <CustomIcon name="ChevronLeft" size={16} />
-              </button>
               <CustomIcon
                 name="Calendar"
                 size={18}

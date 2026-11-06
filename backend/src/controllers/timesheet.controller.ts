@@ -110,13 +110,15 @@ export const timesheetController = {
 
   async getPendingEntries(req: AuthRequest, res: Response) {
     try {
-      const { status, userId, month, year } = req.query;
+      const { status, userId, month, year, from, to } = req.query;
       const roleType = req.user?.role;
       const entries = await timesheetUsecase.getReviewEntries({
         status: status as string,
         userId: userId as string,
         month: month as string,
         year: year as string,
+        from: from as string,
+        to: to as string,
         roleType: roleType as string,
         excludeUserId: req.user?.id,
       });
@@ -148,13 +150,15 @@ export const timesheetController = {
 
   async getPendingCounts(req: AuthRequest, res: Response) {
     try {
-      const { month, year } = req.query;
+      const { month, year, from, to } = req.query;
       const roleType = req.user?.role;
       const counts = await timesheetUsecase.getPendingCounts(
         month as string,
         year as string,
         roleType as string,
         req.user?.id,
+        from as string,
+        to as string,
       );
       res.json({ success: true, counts });
     } catch (error: any) {
@@ -164,10 +168,12 @@ export const timesheetController = {
 
   async getUnfilledUsers(req: AuthRequest, res: Response) {
     try {
-      const { month, year } = req.query;
+      const { month, year, from, to } = req.query;
       const data = await timesheetUsecase.getUnfilledUsers(
         month as string,
-        year as string
+        year as string,
+        from as string,
+        to as string,
       );
       res.json({ success: true, ...data });
     } catch (error: any) {

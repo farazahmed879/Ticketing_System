@@ -567,10 +567,11 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                     projectId: "",
                     ticketId: "",
                   });
-                  setExpandedTasks((prev) => ({
-                    ...prev,
-                    [nextIdx]: true,
-                  }));
+                  // Collapse every existing task so only the new one is open.
+                  const next: Record<number, boolean> = {};
+                  for (let i = 0; i < nextIdx; i++) next[i] = false;
+                  next[nextIdx] = true;
+                  setExpandedTasks(next);
                 }}
               >
                 Add Another Task

@@ -122,7 +122,10 @@
   line-height: 1.6;
   font-family: inherit;
   min-height: 80px;
-  max-height: 320px;
+  /* Grows with content; the user can also drag the bottom-right corner to
+     make it taller (or shorter), up to 60% of the viewport. */
+  max-height: 60vh;
+  resize: vertical;
   overflow-y: auto;
   word-break: break-word;
   cursor: text;
@@ -131,6 +134,7 @@
 .richEditorDisabled {
   opacity: 0.7;
   cursor: not-allowed;
+  resize: none;
 }
 
 .richEditorInput:empty::before {

@@ -1,5 +1,5 @@
 import { timesheetRepository } from "../repositories/timesheet.repository";
-import { startOfMonth, endOfMonth, startOfDay, startOfYear, endOfYear } from "date-fns";
+import { startOfMonth, endOfMonth, startOfDay, endOfDay, startOfYear, endOfYear } from "date-fns";
 import prisma from "../prisma";
 
 const ENTRY_TYPES = new Set([
@@ -22,6 +22,36 @@ const ZERO_HOUR_ENTRY_TYPES = new Set(["WEEKEND", "PUBLIC_HOLIDAY", "FULL_DAY_LE
 const LEAVE_DAYS_BY_ENTRY_TYPE: Record<string, number> = {
   HALF_DAY_LEAVE: 0.5,
   FULL_DAY_LEAVE: 1,
+};
+
+// Parse a "yyyy-MM-dd" string as a local calendar day (null when malformed).
+const parseDay = (value?: string): Date | null => {
+  const m = typeof value === "string" ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(value) : null;
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return isNaN(d.getTime()) ? null : d;
+};
+
+// Review date window. An explicit from/to range (Today / This Week) wins over
+// month/year; "All Months" with a year means the whole year.
+const resolveReviewRange = (
+  month?: string,
+  year?: string,
+  from?: string,
+  to?: string,
+): { startDate?: Date; endDate?: Date } => {
+  const fromDay = parseDay(from);
+  const toDay = parseDay(to);
+  if (fromDay && toDay) {
+    return { startDate: startOfDay(fromDay), endDate: endOfDay(toDay) };
+  }
+  if (year === undefined) return {};
+  const y = parseInt(year);
+  if (month !== undefined) {
+    const m = parseInt(month);
+    return { startDate: startOfMonth(new Date(y, m)), endDate: endOfMonth(new Date(y, m)) };
+  }
+  return { startDate: startOfYear(new Date(y, 0)), endDate: endOfYear(new Date(y, 0)) };
 };
 
 export const timesheetUsecase = {
@@ -219,50 +249,18 @@ export const timesheetUsecase = {
       entries,
     };
   },
-  async getReviewEntries(filters: { status?: string; userId?: string; month?: string; year?: string; roleType?: string; excludeUserId?: string }) {
-    let startDate: Date | undefined;
-    let endDate: Date | undefined;
-
-    if (filters.year !== undefined) {
-      const y = parseInt(filters.year);
-      if (filters.month !== undefined) {
-        const m = parseInt(filters.month);
-        startDate = startOfMonth(new Date(y, m));
-        endDate = endOfMonth(new Date(y, m));
-      } else {
-        // "All Months" with a specific year → filter the whole year.
-        startDate = startOfYear(new Date(y, 0));
-        endDate = endOfYear(new Date(y, 0));
-      }
-    }
-
-    return timesheetRepository.findReviewEntries({
-      ...filters,
-      startDate,
-      endDate,
-    });
+  async getReviewEntries(filters: { status?: string; userId?: string; month?: string; year?: string; from?: string; to?: string; roleType?: string; excludeUserId?: string }) {
+    const { from, to, ...rest } = filters;
+    const { startDate, endDate } = resolveReviewRange(filters.month, filters.year, from, to);
+    return timesheetRepository.findReviewEntries({ ...rest, startDate, endDate });
   },
-  
-  async getPendingCounts(month?: string, year?: string, roleType?: string, excludeUserId?: string) {
-    let startDate: Date | undefined;
-    let endDate: Date | undefined;
 
-    if (year !== undefined) {
-      const y = parseInt(year);
-      if (month !== undefined) {
-        const m = parseInt(month);
-        startDate = startOfMonth(new Date(y, m));
-        endDate = endOfMonth(new Date(y, m));
-      } else {
-        startDate = startOfYear(new Date(y, 0));
-        endDate = endOfYear(new Date(y, 0));
-      }
-    }
-
+  async getPendingCounts(month?: string, year?: string, roleType?: string, excludeUserId?: string, from?: string, to?: string) {
+    const { startDate, endDate } = resolveReviewRange(month, year, from, to);
     return timesheetRepository.getPendingCounts(startDate, endDate, roleType, excludeUserId);
   },
 
-  async getUnfilledUsers(month?: string, year?: string) {
+  async getUnfilledUsers(month?: string, year?: string, from?: string, to?: string) {
     // Policy rule: starts from first November 2026 (2026-11-01)
     const POLICY_START = startOfDay(new Date(2026, 10, 1));
     const now = new Date();
@@ -271,7 +269,12 @@ export const timesheetUsecase = {
     let startDate = POLICY_START;
     let endDate = today;
 
-    if (year !== undefined && month !== undefined && month !== "all" && year !== "all") {
+    const fromDay = parseDay(from);
+    const toDay = parseDay(to);
+    if (fromDay && toDay) {
+      startDate = fromDay < POLICY_START ? POLICY_START : startOfDay(fromDay);
+      endDate = toDay > today ? today : startOfDay(toDay);
+    } else if (year !== undefined && month !== undefined && month !== "all" && year !== "all") {
       const y = parseInt(year);
       const m = parseInt(month);
       const monthStart = startOfMonth(new Date(y, m));

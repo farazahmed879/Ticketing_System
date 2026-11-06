@@ -39,9 +39,21 @@
   color: var(--text-primary);
 }
 
-.navButtons {
+/* Calendar date navigation: prev | title | next | Today, centered together */
+.dateNavRow {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.dateNavRow .monthYear {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .calendarGrid {
@@ -859,54 +871,41 @@
   transition: flex 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
 }
 
-.calendarCollapseBtn {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  border-radius: 8px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-glass);
-  color: var(--text-secondary);
+/* Zero-width flex slot between the two panels. The negative margin cancels
+   the extra layout gap, so the slot sits exactly on the calendar card's left
+   edge. */
+.calendarToggleAnchor {
+  position: relative;
+  flex: 0 0 0;
+  width: 0;
+  margin-right: -16px;
+  z-index: 5;
+}
+
+/* Round toggle straddling the border, matching the sidebar's collapse toggle. */
+.calendarEdgeToggle {
+  position: absolute;
+  top: 18px;
+  left: -12px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  color: #ffffff;
+  border: 4px solid var(--bg-main);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  flex-shrink: 0;
-  padding: 0;
+  transition: transform 0.2s;
 }
 
-.calendarCollapseBtn:hover {
-  background: var(--accent-primary);
-  color: #ffffff;
-  border-color: var(--accent-primary);
-  transform: translateX(2px);
-  box-shadow: 0 4px 12px rgba(12, 165, 57, 0.4);
-}
-
-.calendarExpandBtn {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-glass);
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  flex-shrink: 0;
-  margin-bottom: 12px;
-  padding: 0;
-}
-
-.calendarExpandBtn:hover {
-  background: var(--accent-primary);
-  color: #ffffff;
-  border-color: var(--accent-primary);
+.calendarEdgeToggle:hover {
   transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(12, 165, 57, 0.4);
+  background: var(--accent-secondary);
 }
 
 .calendarSectionCollapsed {
@@ -1174,6 +1173,10 @@
     height: auto;
     max-height: none;
     overflow: visible;
+  }
+
+  .calendarToggleAnchor {
+    display: none;
   }
 
   .timesheetLayout {

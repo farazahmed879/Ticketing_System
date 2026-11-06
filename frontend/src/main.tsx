@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import './i18n/config';
+// Capture the browser's install prompt as early as possible (PWA "Install App").
+import './utils/installPrompt';
 
 // Initialize Theme
 const savedTheme = localStorage.getItem('theme') || 'light';

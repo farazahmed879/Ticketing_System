@@ -201,7 +201,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className={styles.logoRow}>
         <div className={styles.logo}>
           <CustomImage
-            src="/logo-sq.png"
+            src="/InsigniaStandalone.svg"
             alt="Logo"
             style={{ width: 32, height: 32, objectFit: "contain", flexShrink: 0 }}
           />

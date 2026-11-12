@@ -17,8 +17,12 @@ export function formatInlineMarkdownToHtml(escapedText: string): string {
     .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "<em>$1</em>");
 }
 
+// Entities the editor's innerHTML emits. A single typed line is saved as a bare
+// text node (no wrapping <div>), so "a & b" arrives as "a &amp; b" with no tags.
+const HTML_ENTITY_REGEX = /&(?:amp|lt|gt|quot|nbsp|#39|#\d+|#x[0-9a-f]+);/i;
+
 export function isRichHtml(value: string): boolean {
-  return HTML_TAG_REGEX.test(value);
+  return HTML_TAG_REGEX.test(value) || HTML_ENTITY_REGEX.test(value);
 }
 
 /**
@@ -211,6 +215,12 @@ export function getTaskDescriptionPlainText(value?: string | null): string {
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(div|p|li)>/gi, "\n")
     .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
     .replace(/\u200B/g, "")
     .trim();
 }

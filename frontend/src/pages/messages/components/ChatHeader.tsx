@@ -68,6 +68,15 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 
   return (
     <header className={styles.chatHeader}>
+      {/* Phones: list and chat are separate screens — back returns to the list */}
+      <button
+        type="button"
+        className={styles.mobileBackBtn}
+        onClick={onCloseChat}
+        aria-label="Back to chats"
+      >
+        <CustomIcon name="ChevronLeft" size={22} />
+      </button>
       <div style={{ position: "relative", flexShrink: 0 }}>
         <div
           className="glass-card"
@@ -102,8 +111,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         </div>
         {partnerOnline && <span className={styles.onlineDot} />}
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 600 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className={styles.chatHeaderName}>
           {selectedConv.isGroup
             ? selectedConv.name
             : selectedConv.partner?.fullname}
@@ -128,7 +137,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
       </div>
       <div
         ref={moreOptionsRef}
-        style={{ display: "flex", gap: 8, position: "relative" }}
+        className={styles.chatHeaderActions}
       >
         <CustomButton
           variant="ghost"
@@ -231,6 +240,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           style={{ padding: 8 }}
           onClick={onCloseChat}
           title="Close Chat"
+          className={styles.closeChatBtn}
           icon={<CustomIcon name="X" size={20} color="var(--text-muted)" />}
         />
       </div>

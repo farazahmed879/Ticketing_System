@@ -7,7 +7,6 @@ import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
 import { socket } from "../services/socket";
 import CustomIcon from "../components/CustomIcon";
-import CustomButton from "../components/CustomButton";
 import styles from "./MainLayout.module.css";
 import Sidebar from "../components/Sidebar";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -17,6 +16,21 @@ import {
   showDesktopNotification,
   playNotificationSound,
 } from "../utils/desktopNotifications";
+
+const MOBILE_QUERY = "(max-width: 768px)";
+
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = React.useState(
+    () => typeof window !== "undefined" && window.matchMedia(MOBILE_QUERY).matches,
+  );
+  React.useEffect(() => {
+    const mql = window.matchMedia(MOBILE_QUERY);
+    const onChange = () => setIsMobile(mql.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+  return isMobile;
+};
 
 const MainLayout: React.FC = () => {
   const { user } = useAuth();
@@ -32,6 +46,11 @@ const MainLayout: React.FC = () => {
   const [isMarkAllReadOpen, setIsMarkAllReadOpen] = React.useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = React.useState(false);
   const [isBannerDismissed, setIsBannerDismissed] = React.useState(false);
+  // Tap-to-open state for the security pill (hover doesn't exist on touch).
+  const [isPillOpen, setIsPillOpen] = React.useState(false);
+  const pillRef = React.useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const notificationRef = React.useRef<HTMLDivElement>(null);
 
@@ -49,6 +68,42 @@ const MainLayout: React.FC = () => {
       }
     }
   }, [user?.id, user?.mustChangePassword]);
+
+  // Close the tapped-open pill when the user taps anywhere else.
+  React.useEffect(() => {
+    if (!isPillOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (pillRef.current && !pillRef.current.contains(event.target as Node)) {
+        setIsPillOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isPillOpen]);
+
+  // Mobile drawer: close on route change / leaving phone width, Escape to
+  // close, and lock the page scroll behind it while open.
+  const drawerResetKey = `${location.pathname}|${isMobile}`;
+  const [prevDrawerResetKey, setPrevDrawerResetKey] =
+    React.useState(drawerResetKey);
+  if (prevDrawerResetKey !== drawerResetKey) {
+    setPrevDrawerResetKey(drawerResetKey);
+    setIsMobileMenuOpen(false);
+  }
+
+  React.useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsMobileMenuOpen(false);
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [isMobileMenuOpen]);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -253,11 +308,14 @@ const MainLayout: React.FC = () => {
 
   return (
     <div
-      className={`${styles.layout} ${isCollapsed ? styles.layoutCollapsed : ""}`}
+      className={`${styles.layout} ${isCollapsed ? styles.layoutCollapsed : ""} ${isMobile ? styles.layoutMobile : ""}`}
     >
       <Sidebar
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+        isMobile={isMobile}
+        isMobileOpen={isMobileMenuOpen}
+        onMobileOpenChange={setIsMobileMenuOpen}
         unreadMessageCount={notifications.filter((n) => n.unread && n.type === "message").length}
       />
 
@@ -265,8 +323,63 @@ const MainLayout: React.FC = () => {
         <header
           className={`${styles.topbar} ${scrolled ? styles.topbarScrolled : ""}`}
         >
-          <div style={{ fontSize: "1.2rem", fontWeight: 600 }}>
-            {/* {t("topbar.overview")} */}
+          <div className={styles.topbarLeft}>
+            {isMobile && (
+              <button
+                type="button"
+                className={styles.hamburgerBtn}
+                onClick={() => setIsMobileMenuOpen(true)}
+                aria-label="Open menu"
+                aria-expanded={isMobileMenuOpen}
+              >
+                <CustomIcon name="Menu" size={20} />
+              </button>
+            )}
+            {user?.mustChangePassword && !isBannerDismissed && (
+              <div
+                ref={pillRef}
+                className={`${styles.securityPill} ${isPillOpen ? styles.securityPillOpen : ""}`}
+                role="status"
+              >
+                <button
+                  type="button"
+                  className={styles.securityPillIcon}
+                  aria-label="Security notice: default password in use"
+                  aria-expanded={isPillOpen}
+                  onClick={() => setIsPillOpen((open) => !open)}
+                >
+                  <CustomIcon name="ShieldAlert" size={14} />
+                </button>
+                <div className={styles.securityPillBody}>
+                  <span className={styles.securityPillText}>
+                    <strong>Default password in use</strong>
+                    <span className={styles.securityPillDesc}>
+                      Update it to keep your account secure
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.securityPillAction}
+                    onClick={() => {
+                      setIsPillOpen(false);
+                      setIsChangePasswordOpen(true);
+                    }}
+                  >
+                    <CustomIcon name="KeyRound" size={13} />
+                    <span>Change password</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.securityPillDismiss}
+                    onClick={() => setIsBannerDismissed(true)}
+                    title="Dismiss notice"
+                    aria-label="Dismiss notice"
+                  >
+                    <CustomIcon name="X" size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           <div
             style={{ display: "flex", gap: 20, alignItems: "center" }}
@@ -544,47 +657,6 @@ const MainLayout: React.FC = () => {
             </button>
           </div>
         </header>
-
-        {user?.mustChangePassword && !isBannerDismissed && (
-          <div className={styles.passwordAlertBanner}>
-            <div className={styles.alertLeft}>
-              <div className={styles.alertIconWrapper}>
-                <CustomIcon
-                  name="ShieldAlert"
-                  size={20}
-                  className={styles.alertShieldIcon}
-                />
-              </div>
-              <div className={styles.alertTextContent}>
-                <div className={styles.alertTitle}>
-                  <span>Security Notice: Default Password Detected</span>
-                </div>
-                <div className={styles.alertDesc}>
-                  You are currently using an initial or default password. Please update your password to protect your account.
-                </div>
-              </div>
-            </div>
-            <div className={styles.alertActions}>
-              <CustomButton
-                variant="primary"
-                size="sm"
-                icon={<CustomIcon name="KeyRound" size={15} />}
-                onClick={() => setIsChangePasswordOpen(true)}
-                className={styles.alertBtn}
-              >
-                Change Password
-              </CustomButton>
-              <CustomButton
-                variant="ghost"
-                size="sm"
-                icon={<CustomIcon name="X" size={16} />}
-                onClick={() => setIsBannerDismissed(true)}
-                title="Dismiss notice"
-                className={styles.alertDismissBtn}
-              />
-            </div>
-          </div>
-        )}
 
         <div className={styles.pageContainer}>
           <Outlet />

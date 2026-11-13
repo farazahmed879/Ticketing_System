@@ -1,6 +1,7 @@
 import React from "react";
 import CustomButton from "../../../components/CustomButton";
 import CustomIcon from "../../../components/CustomIcon";
+import styles from "../InterviewList.module.css";
 
 import type { InterviewListHeaderProps } from "./interfaces";
 
@@ -9,16 +10,10 @@ export const InterviewListHeader: React.FC<InterviewListHeaderProps> = ({
   onScheduleClick,
 }) => {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}
-    >
+    <div className={styles.listHeader}>
       <div>
-        <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>Interviews</h1>
-        <p style={{ color: "var(--text-muted)" }}>
+        <h1 className={styles.listTitle}>Interviews</h1>
+        <p className={styles.listSubtitle}>
           Schedule and manage candidate interviews
         </p>
       </div>

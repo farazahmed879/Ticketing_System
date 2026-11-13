@@ -149,14 +149,7 @@ const Requests: React.FC = () => {
           </div>
         }
         filters={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 16,
-            }}
-          >
+          <div className={styles.filterRow}>
             <CustomFilterBar
               activeOption={filter}
               onChange={setFilter}
@@ -167,16 +160,7 @@ const Requests: React.FC = () => {
                 { value: "ALL", label: "All" },
               ]}
             />
-            <div
-              style={{
-                display: "flex",
-                gap: 4,
-                padding: 4,
-                borderRadius: 10,
-                border: "1px solid var(--border-glass)",
-                background: "rgba(255,255,255,0.03)",
-              }}
-            >
+            <div className={styles.viewToggle}>
               <CustomButton
                 variant={viewMode === "list" ? "primary" : "ghost"}
                 size="sm"

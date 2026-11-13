@@ -550,7 +550,9 @@ const Messages: React.FC = () => {
   }
 
   return (
-    <div className={`${styles.container} animate-fade-in`}>
+    <div
+      className={`${styles.container} ${activeConv ? styles.containerChatOpen : ""} animate-fade-in`}
+    >
       <ConversationSidebar
         conversations={conversations}
         activeConv={activeConv}

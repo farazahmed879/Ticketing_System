@@ -793,3 +793,161 @@
 }
 
 
+
+/* ---------- Layout helpers (also used on desktop) ---------- */
+.listSearch {
+  padding: 16px 24px;
+}
+
+.chatHeaderName {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chatHeaderActions {
+  display: flex;
+  gap: 8px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.chatInputForm {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.mobileBackBtn {
+  display: none;
+}
+
+/* ---------- Phones: list and chat are separate full-width screens ---------- */
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: minmax(0, 1fr);
+    /* 52px topbar + 12px top/bottom page padding */
+    height: calc(100dvh - 76px);
+    border-radius: 12px;
+  }
+
+  .container .chatArea {
+    display: none;
+  }
+
+  .containerChatOpen .chatArea {
+    display: flex;
+  }
+
+  .containerChatOpen .conversationList {
+    display: none;
+  }
+
+  /* Conversation list */
+  .listHeader {
+    padding: 14px 16px;
+  }
+
+  .listSearch {
+    padding: 12px 16px;
+  }
+
+  .conversationItem {
+    padding: 12px 16px;
+  }
+
+  .activeItem {
+    border-right: none;
+  }
+
+  /* Chat header */
+  .chatHeader {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .mobileBackBtn {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    margin-inline-end: -2px;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+
+  .mobileBackBtn:active {
+    background: rgba(124, 58, 237, 0.12);
+    color: var(--accent-primary);
+  }
+
+  .chatHeaderActions {
+    gap: 2px;
+  }
+
+  /* Back button replaces the close (X) button */
+  .closeChatBtn {
+    display: none !important;
+  }
+
+  .filesPanel {
+    width: min(320px, calc(100vw - 32px));
+  }
+
+  /* Messages */
+  .messagesContainer {
+    padding: 14px 10px;
+  }
+
+  .messagesWrapper {
+    gap: 10px;
+  }
+
+  .messageWrapper {
+    max-width: 86%;
+  }
+
+  .messageBubble {
+    font-size: 0.92rem;
+    padding: 8px 12px;
+  }
+
+  /* No hover on touch — keep reply/delete reachable */
+  .messageActions {
+    opacity: 0.75;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .messageWrapper:hover .messageBubble {
+    transform: none;
+  }
+
+  /* Composer */
+  .chatInput {
+    padding: 8px 10px calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .chatInputForm {
+    gap: 6px;
+  }
+
+  .chatTextInput {
+    height: 40px;
+    padding: 0 12px !important;
+    /* 16px stops iOS Safari from zooming in on focus */
+    font-size: 16px !important;
+  }
+
+  .attachButton {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+}

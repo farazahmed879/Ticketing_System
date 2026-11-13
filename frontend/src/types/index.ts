@@ -514,6 +514,10 @@ export interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   unreadMessageCount?: number;
+  /** Phone layout: icon rail that opens into an overlay drawer. */
+  isMobile?: boolean;
+  isMobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
 }
 
 export interface CustomerDashboardProps {

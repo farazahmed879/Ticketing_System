@@ -80,7 +80,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
         </div>
       </div>
 
-      <div style={{ padding: "16px 24px" }}>
+      <div className={styles.listSearch}>
         <CustomInput
           placeholder="Search chats..."
           value={searchTerm}

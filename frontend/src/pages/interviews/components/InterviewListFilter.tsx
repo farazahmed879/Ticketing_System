@@ -36,22 +36,8 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
   return (
     <div className={styles.filterBar}>
       <div className={styles.filters}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px", // optional spacing
-          }}
-        >
-          <div
-            className={styles.search}
-            style={{
-              border: "none",
-              background: "transparent",
-              padding: 0,
-              flex: "none",
-            }}
-          >
+        <div className={styles.searchRow}>
+          <div className={styles.searchBox}>
             <CustomInput
               placeholder="Search interviews..."
               value={searchInput}
@@ -68,7 +54,7 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
                 }
               }}
               icon={<CustomIcon name="Search" size={18} />}
-              containerStyle={{ width: "350px", paddingLeft: "0px" }}
+              containerStyle={{ width: "100%", paddingLeft: "0px" }}
             />
           </div>
           <div className={styles.filterAnchor}>
@@ -81,8 +67,14 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
               onClick={toggleMoreFilters}
               icon={<CustomIcon name="SlidersHorizontal" size={18} />}
               style={{ height: 48 }}
+              className={styles.filtersToggle}
+              aria-label={
+                activeMoreFilters > 0
+                  ? `Filters (${activeMoreFilters} active)`
+                  : "Filters"
+              }
             >
-              Filters
+              <span className={styles.filtersToggleLabel}>Filters</span>
               {activeMoreFilters > 0 && (
                 <span
                   style={{
@@ -104,6 +96,7 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
                 name={showMoreFilters ? "ChevronUp" : "ChevronDown"}
                 size={16}
                 style={{ marginLeft: 6 }}
+                className={styles.filtersToggleChevron}
               />
             </CustomButton>
 
@@ -164,17 +157,7 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
           </div>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: 4,
-            padding: 4,
-            borderRadius: 10,
-            border: "1px solid var(--border-glass)",
-            background: "rgba(255,255,255,0.03)",
-            marginLeft: "auto",
-          }}
-        >
+        <div className={styles.viewToggle}>
           <CustomButton
             variant={viewMode === "list" ? "primary" : "ghost"}
             size="sm"

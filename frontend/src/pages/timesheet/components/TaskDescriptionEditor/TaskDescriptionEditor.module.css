@@ -261,3 +261,20 @@
   color: var(--accent-danger);
   margin-top: 2px;
 }
+
+/* Phones: icon-only toolbar on one line; keyboard-shortcut hint is useless on touch */
+@media (max-width: 768px) {
+  .toolButton {
+    font-size: 0; /* hides the text label; icon keeps its own size, title/text stay for a11y */
+    gap: 0;
+    padding: 6px 8px;
+  }
+
+  .shortcutHint {
+    display: none;
+  }
+
+  .charCount {
+    margin-inline-start: auto;
+  }
+}

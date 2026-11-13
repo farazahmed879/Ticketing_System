@@ -163,7 +163,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           })}
         </div>
       )}
-      <form onSubmit={onSendMessage} style={{ display: "flex", gap: 12 }}>
+      <form onSubmit={onSendMessage} className={styles.chatInputForm}>
         <input
           type="file"
           accept={CHAT_ACCEPT_ATTRIBUTE}
@@ -210,8 +210,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
+          className={styles.chatTextInput}
           style={{
             flex: 1,
+            minWidth: 0,
             background: "var(--bg-tertiary)",
             border: "1px solid var(--border-color)",
             borderRadius: 12,

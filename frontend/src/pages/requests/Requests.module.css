@@ -144,3 +144,62 @@
   flex-direction: column;
   align-items: center;
 }
+
+.filterRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.viewToggle {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header h1 {
+    font-size: 1.2rem !important;
+  }
+
+  .header p {
+    font-size: 0.8rem;
+  }
+
+  .filterRow {
+    gap: 8px;
+  }
+
+  /* Status tabs take the remaining width and share it evenly */
+  .filterRow > :first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+/* Create-request modal: start / end dates.
+   minmax(0, 1fr) lets native date inputs shrink instead of overflowing. */
+.dateRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 420px) {
+  .dateRow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+}

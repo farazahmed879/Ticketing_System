@@ -109,3 +109,34 @@
   border-bottom-left-radius: 24px;
   border-bottom-right-radius: 24px;
 }
+
+/* Phones: use the screen width, tighter chrome */
+@media (max-width: 768px) {
+  .overlay {
+    padding: 12px;
+  }
+
+  .modal {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    border-radius: 18px;
+  }
+
+  .header {
+    padding: 16px 18px;
+  }
+
+  .header h2 {
+    font-size: 1.1rem;
+  }
+
+  .content {
+    padding: 8px 18px;
+  }
+
+  .footer {
+    padding: 12px 18px;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+  }
+}

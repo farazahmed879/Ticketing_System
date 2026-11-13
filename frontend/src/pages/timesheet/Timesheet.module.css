@@ -1215,3 +1215,210 @@
   }
 }
 
+
+/* =========================================================
+   Phones: everything stacks; calendar fits the narrow width
+   ========================================================= */
+@media (max-width: 768px) {
+  .container {
+    gap: 10px;
+  }
+
+  .header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .header h1 {
+    font-size: 1.2rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .statCard {
+    padding: 8px 12px;
+  }
+
+  .statValue {
+    font-size: 1.1rem;
+  }
+
+  .timesheetLayout {
+    gap: 12px;
+  }
+
+  /* Log panel */
+  .logPanelCard {
+    padding: 14px 12px 0 12px;
+  }
+
+  .modalTopRow {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .taskAccordionBody {
+    padding: 12px;
+  }
+
+  .taskAccordionHeader {
+    padding: 10px 12px;
+  }
+
+  .taskInputsGrid {
+    grid-template-columns: 1fr 96px;
+    gap: 12px;
+  }
+
+  .taskInputsGrid .taskInputProject {
+    grid-column: 1 / -1;
+  }
+
+  .taskInputsGridNoTicket {
+    grid-template-columns: 1fr 96px;
+    gap: 12px;
+  }
+
+  .taskDescPreview {
+    max-width: 100%;
+  }
+
+  .stickyFooter {
+    margin-left: -12px;
+    margin-right: -12px;
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .footerRight {
+    margin-inline-start: auto;
+  }
+
+  /* Calendar card */
+  .calendarSection {
+    padding: 12px 10px;
+  }
+
+  /* Collapsing the side calendar makes no sense when it's stacked below */
+  .calendarCollapseBtn {
+    display: none;
+  }
+
+  .calendarSectionCollapsed {
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px 12px !important;
+  }
+
+  .logTasksSectionExpanded {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  .collapsedCalendarRail {
+    flex-direction: row;
+    height: auto;
+    margin-top: 0;
+  }
+
+  .collapsedCalendarRail .calendarExpandBtn {
+    margin-bottom: 0;
+  }
+
+  .collapsedCalendarText {
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+
+  .controls > div {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .monthYear {
+    font-size: 1rem;
+  }
+
+  .navButtons {
+    gap: 6px;
+  }
+
+  .viewSwitcher {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .viewSwitcher > * {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding-inline: 6px;
+  }
+
+  /* Monthly grid: 7 narrow columns → compact cells, hours only */
+  .calendarGrid {
+    gap: 3px;
+  }
+
+  .dayHeader {
+    font-size: 0.62rem;
+    letter-spacing: 0;
+  }
+
+  .dayCell {
+    min-height: 48px;
+    padding: 4px;
+    border-radius: 8px;
+  }
+
+  .calendarGrid .dayCell .taskList {
+    display: none;
+  }
+
+  .dayCell .hoursBadge {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+    align-self: stretch;
+    text-align: center;
+  }
+
+  .selectedDay {
+    transform: none;
+  }
+
+  /* Weekly grid */
+  .weeklyCalendarGrid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px 6px;
+  }
+
+  .weeklyDayCell {
+    min-height: 84px;
+    padding: 8px;
+    border-radius: 10px;
+  }
+
+  .weeklyDayCell .dayNumber {
+    font-size: 0.95rem;
+  }
+
+  .weeklyDayCell .hoursBadge {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+  }
+}
+
+@media (max-width: 420px) {
+  .viewSwitcher > * {
+    font-size: 0.75rem;
+  }
+
+  .weeklyCalendarGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

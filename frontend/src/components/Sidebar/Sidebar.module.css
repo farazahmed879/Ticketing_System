@@ -319,3 +319,90 @@
     padding: 16px;
   }
 }
+
+/* ---------- Phone layout: off-canvas drawer opened from the topbar ---------- */
+.mobileCloseBtn {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  margin-inline-start: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.mobileCloseBtn:active {
+  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.3);
+  color: var(--accent-primary);
+}
+
+.mobileBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  animation: backdropIn 0.2s ease;
+}
+
+@keyframes backdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sidebar.sidebarMobile {
+  width: min(280px, 85vw);
+  height: 100dvh;
+  padding: 16px;
+  z-index: 200;
+  transform: translateX(-100%);
+  visibility: hidden;
+  box-shadow: none;
+  transition:
+    transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.28s ease,
+    visibility 0s linear 0.28s;
+}
+
+:global([dir="rtl"]) .sidebar.sidebarMobile {
+  transform: translateX(100%);
+}
+
+.sidebar.sidebarMobile.sidebarMobileOpen {
+  transform: none;
+  visibility: visible;
+  box-shadow: 12px 0 40px rgba(0, 0, 0, 0.25);
+  transition:
+    transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.28s ease,
+    visibility 0s;
+}
+
+.sidebar.sidebarMobile .logo {
+  margin-bottom: 18px;
+}
+
+.sidebar.sidebarMobile .navLink {
+  padding: 12px;
+  font-size: 0.95rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar.sidebarMobile,
+  .sidebar.sidebarMobile.sidebarMobileOpen {
+    transition: none;
+  }
+}

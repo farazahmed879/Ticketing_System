@@ -3,6 +3,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomBadge from "../../../components/CustomBadge";
 import { formatDate } from "../../../utils/helpers";
 import type { Candidate } from "../../../types";
+import tabStyles from "./CandidateDetail.module.css";
 
 interface CandidateProfileTabProps {
   candidate: Candidate;
@@ -100,6 +101,7 @@ export const CandidateProfileTab: React.FC<CandidateProfileTabProps> = ({
         )}
 
         <div
+          className={tabStyles.profileColumns}
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr",

@@ -522,6 +522,7 @@ const NotificationSettingsSection: React.FC = () => {
           }}
         >
           <div
+            className={styles.prefRow}
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -551,7 +552,7 @@ const NotificationSettingsSection: React.FC = () => {
               </p>
             </div>
             <div
-              className={styles.themeToggleGrid}
+              className={`${styles.themeToggleGrid} ${styles.onOffToggle}`}
               style={{ maxWidth: "200px" }}
             >
               <CustomButton
@@ -581,6 +582,7 @@ const NotificationSettingsSection: React.FC = () => {
           }}
         >
           <div
+            className={styles.prefRow}
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -609,7 +611,7 @@ const NotificationSettingsSection: React.FC = () => {
               </p>
             </div>
             <div
-              className={styles.themeToggleGrid}
+              className={`${styles.themeToggleGrid} ${styles.onOffToggle}`}
               style={{ maxWidth: "200px" }}
             >
               <CustomButton
@@ -632,6 +634,7 @@ const NotificationSettingsSection: React.FC = () => {
 
         <div className={styles.settingGroup}>
           <div
+            className={styles.prefRow}
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -688,7 +691,7 @@ const NotificationSettingsSection: React.FC = () => {
               )}
             </div>
             <div
-              className={styles.themeToggleGrid}
+              className={`${styles.themeToggleGrid} ${styles.onOffToggle}`}
               style={{ maxWidth: "200px" }}
             >
               <CustomButton

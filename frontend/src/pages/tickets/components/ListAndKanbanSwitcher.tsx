@@ -1,4 +1,5 @@
 import CustomIcon from "../../../components/CustomIcon";
+import styles from "../TicketList.module.css";
 
 interface ListAndKanbanSwitcherProps {
   navigate: (path: string) => void;
@@ -41,6 +42,7 @@ const ListAndKanbanSwitcher: React.FC<ListAndKanbanSwitcherProps> = ({
   return (
     <>
       <div
+        className={styles.viewSwitch}
         style={{
           display: "flex",
           background: "var(--bg-card)",
@@ -54,24 +56,33 @@ const ListAndKanbanSwitcher: React.FC<ListAndKanbanSwitcherProps> = ({
             selectedValue !== "list" && navigate("/tickets?view=list")
           }
           style={selectedValue === "list" ? activeStyle : inactiveStyle}
+          aria-label="List view"
+          title="List view"
         >
-          <CustomIcon name="List" size={16} /> List
+          <CustomIcon name="List" size={16} />{" "}
+          <span className={styles.viewSwitchLabel}>List</span>
         </button>
         <button
           onClick={() =>
             selectedValue !== "grid" && navigate("/tickets?view=grid")
           }
           style={selectedValue === "grid" ? activeStyle : inactiveStyle}
+          aria-label="Grid view"
+          title="Grid view"
         >
-          <CustomIcon name="LayoutGrid" size={16} /> Grid
+          <CustomIcon name="LayoutGrid" size={16} />{" "}
+          <span className={styles.viewSwitchLabel}>Grid</span>
         </button>
         <button
           onClick={() =>
             selectedValue !== "board" && navigate("/tickets/board")
           }
           style={selectedValue === "board" ? activeStyle : inactiveStyle}
+          aria-label="Board view"
+          title="Board view"
         >
-          <CustomIcon name="Kanban" size={16} /> Board
+          <CustomIcon name="Kanban" size={16} />{" "}
+          <span className={styles.viewSwitchLabel}>Board</span>
         </button>
       </div>
     </>

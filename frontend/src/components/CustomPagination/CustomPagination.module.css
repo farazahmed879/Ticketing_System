@@ -178,3 +178,51 @@
     gap: 16px;
   }
 }
+
+/* Phones: slim two-line bar (overrides the stacked layout above) —
+   line 1: "Showing x–y of z" + page size, line 2: page buttons */
+@media (max-width: 768px) {
+  .paginationContainer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 8px 10px;
+    text-align: left;
+  }
+
+  .leftSection {
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .info {
+    font-size: 0.75rem;
+  }
+
+  .pageSize {
+    gap: 6px;
+    font-size: 0.75rem;
+  }
+
+  .controls {
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .pageBtn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+  }
+
+  .pageBtn:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .ellipsis {
+    padding: 0 2px;
+  }
+}

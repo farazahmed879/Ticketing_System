@@ -621,3 +621,54 @@
     transform: translateY(0);
   }
 }
+
+/* =========================================================
+   Phones: one column per screen, swipe between columns
+   ========================================================= */
+@media (max-width: 768px) {
+  .boardContainer {
+    /* 52px topbar + 12px top/bottom page padding */
+    height: calc(100dvh - 76px);
+  }
+
+  .kanbanBoard {
+    gap: 10px;
+    scroll-padding-inline: 0;
+    /* allow normal text interaction on touch */
+    user-select: auto;
+    -webkit-user-select: auto;
+  }
+
+  /* Full-width column with a small peek of the next one */
+  .column {
+    min-width: calc(100vw - 52px);
+    max-width: calc(100vw - 52px);
+    border-radius: 16px;
+    padding: 10px 8px;
+    gap: 10px;
+  }
+
+  .columnCollapsed {
+    min-width: 120px;
+    max-width: 120px;
+    padding: 12px 8px;
+  }
+
+  /* Swipe replaces the arrow buttons on touch screens */
+  .scrollAffordance {
+    display: none;
+  }
+
+  .card:hover,
+  .miniCard:hover {
+    transform: none;
+  }
+
+  .card:active {
+    transform: scale(0.98);
+  }
+
+  .cardList {
+    gap: 10px;
+  }
+}

@@ -393,3 +393,67 @@
 .saveButton:active:not(:disabled) {
   transform: translateY(0) scale(0.98) !important;
 }
+
+/* =========================================================
+   Phones: single column (details card → tabs/comments → sidebar)
+   ========================================================= */
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .ticketInfo {
+    padding: 16px;
+  }
+
+  .title,
+  .titleInput {
+    font-size: 1.2rem;
+    overflow-wrap: anywhere;
+  }
+
+  /* Row 1: back button + ticket # (+ Returned); row 2: the title */
+  .title,
+  .titleInput {
+    min-width: 0 !important;
+    flex-basis: 100% !important;
+    order: 2;
+  }
+
+  .tabs {
+    gap: 18px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Unsaved-changes bar: full width, wraps, clears the iPhone home bar */
+  .floatingBar {
+    width: calc(100% - 20px);
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+    border-radius: 14px;
+  }
+
+  .unsavedBadge {
+    font-size: 0.78rem;
+    padding: 5px 10px;
+  }
+
+  .floatingBarActions {
+    margin-inline-start: auto;
+    gap: 8px;
+  }
+}

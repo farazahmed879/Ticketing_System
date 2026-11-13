@@ -109,7 +109,7 @@ const DuplicateConflictModal: React.FC<DuplicateConflictModalProps> = ({
           >
             Existing Record in Database
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", gap: "10px", overflowWrap: "anywhere" }}>
             <div>
               <div style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
                 Candidate Name

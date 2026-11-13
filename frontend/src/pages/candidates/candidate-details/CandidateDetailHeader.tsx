@@ -4,6 +4,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import CustomBadge from "../../../components/CustomBadge";
 import type { Candidate } from "../../../types";
+import headerStyles from "./CandidateDetail.module.css";
 
 interface CandidateDetailHeaderProps {
   candidate: Candidate;
@@ -33,7 +34,7 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
 
   return (
     <div
-      className="glass-card"
+      className={`glass-card ${headerStyles.headerCard}`}
       style={{
         padding: "30px",
         display: "flex",
@@ -41,7 +42,10 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
         alignItems: "center",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+      <div
+        className={headerStyles.headerMain}
+        style={{ display: "flex", alignItems: "center", gap: 24 }}
+      >
         <CustomButton
           variant="ghost"
           onClick={() => navigate("/candidates")}
@@ -56,6 +60,7 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
           }}
         />
         <div
+          className={headerStyles.avatar}
           style={{
             width: 70,
             height: 70,
@@ -73,8 +78,9 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
         >
           {candidate.name.charAt(0)}
         </div>
-        <div>
+        <div className={headerStyles.headerText}>
           <h1
+            className={headerStyles.name}
             style={{
               fontSize: "2.2rem",
               fontWeight: 800,
@@ -107,6 +113,7 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
               </CustomBadge>
             </div>
             <div
+              className={headerStyles.divider}
               style={{
                 width: 1,
                 height: 20,
@@ -303,7 +310,10 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
           )}
         </div>
       </div>
-      <div style={{ display: "flex", gap: 12 }}>
+      <div
+        className={headerStyles.actions}
+        style={{ display: "flex", gap: 12 }}
+      >
         {candidate.resumeUrl && (
           <CustomButton
             variant="gradient"

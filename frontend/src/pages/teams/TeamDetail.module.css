@@ -1,0 +1,49 @@
+.mainGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .mainGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 768px) {
+  /* Back button + icon on row 1, name / meta / description below */
+  .headerCard {
+    flex-wrap: wrap;
+    padding: 16px !important;
+    gap: 12px !important;
+  }
+
+  .headerIcon {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+  }
+
+  .headerIcon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .headerText {
+    flex: 1 1 100% !important;
+  }
+
+  .headerTitle {
+    font-size: 1.15rem !important;
+    overflow-wrap: anywhere;
+  }
+
+  .mainGrid {
+    gap: 16px;
+  }
+
+  .mainGrid :global(.glass-card) {
+    padding: 16px !important;
+  }
+}

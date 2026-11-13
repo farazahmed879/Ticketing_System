@@ -10,6 +10,7 @@ import ConfirmationModal from "../../../components/ConfirmationModal";
 import { CandidateDetailHeader } from "./CandidateDetailHeader.tsx";
 import { CandidateProfileTab } from "./CandidateProfileTab.tsx";
 import { CandidateHiringTab } from "./CandidateHiringTab.tsx";
+import detailStyles from "./CandidateDetail.module.css";
 
 const CandidateDetail: React.FC = () => {
   const queryClient = useQueryClient();
@@ -87,7 +88,7 @@ const CandidateDetail: React.FC = () => {
 
   return (
     <div
-      className="animate-fade-in"
+      className={`animate-fade-in ${detailStyles.page}`}
       style={{ display: "flex", flexDirection: "column", gap: 24 }}
     >
 
@@ -99,6 +100,7 @@ const CandidateDetail: React.FC = () => {
 
       {/* Tabs Navigation */}
       <div
+        className={detailStyles.tabs}
         style={{
           display: "flex",
           gap: 8,

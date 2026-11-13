@@ -183,7 +183,13 @@ const TicketForm: React.FC<TicketFormProps> = ({
         maxLength={255}
       />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div style={{
+        display: "grid",
+        // 2 columns when there is room, 1 on phones; auto-fill keeps a lone
+        // field at half width like before.
+        gridTemplateColumns: "repeat(auto-fill, minmax(min(200px, 100%), 1fr))",
+        gap: 16,
+      }}>
         <CustomSelect
           name="projectId"
           control={control}
@@ -253,7 +259,13 @@ const TicketForm: React.FC<TicketFormProps> = ({
           ))}
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div style={{
+        display: "grid",
+        // 2 columns when there is room, 1 on phones; auto-fill keeps a lone
+        // field at half width like before.
+        gridTemplateColumns: "repeat(auto-fill, minmax(min(200px, 100%), 1fr))",
+        gap: 16,
+      }}>
         {showAssignee && (
           <CustomSelect
             name="assigneeId"

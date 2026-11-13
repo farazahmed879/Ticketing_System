@@ -351,3 +351,103 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* =========================================================
+   Phones: tabs become a horizontal strip above the content
+   ========================================================= */
+@media (max-width: 768px) {
+  .header {
+    margin-bottom: 14px;
+  }
+
+  .header h1 {
+    font-size: 1.2rem !important;
+  }
+
+  .container {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .sidebar {
+    flex-direction: row;
+    gap: 6px;
+    padding: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar .tabBtn {
+    width: auto !important;
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    gap: 8px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    scroll-snap-align: start;
+  }
+
+  .content {
+    padding: 16px;
+    min-height: 0;
+  }
+
+  .profileContent {
+    min-height: 0;
+  }
+
+  .sectionHeader {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .sectionHeader h3 {
+    font-size: 1.05rem;
+  }
+
+  .sectionHeader p {
+    font-size: 0.8rem;
+  }
+
+  .themeToggleGrid {
+    grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
+    gap: 10px;
+  }
+
+  .presetsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  /* Preference rows: text on top, full-width On / Off below */
+  .prefRow {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .onOffToggle {
+    max-width: none !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .actions {
+    margin-top: 24px;
+    padding-top: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .securityCard {
+    padding: 14px;
+  }
+
+  .inputWrapper input {
+    font-size: 16px; /* stops iOS Safari zooming in on focus */
+  }
+}

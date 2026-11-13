@@ -57,6 +57,9 @@ export function useScrollSnap() {
 
     const onPointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return;
+      // Touch/pen already get native swipe scrolling; hijacking them here
+      // fights the browser and can swallow the next tap on a card.
+      if (e.pointerType !== "mouse") return;
       const target = e.target as HTMLElement;
       if (
         target.closest(

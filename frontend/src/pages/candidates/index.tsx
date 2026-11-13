@@ -319,6 +319,7 @@ const CandidateList: React.FC = () => {
       <StandardListLayout
         header={
           <div
+            className={styles.pageHeader}
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -333,7 +334,10 @@ const CandidateList: React.FC = () => {
                 Manage interview candidates and their profiles
               </p>
             </div>
-            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <div
+              className={styles.pageHeaderActions}
+              style={{ display: "flex", gap: "12px", alignItems: "center" }}
+            >
               {isAdmin && (
                 <CustomButton
                   variant="danger"
@@ -365,6 +369,7 @@ const CandidateList: React.FC = () => {
         }
         filters={
           <div
+            className={styles.toolbar}
             style={{
               display: "flex",
               gap: 12,
@@ -402,7 +407,7 @@ const CandidateList: React.FC = () => {
             </CustomButton>
 
             {/* Search Bar */}
-            <div style={{ flex: "none" }}>
+            <div className={styles.searchBox}>
               <CustomInput
                 placeholder={
                   isAiMode
@@ -419,7 +424,7 @@ const CandidateList: React.FC = () => {
                   e.key === "Enter" && handleSearch()
                 }
                 icon={<CustomIcon name="Search" size={18} />}
-                containerStyle={{ width: "350px" }}
+                containerStyle={{ width: "100%" }}
               />
             </div>
 
@@ -452,7 +457,7 @@ const CandidateList: React.FC = () => {
                 onClick={() => setShowMoreFilters(!showMoreFilters)}
                 icon={<CustomIcon name="SlidersHorizontal" size={18} />}
               >
-                Filters
+                <span className={styles.filtersToggleLabel}>Filters</span>
                 {(() => {
                   const count = [
                     positionFilter,
@@ -701,7 +706,7 @@ const CandidateList: React.FC = () => {
               flex: 1,
               overflowY: "auto",
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(320px, 100%), 1fr))",
               gap: 16,
               padding: "4px 0",
               alignContent: "start",

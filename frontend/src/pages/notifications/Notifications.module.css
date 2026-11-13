@@ -51,7 +51,7 @@
 }
 
 .unread {
-  background: rgba(var(--accent-primary-rgb), 0.03);
+  background: rgba(var(--primary-rgb), 0.05);
 }
 
 .unread::before {
@@ -70,7 +70,7 @@
   border-radius: 12px;
   display: flex;
   align-items: center;
-  justify_content: center;
+  justify-content: center;
   flex-shrink: 0;
   border: 1px solid var(--border-glass);
 }
@@ -121,4 +121,91 @@
 
 .emptyState p {
   font-size: 1.1rem;
+}
+
+.paginationWrap {
+  margin-top: 24px;
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 768px) {
+  .header {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .header h1 {
+    font-size: 1.2rem !important;
+  }
+
+  .actions {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .actionBtn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+
+  .notificationItem {
+    gap: 12px;
+    padding: 14px 12px;
+  }
+
+  .iconContainer {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  /* Title wraps; time sits on its own line under it */
+  .itemHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    margin-bottom: 4px;
+  }
+
+  .title {
+    font-size: 0.92rem;
+    overflow-wrap: anywhere;
+  }
+
+  .time {
+    font-size: 0.7rem;
+  }
+
+  .message {
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+  }
+
+  .itemActions {
+    display: none; /* the whole row is tappable */
+  }
+
+  .emptyState {
+    padding: 48px 20px;
+  }
+
+  .emptyState p {
+    font-size: 0.95rem;
+  }
+
+  .paginationWrap {
+    margin-top: 14px;
+  }
+}
+
+/* Very narrow: icon-only header buttons (names stay as tooltips / labels) */
+@media (max-width: 400px) {
+  .actionLabel {
+    display: none;
+  }
+
+  .actionBtn {
+    padding: 8px 10px;
+  }
 }

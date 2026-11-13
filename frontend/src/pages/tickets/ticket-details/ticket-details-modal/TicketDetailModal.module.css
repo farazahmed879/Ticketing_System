@@ -91,3 +91,42 @@
     min-height: auto;
   }
 }
+
+/* ---------- Phones ---------- */
+@media (max-width: 768px) {
+  .grid {
+    gap: 18px;
+  }
+
+  /* Priority + status selects wrap and share the row; expand button stays */
+  .badgeRow {
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .badgeGroup {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .badgeGroup > * {
+    min-width: 0 !important;
+    flex: 1 1 140px;
+  }
+
+  /* Description above, reporter / due date / assignees below */
+  .detailsGrid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px !important;
+  }
+
+  .commentsContainer {
+    padding-top: 18px;
+  }
+
+  .commentsList {
+    padding: 10px;
+  }
+}

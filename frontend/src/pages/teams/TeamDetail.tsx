@@ -8,6 +8,7 @@ import { useNotification } from "../../context/NotificationContext";
 import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import type { Team } from "../../types";
 import CustomImage from "../../components/CustomImage";
+import detailStyles from "./TeamDetail.module.css";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 
 const getInitials = (name?: string) =>
@@ -54,7 +55,7 @@ const TeamDetail: React.FC = () => {
     >
       {/* Header card */}
       <div
-        className="glass-card"
+        className={`glass-card ${detailStyles.headerCard}`}
         style={{
           padding: 30,
           display: "flex",
@@ -76,6 +77,7 @@ const TeamDetail: React.FC = () => {
           }}
         />
         <div
+          className={detailStyles.headerIcon}
           style={{
             width: 72,
             height: 72,
@@ -91,8 +93,9 @@ const TeamDetail: React.FC = () => {
         >
           <CustomIcon name="ShieldCheck" size={32} />
         </div>
-        <div style={{ flex: 1 }}>
+        <div className={detailStyles.headerText} style={{ flex: 1, minWidth: 0 }}>
           <h2
+            className={detailStyles.headerTitle}
             style={{
               fontSize: "1.4rem",
               fontWeight: 800,
@@ -143,9 +146,7 @@ const TeamDetail: React.FC = () => {
         </div>
       </div>
 
-      <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: 24 }}
-      >
+      <div className={detailStyles.mainGrid}>
         {/* Members */}
         <div className="glass-card" style={{ padding: 24 }}>
           <div

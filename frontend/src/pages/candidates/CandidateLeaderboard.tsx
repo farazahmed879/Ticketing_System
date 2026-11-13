@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import CustomButton from "../../components/CustomButton";
 
 import { getLeaderboardColumns, type LeaderboardEntry } from "./columns";
+import listStyles from "./CandidateList.module.css";
 
 const CandidateLeaderboard: React.FC = () => {
   const [data, setData] = useState<LeaderboardEntry[]>([]);
@@ -78,6 +79,7 @@ const CandidateLeaderboard: React.FC = () => {
 
       <div className="glass-card" style={{ padding: 0, overflow: "hidden" }}>
         <div
+          className={listStyles.leaderboardHead}
           style={{
             padding: "24px 32px",
             borderBottom: "1px solid var(--border-glass)",

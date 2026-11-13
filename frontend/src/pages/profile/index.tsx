@@ -94,7 +94,7 @@ const Profile: React.FC = () => {
     >
       {/* Header Card */}
       <div
-        className="glass-card"
+        className={`glass-card ${styles.pHeader}`}
         style={{
           padding: "30px",
           display: "flex",
@@ -103,7 +103,10 @@ const Profile: React.FC = () => {
           gap: 16,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+        <div
+          className={styles.pHeaderMain}
+          style={{ display: "flex", alignItems: "center", gap: 24 }}
+        >
           {id && (
             <CustomButton
               variant="ghost"
@@ -120,6 +123,7 @@ const Profile: React.FC = () => {
             />
           )}
           <div
+            className={styles.pAvatar}
             style={{
               width: 80,
               height: 80,
@@ -152,8 +156,9 @@ const Profile: React.FC = () => {
               user.fullname.charAt(0)
             )}
           </div>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <h1
+              className={styles.pName}
               style={{
                 fontSize: "2.2rem",
                 fontWeight: 800,
@@ -167,11 +172,13 @@ const Profile: React.FC = () => {
               style={{
                 display: "flex",
                 alignItems: "center",
+                flexWrap: "wrap",
                 gap: 12,
                 marginTop: 8,
               }}
             >
               <span
+                className={styles.pTitle}
                 style={{
                   color: "var(--text-secondary)",
                   fontSize: "1.1rem",
@@ -212,7 +219,10 @@ const Profile: React.FC = () => {
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
+        <div
+          className={styles.pHeaderActions}
+          style={{ display: "flex", gap: 12, flexShrink: 0 }}
+        >
           {user.primaryResumeUrl && (
             <CustomButton
               variant="gradient"
@@ -234,9 +244,7 @@ const Profile: React.FC = () => {
         </div>
       </div>
 
-      <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: 24 }}
-      >
+      <div className={styles.pMainGrid}>
         {/* Main Content */}
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           {/* Bio / About */}
@@ -286,13 +294,7 @@ const Profile: React.FC = () => {
               </h3>
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 24,
-              }}
-            >
+            <div className={styles.pInfoGrid}>
               <div className={styles.infoItem}>
                 <label>Department</label>
                 <span>{user.department?.name || "Operations"}</span>
@@ -369,13 +371,7 @@ const Profile: React.FC = () => {
               </h3>
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 24,
-              }}
-            >
+            <div className={styles.pInfoGrid}>
               <div className={styles.infoItem}>
                 <label>Full Name</label>
                 <span>{user.fullname}</span>

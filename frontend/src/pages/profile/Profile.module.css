@@ -126,3 +126,86 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Profile page layout ---------- */
+.pMainGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 24px;
+}
+
+.pInfoGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .pMainGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 768px) {
+  /* Header: avatar + name on top, action buttons full-width below */
+  .pHeader {
+    flex-direction: column;
+    align-items: stretch !important;
+    padding: 16px !important;
+    gap: 14px !important;
+  }
+
+  .pHeaderMain {
+    gap: 12px !important;
+    min-width: 0;
+  }
+
+  .pAvatar {
+    width: 56px !important;
+    height: 56px !important;
+    font-size: 1.4rem !important;
+  }
+
+  .pName {
+    font-size: 1.3rem !important;
+    overflow-wrap: anywhere;
+  }
+
+  .pTitle {
+    font-size: 0.9rem !important;
+  }
+
+  .pHeaderActions {
+    flex-wrap: wrap;
+    gap: 8px !important;
+  }
+
+  .pHeaderActions > button {
+    flex: 1 1 140px;
+    justify-content: center;
+  }
+
+  .pMainGrid {
+    gap: 16px;
+  }
+
+  .pMainGrid :global(.glass-card) {
+    padding: 16px !important;
+  }
+
+  /* Long emails / values wrap instead of overflowing */
+  .pMainGrid span {
+    overflow-wrap: anywhere;
+  }
+
+  .pInfoGrid {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .pInfoGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

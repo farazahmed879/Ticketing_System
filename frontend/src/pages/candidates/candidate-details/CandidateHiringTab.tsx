@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomBadge from "../../../components/CustomBadge";
 import type { Candidate } from "../../../types";
+import tabStyles from "./CandidateDetail.module.css";
 
 interface CandidateHiringTabProps {
   candidate: Candidate;
@@ -71,6 +72,7 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
                 style={{ padding: 0, overflow: "hidden" }}
               >
                 <div
+                  className={tabStyles.interviewHead}
                   style={{
                     padding: "20px 24px",
                     background: "rgba(255,255,255,0.02)",
@@ -123,7 +125,7 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
                   </CustomBadge>
                 </div>
 
-                <div style={{ padding: 24 }}>
+                <div className={tabStyles.interviewBody} style={{ padding: 24 }}>
                   <h4
                     style={{
                       margin: "0 0 16px 0",
@@ -138,7 +140,7 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
                       style={{
                         display: "grid",
                         gridTemplateColumns:
-                          "repeat(auto-fill, minmax(400px, 1fr))",
+                          "repeat(auto-fill, minmax(min(400px, 100%), 1fr))",
                         gap: 20,
                       }}
                     >

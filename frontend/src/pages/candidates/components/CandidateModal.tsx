@@ -4,6 +4,7 @@ import CustomButton from "../../../components/CustomButton";
 import CandidateForm from "./CandidateForm";
 import FullScreenLoader from "../../../components/FullScreenLoader/FullScreenLoader";
 import type { Candidate } from "../../../types";
+import formStyles from "./CandidateForm.module.css";
 
 interface CandidateModalProps {
   isOpen: boolean;
@@ -42,7 +43,7 @@ const CandidateModal: React.FC<CandidateModalProps> = ({
       maxWidth="1400px"
       footer={
         <>
-          <div style={{ marginRight: "auto" }}>
+          <div className={formStyles.resetWrap} style={{ marginRight: "auto" }}>
             <CustomButton
               variant="outline"
               type="reset"

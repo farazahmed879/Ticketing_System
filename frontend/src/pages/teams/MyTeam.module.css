@@ -353,3 +353,56 @@
     gap: 16px;
   }
 }
+
+/* Phones: tighter, and stats as a 2-up grid instead of a tall stack */
+@media (max-width: 768px) {
+  .teamSection {
+    margin-bottom: 28px;
+  }
+
+  .teamHeader {
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .teamIconWrap {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  .teamName {
+    font-size: 1.1rem;
+    overflow-wrap: anywhere;
+  }
+
+  .teamMeta {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .managerCard {
+    padding: 14px;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .managerCard:hover,
+  .memberCard:hover {
+    transform: none;
+  }
+
+  .statsRow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .statCard {
+    min-width: 0;
+    padding: 12px;
+    gap: 10px;
+  }
+}

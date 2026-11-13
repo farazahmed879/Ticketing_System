@@ -25,6 +25,7 @@ import StandardListLayout from "../../components/StandardListLayout";
 import { getProjectColumns } from "./columns";
 import ProjectCard from "./components/ProjectCard";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import pageStyles from "./ProjectPages.module.css";
 
 const ProjectList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -216,16 +217,10 @@ const ProjectList: React.FC = () => {
     <>
       <StandardListLayout
         header={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+          <div className={pageStyles.listHeader}>
             <div>
-              <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>Projects</h1>
-              <p style={{ color: "var(--text-muted)" }}>
+              <h1 className={pageStyles.listTitle}>Projects</h1>
+              <p className={pageStyles.listSubtitle}>
                 Manage client and internal projects
               </p>
             </div>
@@ -241,49 +236,43 @@ const ProjectList: React.FC = () => {
           </div>
         }
         filters={
-          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-            <CustomInput
-              placeholder="Search projects..."
-              value={searchInput}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                const val = e.target.value;
-                setSearchInput(val);
-                if (val === "") {
-                  setSearch("");
-                  setCurrentPage(0);
-                }
-              }}
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === "Enter") {
-                  setSearch(searchInput);
-                  setCurrentPage(0);
-                }
-              }}
-              icon={<CustomIcon name="Search" size={18} />}
-              containerStyle={{ width: "350px" }}
-            />
-            <CustomSelect
-              value={statusFilter}
-              onChange={(val: string) => setStatusFilter(val)}
-              placeholder="All Statuses"
-              options={[
-                { value: "", label: "All Statuses" },
-                ...PROJECT_STATUS_OPTIONS,
-              ]}
-              icon={<CustomIcon name="Activity" size={18} />}
-              style={{ minWidth: 200 }}
-            />
-            <div
-              style={{
-                display: "flex",
-                gap: 4,
-                padding: 4,
-                borderRadius: 10,
-                border: "1px solid var(--border-glass)",
-                background: "rgba(255,255,255,0.03)",
-                marginLeft: "auto",
-              }}
-            >
+          <div className={pageStyles.toolbar}>
+            <div className={pageStyles.searchBox}>
+              <CustomInput
+                placeholder="Search projects..."
+                value={searchInput}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const val = e.target.value;
+                  setSearchInput(val);
+                  if (val === "") {
+                    setSearch("");
+                    setCurrentPage(0);
+                  }
+                }}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === "Enter") {
+                    setSearch(searchInput);
+                    setCurrentPage(0);
+                  }
+                }}
+                icon={<CustomIcon name="Search" size={18} />}
+                containerStyle={{ width: "100%" }}
+              />
+            </div>
+            <div className={pageStyles.statusFilter}>
+              <CustomSelect
+                value={statusFilter}
+                onChange={(val: string) => setStatusFilter(val)}
+                placeholder="All Statuses"
+                options={[
+                  { value: "", label: "All Statuses" },
+                  ...PROJECT_STATUS_OPTIONS,
+                ]}
+                icon={<CustomIcon name="Activity" size={18} />}
+                style={{ width: "100%" }}
+              />
+            </div>
+            <div className={pageStyles.viewToggle}>
               <CustomButton
                 variant={viewMode === "list" ? "primary" : "ghost"}
                 size="sm"
@@ -353,7 +342,7 @@ const ProjectList: React.FC = () => {
               flex: 1,
               overflowY: "auto",
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(300px, 100%), 1fr))",
               gap: 16,
               padding: "4px 0",
               alignContent: "start",

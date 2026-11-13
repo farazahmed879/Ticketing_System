@@ -9,6 +9,7 @@ import { StatusName } from "../../../../../utils/constants";
 import type { TicketDetail, TicketUpdateFormData } from "../../../../../types";
 import type { Control, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import TicketAssignments from "./TicketAssignments";
+import modalStyles from "../TicketDetailModal.module.css";
 import SelectWithLabel from "../../../../../components/SelectWithLabel";
 import { ROLE_TYPE } from "../../../../roles/roleConstants";
 import {
@@ -102,9 +103,13 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
         </span>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <div
+        className={modalStyles.badgeRow}
+        style={{ display: "flex", justifyContent: "space-between" }}
+      >
         {/* Header Badges */}
         <div
+          className={modalStyles.badgeGroup}
           style={{
             display: "flex",
             gap: 12,
@@ -199,6 +204,7 @@ const ModalDetailsForm: React.FC<ModalDetailsFormProps> = ({
       </div>
 
       <div
+        className={modalStyles.detailsGrid}
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",

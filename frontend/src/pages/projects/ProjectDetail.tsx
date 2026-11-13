@@ -11,6 +11,7 @@ import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import type { Project } from "../../types";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import ProjectDeveloperHours from "./components/ProjectDeveloperHours";
+import pageStyles from "./ProjectPages.module.css";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 
 const getStatusVariant = (status: string) => {
@@ -69,7 +70,7 @@ const ProjectDetail: React.FC = () => {
     >
       {/* Header card */}
       <div
-        className="glass-card"
+        className={`glass-card ${pageStyles.detailHeader}`}
         style={{
           padding: 30,
           display: "flex",
@@ -78,7 +79,10 @@ const ProjectDetail: React.FC = () => {
           gap: 24,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+        <div
+          className={pageStyles.detailHeaderMain}
+          style={{ display: "flex", alignItems: "center", gap: 24 }}
+        >
           <CustomButton
             variant="ghost"
             onClick={() => navigate(-1)}
@@ -93,6 +97,7 @@ const ProjectDetail: React.FC = () => {
             }}
           />
           <div
+            className={pageStyles.detailAvatar}
             style={{
               width: 72,
               height: 72,
@@ -108,8 +113,9 @@ const ProjectDetail: React.FC = () => {
           >
             <CustomIcon name="FolderKanban" size={32} />
           </div>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <h2
+              className={pageStyles.detailTitle}
               style={{
                 fontSize: "1.4rem",
                 fontWeight: 800,
@@ -123,6 +129,7 @@ const ProjectDetail: React.FC = () => {
               style={{
                 display: "flex",
                 alignItems: "center",
+                flexWrap: "wrap",
                 gap: 12,
                 marginTop: 8,
               }}
@@ -155,9 +162,7 @@ const ProjectDetail: React.FC = () => {
         </div>
       </div>
 
-      <div
-        style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: 24 }}
-      >
+      <div className={pageStyles.detailGrid}>
         {/* Left Column: Description + Developer Hours */}
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           {/* Description */}
@@ -440,6 +445,7 @@ const ProjectDetail: React.FC = () => {
                     navigate(`/tickets/${t.id}`);
                   }
                 }}
+                className={pageStyles.ticketRow}
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
@@ -481,7 +487,10 @@ const ProjectDetail: React.FC = () => {
                     {t.subject}
                   </span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  className={pageStyles.ticketMeta}
+                  style={{ display: "flex", alignItems: "center", gap: 12 }}
+                >
                   {t.priority && (
                     <CustomBadge variant="neutral">
                       {t.priority.name}

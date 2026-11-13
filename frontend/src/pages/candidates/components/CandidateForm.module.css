@@ -39,7 +39,7 @@
 
 .twoColGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
 }
 
@@ -67,5 +67,45 @@
 @media (max-width: 500px) {
   .twoColGrid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   Phones: one scroll area (the modal body), compact upload box,
+   footer = [Cancel][Create] with Reset on its own row
+   ========================================================= */
+@media (max-width: 768px) {
+  .formContainer {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .formGrid {
+    overflow: visible;
+    gap: 16px;
+  }
+
+  .leftColumn {
+    gap: 14px;
+    padding-bottom: 16px;
+  }
+
+  .rightColumn {
+    gap: 14px;
+  }
+
+  .uploadArea {
+    padding: 18px 14px !important;
+  }
+
+  .resetWrap {
+    order: 3;
+    flex: 1 1 100%;
+    margin-right: 0 !important;
+  }
+
+  .resetWrap > button {
+    width: 100%;
+    justify-content: center;
   }
 }

@@ -1034,9 +1034,134 @@
 
 .newHiresGridExpanded {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 16px;
   margin-top: 16px;
 }
 
 
+
+/* =========================================================
+   Phones
+   ========================================================= */
+@media (max-width: 768px) {
+  /* Stats: compact 2 × 2 instead of four full-width rows */
+  .statsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .premiumStatCard {
+    padding: 12px;
+    gap: 8px;
+    border-radius: 12px;
+  }
+
+  .premiumStatCard:hover {
+    transform: none;
+  }
+
+  .statInfo {
+    min-width: 0;
+  }
+
+  .statLabel {
+    font-size: 0.66rem;
+    letter-spacing: 0.02em;
+  }
+
+  .statValue {
+    font-size: 1.35rem;
+  }
+
+  .statIconWrapper {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+
+  .statIconWrapper svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .heroSection {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  /* Shorter inner scroll areas so the page itself stays easy to scroll */
+  .announcementContainer,
+  .reviewsList {
+    max-height: 360px;
+  }
+
+  .announcementCard,
+  .premiumReviewCard {
+    padding: 12px 14px;
+  }
+
+  .recentTickets {
+    padding: 14px;
+  }
+
+  .sectionHeader,
+  .welcomeHeader {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .newHireCard {
+    gap: 12px;
+    padding: 10px;
+  }
+
+  .featuredNewHire {
+    padding: 12px;
+  }
+
+  /* No hover motion on touch */
+  .newHireCard:hover,
+  .premiumReviewCard:hover,
+  .momentCard:hover {
+    transform: none;
+  }
+
+  /* Moment highlight + full-screen section overlays */
+  .highlightedMomentCard {
+    width: calc(100vw - 24px);
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+
+  .closeOverlayBtn {
+    top: 12px;
+    right: 12px;
+  }
+
+  .highlightTitle {
+    font-size: 1.25rem;
+  }
+
+  .highlightText {
+    font-size: 0.95rem;
+  }
+
+  .highlightFooter {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .fullscreenSectionOverlay {
+    padding: 12px;
+  }
+
+  .fullscreenSectionContent {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    padding: 18px 14px;
+    border-radius: 16px;
+  }
+}

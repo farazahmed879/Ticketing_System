@@ -280,15 +280,7 @@ const TicketList: React.FC = () => {
                 navigate={navigate}
                 selectedValue={viewMode}
               />
-              <div
-                className={styles.search}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  padding: 0,
-                  flex: "none",
-                }}
-              >
+              <div className={styles.searchBox}>
                 <CustomInput
                   placeholder="Search by subject or ID..."
                   value={searchInput}
@@ -307,7 +299,7 @@ const TicketList: React.FC = () => {
                     }
                   }}
                   icon={<CustomIcon name="Search" size={18} />}
-                  containerStyle={{ width: "350px", paddingLeft: "0px" }}
+                  containerStyle={{ width: "100%", paddingLeft: "0px" }}
                 />
               </div>
               <div className={styles.filterAnchor}>
@@ -320,7 +312,7 @@ const TicketList: React.FC = () => {
                   onClick={toggleMoreFilters}
                   icon={<CustomIcon name="SlidersHorizontal" size={18} />}
                 >
-                  Filters
+                  <span className={styles.filtersToggleLabel}>Filters</span>
                   {activeMoreFilters > 0 && (
                     <span
                       style={{
@@ -342,6 +334,7 @@ const TicketList: React.FC = () => {
                     name={showMoreFilters ? "ChevronUp" : "ChevronDown"}
                     size={16}
                     style={{ marginLeft: 6 }}
+                    className={styles.filtersToggleChevron}
                   />
                 </CustomButton>
 
@@ -683,7 +676,7 @@ const TicketList: React.FC = () => {
               flex: 1,
               overflowY: "auto",
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(320px, 100%), 1fr))",
               gap: 16,
               padding: "4px 0",
               alignContent: "start",

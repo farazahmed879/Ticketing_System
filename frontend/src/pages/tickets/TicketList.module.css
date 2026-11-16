@@ -95,10 +95,8 @@
   border-bottom-right-radius: 14px;
 }
 
-.search {
-  flex: 0 1 auto;
-  min-width: 160px;
-  position: relative;
+.viewSwitch {
+  flex-shrink: 0;
 }
 
 .createBtn {
@@ -118,25 +116,69 @@
   box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
 }
 
+/* ---------- Toolbar helpers (desktop look unchanged) ---------- */
+.searchBox {
+  width: 350px;
+  max-width: 100%;
+  flex: 0 1 auto;
+  min-width: 160px;
+}
+
+/* ---------- Phones (shared by list + board views) ---------- */
 @media (max-width: 768px) {
-  /* Switcher + Filters on the first line, search full-width below. */
-  .filters {
+  .header {
     flex-wrap: wrap;
     gap: 10px;
   }
-  .filterAnchor {
-    margin-left: auto;
+
+  .header h1 {
+    font-size: 1.2rem !important;
   }
-  .search {
-    order: 3;
+
+  /* Row 1: view switch + action buttons, Row 2: full-width search */
+  .filters {
+    position: relative; /* filter panel anchors to the whole toolbar */
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .filterBar {
+    position: relative;
+  }
+
+  .searchBox {
+    order: 99;
     flex: 1 1 100%;
-    min-width: 0;
+    width: 100%;
   }
-  .search > * {
-    width: 100% !important;
+
+  .filterAnchor {
+    position: static;
+    margin-inline-start: auto;
   }
+
+  .viewSwitchLabel {
+    display: none;
+  }
+
   .advancedPanel {
-    width: min(340px, calc(100vw - 32px));
+    left: 0;
+    right: 0;
+    width: auto;
     max-height: calc(100dvh - 220px);
+    padding: 16px;
+  }
+
+  .filterActions {
+    margin: 0 -16px -16px;
+    bottom: -16px;
+    padding: 12px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .filtersToggleLabel,
+  .filtersToggleChevron {
+    display: none;
   }
 }

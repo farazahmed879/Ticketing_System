@@ -550,7 +550,7 @@
 
 .newHiresGridExpanded {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -1296,5 +1296,50 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     column-gap: 24px;
+  }
+}
+
+/* =========================================================
+   Phones: moment highlight + full-screen section overlays
+   ========================================================= */
+@media (max-width: 768px) {
+  /* No hover motion on touch */
+  .momentCard:hover {
+    transform: none;
+  }
+
+  .highlightedMomentCard {
+    width: calc(100vw - 24px);
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+
+  .closeOverlayBtn {
+    top: 12px;
+    right: 12px;
+  }
+
+  .highlightTitle {
+    font-size: 1.25rem;
+  }
+
+  .highlightText {
+    font-size: 0.95rem;
+  }
+
+  .highlightFooter {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .fullscreenSectionOverlay {
+    padding: 12px;
+  }
+
+  .fullscreenSectionContent {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    padding: 18px 14px;
+    border-radius: 16px;
   }
 }

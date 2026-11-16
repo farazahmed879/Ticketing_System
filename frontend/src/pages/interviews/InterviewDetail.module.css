@@ -473,4 +473,21 @@
   .ratingChip {
     padding: 4px 10px;
   }
+
+  .metaItem {
+    font-size: 0.8rem;
+  }
+
+  .summaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .summaryValue {
+    font-size: 1.3rem;
+  }
+
+  .ratingGroup {
+    padding: 12px;
+  }
 }

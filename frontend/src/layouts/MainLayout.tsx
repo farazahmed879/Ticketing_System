@@ -20,6 +20,21 @@ import {
 import { useInstallOption, promptInstallApp } from "../utils/installPrompt";
 import InstallInstructionsModal from "../components/InstallInstructionsModal";
 
+const MOBILE_QUERY = "(max-width: 768px)";
+
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = React.useState(
+    () => typeof window !== "undefined" && window.matchMedia(MOBILE_QUERY).matches,
+  );
+  React.useEffect(() => {
+    const mql = window.matchMedia(MOBILE_QUERY);
+    const onChange = () => setIsMobile(mql.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+  return isMobile;
+};
+
 const MainLayout: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -28,13 +43,17 @@ const MainLayout: React.FC = () => {
   const location = useLocation();
   const queryClient = useQueryClient();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [notifications, setNotifications] = React.useState<any[]>([]);
   const [isNotificationOpen, setIsNotificationOpen] = React.useState(false);
   const [isMarkAllReadOpen, setIsMarkAllReadOpen] = React.useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = React.useState(false);
   const [isBannerDismissed, setIsBannerDismissed] = React.useState(false);
+  // Tap-to-open state for the security pill (hover doesn't exist on touch).
+  const [isPillOpen, setIsPillOpen] = React.useState(false);
+  const pillRef = React.useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const notificationRef = React.useRef<HTMLDivElement>(null);
   // Only true in browsers that support installing (Chrome/Edge) and when the
@@ -57,9 +76,41 @@ const MainLayout: React.FC = () => {
     }
   }, [user?.id, user?.mustChangePassword]);
 
+  // Close the tapped-open pill when the user taps anywhere else.
   React.useEffect(() => {
+    if (!isPillOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (pillRef.current && !pillRef.current.contains(event.target as Node)) {
+        setIsPillOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isPillOpen]);
+
+  // Mobile drawer: close on route change / leaving phone width, Escape to
+  // close, and lock the page scroll behind it while open.
+  const drawerResetKey = `${location.pathname}|${isMobile}`;
+  const [prevDrawerResetKey, setPrevDrawerResetKey] =
+    React.useState(drawerResetKey);
+  if (prevDrawerResetKey !== drawerResetKey) {
+    setPrevDrawerResetKey(drawerResetKey);
     setIsMobileMenuOpen(false);
-  }, [location.pathname]);
+  }
+
+  React.useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsMobileMenuOpen(false);
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [isMobileMenuOpen]);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -264,38 +315,78 @@ const MainLayout: React.FC = () => {
 
   return (
     <div
-      className={`${styles.layout} ${isCollapsed ? styles.layoutCollapsed : ""}`}
+      className={`${styles.layout} ${isCollapsed ? styles.layoutCollapsed : ""} ${isMobile ? styles.layoutMobile : ""}`}
     >
       <Sidebar
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
-        unreadMessageCount={notifications.filter((n) => n.unread && n.type === "message").length}
+        isMobile={isMobile}
         isMobileOpen={isMobileMenuOpen}
-        onCloseMobile={() => setIsMobileMenuOpen(false)}
+        onMobileOpenChange={setIsMobileMenuOpen}
+        unreadMessageCount={notifications.filter((n) => n.unread && n.type === "message").length}
       />
-
-      {isMobileMenuOpen && (
-        <div
-          className={styles.mobileBackdrop}
-          onClick={() => setIsMobileMenuOpen(false)}
-          aria-hidden="true"
-        />
-      )}
 
       <main className={styles.mainContent}>
         <header
           className={`${styles.topbar} ${scrolled ? styles.topbarScrolled : ""}`}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button
-              className={styles.burgerButton}
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle navigation menu"
-              type="button"
-            >
-              <CustomIcon name={isMobileMenuOpen ? "X" : "Menu"} size={20} />
-            </button>
-            <span className={styles.mobileBrand}>Jami Partners</span>
+          <div className={styles.topbarLeft}>
+            {isMobile && (
+              <button
+                type="button"
+                className={styles.hamburgerBtn}
+                onClick={() => setIsMobileMenuOpen(true)}
+                aria-label="Open menu"
+                aria-expanded={isMobileMenuOpen}
+              >
+                <CustomIcon name="Menu" size={20} />
+              </button>
+            )}
+            {user?.mustChangePassword && !isBannerDismissed && (
+              <div
+                ref={pillRef}
+                className={`${styles.securityPill} ${isPillOpen ? styles.securityPillOpen : ""}`}
+                role="status"
+              >
+                <button
+                  type="button"
+                  className={styles.securityPillIcon}
+                  aria-label="Security notice: default password in use"
+                  aria-expanded={isPillOpen}
+                  onClick={() => setIsPillOpen((open) => !open)}
+                >
+                  <CustomIcon name="ShieldAlert" size={14} />
+                </button>
+                <div className={styles.securityPillBody}>
+                  <span className={styles.securityPillText}>
+                    <strong>Default password in use</strong>
+                    <span className={styles.securityPillDesc}>
+                      Update it to keep your account secure
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.securityPillAction}
+                    onClick={() => {
+                      setIsPillOpen(false);
+                      setIsChangePasswordOpen(true);
+                    }}
+                  >
+                    <CustomIcon name="KeyRound" size={13} />
+                    <span>Change password</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.securityPillDismiss}
+                    onClick={() => setIsBannerDismissed(true)}
+                    title="Dismiss notice"
+                    aria-label="Dismiss notice"
+                  >
+                    <CustomIcon name="X" size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div
@@ -611,47 +702,6 @@ const MainLayout: React.FC = () => {
             </button>
           </div>
         </header>
-
-        {user?.mustChangePassword && !isBannerDismissed && (
-          <div className={styles.passwordAlertBanner}>
-            <div className={styles.alertLeft}>
-              <div className={styles.alertIconWrapper}>
-                <CustomIcon
-                  name="ShieldAlert"
-                  size={20}
-                  className={styles.alertShieldIcon}
-                />
-              </div>
-              <div className={styles.alertTextContent}>
-                <div className={styles.alertTitle}>
-                  <span>Security Notice: Default Password Detected</span>
-                </div>
-                <div className={styles.alertDesc}>
-                  You are currently using an initial or default password. Please update your password to protect your account.
-                </div>
-              </div>
-            </div>
-            <div className={styles.alertActions}>
-              <CustomButton
-                variant="primary"
-                size="sm"
-                icon={<CustomIcon name="KeyRound" size={15} />}
-                onClick={() => setIsChangePasswordOpen(true)}
-                className={styles.alertBtn}
-              >
-                Change Password
-              </CustomButton>
-              <CustomButton
-                variant="ghost"
-                size="sm"
-                icon={<CustomIcon name="X" size={16} />}
-                onClick={() => setIsBannerDismissed(true)}
-                title="Dismiss notice"
-                className={styles.alertDismissBtn}
-              />
-            </div>
-          </div>
-        )}
 
         <div className={styles.pageContainer}>
           <Outlet />

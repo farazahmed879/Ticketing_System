@@ -1,0 +1,138 @@
+/* ---------- Project list ---------- */
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.listTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.listSubtitle {
+  color: var(--text-muted);
+}
+
+.toolbar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.searchBox {
+  width: 350px;
+  flex: none;
+  min-width: 0;
+}
+
+.statusFilter {
+  min-width: 200px;
+}
+
+.viewToggle {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.03);
+  margin-left: auto;
+}
+
+/* ---------- Project detail ---------- */
+.detailGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .detailGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 768px) {
+  .listHeader {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .listTitle {
+    font-size: 1.2rem;
+  }
+
+  .listSubtitle {
+    font-size: 0.8rem;
+  }
+
+  /* Row 1: full-width search; row 2: status filter + list/grid toggle */
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .searchBox {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .statusFilter {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .viewToggle {
+    margin-left: 0;
+  }
+
+  /* Detail header */
+  .detailHeader {
+    padding: 16px !important;
+    gap: 12px !important;
+  }
+
+  .detailHeaderMain {
+    gap: 12px !important;
+    min-width: 0;
+    align-items: flex-start !important;
+  }
+
+  .detailAvatar {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    flex-shrink: 0;
+  }
+
+  .detailAvatar svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .detailTitle {
+    font-size: 1.15rem !important;
+    overflow-wrap: anywhere;
+  }
+
+  .detailGrid {
+    gap: 16px;
+  }
+
+  /* Ticket rows: subject on top, badges/people wrap underneath */
+  .ticketRow {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px;
+    padding: 10px 12px !important;
+  }
+
+  .ticketMeta {
+    flex-wrap: wrap;
+    gap: 6px 10px !important;
+  }
+}

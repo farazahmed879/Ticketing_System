@@ -327,14 +327,7 @@ const TicketList: React.FC = () => {
                 navigate={navigate}
                 selectedValue={viewMode}
               />
-              <div
-                className={styles.search}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  padding: 0,
-                }}
-              >
+              <div className={styles.searchBox}>
                 <CustomInput
                   placeholder="Search by subject or ID..."
                   value={searchInput}
@@ -353,7 +346,7 @@ const TicketList: React.FC = () => {
                     }
                   }}
                   icon={<CustomIcon name="Search" size={18} />}
-                  containerStyle={{ width: "350px", maxWidth: "100%", paddingLeft: "0px" }}
+                  containerStyle={{ width: "100%", paddingLeft: "0px" }}
                 />
               </div>
               <div className={styles.filterAnchor}>
@@ -366,7 +359,7 @@ const TicketList: React.FC = () => {
                   onClick={toggleMoreFilters}
                   icon={<CustomIcon name="SlidersHorizontal" size={18} />}
                 >
-                  Filters
+                  <span className={styles.filtersToggleLabel}>Filters</span>
                   {activeMoreFilters > 0 && (
                     <span
                       style={{
@@ -388,6 +381,7 @@ const TicketList: React.FC = () => {
                     name={showMoreFilters ? "ChevronUp" : "ChevronDown"}
                     size={16}
                     style={{ marginLeft: 6 }}
+                    className={styles.filtersToggleChevron}
                   />
                 </CustomButton>
 

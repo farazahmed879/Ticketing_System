@@ -209,7 +209,7 @@ const TeamList: React.FC = () => {
                 }
               }}
               icon={<CustomIcon name="Search" size={18} />}
-              containerStyle={{ width: "350px" }}
+              containerStyle={{ flex: "0 1 350px", minWidth: 0 }}
             />
             <div className="view-mode-switcher"
               style={{
@@ -280,7 +280,7 @@ const TeamList: React.FC = () => {
               flex: 1,
               overflowY: "auto",
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(320px, 100%), 1fr))",
               gap: 16,
               padding: "4px 0",
               alignContent: "start",

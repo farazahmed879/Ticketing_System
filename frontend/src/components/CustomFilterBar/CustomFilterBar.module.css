@@ -29,3 +29,19 @@
   color: white !important;
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
 }
+
+@media (max-width: 768px) {
+  .filters {
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .filterBtn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 7px 8px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    text-align: center;
+  }
+}

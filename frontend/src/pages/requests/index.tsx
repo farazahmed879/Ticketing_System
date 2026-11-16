@@ -159,16 +159,7 @@ const Requests: React.FC = () => {
                 { value: "ALL", label: "All" },
               ]}
             />
-            <div className="view-mode-switcher"
-              style={{
-                display: "flex",
-                gap: 4,
-                padding: 4,
-                borderRadius: 10,
-                border: "1px solid var(--border-glass)",
-                background: "rgba(255,255,255,0.03)",
-              }}
-            >
+            <div className={`view-mode-switcher ${styles.viewToggle}`}>
               <CustomButton
                 variant={viewMode === "list" ? "primary" : "ghost"}
                 size="sm"

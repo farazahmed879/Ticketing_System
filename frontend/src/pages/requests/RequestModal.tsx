@@ -4,6 +4,7 @@ import Modal from "../../components/Modal";
 import CustomInput from "../../components/CustomInput";
 import CustomSelect from "../../components/CustomSelect";
 import CustomButton from "../../components/CustomButton";
+import styles from "./Requests.module.css";
 import { TaskDescriptionEditor } from "../timesheet/components/TaskDescriptionEditor";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
@@ -90,9 +91,7 @@ const RequestModal: React.FC<RequestModalProps> = ({
             }}
           />
         ) : (
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
-          >
+          <div className={styles.dateRow}>
             <CustomInput
               name="startDate"
               control={control}

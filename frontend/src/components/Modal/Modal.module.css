@@ -142,3 +142,16 @@
     border-radius: 0 !important;
   }
 }
+
+/* Phones: footer buttons wrap and share the width instead of overflowing */
+@media (max-width: 768px) {
+  .footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .footer > * {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}

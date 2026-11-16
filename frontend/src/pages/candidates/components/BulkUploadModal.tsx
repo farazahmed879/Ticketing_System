@@ -1410,10 +1410,10 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns:
-                summary.needsTitleCount > 0
-                  ? "repeat(4, 1fr)"
-                  : "repeat(3, 1fr)",
+              // One row of 3–4 stats when there's room; wraps to 2 on phones.
+              gridTemplateColumns: `repeat(auto-fit, minmax(min(${
+                summary.needsTitleCount > 0 ? 100 : 120
+              }px, 100%), 1fr))`,
               gap: "12px",
             }}
           >

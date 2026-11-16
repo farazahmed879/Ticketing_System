@@ -150,17 +150,23 @@ const Notifications: React.FC = () => {
           <button
             className={`${styles.actionBtn} glass-card glass-card-hover`}
             onClick={() => setIsMarkAllReadOpen(true)}
+            aria-label="Mark all read"
+            title="Mark all read"
             disabled={!notifications.some((n) => n.unread)}
           >
-            <CustomIcon name="CheckCircle2" size={16} /> Mark all read
+            <CustomIcon name="CheckCircle2" size={16} />{" "}
+            <span className={styles.actionLabel}>Mark all read</span>
           </button>
           <button
             className={`${styles.actionBtn} glass-card glass-card-hover`}
             onClick={() => setIsClearAllOpen(true)}
+            aria-label="Clear all"
+            title="Clear all"
             disabled={notifications.length === 0}
             style={{ color: "var(--accent-danger)" }}
           >
-            <CustomIcon name="Trash2" size={16} /> Clear all
+            <CustomIcon name="Trash2" size={16} />{" "}
+            <span className={styles.actionLabel}>Clear all</span>
           </button>
         </div>
       </div>
@@ -217,7 +223,7 @@ const Notifications: React.FC = () => {
       </div>
 
       {notifications.length > 0 && (
-        <div style={{ marginTop: 24 }}>
+        <div className={styles.paginationWrap}>
           <CustomPagination
             currentPage={page}
             totalPages={Math.ceil(totalCount / itemsPerPage)}

@@ -1179,6 +1179,31 @@
     display: none;
   }
 
+  /* Stacked layout: a collapsed calendar becomes a full-width horizontal
+     rail (tap to expand) instead of a 46px-wide column. */
+  .calendarSectionCollapsed {
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 10px 12px !important;
+  }
+
+  .logTasksSectionExpanded {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  .collapsedCalendarRail {
+    flex-direction: row;
+    height: auto;
+    margin-top: 0;
+  }
+
+  .collapsedCalendarText {
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+
   .timesheetLayout {
     flex-direction: column;
     flex: none;
@@ -1484,6 +1509,10 @@
 }
 
 @media (max-width: 768px) {
+  .container {
+    gap: 10px;
+  }
+
   .header h1 {
     font-size: 1.25rem;
   }
@@ -1500,6 +1529,30 @@
   .statsGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
+  }
+
+  .statCard {
+    padding: 8px 12px;
+  }
+
+  .statValue {
+    font-size: 1.1rem;
+  }
+
+  .viewSwitcher {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .viewSwitcher > * {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding-inline: 6px;
+  }
+
+  .selectedDay {
+    transform: none;
   }
 
   .calendarSection {
@@ -1539,7 +1592,8 @@
     white-space: nowrap;
   }
 
-  .dayCell:not(.weeklyDayCell) .weeklyTaskIndicator {
+  .dayCell:not(.weeklyDayCell) .weeklyTaskIndicator,
+  .dayCell:not(.weeklyDayCell) .taskList {
     display: none;
   }
 
@@ -1686,6 +1740,12 @@
 
   .reportCard {
     padding: 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .viewSwitcher > * {
+    font-size: 0.75rem;
   }
 }
 

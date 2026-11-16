@@ -490,8 +490,10 @@ const TicketBoard: React.FC = () => {
           size="sm"
           onClick={() => setMyTicketsOnly((prev) => !prev)}
           icon={<CustomIcon name="User" size={18} />}
+          aria-label="My Tickets"
+          title="My Tickets"
         >
-          My Tickets
+          <span className={styles1.filtersToggleLabel}>My Tickets</span>
         </CustomButton>
 
         <div className={styles1.filterAnchor}>
@@ -502,7 +504,7 @@ const TicketBoard: React.FC = () => {
             onClick={toggleMoreFilters}
             icon={<CustomIcon name="SlidersHorizontal" size={18} />}
           >
-            Filters
+            <span className={styles1.filtersToggleLabel}>Filters</span>
             {activeMoreFilters > 0 && (
               <span
                 style={{
@@ -524,6 +526,7 @@ const TicketBoard: React.FC = () => {
               name={showMoreFilters ? "ChevronUp" : "ChevronDown"}
               size={16}
               style={{ marginLeft: 6 }}
+              className={styles1.filtersToggleChevron}
             />
           </CustomButton>
 

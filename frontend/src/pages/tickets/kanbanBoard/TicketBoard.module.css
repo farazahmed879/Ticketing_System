@@ -817,6 +817,16 @@
     width: 100%;
     overflow-x: auto;
   }
+
+  /* No hover lift on touch screens; give tap feedback instead */
+  .card:hover,
+  .miniCard:hover {
+    transform: none;
+  }
+
+  .card:active {
+    transform: scale(0.98);
+  }
 }
 
 .columnDropHover {

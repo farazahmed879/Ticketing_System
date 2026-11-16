@@ -515,6 +515,7 @@
   .title,
   .titleInput {
     font-size: 1.25rem;
+    overflow-wrap: anywhere;
   }
 
   .titleInput {
@@ -548,7 +549,8 @@
   }
 
   .floatingBar {
-    bottom: 12px;
+    /* clear the iPhone home indicator */
+    bottom: calc(12px + env(safe-area-inset-bottom));
     width: calc(100% - 24px);
     padding: 10px 12px;
     flex-wrap: wrap;

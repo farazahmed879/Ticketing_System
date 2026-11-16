@@ -290,6 +290,10 @@
   .mobileTabButton {
     min-height: 40px;
   }
+
+  .commentsList {
+    padding: 10px;
+  }
 }
 
 /* Loading skeleton — mirrors the real layout so it collapses the same way. */

@@ -625,6 +625,7 @@ const CandidateForm: React.FC<CandidateFormProps> = ({
 
           {/* Upload Area */}
           <div
+            className={styles.uploadArea}
             onClick={() => fileInputRef.current?.click()}
             style={{
               border: "2px dashed var(--border-glass)",

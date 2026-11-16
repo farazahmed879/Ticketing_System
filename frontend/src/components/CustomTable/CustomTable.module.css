@@ -47,3 +47,162 @@
   background: transparent;
   border-bottom: 1px solid var(--border-glass);
 }
+
+/* =========================================================
+   Phones: each row becomes a card
+   - first column  → card title (no label)
+   - other columns → "LABEL ........ value" rows
+   - Actions column → footer bar, right-aligned
+   ========================================================= */
+@media (max-width: 768px) {
+  .wrapper {
+    background: transparent !important;
+    border: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .table,
+  .table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 2px 0 8px;
+  }
+
+  .table tr {
+    display: block;
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: 14px;
+    padding: 4px 14px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+
+  .table tr.dataRow:active {
+    border-color: var(--border-active);
+  }
+
+  .table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding: 9px 0 !important;
+    border-bottom: 1px dashed var(--border-glass);
+    text-align: right !important;
+    font-size: 0.86rem;
+    overflow-wrap: anywhere;
+  }
+
+  .table tr td:last-child {
+    border-bottom: none;
+  }
+
+  .table td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    max-width: 45%;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+  }
+
+  /* Right side: let the value wrap/shrink instead of overflowing */
+  .table td > * {
+    min-width: 0 !important;
+    max-width: 100%;
+  }
+
+  /* Card title */
+  .table td.primaryCell {
+    justify-content: flex-start;
+    text-align: left !important;
+    padding: 12px 0 10px !important;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-glass);
+  }
+
+  .table td.primaryCell::before {
+    display: none;
+  }
+
+  /* Card footer actions */
+  .table td.actionsCell {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    padding: 10px 0 !important;
+    border-top: 1px solid var(--border-glass);
+    border-bottom: none;
+  }
+
+  .table td.actionsCell::before {
+    display: none;
+  }
+
+  .table td:has(+ td.actionsCell) {
+    border-bottom: none;
+  }
+
+  /* Rows without labels (loading skeleton) stay simple */
+  .table td:not([data-label]) {
+    justify-content: flex-start;
+    text-align: left !important;
+  }
+
+  /* Empty state & expanded child rows span the card */
+  .table tr.emptyRow {
+    border-style: dashed;
+  }
+
+  .table tr.emptyRow td {
+    justify-content: center;
+    text-align: center !important;
+    padding: 32px 0 !important;
+  }
+
+  .table tr.expandedRow {
+    padding: 0;
+    margin-top: -6px;
+    overflow: hidden;
+  }
+
+  .table tr.expandedRow td {
+    display: block;
+    text-align: left !important;
+  }
+
+  .highlightRow td {
+    background: transparent;
+    animation: none;
+  }
+
+  .table tr.highlightRow {
+    animation: cardHighlight 2.5s ease-out forwards;
+  }
+
+  @keyframes cardHighlight {
+    0% {
+      background: rgba(124, 58, 237, 0.18);
+      border-color: var(--accent-primary);
+    }
+    100% {
+      background: var(--bg-card);
+    }
+  }
+}

@@ -52,7 +52,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ onSelect }) => {
         position: "absolute",
         bottom: "calc(100% + 10px)",
         left: 0,
-        width: "min(320px, calc(100vw - 40px))",
+        width: "min(320px, calc(100vw - 100px))",
         maxHeight: "min(300px, 50dvh)",
         overflowY: "auto",
         padding: 12,

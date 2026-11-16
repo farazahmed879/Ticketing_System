@@ -14,8 +14,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   onToggleCollapse,
   unreadMessageCount,
+  isMobile = false,
   isMobileOpen = false,
-  onCloseMobile,
+  onMobileOpenChange,
 }) => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
@@ -59,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       observer.disconnect();
       nav.removeEventListener("scroll", checkScroll);
     };
-  }, [isCollapsed]);
+  }, [isCollapsed, isMobileOpen]);
 
   const scrollUp = () => {
     if (navRef.current) {
@@ -182,43 +183,65 @@ const Sidebar: React.FC<SidebarProps> = ({
     hasPermission(item.permission),
   );
 
-  return (
-    <aside
-      className={`${styles.sidebar} ${isCollapsed ? styles.sidebarCollapsed : ""} ${isMobileOpen ? styles.sidebarMobileOpen : ""}`}
-    >
-      <button
-        className={styles.collapseToggle}
-        onClick={onToggleCollapse}
-        title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-      >
-        {isCollapsed ? (
-          <CustomIcon name="ChevronRight" size={16} />
-        ) : (
-          <CustomIcon name="ChevronLeft" size={16} />
-        )}
-      </button>
+  // On phones the sidebar is an off-canvas drawer (opened from the topbar
+  // hamburger) that always shows full labels. Desktop keeps the
+  // user-controlled collapse.
+  const collapsed = isMobile ? false : isCollapsed;
+  const closeMobile = () => {
+    if (isMobile) onMobileOpenChange?.(false);
+  };
 
-      <div className={styles.logoRow}>
-        <div className={styles.logo}>
-          <CustomImage
-            src="/InsigniaStandalone.svg"
-            alt="Logo"
-            style={{ width: 32, height: 32, objectFit: "contain", flexShrink: 0 }}
-          />
-          {!isCollapsed && (
-            <span style={{ color: "forestgreen", fontWeight: 700 }}>
-              Jami Partners
-            </span>
-          )}
-        </div>
+  return (
+    <>
+    {isMobile && isMobileOpen && (
+      <div
+        className={styles.mobileBackdrop}
+        onClick={closeMobile}
+        aria-hidden="true"
+      />
+    )}
+    <aside
+      className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""} ${isMobile ? styles.sidebarMobile : ""} ${isMobile && isMobileOpen ? styles.sidebarMobileOpen : ""}`}
+      aria-label="Main navigation"
+      aria-hidden={isMobile && !isMobileOpen ? true : undefined}
+      inert={isMobile && !isMobileOpen ? true : undefined}
+    >
+      {!isMobile && (
         <button
-          className={styles.mobileCloseBtn}
-          onClick={onCloseMobile}
-          aria-label="Close menu"
-          type="button"
+          className={styles.collapseToggle}
+          onClick={onToggleCollapse}
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
-          <CustomIcon name="X" size={20} />
+          {isCollapsed ? (
+            <CustomIcon name="ChevronRight" size={16} />
+          ) : (
+            <CustomIcon name="ChevronLeft" size={16} />
+          )}
         </button>
+      )}
+
+      <div className={styles.logo}>
+        <CustomImage
+          src="/InsigniaStandalone.svg"
+          alt="Logo"
+          style={{ width: 32, height: 32, objectFit: "contain", flexShrink: 0 }}
+        />
+        {!collapsed && (
+          <span style={{ color: "forestgreen", fontWeight: 700 }}>
+            Jami Partners
+          </span>
+        )}
+        {isMobile && (
+          <button
+            type="button"
+            className={styles.mobileCloseBtn}
+            onClick={closeMobile}
+            aria-label="Close menu"
+            aria-expanded={true}
+          >
+            <CustomIcon name="X" size={18} />
+          </button>
+        )}
       </div>
 
       {canScrollUp && (
@@ -233,10 +256,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             key={item.path}
             className={styles.navItemWrapper}
             onMouseEnter={(e) => {
+              // Taps fire mouseenter on touch screens — skip hover popups there.
+              if (isMobile) return;
               const rect = e.currentTarget.getBoundingClientRect();
               if (item.children) {
                 setHoveredSubmenu({ item, top: rect.top });
-              } else if (isCollapsed) {
+              } else if (collapsed) {
                 setHoveredTooltip({
                   label: item.label,
                   top: rect.top + rect.height / 2,
@@ -251,25 +276,24 @@ const Sidebar: React.FC<SidebarProps> = ({
             <NavLink
               to={item.path}
               end={item.path === "/tickets"}
-              onClick={() => {
-                if (onCloseMobile) onCloseMobile();
-              }}
+              onClick={closeMobile}
+              aria-label={collapsed ? item.label : undefined}
               className={({ isActive }) =>
                 `${styles.navLink} ${isActive ? styles.navLinkActive : ""}`
               }
             >
               {item.icon}
-              {!isCollapsed && <span>{item.label}</span>}
+              {!collapsed && <span>{item.label}</span>}
               {item.path === "/messages" &&
                 unreadMessageCount !== undefined &&
                 unreadMessageCount > 0 && (
                   <span
-                    className={`${styles.sidebarBadge} ${isCollapsed ? styles.collapsedBadge : ""}`}
+                    className={`${styles.sidebarBadge} ${collapsed ? styles.collapsedBadge : ""}`}
                   >
                     {unreadMessageCount}
                   </span>
                 )}
-              {item.children && !isCollapsed && (
+              {item.children && !collapsed && (
                 <CustomIcon
                   name="ChevronRight"
                   size={14}
@@ -303,7 +327,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               }
               onClick={() => {
                 setHoveredSubmenu(null);
-                if (onCloseMobile) onCloseMobile();
+                closeMobile();
               }}
             >
               {child.label}
@@ -330,20 +354,20 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div
         className={styles.userProfile}
         onClick={() => {
-          if (onCloseMobile) onCloseMobile();
+          closeMobile();
           navigate("/profile");
         }}
         style={{
           cursor: "pointer",
-          flexDirection: isCollapsed ? "column" : "row",
-          gap: isCollapsed ? "16px" : "12px",
+          flexDirection: collapsed ? "column" : "row",
+          gap: collapsed ? "16px" : "12px",
           justifyContent: "center",
         }}
       >
         <div className={styles.avatar}>
           <CustomIcon name="User" size={20} color="var(--text-secondary)" />
         </div>
-        {!isCollapsed && (
+        {!collapsed && (
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className={styles.userName}>{user?.fullname}</div>
             <div className={styles.userTitle}>
@@ -376,6 +400,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         type="danger"
       />
     </aside>
+    </>
   );
 };
 

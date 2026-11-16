@@ -72,21 +72,24 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
   const toggleTask = (index: number) => {
     setExpandedTasks((prev) => ({
       ...prev,
-      [index]: !prev[index],
+      // Same default as the render (first task open when unset).
+      [index]: !(prev[index] ?? index === 0),
     }));
   };
 
-  const expandAll = () => {
+  const setAllExpanded = (expanded: boolean) => {
     const all: Record<number, boolean> = {};
     fields.forEach((_, i) => {
-      all[i] = true;
+      all[i] = expanded;
     });
     setExpandedTasks(all);
   };
 
-  const collapseAll = () => {
-    setExpandedTasks({});
-  };
+  const expandAll = () => setAllExpanded(true);
+
+  // Explicit `false` for every task — an empty object would fall back to
+  // the "first task open" default and leave #1 expanded.
+  const collapseAll = () => setAllExpanded(false);
 
   const watchedTasks = watch("tasks");
   const watchedEntryType = watch("entryType");

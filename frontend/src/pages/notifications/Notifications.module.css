@@ -139,6 +139,10 @@
   white-space: nowrap;
 }
 
+.paginationWrap {
+  margin-top: 24px;
+}
+
 @media (max-width: 768px) {
   .header {
     margin-bottom: 14px;
@@ -150,6 +154,7 @@
 
   .actions {
     gap: 8px;
+    flex-shrink: 0;
   }
 
   .actionBtn {
@@ -204,5 +209,20 @@
 
   .emptyState p {
     font-size: 0.9rem;
+  }
+
+  .paginationWrap {
+    margin-top: 14px;
+  }
+}
+
+/* Very narrow: icon-only header buttons (names stay as tooltips / labels) */
+@media (max-width: 400px) {
+  .actionLabel {
+    display: none;
+  }
+
+  .actionBtn {
+    padding: 6px 8px;
   }
 }

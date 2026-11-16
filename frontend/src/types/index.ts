@@ -523,8 +523,10 @@ export interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   unreadMessageCount?: number;
+  /** Phone layout: sidebar becomes an off-canvas drawer opened from the topbar. */
+  isMobile?: boolean;
   isMobileOpen?: boolean;
-  onCloseMobile?: () => void;
+  onMobileOpenChange?: (open: boolean) => void;
 }
 
 export interface CustomerDashboardProps {

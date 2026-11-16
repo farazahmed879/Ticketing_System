@@ -179,162 +179,253 @@
   }
 }
 
-.passwordAlertBanner {
-  margin: 14px 22px 0 22px;
-  padding: 12px 18px;
-  border-radius: 12px;
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.06) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.alertLeft {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+/* Slim default-password notice, rendered inside the topbar so it adds no page height */
+.topbarLeft {
+  flex: 1;
   min-width: 0;
-}
-
-.alertIconWrapper {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: rgba(245, 158, 11, 0.2);
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  margin-inline-end: 16px;
 }
 
-.alertShieldIcon {
-  color: #f59e0b;
-}
-
-.alertTextContent {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.alertTitle {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #f59e0b;
-  display: flex;
+/* Collapsed to just the shield icon; expands on hover / keyboard focus / tap */
+.securityPill {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  height: 34px;
+  max-width: 100%;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid transparent;
+  animation: pillIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
-.alertDesc {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  line-height: 1.35;
+.securityPill:hover,
+.securityPill:focus-within,
+.securityPill.securityPillOpen {
+  background: linear-gradient(
+    90deg,
+    rgba(245, 158, 11, 0.14) 0%,
+    rgba(245, 158, 11, 0.05) 100%
+  );
+  border-color: rgba(245, 158, 11, 0.32);
+  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.08);
 }
 
-.alertActions {
+.securityPillBody {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
+  min-width: 0;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    max-width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.2s ease,
+    padding 0.35s ease,
+    visibility 0s linear 0.35s;
 }
 
-.alertBtn {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: #ffffff;
+.securityPill:hover .securityPillBody,
+.securityPill:focus-within .securityPillBody,
+.securityPillOpen .securityPillBody {
+  max-width: 640px;
+  opacity: 1;
+  visibility: visible;
+  padding-inline-start: 10px;
+  transition:
+    max-width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.25s ease 0.08s,
+    padding 0.35s ease,
+    visibility 0s;
+}
+
+@keyframes pillIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.securityPillIcon {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  padding: 0;
   border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-weight: 600;
-  font-size: 0.825rem;
+  color: #fff;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   cursor: pointer;
+}
+
+.securityPillIcon:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+.securityPillIcon::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid rgba(245, 158, 11, 0.35);
+  animation: pillPulse 2.4s ease-out infinite;
+}
+
+@keyframes pillPulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 1;
+  }
+  70%,
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+.securityPillText {
   display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.securityPillText strong {
+  font-weight: 700;
+  color: #b45309;
+}
+
+.securityPillDesc {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-inline-start: 8px;
+  border-inline-start: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.securityPillAction {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-  transition: all 0.2s ease;
-}
-
-.alertBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
-}
-
-.alertDismissBtn {
-  background: transparent;
+  height: 26px;
+  flex-shrink: 0;
+  padding: 0 12px;
   border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.3);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.securityPillAction:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.38);
+}
+
+.securityPillDismiss {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
-.alertDismissBtn:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+.securityPillDismiss:hover {
+  background: rgba(245, 158, 11, 0.15);
+  color: #b45309;
 }
 
-@media (max-width: 768px) {
-  .passwordAlertBanner {
-    flex-direction: column;
-    align-items: flex-start;
-    margin: 10px 14px 0 14px;
-    gap: 12px;
-  }
-  .alertActions {
-    width: 100%;
-    justify-content: space-between;
+@media (max-width: 1100px) {
+  .securityPillDesc {
+    display: none;
   }
 }
 
+@media (max-width: 640px) {
+  .securityPillText {
+    display: none;
+  }
+  .securityPill:hover .securityPillBody,
+  .securityPill:focus-within .securityPillBody,
+  .securityPillOpen .securityPillBody {
+    gap: 6px;
+    padding-inline-start: 6px;
+  }
+}
 
-.burgerButton {
-  display: none;
-  background: rgba(255, 255, 255, 0.05);
+@media (prefers-reduced-motion: reduce) {
+  .securityPill,
+  .securityPillIcon::after {
+    animation: none;
+  }
+  .securityPillBody {
+    transition: none;
+  }
+}
+
+:global([data-theme="dark"]) .securityPillText strong,
+:global([data-theme="dark"]) .securityPillDismiss:hover {
+  color: #fbbf24;
+}
+
+/* Phone layout: sidebar is off-canvas, content takes the full width */
+.hamburgerBtn {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  margin-inline-end: 10px;
+  padding: 0;
+  border-radius: 10px;
   border: 1px solid var(--border-glass);
+  background: var(--bg-card);
   color: var(--text-primary);
-  padding: 6px 10px;
-  border-radius: 8px;
   cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 }
 
-.burgerButton:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--border-active);
-}
-
-.mobileBrand {
-  display: none;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: forestgreen;
-}
-
-.mobileBackdrop {
-  display: none;
+.hamburgerBtn:active {
+  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.3);
+  color: var(--accent-primary);
 }
 
 @media (max-width: 768px) {
@@ -343,34 +434,19 @@
     min-height: 100dvh;
     height: auto !important;
   }
-
-  .burgerButton {
-    display: inline-flex;
-  }
-
-  .mobileBrand {
-    display: inline-block;
-  }
-
-  .mainContent {
-    margin-inline-start: 0 !important;
+  .layoutMobile .mainContent,
+  .layoutMobile.layoutCollapsed .mainContent {
+    margin-inline-start: 0;
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
     height: auto !important;
-    display: flex;
-    flex-direction: column;
   }
-
   .topbar {
-    padding: 0 14px;
     height: 52px;
+    padding: 0 12px;
     flex-shrink: 0;
-    position: sticky;
-    top: 0;
-    z-index: 90;
   }
-
   .pageContainer {
     padding: 12px 10px;
     overflow-x: hidden;
@@ -379,21 +455,6 @@
     min-height: calc(100vh - 52px) !important;
     min-height: calc(100dvh - 52px) !important;
     height: auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  .mobileBackdrop {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(4px);
-    z-index: 195;
-    animation: fadeIn 0.2s ease;
   }
 }
 

@@ -197,10 +197,113 @@
   position: relative;
 }
 
+/* ---------- List header / filter row ---------- */
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.listTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.listSubtitle {
+  color: var(--text-muted);
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.searchBox {
+  width: 350px;
+  max-width: 100%;
+  flex: none;
+  min-width: 0;
+}
+
+.viewToggle {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.03);
+  margin-left: auto;
+}
+
 @media (max-width: 768px) {
-  /* Keep the floating filter panel on screen */
+  .listHeader {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .listTitle {
+    font-size: 1.2rem;
+  }
+
+  .listSubtitle {
+    font-size: 0.8rem;
+  }
+
+  /* One row: [search ......][filters][list|grid] */
+  .filters {
+    gap: 8px;
+  }
+
+  .searchRow {
+    flex: 1 1 auto;
+    gap: 8px;
+  }
+
+  .searchBox {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  .filterAnchor {
+    position: static; /* panel anchors to the whole filter bar instead */
+  }
+
+  .filterBar {
+    position: relative;
+  }
+
+  .filtersToggle {
+    height: 44px !important;
+    padding: 0 12px;
+  }
+
+  .viewToggle {
+    margin-left: 0;
+  }
+
   .advancedPanel {
-    width: min(340px, calc(100vw - 32px));
+    left: 0;
+    right: 0;
+    width: auto;
     max-height: calc(100dvh - 220px);
+    padding: 16px;
+  }
+
+  .filterActions {
+    margin: 0 -16px -16px;
+    bottom: -16px;
+    padding: 12px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Icon-only filters button (badge still shows the active count) */
+  .filtersToggleLabel,
+  .filtersToggleChevron {
+    display: none;
   }
 }

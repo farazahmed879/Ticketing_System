@@ -1,6 +1,7 @@
 import { timesheetRepository } from "../repositories/timesheet.repository";
 import { startOfMonth, endOfMonth, startOfDay, endOfDay, startOfYear, endOfYear } from "date-fns";
 import prisma from "../prisma";
+import { requestUsecase } from "./request.usecase";
 
 const ENTRY_TYPES = new Set([
   "WORK",
@@ -84,8 +85,12 @@ export const timesheetUsecase = {
 
     const existingEntry = await timesheetRepository.findEntryByUserIdAndDate(userId, entryDate);
 
+    // Approved entries are locked — except ones auto-filled from an approved
+    // leave request, which the employee may still adjust (re-submitting puts
+    // them back into review; the leave balance is owned by the request).
     if (
       existingEntry &&
+      !existingEntry.leaveRequestId &&
       (existingEntry.managerApproved === "APPROVED" || existingEntry.hrApproved === "APPROVED")
     ) {
       throw new Error("Cannot edit an approved timesheet.");
@@ -116,6 +121,49 @@ export const timesheetUsecase = {
     }
   },
 
+  /**
+   * Leave entries (Full/Half Day Leave) follow the same approval hierarchy as
+   * leave requests: an Employee's leave by a Manager/HR/Admin, a Manager's by
+   * HR/Admin, an HR's by another HR/Admin. Throws "Access denied: ..." when
+   * the reviewer isn't allowed. Non-leave entries are unaffected.
+   */
+  async assertCanReviewLeave(id: string, reviewer: { id: string; role: string }) {
+    const entry = await timesheetRepository.findEntryById(id);
+    if (!entry) throw new Error("Timesheet entry not found");
+    if (!LEAVE_DAYS_BY_ENTRY_TYPE[entry.entryType || ""]) return;
+    const review = await this.leaveReviewCheck(entry.userId, reviewer);
+    if (!review.allowed) throw new Error(`Access denied: ${review.reason}`);
+  },
+
+  async leaveReviewCheck(
+    requesterId: string,
+    reviewer: { id: string; role: string },
+    ctx?: Awaited<ReturnType<typeof requestUsecase.getReviewContext>>,
+    roles?: Map<string, string>,
+  ) {
+    const reviewCtx = ctx ?? (await requestUsecase.getReviewContext(reviewer.id));
+    const roleMap = roles ?? (await requestUsecase.getRoleTypes([requesterId]));
+    return requestUsecase.canReview(reviewer, requesterId, reviewCtx, {
+      isLeave: true,
+      requesterRole: roleMap.get(requesterId),
+    });
+  },
+
+  /** Adds `canReview: false` to leave entries the reviewer may not approve. */
+  async annotateLeaveReview(entries: any[], reviewer: { id: string; role: string }) {
+    const leaveEntries = entries.filter((e) => LEAVE_DAYS_BY_ENTRY_TYPE[e.entryType || ""]);
+    if (!leaveEntries.length) return entries;
+    const ctx = await requestUsecase.getReviewContext(reviewer.id);
+    const roles = await requestUsecase.getRoleTypes(leaveEntries.map((e) => e.userId));
+    return Promise.all(
+      entries.map(async (e) =>
+        LEAVE_DAYS_BY_ENTRY_TYPE[e.entryType || ""]
+          ? { ...e, canReview: (await this.leaveReviewCheck(e.userId, reviewer, ctx, roles)).allowed }
+          : e,
+      ),
+    );
+  },
+
   async approveEntry(id: string, agentId: string, roleType: string) {
     await this.assertNotOwnEntry(id, agentId);
     const isHr = roleType === "hr";
@@ -127,9 +175,19 @@ export const timesheetUsecase = {
       data.managerApproved = "APPROVED";
     }
 
+    // Signed leave-balance change this call applied (negative = deducted), so
+    // the caller can tell the employee. 0 when nothing changed.
+    let leaveChange = 0;
+    let existing: Awaited<ReturnType<typeof timesheetRepository.findEntryById>> = null;
+
     if (isHr) {
-      const existing = await timesheetRepository.findEntryById(id);
-      const days = existing ? LEAVE_DAYS_BY_ENTRY_TYPE[existing.entryType || ""] : undefined;
+      existing = await timesheetRepository.findEntryById(id);
+      // Entries filled from an approved leave request were already deducted
+      // by the request — reviewing them never touches the balance.
+      const days =
+        existing && !existing.leaveRequestId
+          ? LEAVE_DAYS_BY_ENTRY_TYPE[existing.entryType || ""]
+          : undefined;
       if (existing && days) {
         // Race-safe leave deduction without a transaction. The old code read
         // the status and balance, then wrote — two concurrent approvals both
@@ -169,11 +227,13 @@ export const timesheetUsecase = {
               `Insufficient leave balance. Requested ${days} day(s), available ${user?.leaves ?? 0}.`,
             );
           }
+          leaveChange = -days;
         }
       }
     }
 
-    return timesheetRepository.updateEntryStatus(id, data);
+    const entry = await timesheetRepository.updateEntryStatus(id, data);
+    return { entry, leaveChange, userId: existing?.userId, entryType: existing?.entryType, date: existing?.date };
   },
 
   async rejectEntry(id: string, reason?: string, roleType?: string, reviewerId?: string) {
@@ -189,9 +249,17 @@ export const timesheetUsecase = {
       data.managerApproved = "REJECTED";
     }
 
+    let leaveChange = 0;
+    let existing: Awaited<ReturnType<typeof timesheetRepository.findEntryById>> = null;
+
     if (isHr) {
-      const existing = await timesheetRepository.findEntryById(id);
-      const days = existing ? LEAVE_DAYS_BY_ENTRY_TYPE[existing.entryType || ""] : undefined;
+      existing = await timesheetRepository.findEntryById(id);
+      // Entries filled from an approved leave request were already deducted
+      // by the request — reviewing them never touches the balance.
+      const days =
+        existing && !existing.leaveRequestId
+          ? LEAVE_DAYS_BY_ENTRY_TYPE[existing.entryType || ""]
+          : undefined;
       if (existing && days) {
         // Refund only if THIS call flips APPROVED -> REJECTED, so concurrent
         // rejections can't refund the same leave twice.
@@ -204,11 +272,13 @@ export const timesheetUsecase = {
             where: { id: existing.userId },
             data: { leaves: { increment: days } },
           });
+          leaveChange = days;
         }
       }
     }
 
-    return timesheetRepository.updateEntryStatus(id, data);
+    const entry = await timesheetRepository.updateEntryStatus(id, data);
+    return { entry, leaveChange, userId: existing?.userId, entryType: existing?.entryType, date: existing?.date };
   },
 
   async getPendingEntries() {

@@ -22,6 +22,7 @@ import MomentsSection from "./components/MomentsSection";
 import LeaderboardSection from "./components/LeaderboardSection";
 import CustomerDashboard from "./CustomerDashboard";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import { useLeaveHistory, fmtDays } from "../profile/useLeaveHistory";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -54,6 +55,15 @@ const Dashboard: React.FC = () => {
   );
   const announcements = dashboardData?.announcements || [];
   const seenMomentIds = dashboardData?.seenMomentIds || [];
+
+  // Own leave balance (shared query with the profile card). Called before the
+  // loading early-return to keep hook order stable.
+  // Employees only — admins and clients have no leave balance.
+  const showLeaveBalance =
+    !!user &&
+    user.role?.roleType !== ROLE_TYPE.CUSTOMER &&
+    user.role?.roleType !== ROLE_TYPE.ADMIN;
+  const { data: leaveData } = useLeaveHistory(user?.id, true, showLeaveBalance);
 
   if (loading) return <DashboardSkeleton />;
 
@@ -117,9 +127,27 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  const cards = isHR
+  const statCards = isHR
     ? allCards.filter((card) => card.label === "Total Users")
     : allCards;
+
+  // Own leave balance (employees only, not admins/clients). Highlighted
+  // when approved leave was cut from it in the last 7 days.
+  const leaveCard: StatCard | null = showLeaveBalance
+    ? {
+        label: "Leave Balance",
+        value: leaveData?.balance ?? user?.leaves ?? 0,
+        icon: <CustomIcon name="CalendarCheck" size={18} />,
+        color: "var(--accent-success)",
+        alert: (leaveData?.recentDays ?? 0) > 0,
+        caption:
+          (leaveData?.recentDays ?? 0) > 0
+            ? `${fmtDays(leaveData!.recentDays)} deducted this week`
+            : "Days remaining",
+        onClick: () => navigate("/profile"),
+      }
+    : null;
+  const cards = leaveCard ? [...statCards, leaveCard] : statCards;
 
   if (roleType === ROLE_TYPE.CUSTOMER) {
     return <CustomerDashboard stats={stats} moments={moments} />;

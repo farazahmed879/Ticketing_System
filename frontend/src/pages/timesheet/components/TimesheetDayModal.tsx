@@ -82,6 +82,10 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
   const isApproved =
     existingEntry?.managerApproved === "APPROVED" ||
     existingEntry?.hrApproved === "APPROVED";
+  // Filled automatically from an approved leave request: shown as approved
+  // but the employee may still edit it (saving sends it back for review).
+  const isFromLeaveRequest = !!existingEntry?.leaveRequestId;
+  const isLocked = isApproved && !isFromLeaveRequest;
 
   // Total hours for the day is derived from the sum of task hours — keep the
   // (read-only) field in sync whenever a task's hours change. Weekend /
@@ -234,14 +238,14 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
             control={control}
             label="Day Type"
             options={ENTRY_TYPE_OPTIONS}
-            disabled={isApproved}
+            disabled={isLocked}
           />
           <CustomInput
             name="notes"
             control={control}
             label="Daily Notes (Optional)"
             placeholder="Anything special or noteworthy about today?"
-            disabled={isApproved}
+            disabled={isLocked}
           />
         </div>
 
@@ -365,7 +369,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
                         </div>
 
                         <div className={styles.taskAccordionHeaderRight}>
-                          {!isApproved && fields.length > 1 && (
+                          {!isLocked && fields.length > 1 && (
                             <CustomButton
                               type="button"
                               variant="ghost"
@@ -410,7 +414,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
                                   label: p.name,
                                 })),
                               ]}
-                              disabled={isApproved}
+                              disabled={isLocked}
                               showSearch
                             />
 
@@ -430,7 +434,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
                                     value: t.id,
                                     label: `#${t.uid} ${t.subject.substring(0, 24)}...`,
                                   }))}
-                                disabled={isApproved}
+                                disabled={isLocked}
                                 showSearch
                               />
                             )}
@@ -448,7 +452,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
                               step="any"
                               min={0.1}
                               max={24}
-                              disabled={isApproved}
+                              disabled={isLocked}
                               required
                             />
                           </div>
@@ -456,7 +460,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
                           <TaskDescriptionEditor
                             name={`tasks.${index}.description` as const}
                             control={control}
-                            disabled={isApproved}
+                            disabled={isLocked}
                             required
                           />
                         </div>
@@ -474,7 +478,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
               </div>
             )}
 
-            {!isApproved && (
+            {!isLocked && (
               <CustomButton
                 type="button"
                 variant="outline"
@@ -509,7 +513,7 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
           <CustomButton variant="secondary" type="button" onClick={onClose}>
             Cancel
           </CustomButton>
-          {!isApproved && (
+          {!isLocked && (
             <CustomButton variant="gradient" type="submit">
               Save Timesheet
             </CustomButton>
@@ -518,8 +522,10 @@ const TimesheetDayModal: React.FC<TimesheetDayModalProps> = ({
             <div
               className={`${styles.flexRow} ${styles.alignCenter} ${styles.gap8} ${styles.textSuccess} ${styles.fw600}`}
             >
-              <CustomIcon name="CheckCircle2" size={20} />
-              Approved by {existingEntry?.approvedBy?.fullname}
+              <CustomIcon name={isFromLeaveRequest ? "CalendarCheck" : "CheckCircle2"} size={20} />
+              {isFromLeaveRequest
+                ? "Filled from your approved leave request — you can still edit it"
+                : `Approved by ${existingEntry?.approvedBy?.fullname ?? ""}`}
             </div>
           )}
         </div>

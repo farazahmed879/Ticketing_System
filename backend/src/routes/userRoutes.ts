@@ -74,6 +74,25 @@ router.get("/usersByRole", authMiddleware, userController.getUsersByRoles);
 
 /**
  * @swagger
+ * /api/users/leave-history:
+ *   get:
+ *     summary: Leave balance and approved leaves deducted from it (own; Admin/HR may pass userId)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Balance and recent deductions
+ */
+router.get("/leave-history", authMiddleware, userController.getLeaveHistory);
+
+/**
+ * @swagger
  * /api/users:
  *   post:
  *     summary: Create a new user

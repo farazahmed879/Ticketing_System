@@ -14,6 +14,7 @@ import UserModal from "../users/components/UserModal";
 import type { Role, UserFormData } from "../../types";
 import CustomImage from "../../components/CustomImage";
 import { ROLE_TYPE } from "../roles/roleConstants";
+import LeaveBalanceCard from "./LeaveBalanceCard";
 
 const Profile: React.FC = () => {
   const { id } = useParams();
@@ -208,6 +209,19 @@ const Profile: React.FC = () => {
         </div>
       </div>
 
+      {/* Leave balance + deductions — shown prominently above the details so
+          employees notice when approved leave is cut from their balance.
+          Employees only (not admins/clients). Leaves are private: only the
+          user themselves or Admin/HR see this. */}
+      {user.role?.roleType !== ROLE_TYPE.CUSTOMER &&
+        user.role?.roleType !== ROLE_TYPE.ADMIN &&
+        (user.id === currentUser?.id || canEdit) && (
+          <LeaveBalanceCard
+            userId={user.id}
+            isSelf={user.id === currentUser?.id}
+          />
+        )}
+
       <div className={styles.layout}>
         {/* Main Content */}
         <div className={styles.column}>
@@ -287,31 +301,6 @@ const Profile: React.FC = () => {
                 </label>
                 <span>#{user.id.toString().slice(-6).toUpperCase()}</span>
               </div>
-              {user.role?.roleType !== ROLE_TYPE.CUSTOMER && (
-                <div className={styles.infoItem}>
-                  <label>Leave Balance</label>
-                  <span
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}
-                  >
-                    <CustomIcon
-                      name="Calendar"
-                      size={16}
-                      color="var(--accent-primary)"
-                    />
-                    <strong style={{ fontSize: "1.05rem" }}>
-                      {user.leaves ?? 0}
-                    </strong>
-                    <span
-                      style={{
-                        color: "var(--text-muted)",
-                        fontSize: "0.85rem",
-                      }}
-                    >
-                      days remaining
-                    </span>
-                  </span>
-                </div>
-              )}
             </div>
           </div>
 

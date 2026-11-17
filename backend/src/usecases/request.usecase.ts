@@ -2,13 +2,14 @@ import { requestRepository } from "../repositories/request.repository";
 import { userRepository } from "../repositories/user.repository";
 import prisma from "../prisma";
 import { RoleType } from "../utils/constants";
+import { leaveUsecase } from "./leave.usecase";
 
 export interface ReviewContext {
   ledMemberIds: Set<string>;
   orgManagersByMember: Map<string, Set<string>>;
 }
 
-const LEAVE_TYPES = new Set(["HALFDAY_LEAVE", "FULLDAY_LEAVE", "VACATION"]);
+export const LEAVE_TYPES = new Set(["HALFDAY_LEAVE", "FULLDAY_LEAVE", "VACATION"]);
 
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -30,7 +31,7 @@ function countWeekdays(startStr: string, endStr: string): number {
   return count;
 }
 
-function computeLeaveDays(
+export function computeLeaveDays(
   type: string,
   startDate?: string,
   endDate?: string,
@@ -114,6 +115,7 @@ export const requestUsecase = {
     reviewer: { id: string; role: string },
     requesterId: string | null | undefined,
     ctx: ReviewContext,
+    leave?: { isLeave: boolean; requesterRole?: string | null },
   ): { allowed: boolean; reason?: string } {
     if (reviewer.role === RoleType.ADMIN) return { allowed: true };
     if (!requesterId) {
@@ -121,6 +123,39 @@ export const requestUsecase = {
     }
     if (requesterId === reviewer.id) {
       return { allowed: false, reason: "You cannot approve your own request" };
+    }
+
+    // Leave approval hierarchy (Admin can always approve, handled above):
+    // - HR's leave:       another HR only
+    // - Manager's leave:  HR only
+    // - Employee's leave: HR, or a Manager (subject to the org-team rule below)
+    if (leave?.isLeave) {
+      const requesterRole = leave.requesterRole;
+      if (requesterRole === RoleType.HR) {
+        return reviewer.role === RoleType.HR
+          ? { allowed: true }
+          : {
+              allowed: false,
+              reason: "HR leave requests can only be approved by another HR or an Admin",
+            };
+      }
+      if (requesterRole === RoleType.AGENT) {
+        return reviewer.role === RoleType.HR
+          ? { allowed: true }
+          : {
+              allowed: false,
+              reason: "Manager leave requests can only be approved by HR or an Admin",
+            };
+      }
+      if (reviewer.role === RoleType.HR) return { allowed: true };
+      if (reviewer.role !== RoleType.AGENT) {
+        return {
+          allowed: false,
+          reason: "Employee leave requests can only be approved by a Manager, HR or an Admin",
+        };
+      }
+      // Manager reviewing an employee's leave: falls through to the
+      // org-team / team rules below.
     }
 
     // A manager's own request (they are a member of the team they manage)
@@ -144,6 +179,17 @@ export const requestUsecase = {
       allowed: false,
       reason: "You can only manage requests from your team members",
     };
+  },
+
+  /** roleType per user id, for the leave approval hierarchy. */
+  async getRoleTypes(userIds: (string | null | undefined)[]): Promise<Map<string, string>> {
+    const ids = Array.from(new Set(userIds.filter(Boolean) as string[]));
+    if (!ids.length) return new Map();
+    const users = await prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, role: { select: { roleType: true } } },
+    });
+    return new Map(users.map((u) => [u.id, u.role?.roleType ?? ""]));
   },
 
   async createRequest(data: {
@@ -256,12 +302,36 @@ export const requestUsecase = {
       },
     });
 
-    if (allTeams.length > 0) {
-      allTeams.forEach((team: any) => {
-        // 2. Add Team Lead
-        if (team && team.teamLeadId !== data.userId) {
-          targetUserIds.add(team.teamLeadId);
+    const isLeave = LEAVE_TYPES.has(data.type);
+    const creatorRole = creator?.role?.roleType;
+    // A manager's or HR's leave can't be approved by a team lead, so team
+    // leads are only told about employee leaves (and non-leave requests).
+    const notifyTeamLeads =
+      !isLeave || (creatorRole !== RoleType.AGENT && creatorRole !== RoleType.HR);
+
+    if (notifyTeamLeads && allTeams.length > 0) {
+      const leadIds = allTeams
+        .map((team: any) => team?.teamLeadId)
+        .filter((id: string | null) => id && id !== data.userId);
+      // For leave, only leads who are Managers can approve (employee team
+      // leads can't), so skip the rest.
+      const leadRoles = isLeave ? await this.getRoleTypes(leadIds) : null;
+      leadIds.forEach((id: string) => {
+        if (!leadRoles || leadRoles.get(id) === RoleType.AGENT) {
+          targetUserIds.add(id);
         }
+      });
+    }
+
+    // HR approves every leave request (and only HR/Admin can approve a
+    // manager's or HR's leave), so tell HR about all of them.
+    if (isLeave) {
+      const hrUsers = await prisma.user.findMany({
+        where: { deleted: false, role: { roleType: RoleType.HR } },
+        select: { id: true },
+      });
+      hrUsers.forEach((u) => {
+        if (u.id !== data.userId) targetUserIds.add(u.id);
       });
     }
 
@@ -283,6 +353,8 @@ export const requestUsecase = {
     const existing = await requestRepository.findById(id);
     if (!existing) throw new Error("Request not found.");
     const previousStatus = existing.status;
+    // Signed balance change applied below (negative = deducted), reported to the user.
+    let leaveChange = 0;
 
     // Adjust leave balance when status transitions involve a leave-type request.
     if (existing.userId && LEAVE_TYPES.has(existing.type)) {
@@ -309,6 +381,7 @@ export const requestUsecase = {
           where: { id: existing.userId },
           data: { leaves: { decrement: days } },
         });
+        leaveChange = -days;
       }
 
       // Un-approving a previously approved leave -> restore balance.
@@ -317,6 +390,7 @@ export const requestUsecase = {
           where: { id: existing.userId },
           data: { leaves: { increment: days } },
         });
+        leaveChange = days;
       }
     }
 
@@ -335,8 +409,41 @@ export const requestUsecase = {
 
     const request = await requestRepository.update(id, updatePayload);
 
+    // Keep the timesheet in step with the leave: fill it on approval, clear the
+    // auto-filled days when the approval is withdrawn. Best-effort — the status
+    // change itself has already succeeded.
+    let filledDays = 0;
+    if (LEAVE_TYPES.has(request.type)) {
+      try {
+        if (status === "APPROVED" && previousStatus !== "APPROVED") {
+          filledDays = await leaveUsecase.fillTimesheetFromRequest(request);
+        } else if (previousStatus === "APPROVED" && status !== "APPROVED") {
+          await leaveUsecase.removeTimesheetForRequest(request.id);
+        }
+      } catch (err) {
+        console.error("Failed to sync timesheet with leave request", err);
+      }
+    }
+
     let notification = null;
-    if (request.userId) {
+    if (request.userId && leaveChange !== 0) {
+      // Leave cut from / restored to the balance: say so explicitly, with the
+      // remaining balance, instead of the generic "request approved" text.
+      notification = await leaveUsecase.notifyBalanceChange(
+        request.userId,
+        leaveChange,
+        `${leaveUsecase.labelFor(request.type).toLowerCase()} request`,
+        { requestId: request.id },
+        [
+          filledDays > 0
+            ? `Your timesheet has been filled for ${filledDays} day${filledDays === 1 ? "" : "s"} — you can still edit it.`
+            : "",
+          message || "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+      );
+    } else if (request.userId) {
       notification = await requestRepository.createNotification({
         title: `Request ${status}`,
         message: `Your ${request.type

@@ -10,6 +10,8 @@ export interface StatCard {
   /** One line of context under the number, e.g. "15% of all tickets" */
   caption?: string;
   onClick?: () => void;
+  /** Highlight the card (amber border + caption), e.g. leave recently deducted */
+  alert?: boolean;
 }
 
 const StatsCards: React.FC<{ cards: StatCard[] }> = ({ cards }) => {
@@ -32,11 +34,15 @@ const StatsCards: React.FC<{ cards: StatCard[] }> = ({ cards }) => {
               {(card.value ?? 0).toLocaleString()}
             </div>
             {card.caption && (
-              <div className={styles.statCaption}>{card.caption}</div>
+              <div
+                className={`${styles.statCaption} ${card.alert ? styles.statCaptionAlert : ""}`}
+              >
+                {card.caption}
+              </div>
             )}
           </>
         );
-        const className = `${styles.statCard} glass-card animate-slide-up`;
+        const className = `${styles.statCard} ${card.alert ? styles.statCardAlert : ""} glass-card animate-slide-up`;
         const style = { animationDelay: `${i * 0.06}s` };
         return card.onClick ? (
           <button

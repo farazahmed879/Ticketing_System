@@ -87,6 +87,17 @@
   cursor: pointer;
 }
 
+/* Leave balance card when leave was recently deducted */
+.statCardAlert {
+  border-color: color-mix(in srgb, var(--accent-warning) 55%, var(--border-glass));
+  background: color-mix(in srgb, var(--accent-warning) 8%, var(--bg-card));
+}
+
+.statCaptionAlert {
+  color: var(--accent-warning);
+  font-weight: 600;
+}
+
 /* A role with a single stat (HR) shouldn't get one full-width bar */
 .statCard:only-child {
   max-width: 340px;

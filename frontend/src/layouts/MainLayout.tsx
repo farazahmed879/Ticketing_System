@@ -36,7 +36,7 @@ const useIsMobile = () => {
 };
 
 const MainLayout: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { t } = useTranslation();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
@@ -184,9 +184,21 @@ const MainLayout: React.FC = () => {
       const isOnMessagesPage = location.pathname === "/messages";
       const isChatNotification = notification.type === "message";
 
+      // Leave cut from / restored to the balance: update the cached balance
+      // right away and use a warning toast so it stands out.
+      const isLeaveNotification = notification.type === "leave";
+      if (isLeaveNotification) {
+        if (typeof notification.data?.leaveBalance === "number") {
+          updateUser({ leaves: notification.data.leaveBalance });
+        }
+        queryClient.invalidateQueries({ queryKey: ["leaveHistory"] });
+      }
+
       if (!(isOnMessagesPage && isChatNotification)) {
         showNotification(
-          "info",
+          isLeaveNotification && notification.data?.leaveChange < 0
+            ? "warning"
+            : "info",
           notification.title + ": " + notification.message,
         );
 
@@ -206,6 +218,8 @@ const MainLayout: React.FC = () => {
         () => {
           if (isChatNotification && notification.data?.roomId) {
             navigate(`/messages?roomId=${notification.data.roomId}`);
+          } else if (isLeaveNotification) {
+            navigate("/profile");
           } else {
             navigate("/notifications");
           }
@@ -231,7 +245,7 @@ const MainLayout: React.FC = () => {
       socket.off("notifications:new");
       socket.off("ticket:updated");
     };
-  }, [user, showNotification, location.pathname, queryClient]);
+  }, [user, updateUser, showNotification, location.pathname, queryClient]);
 
   const handleMarkAsRead = async (id: string) => {
     socket.emit("notifications:markRead", id);

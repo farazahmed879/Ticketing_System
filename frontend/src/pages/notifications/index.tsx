@@ -110,6 +110,8 @@ const Notifications: React.FC = () => {
         return <CustomIcon name="RefreshCw" size={18} color="#ff9800" />;
       case "comment":
         return <CustomIcon name="MessageCircle" size={18} color="#009688" />;
+      case "leave":
+        return <CustomIcon name="CalendarMinus" size={18} color="var(--accent-warning)" />;
       case "request":
         return <CustomIcon name="FileQuestion" size={18} color="#00bcd4" />;
       case "interview":
@@ -127,7 +129,9 @@ const Notifications: React.FC = () => {
 
   const handleNotificationClick = (n: NotificationItem) => {
     handleMarkAsRead(n.id);
-    if (n.data?.ticketId) {
+    if (n.type === "leave") {
+      navigate("/profile");
+    } else if (n.data?.ticketId) {
       navigate(`/tickets/${n.data.ticketId}`);
     } else if (n.type === "message" && n.data?.roomId) {
       navigate(`/messages?roomId=${n.data.roomId}`);

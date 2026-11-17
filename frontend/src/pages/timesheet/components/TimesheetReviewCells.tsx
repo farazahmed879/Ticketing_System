@@ -22,6 +22,9 @@ export const canApproveTimesheetEntry = (
   const isHr = userRoleType === ROLE_TYPE.HR;
   const isManager =
     userRoleType === ROLE_TYPE.AGENT || userRoleType === ROLE_TYPE.ADMIN;
+  // canReview === false: leave hierarchy (e.g. a Manager's leave can only be
+  // approved by HR/Admin) — computed server-side.
+  if (entry.canReview === false) return false;
   return (
     (isManager && entry.managerApproved === "PENDING") ||
     (isHr && entry.hrApproved === "PENDING")

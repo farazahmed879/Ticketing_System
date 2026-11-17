@@ -24,9 +24,12 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
   const isInvalidHours = !isZeroHourDay && entry.totalHours > 24;
   const isHr = userRoleType === "hr";
   const isManager = userRoleType === "agent" || userRoleType === "admin";
+  // Leave hierarchy (computed server-side) can bar this reviewer entirely.
+  const blockedByHierarchy = entry.canReview === false;
   const canApprove =
-    (isManager && entry.managerApproved === "PENDING") ||
-    (isHr && entry.hrApproved === "PENDING");
+    !blockedByHierarchy &&
+    ((isManager && entry.managerApproved === "PENDING") ||
+      (isHr && entry.hrApproved === "PENDING"));
 
   return (
      <Modal
@@ -207,14 +210,22 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
         </div>
 
         <div className={styles.reviewModalActions}>
-          <CustomButton
-            variant="secondary"
-            onClick={() => onReject(entry.id)}
-            style={{ color: "var(--accent-danger)" }}
-            icon={<CustomIcon name="XCircle" size={18} />}
-          >
-            Reject
-          </CustomButton>
+          {blockedByHierarchy ? (
+            <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginRight: "auto" }}>
+              You can't review this leave. Employee leave is approved by a
+              Manager, HR or Admin; a Manager's by HR or Admin; HR's by another
+              HR or Admin.
+            </span>
+          ) : (
+            <CustomButton
+              variant="secondary"
+              onClick={() => onReject(entry.id)}
+              style={{ color: "var(--accent-danger)" }}
+              icon={<CustomIcon name="XCircle" size={18} />}
+            >
+              Reject
+            </CustomButton>
+          )}
           {canApprove && (
             <CustomButton
               variant="gradient"

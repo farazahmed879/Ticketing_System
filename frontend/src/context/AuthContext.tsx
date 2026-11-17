@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "../services/api";
 import { connectSocket, disconnectSocket } from "../services/socket";
@@ -61,9 +61,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     disconnectSocket();
   };
 
-  const updateUser = (partial: Partial<User>) => {
+  // Stable identity: MainLayout's socket effect depends on it.
+  const updateUser = useCallback((partial: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...partial } : prev));
-  };
+  }, []);
 
   return (
     <AuthContext.Provider

@@ -39,6 +39,7 @@ export const API_ROUTES = {
     BASE: "/users",
     GET_BY_ROLES: "/users/usersByRole",
     BY_ID: (id: string) => `/users/${id}`,
+    LEAVE_HISTORY: "/users/leave-history",
   },
 
   // Roles

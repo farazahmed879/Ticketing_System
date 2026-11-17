@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../types";
 import { userUsecase, ForbiddenError } from "../usecases/user.usecase";
 import { RoleType } from "../utils/constants";
+import { leaveUsecase } from "../usecases/leave.usecase";
 
 /**
  * Personal data only Admin, HR and the user themselves may see. Everyone else
@@ -31,6 +32,23 @@ export const redactUser = (req: AuthRequest, user: any) => {
 };
 
 export const userController = {
+  // Leave balance + approved leaves that were cut from it. Own history by
+  // default; Admin/HR may pass ?userId= (leaves is a private field).
+  async getLeaveHistory(req: AuthRequest, res: Response) {
+    try {
+      const requested = typeof req.query.userId === "string" ? req.query.userId : "";
+      const userId = requested || req.user?.id;
+      if (!userId) return res.status(401).json({ success: false, error: "Unauthorized" });
+      if (!canSeePrivateFields(req, userId)) {
+        return res.status(403).json({ success: false, error: "Forbidden" });
+      }
+      const history = await leaveUsecase.getLeaveHistory(userId);
+      res.json({ success: true, ...history });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  },
+
   async getUsers(req: AuthRequest, res: Response) {
     try {
       const {

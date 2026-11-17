@@ -42,7 +42,7 @@ const useIsMobile = () => {
 };
 
 const MainLayout: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { t } = useTranslation();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
@@ -86,7 +86,7 @@ const MainLayout: React.FC = () => {
     api
       .post(API_ROUTES.ANNOUNCEMENTS.FEED_SEEN)
       .then(() => socket.emit("notifications:get"))
-      .catch(() => {});
+      .catch(() => { });
   }, [queryClient]);
 
   React.useEffect(() => {
@@ -202,7 +202,7 @@ const MainLayout: React.FC = () => {
         if (data.items) {
           const filteredItems = data.items.filter((n: any) => n.type !== "moment");
           setNotifications(filteredItems);
-          
+
           // Re-calculate count if possible, or fall back to backend count
           if (data.count !== undefined) {
             // Since we're hiding "moment", the backend count might be off by the number of unread moments
@@ -232,9 +232,21 @@ const MainLayout: React.FC = () => {
       const isOnMessagesPage = location.pathname === "/messages";
       const isChatNotification = notification.type === "message";
 
+      // Leave cut from / restored to the balance: update the cached balance
+      // right away and use a warning toast so it stands out.
+      const isLeaveNotification = notification.type === "leave";
+      if (isLeaveNotification) {
+        if (typeof notification.data?.leaveBalance === "number") {
+          updateUser({ leaves: notification.data.leaveBalance });
+        }
+        queryClient.invalidateQueries({ queryKey: ["leaveHistory"] });
+      }
+
       if (!(isOnMessagesPage && isChatNotification)) {
         showNotification(
-          "info",
+          isLeaveNotification && notification.data?.leaveChange < 0
+            ? "warning"
+            : "info",
           notification.title + ": " + notification.message,
         );
 
@@ -254,6 +266,8 @@ const MainLayout: React.FC = () => {
         () => {
           if (isChatNotification && notification.data?.roomId) {
             navigate(`/messages?roomId=${notification.data.roomId}`);
+          } else if (isLeaveNotification) {
+            navigate("/profile");
           } else {
             navigate("/notifications");
           }
@@ -279,7 +293,7 @@ const MainLayout: React.FC = () => {
       socket.off("notifications:new");
       socket.off("ticket:updated");
     };
-  }, [user, showNotification, location.pathname, queryClient, markShoutoutsSeen]);
+  }, [user, showNotification, location.pathname, queryClient, markShoutoutsSeen, updateUser ]);
 
   const handleMarkAsRead = async (id: string) => {
     socket.emit("notifications:markRead", id);
@@ -632,13 +646,13 @@ const MainLayout: React.FC = () => {
                               position: "relative",
                             }}
                             onMouseEnter={(e) =>
-                              (e.currentTarget.style.background =
-                                "rgba(255,255,255,0.05)")
+                            (e.currentTarget.style.background =
+                              "rgba(255,255,255,0.05)")
                             }
                             onMouseLeave={(e) =>
-                              (e.currentTarget.style.background = n.unread
-                                ? "rgba(255,255,255,0.02)"
-                                : "transparent")
+                            (e.currentTarget.style.background = n.unread
+                              ? "rgba(255,255,255,0.02)"
+                              : "transparent")
                             }
                             onClick={() => {
                               handleMarkAsRead(n.id);

@@ -101,6 +101,10 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
   const isApproved =
     existingEntry?.managerApproved === "APPROVED" ||
     existingEntry?.hrApproved === "APPROVED";
+  // Filled automatically from an approved leave request: shown as approved
+  // but the employee may still edit it (saving sends it back for review).
+  const isFromLeaveRequest = !!existingEntry?.leaveRequestId;
+  const isLocked = isApproved && !isFromLeaveRequest;
   const isRejected =
     existingEntry?.managerApproved === "REJECTED" ||
     existingEntry?.hrApproved === "REJECTED";
@@ -237,7 +241,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
           {existingEntry ? (
             isApproved ? (
               <CustomBadge variant="success" style={{ fontSize: "0.72rem" }}>
-                Approved
+                {isFromLeaveRequest ? "Leave approved" : "Approved"}
               </CustomBadge>
             ) : isRejected ? (
               <CustomBadge variant="danger" style={{ fontSize: "0.72rem" }}>
@@ -302,14 +306,14 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
             label="Day Type"
             required
             options={ENTRY_TYPE_OPTIONS}
-            disabled={isApproved}
+            disabled={isLocked}
           />
           <CustomInput
             name="notes"
             control={control}
             label="Daily Notes (Optional)"
             placeholder="Notes or comments..."
-            disabled={isApproved}
+            disabled={isLocked}
           />
         </div>
 
@@ -435,7 +439,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                         </div>
 
                         <div className={styles.taskAccordionHeaderRight}>
-                          {!isApproved && fields.length > 1 && (
+                          {!isLocked && fields.length > 1 && (
                             <CustomButton
                               type="button"
                               variant="ghost"
@@ -481,7 +485,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                                     label: p.name,
                                   })),
                                 ]}
-                                disabled={isApproved}
+                                disabled={isLocked}
                                 showSearch
                               />
                             </div>
@@ -503,7 +507,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                                       value: t.id,
                                       label: `#${t.uid} ${t.subject.substring(0, 24)}...`,
                                     }))}
-                                  disabled={isApproved}
+                                  disabled={isLocked}
                                   showSearch
                                 />
                               </div>
@@ -523,7 +527,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                                 step="any"
                                 min={0.1}
                                 max={24}
-                                disabled={isApproved}
+                                disabled={isLocked}
                                 required
                               />
                             </div>
@@ -532,7 +536,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                           <TaskDescriptionEditor
                             name={`tasks.${index}.description` as const}
                             control={control}
-                            disabled={isApproved}
+                            disabled={isLocked}
                             required
                           />
                         </div>
@@ -556,7 +560,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
         {/* Sticky Docked Footer */}
         <div className={styles.stickyFooter}>
           <div className={styles.footerLeft}>
-            {!isApproved && !isZeroHourDay && (
+            {!isLocked && !isZeroHourDay && (
               <CustomButton
                 type="button"
                 variant="outline"
@@ -588,7 +592,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
               <span className={styles.totalHoursVal}>{isZeroHourDay ? "0" : taskSum}h</span>
             </div>
 
-            {!isApproved && (
+            {!isLocked && (
               <CustomButton
                 variant="gradient"
                 type="submit"
@@ -604,8 +608,12 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                 className={`${styles.flexRow} ${styles.alignCenter} ${styles.gap8} ${styles.textSuccess} ${styles.fw600}`}
                 style={{ fontSize: "0.85rem" }}
               >
-                <CustomIcon name="CheckCircle2" size={18} />
-                <span>Approved by {existingEntry?.approvedBy?.fullname}</span>
+                <CustomIcon name={isFromLeaveRequest ? "CalendarCheck" : "CheckCircle2"} size={18} />
+                <span>
+                  {isFromLeaveRequest
+                    ? "Filled from your approved leave request — you can still edit it"
+                    : `Approved by ${existingEntry?.approvedBy?.fullname ?? ""}`}
+                </span>
               </div>
             )}
           </div>

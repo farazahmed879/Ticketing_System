@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthRequest } from "../types";
-import { requestUsecase } from "../usecases/request.usecase";
+import { requestUsecase, LEAVE_TYPES } from "../usecases/request.usecase";
 import { emitNotificationToUser } from "../socketio/events";
 import { RoleType } from "../utils/constants";
 
@@ -14,20 +14,32 @@ export const requestController = {
 
       // Admins and Agents see every request. Everyone else sees their own
       // requests plus, if they lead any teams, those teams' members' requests.
+      // HR additionally sees every leave request, since HR approves leave.
       const seesAll =
         user.role === RoleType.ADMIN || user.role === RoleType.AGENT;
-      const requests = await requestUsecase.getRequests(
-        seesAll
-          ? undefined
-          : Array.from(new Set([user.id, ...ctx.ledMemberIds])),
+      const isHr = user.role === RoleType.HR;
+      const ownScope = new Set([user.id, ...ctx.ledMemberIds]);
+      let requests = await requestUsecase.getRequests(
+        seesAll || isHr ? undefined : Array.from(ownScope),
       );
+      if (isHr) {
+        requests = requests.filter(
+          (r) => (r.userId && ownScope.has(r.userId)) || LEAVE_TYPES.has(r.type),
+        );
+      }
 
       // Tell the UI which requests this user may approve/reject.
+      const roles = await requestUsecase.getRoleTypes(
+        requests.filter((r) => LEAVE_TYPES.has(r.type)).map((r) => r.userId),
+      );
       const withReview = requests.map((r) => ({
         ...r,
         canReview:
           r.status === "PENDING" &&
-          requestUsecase.canReview(user, r.userId, ctx).allowed,
+          requestUsecase.canReview(user, r.userId, ctx, {
+            isLeave: LEAVE_TYPES.has(r.type),
+            requesterRole: r.userId ? roles.get(r.userId) : null,
+          }).allowed,
       }));
       res.json({ success: true, requests: withReview });
     } catch (error: any) {
@@ -85,7 +97,14 @@ export const requestController = {
         });
       }
       const ctx = await requestUsecase.getReviewContext(user.id);
-      const review = requestUsecase.canReview(user, request.userId, ctx);
+      const isLeave = LEAVE_TYPES.has(request.type);
+      const requesterRole = isLeave && request.userId
+        ? (await requestUsecase.getRoleTypes([request.userId])).get(request.userId)
+        : null;
+      const review = requestUsecase.canReview(user, request.userId, ctx, {
+        isLeave,
+        requesterRole,
+      });
       if (!review.allowed) {
         return res.status(403).json({
           success: false,

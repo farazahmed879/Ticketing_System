@@ -104,8 +104,10 @@ export const userRepository = {
     return prisma.user.findUnique({
       where: { id },
       select: {
-        teams: { select: teamSelect },
-        ledTeams: { select: teamSelect },
+        // Exclude soft-deleted teams — otherwise they show in the list but
+        // GET /teams/:id (which filters deleted) returns "Team not found".
+        teams: { where: { deleted: false }, select: teamSelect },
+        ledTeams: { where: { deleted: false }, select: teamSelect },
       },
     });
   },

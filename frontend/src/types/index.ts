@@ -285,6 +285,10 @@ export interface TimesheetEntry {
   user?: { fullname: string; email: string; image?: string };
   tasks: TimesheetTask[];
   approvedBy?: { fullname: string };
+  /** Set when auto-filled from an approved leave request (still editable). */
+  leaveRequestId?: string | null;
+  /** Review list only: false when the leave hierarchy bars this reviewer. */
+  canReview?: boolean;
 }
 
 export interface TimesheetReport {

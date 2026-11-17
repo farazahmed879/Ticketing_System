@@ -411,6 +411,10 @@ model TimesheetEntry {
   entryType  String?  @default("WORK") // WORK, WEEKEND, FULL_DAY_LEAVE
   managerApproved String? @default("PENDING")
   hrApproved      String? @default("PENDING")
+  // Set when the entry was auto-filled from an approved leave request. The
+  // request owns the leave-balance deduction, so reviewing this entry never
+  // changes the balance, and the user may still edit it.
+  leaveRequestId  String? @db.ObjectId
 
   userId String @db.ObjectId
   user   User   @relation("UserTimesheets", fields: [userId], references: [id])

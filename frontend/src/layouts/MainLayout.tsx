@@ -318,6 +318,12 @@ const MainLayout: React.FC = () => {
           color: "#f59e0b",
           bg: "rgba(245, 158, 11, 0.1)",
         };
+      case "shoutout":
+        return {
+          iconName: "Megaphone",
+          color: "#ec4899",
+          bg: "rgba(236, 72, 153, 0.1)",
+        };
       default:
         return {
           iconName: "Bell",
@@ -609,6 +615,8 @@ const MainLayout: React.FC = () => {
                                 navigate("/messages");
                               } else if (n.data?.requestId) {
                                 navigate(`/requests?requestId=${n.data.requestId}`);
+                              } else if (n.data?.announcementId) {
+                                navigate(`/announcements?postId=${n.data.announcementId}`);
                               }
                               setIsNotificationOpen(false);
                             }}

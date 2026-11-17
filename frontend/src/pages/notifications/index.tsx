@@ -122,6 +122,8 @@ const Notifications: React.FC = () => {
         return <CustomIcon name="Headset" size={18} color="#7c3aed" />;
       case "ticket":
         return <CustomIcon name="Ticket" size={18} color="#f59e0b" />;
+      case "shoutout":
+        return <CustomIcon name="Megaphone" size={18} color="#ec4899" />;
       default:
         return <CustomIcon name="Bell" size={18} color="var(--text-muted)" />;
     }
@@ -139,6 +141,8 @@ const Notifications: React.FC = () => {
       navigate("/messages");
     } else if (n.data?.requestId) {
       navigate(`/requests?requestId=${n.data.requestId}`);
+    } else if (n.data?.announcementId) {
+      navigate(`/announcements?postId=${n.data.announcementId}`);
     }
   };
 

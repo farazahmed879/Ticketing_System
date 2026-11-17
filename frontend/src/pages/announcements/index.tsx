@@ -1,408 +1,351 @@
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import React, { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
-import api from "../../services/api";
-import { useNotification } from "../../context/NotificationContext";
-import { API_ROUTES } from "../../utils/apiRoutes";
-import { useAuth } from "../../context/AuthContext";
-import CustomTable from "../../components/CustomTable";
 import CustomButton from "../../components/CustomButton";
 import CustomInput from "../../components/CustomInput";
-import AnnouncementModal from "./components/AnnouncementModal";
+import CustomAvatarStack from "../../components/CustomAvatarStack";
 import ConfirmationModal from "../../components/ConfirmationModal";
-import CustomPagination from "../../components/CustomPagination";
-import CustomBadge from "../../components/CustomBadge";
-import CustomTooltip from "../../components/CustomTooltip";
-import { format } from "date-fns";
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS, AnnouncementType } from "../../utils/constants";
-
 import StandardListLayout from "../../components/StandardListLayout";
-import { getAnnouncementColumns, type Announcement } from "./columns";
+import AnnouncementModal from "./components/AnnouncementModal";
+import FeedPostCard from "./feed/FeedPostCard";
+import FeedColumn, { type FeedFilter } from "./feed/FeedColumn";
+import { FEED_KEY, FEED_POST_KEY, refreshPost } from "./feed/feedCache";
+import type { FeedPost } from "./feed/feedTypes";
+import styles from "./feed/Feed.module.css";
+import api from "../../services/api";
+import { socket } from "../../services/socket";
+import { API_ROUTES } from "../../utils/apiRoutes";
+import { useAuth } from "../../context/AuthContext";
+import { useNotification } from "../../context/NotificationContext";
 import { ROLE_TYPE } from "../roles/roleConstants";
-import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
-import { useListViewMode } from "../../utils/helpers";
+import { AnnouncementType } from "../../utils/constants";
 
-const AnnouncementList: React.FC = () => {
+type LaneId = "important" | "feed" | "events";
+
+const LANES: {
+  id: LaneId;
+  title: string;
+  icon: string;
+  accent: string;
+  filter: FeedFilter;
+  emptyText: string;
+}[] = [
+  {
+    id: "important",
+    title: "Important & Info",
+    icon: "AlertTriangle",
+    accent: "#ef4444",
+    filter: { types: [AnnouncementType.IMPORTANT, AnnouncementType.INFO] },
+    emptyText: "No important updates right now.",
+  },
+  {
+    id: "feed",
+    title: "Moments & Reviews",
+    icon: "Award",
+    accent: "#6366f1",
+    filter: {
+      excludeTypes: [
+        AnnouncementType.IMPORTANT,
+        AnnouncementType.INFO,
+        AnnouncementType.EVENT,
+      ],
+    },
+    emptyText: "No posts yet.",
+  },
+  {
+    id: "events",
+    title: "Events",
+    icon: "Calendar",
+    accent: "#0ea5e9",
+    filter: { types: [AnnouncementType.EVENT] },
+    emptyText: "No upcoming events.",
+  },
+];
+
+/** Shoutouts wall: a Facebook-style feed with reactions and comments. */
+const AnnouncementFeed: React.FC = () => {
   const { user } = useAuth();
   const isCustomer = user?.role?.roleType === ROLE_TYPE.CUSTOMER;
   const entityName = isCustomer ? "Review" : "Shoutout";
   const entityNamePlural = isCustomer ? "Reviews" : "Shoutouts";
+  const isModerator =
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.AGENT;
+  const canCreate =
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
+    user?.role?.permissions?.announcements?.create === true;
 
-  const queryClient = useQueryClient();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingAnnouncement, setEditingAnnouncement] =
-    useState<Announcement | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [announcementToDelete, setAnnouncementToDelete] = useState<
-    string | null
-  >(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [page, setPage] = useState(0);
-  const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [viewMode, setViewMode] = useListViewMode();
-  const { showNotification, setIsLoading } = useNotification();
-
-  const { data: announcementsData, isLoading: loading } = useQuery({
-    queryKey: ["announcements", page, limit, search],
-    queryFn: async () => {
-      const response = await api.get(API_ROUTES.ANNOUNCEMENTS.BASE, {
-        params: {
-          page: page + 1,
-          limit: limit,
-          search,
-        },
-      });
-      return {
-        announcements: response.data.announcements,
-        total: response.data.pagination.total || 0,
-        totalPages: response.data.pagination.totalPages || 0,
-      };
-    },
-  });
-
-  const announcements = announcementsData?.announcements || [];
-  const totalItems = announcementsData?.total || 0;
-  const totalPages = announcementsData?.totalPages || 0;
-
-  const saveMutation = useMutation({
-    mutationFn: async (data: any) => {
-      if (editingAnnouncement) {
-        return api.put(
-          API_ROUTES.ANNOUNCEMENTS.BY_ID(editingAnnouncement.id),
-          data,
-        );
-      } else {
-        return api.post(API_ROUTES.ANNOUNCEMENTS.BASE, data);
-      }
-    },
-    onMutate: () => {
-      setIsSaving(true);
-      setIsLoading(true, "Saving announcement...");
-    },
-    onSettled: () => {
-      setIsSaving(false);
-      setIsLoading(false, "");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
-      showNotification(
-        "success",
-        editingAnnouncement
-          ? "Announcement updated successfully"
-          : "Announcement created successfully",
-      );
-      setIsModalOpen(false);
-      setEditingAnnouncement(null);
-    },
-    onError: () => {
-      showNotification("error", "Operation failed");
-    },
-  });
-
-  const handleSubmit = async (data: any) => {
-    saveMutation.mutate(data);
+  const me = {
+    id: user?.id || "",
+    fullname: user?.fullname || "You",
+    image: user?.image,
   };
 
-  const handleEdit = (ann: Announcement) => {
-    setEditingAnnouncement(ann);
+  const queryClient = useQueryClient();
+  const { showNotification, setIsLoading } = useNotification();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pinnedId = searchParams.get("postId");
+
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<FeedPost | null>(null);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  // Which lane is visible on narrow screens (all three show side by side on desktop).
+  const [activeLane, setActiveLane] = useState<LaneId>("feed");
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // ---------- Data ----------
+
+  // A post opened from a notification is pinned at the top.
+  const pinned = useQuery({
+    queryKey: [FEED_POST_KEY, pinnedId],
+    queryFn: async () => {
+      const res = await api.get(API_ROUTES.ANNOUNCEMENTS.FEED_POST(pinnedId!));
+      return res.data.post as FeedPost;
+    },
+    enabled: !!pinnedId,
+    retry: false,
+  });
+
+  // Live updates from other users.
+  useEffect(() => {
+    const onActivity = (payload?: { announcementId?: string }) => {
+      if (payload?.announcementId)
+        refreshPost(queryClient, payload.announcementId);
+    };
+    const onUpdated = () =>
+      queryClient.invalidateQueries({ queryKey: [FEED_KEY] });
+    socket.on("announcement:activity", onActivity);
+    socket.on("announcement:updated", onUpdated);
+    return () => {
+      socket.off("announcement:activity", onActivity);
+      socket.off("announcement:updated", onUpdated);
+    };
+  }, [queryClient]);
+
+  // ---------- Create / edit / delete ----------
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: [FEED_KEY] });
+    queryClient.invalidateQueries({ queryKey: [FEED_POST_KEY] });
+    queryClient.invalidateQueries({ queryKey: ["announcements"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: unknown) =>
+      editingPost
+        ? api.put(API_ROUTES.ANNOUNCEMENTS.BY_ID(editingPost.id), data)
+        : api.post(API_ROUTES.ANNOUNCEMENTS.BASE, data),
+    onMutate: () => setIsLoading(true, `Saving ${entityName.toLowerCase()}...`),
+    onSettled: () => setIsLoading(false, ""),
+    onSuccess: () => {
+      invalidateAll();
+      showNotification(
+        "success",
+        `${entityName} ${editingPost ? "updated" : "posted"} successfully`,
+      );
+      setIsModalOpen(false);
+      setEditingPost(null);
+      if (!editingPost)
+        scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    onError: () => showNotification("error", "Operation failed"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.delete(API_ROUTES.ANNOUNCEMENTS.BY_ID(id)),
+    onSuccess: (_, id) => {
+      invalidateAll();
+      if (id === pinnedId) setSearchParams({});
+      showNotification("success", `${entityName} deleted`);
+      setPostToDelete(null);
+    },
+    onError: () => {
+      showNotification("error", `Failed to delete ${entityName.toLowerCase()}`);
+      setPostToDelete(null);
+    },
+  });
+
+  const openComposer = () => {
+    setEditingPost(null);
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setAnnouncementToDelete(id);
-    setIsDeleteModalOpen(true);
+  const cardProps = {
+    me,
+    isModerator,
+    onEdit: (p: FeedPost) => {
+      setEditingPost(p);
+      setIsModalOpen(true);
+    },
+    onDelete: (id: string) => setPostToDelete(id),
   };
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return api.delete(API_ROUTES.ANNOUNCEMENTS.BY_ID(id));
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["announcements"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] });
-      showNotification("success", "Announcement deleted successfully");
-      setIsDeleteModalOpen(false);
-      setAnnouncementToDelete(null);
-    },
-    onError: () => {
-      showNotification("error", "Failed to delete announcement");
-      setAnnouncementToDelete(null);
-    },
-  });
+  // ---------- Render ----------
 
-  const confirmDelete = async () => {
-    if (!announcementToDelete) return;
-    deleteMutation.mutate(announcementToDelete);
-  };
+  const firstName = (user?.fullname || "").split(" ")[0];
 
-  const columns = getAnnouncementColumns(entityName, handleEdit, handleDelete);
+  // Clients only ever see their own reviews, so they get a single lane.
+  const lanes = isCustomer
+    ? [
+        {
+          ...LANES[1],
+          title: "My Reviews",
+          icon: "Star",
+          emptyText: "No reviews yet.",
+        },
+      ]
+    : LANES;
+
+  const centerTop = (
+    <>
+      {canCreate && (
+        <div className={`glass-card ${styles.composer}`}>
+          <CustomAvatarStack
+            items={[
+              { id: me.id, name: me.fullname, image: me.image || undefined },
+            ]}
+            limit={1}
+            size={40}
+          />
+          <button
+            type="button"
+            className={styles.composerInput}
+            onClick={openComposer}
+          >
+            {isCustomer
+              ? `Write a review, ${firstName}...`
+              : `Give a shoutout, ${firstName}...`}
+          </button>
+          <CustomButton
+            variant="gradient"
+            icon={<CustomIcon name="Megaphone" size={18} />}
+            onClick={openComposer}
+          >
+            Post
+          </CustomButton>
+        </div>
+      )}
+
+      {pinnedId && (
+        <>
+          <div className={styles.pinnedBar}>
+            <span>
+              <CustomIcon name="Pin" size={12} /> Opened from a notification
+            </span>
+            <button
+              type="button"
+              className={styles.linkBtn}
+              onClick={() => setSearchParams({})}
+            >
+              Dismiss
+            </button>
+          </div>
+          {pinned.data ? (
+            <FeedPostCard post={pinned.data} highlighted {...cardProps} />
+          ) : pinned.isError ? (
+            <div className={`glass-card ${styles.empty}`}>
+              This {entityName.toLowerCase()} is no longer available.
+            </div>
+          ) : null}
+        </>
+      )}
+    </>
+  );
 
   return (
     <>
       <StandardListLayout
         header={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+          <div className={styles.header}>
             <div>
               <h1 style={{ fontSize: "1.4rem", fontWeight: 700 }}>
                 {entityNamePlural}
               </h1>
               <p style={{ color: "var(--text-muted)" }}>
-                Manage company-wide announcements and events
+                {isCustomer
+                  ? "Your reviews and feedback"
+                  : "Celebrate wins, share news and cheer your colleagues on"}
               </p>
             </div>
-            <CustomButton
-              variant="gradient"
-              icon={<CustomIcon name="Plus" size={20} />}
-              onClick={() => {
-                setEditingAnnouncement(null);
-                setIsModalOpen(true);
-              }}
-            >
-              Create {entityName}
-            </CustomButton>
-          </div>
-        }
-        filters={
-          <div style={{ display: "flex", gap: 16, alignItems: "center", width: "100%" }}>
             <CustomInput
               placeholder={`Search ${entityNamePlural.toLowerCase()}...`}
               value={searchInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                const val = e.target.value;
-                setSearchInput(val);
-                if (val === "") {
-                  setSearch("");
-                  setPage(0);
-                }
+                setSearchInput(e.target.value);
+                if (e.target.value === "") setSearch("");
               }}
               onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === "Enter") {
-                  setSearch(searchInput);
-                  setPage(0);
-                }
+                if (e.key === "Enter") setSearch(searchInput.trim());
               }}
               icon={<CustomIcon name="Search" size={18} />}
-              containerStyle={{ width: "350px" }}
+              containerStyle={{ width: "min(320px, 100%)" }}
             />
-            <div className="view-mode-switcher"
-              style={{
-                display: "flex",
-                gap: 4,
-                padding: 4,
-                borderRadius: 10,
-                border: "1px solid var(--border-glass)",
-                background: "rgba(255,255,255,0.03)",
-                marginLeft: "auto",
-              }}
-            >
-              <CustomButton
-                variant={viewMode === "list" ? "primary" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-                icon={<CustomIcon name="List" size={16} />}
-                title="List view"
-                style={{ padding: "6px 10px" }}
-              />
-              <CustomButton
-                variant={viewMode === "grid" ? "primary" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-                icon={<CustomIcon name="LayoutGrid" size={16} />}
-                title="Grid view"
-                style={{ padding: "6px 10px" }}
-              />
-            </div>
           </div>
-        }
-        pagination={
-          <CustomPagination
-            currentPage={page}
-            totalPages={totalPages}
-            totalItems={totalItems}
-            itemsPerPage={limit}
-            onPageChange={setPage}
-            onPageSizeChange={(newLimit) => {
-              setLimit(newLimit);
-              setPage(0);
-            }}
-            pageSizeOptions={PAGE_SIZE_OPTIONS}
-          />
         }
       >
-        {viewMode === "list" ? (
-          <CustomTable
-            style={{ flex: 1, overflowY: "auto" }}
-            columns={columns}
-            data={announcements}
-            loading={loading}
-            emptyMessage="No announcements found"
-          />
-        ) : loading ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", flex: 1 }}>
-            Loading {entityNamePlural.toLowerCase()}...
-          </div>
-        ) : announcements.length === 0 ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", flex: 1 }}>
-            No {entityNamePlural.toLowerCase()} found
-          </div>
-        ) : (
-          <div
-            style={{
-              flex: 1,
-              overflowY: "auto",
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-              gap: 16,
-              padding: "4px 0",
-              alignContent: "start",
-            }}
-          >
-            {announcements.map((ann: Announcement) => {
-              let variant: "info" | "warning" | "success" | "danger" | "neutral" | "primary" = "neutral";
-              let iconName: "Megaphone" | "Calendar" | "AlertTriangle" | "Star" | "Info" | "Award" = "Megaphone";
-
-              if (ann.type === AnnouncementType.EVENT) {
-                variant = "info";
-                iconName = "Calendar";
-              } else if (ann.type === AnnouncementType.IMPORTANT) {
-                variant = "danger";
-                iconName = "AlertTriangle";
-              } else if (ann.type === AnnouncementType.REVIEW) {
-                variant = "success";
-                iconName = "Star";
-              } else if (ann.type === AnnouncementType.INFO) {
-                variant = "warning";
-                iconName = "Info";
-              } else if (ann.type === AnnouncementType.MOMENT) {
-                variant = "primary";
-                iconName = "Award";
-              }
-
-              return (
-                <div
-                  key={ann.id}
-                  className="glass-card"
-                  style={{
-                    padding: 20,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "space-between",
-                    gap: 16,
-                    transition: "var(--transition-normal)",
-                    position: "relative",
-                    border: "1px solid var(--border-glass)",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                      <div
-                        className="icon-box"
-                        style={{
-                          padding: 8,
-                          borderRadius: 8,
-                          background: `rgba(${variant === "info" ? "33,150,243" : variant === "danger" ? "244,67,54" : variant === "success" ? "76,175,80" : variant === "warning" ? "255,152,0" : "124,58,237"},0.1)`,
-                          color: `var(--accent-${variant === "info" ? "secondary" : variant === "danger" ? "danger" : variant === "success" ? "success" : variant === "warning" ? "warning" : "primary"})`,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <CustomIcon name={iconName} size={20} />
-                      </div>
-                      <div>
-                        <h3 style={{ fontSize: "1.05rem", fontWeight: 600, margin: 0 }}>
-                          {ann.title}
-                        </h3>
-                        <span className="text-xs-muted" style={{ display: "block", marginTop: 2, whiteSpace: "nowrap" }}>
-                          Scheduled {format(new Date(ann.date), "MMM dd, yyyy")}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                      <CustomBadge variant={variant}>
-                        {ann.type.toUpperCase()}
-                      </CustomBadge>
-                      <div style={{ display: "flex", gap: 2, marginLeft: 6 }}>
-                        <CustomTooltip text={`Edit ${entityName}`}>
-                          <CustomButton
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(ann)}
-                            icon={<CustomIcon name="Edit2" size={14} />}
-                            style={{ padding: 6, minHeight: "auto" }}
-                          />
-                        </CustomTooltip>
-                        <CustomTooltip text={`Delete ${entityName}`}>
-                          <CustomButton
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(ann.id)}
-                            icon={<CustomIcon name="Trash2" size={14} />}
-                            style={{ padding: 6, minHeight: "auto", color: "var(--accent-danger)" }}
-                          />
-                        </CustomTooltip>
-                      </div>
-                    </div>
-                  </div>
-
-                  <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.4 }}>
-                    <FormattedTaskDescription content={ann.description} />
-                  </p>
-
-                  {ann.project && (
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      <CustomIcon name="FolderKanban" size={14} color="var(--text-muted)" />
-                      <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                        Project: {ann.project.name}
-                        {ann.isProjectTeamOnly && " (Project Team Only)"}
-                      </span>
-                    </div>
-                  )}
-
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-glass)", paddingTop: 12 }}>
-                    <div>
-                      <span className="text-xs-muted" style={{ display: "block", marginBottom: 2, fontWeight: 600 }}>
-                        Author
-                      </span>
-                      <span style={{ fontSize: "0.85rem", color: "var(--text-primary)", fontWeight: 600 }}>
-                        {ann.author.fullname}
-                      </span>
-                    </div>
-                    <span className="text-xs-muted">
-                      {(ann.author as any).title || (ann.author as any).role?.name || "Member"}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+        {lanes.length > 1 && (
+          <div className={styles.laneTabs}>
+            {lanes.map((lane) => (
+              <button
+                key={lane.id}
+                type="button"
+                className={`${styles.laneTab} ${
+                  activeLane === lane.id ? styles.laneTabActive : ""
+                }`}
+                onClick={() => setActiveLane(lane.id)}
+              >
+                <CustomIcon name={lane.icon} size={14} />
+                {lane.title}
+              </button>
+            ))}
           </div>
         )}
+
+        <div
+          className={`${styles.board} ${lanes.length === 1 ? styles.boardSingle : ""}`}
+        >
+          {lanes.map((lane) => (
+            <FeedColumn
+              key={lane.id}
+              id={lane.id}
+              title={lane.title}
+              icon={lane.icon}
+              accent={lane.accent}
+              filter={lane.filter}
+              emptyText={lane.emptyText}
+              search={search}
+              hideId={pinnedId}
+              active={lanes.length === 1 || activeLane === lane.id}
+              scrollRef={lane.id === "feed" ? scrollRef : undefined}
+              cardProps={cardProps}
+              top={lane.id === "feed" ? centerTop : undefined}
+            />
+          ))}
+        </div>
       </StandardListLayout>
 
       <AnnouncementModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        announcement={editingAnnouncement}
-        onSubmit={handleSubmit}
-        isLoading={isSaving}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingPost(null);
+        }}
+        announcement={editingPost}
+        onSubmit={async (data) => saveMutation.mutate(data)}
+        isLoading={saveMutation.isPending}
       />
 
       <ConfirmationModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={confirmDelete}
-        title="Delete Announcement"
-        message="Are you sure you want to delete this announcement?"
+        isOpen={!!postToDelete}
+        onClose={() => setPostToDelete(null)}
+        onConfirm={() => postToDelete && deleteMutation.mutate(postToDelete)}
+        title={`Delete ${entityName}`}
+        message={`Are you sure you want to delete this ${entityName.toLowerCase()}? Its reactions and comments will be removed from the feed too.`}
         confirmText="Delete"
         type="danger"
       />
@@ -410,4 +353,4 @@ const AnnouncementList: React.FC = () => {
   );
 };
 
-export default AnnouncementList;
+export default AnnouncementFeed;

@@ -132,5 +132,11 @@ export const API_ROUTES = {
     DASHBOARD: "/announcements/dashboard",
     MARK_SEEN: (id: string) => `/announcements/moments/${id}/seen`,
     BY_ID: (id: string) => `/announcements/${id}`,
+    FEED: "/announcements/feed",
+    FEED_POST: (id: string) => `/announcements/feed/${id}`,
+    REACTION: (id: string) => `/announcements/${id}/reaction`,
+    COMMENTS: (id: string) => `/announcements/${id}/comments`,
+    COMMENT: (id: string, commentId: string) =>
+      `/announcements/${id}/comments/${commentId}`,
   },
 };

@@ -36,7 +36,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
       onClose={onClose}
       title={project ? "Edit Project" : "Add New Project"}
       footer={footer}
-      maxWidth="750px"
+      maxWidth="1100px"
     >
       <ProjectForm
         initialData={project}

@@ -14,6 +14,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   onToggleCollapse,
   unreadMessageCount,
+  unreadShoutoutCount,
   isMobile = false,
   isMobileOpen = false,
   onMobileOpenChange,
@@ -291,6 +292,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                     className={`${styles.sidebarBadge} ${collapsed ? styles.collapsedBadge : ""}`}
                   >
                     {unreadMessageCount}
+                  </span>
+                )}
+              {item.path === "/announcements" &&
+                !!unreadShoutoutCount &&
+                unreadShoutoutCount > 0 && (
+                  <span
+                    className={`${styles.sidebarBadge} ${collapsed ? styles.collapsedBadge : ""}`}
+                    title={`${unreadShoutoutCount} new shoutout${unreadShoutoutCount === 1 ? "" : "s"}`}
+                  >
+                    {unreadShoutoutCount > 99 ? "99+" : unreadShoutoutCount}
                   </span>
                 )}
               {item.children && !collapsed && (

@@ -73,11 +73,20 @@ export interface Team {
   createdAt: string;
 }
 
+/** A labelled project link: a git repository or a deployed site. */
+export interface ProjectLink {
+  label?: string | null;
+  url: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   description?: string;
   status: string;
+  /** Not sent to clients. */
+  gitRepos?: ProjectLink[];
+  siteUrls?: ProjectLink[];
   departmentId?: string;
   department?: { id: string; name: string };
   clientIds: string[];
@@ -502,6 +511,8 @@ export interface ProjectFormData {
   clientIds: string[];
   managerId?: string | null;
   teamIds: string[];
+  gitRepos: { label: string; url: string }[];
+  siteUrls: { label: string; url: string }[];
 }
 
 export interface ProjectFormProps {
@@ -529,6 +540,8 @@ export interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   unreadMessageCount?: number;
+  /** New shoutouts posted since the user last opened the wall. */
+  unreadShoutoutCount?: number;
   /** Phone layout: sidebar becomes an off-canvas drawer opened from the topbar. */
   isMobile?: boolean;
   isMobileOpen?: boolean;

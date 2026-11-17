@@ -142,7 +142,130 @@ async function getVisiblePost(user: FeedUser, id: string) {
   return post;
 }
 
+/** Notification type for "a new shoutout was posted" (drives the sidebar badge). */
+export const NEW_SHOUTOUT_NOTIFICATION = "shoutout_new";
+
+/**
+ * Everyone (except the author) who will see `post` on the wall - the inverse
+ * of visibilityWhere(). Clients are left out: they only ever see their own
+ * posts. Users whose role can't open the wall are left out too.
+ */
+async function audienceFor(post: {
+  authorId: string;
+  projectId: string | null;
+  isProjectTeamOnly: boolean | null;
+}): Promise<string[]> {
+  const users = await prisma.user.findMany({
+    where: { deleted: false, id: { not: post.authorId } },
+    select: { id: true, role: { select: { roleType: true, permissions: true } } },
+  });
+
+  // "Project team only": restricted to the project's people (admins/managers always see it).
+  let projectPeople: Set<string> | null = null;
+  if (post.isProjectTeamOnly && post.projectId) {
+    const project = await prisma.project.findUnique({
+      where: { id: post.projectId },
+      select: { managerId: true, createdById: true, teamIds: true },
+    });
+    const teams = await prisma.team.findMany({
+      where: {
+        deleted: false,
+        OR: [{ id: { in: project?.teamIds || [] } }, { projectIds: { has: post.projectId } }],
+      },
+      select: { memberIds: true },
+    });
+    projectPeople = new Set(
+      [
+        ...teams.flatMap((t) => t.memberIds),
+        project?.managerId,
+        project?.createdById,
+      ].filter((id): id is string => !!id),
+    );
+  }
+
+  return users
+    .filter((u) => {
+      const roleType = u.role?.roleType;
+      if (roleType === RoleType.CUSTOMER) return false;
+      if (roleType === RoleType.ADMIN) return true;
+      if ((u.role?.permissions as any)?.announcements?.view !== true) return false;
+      if (roleType === RoleType.AGENT) return true;
+      return !projectPeople || projectPeople.has(u.id);
+    })
+    .map((u) => u.id);
+}
+
+const NEW_POST_TITLES: Record<string, string> = {
+  important: "Important announcement",
+  event: "New event",
+  info: "New info",
+  review: "New review",
+  moment: "New shoutout",
+};
+
 export const announcementFeedUsecase = {
+  /**
+   * Create a "new shoutout" notification for everyone who can see the post.
+   * Returns the created notifications so the caller can push them live.
+   */
+  async notifyNewPost(post: {
+    id: string;
+    title: string;
+    type: string;
+    authorId: string;
+    projectId: string | null;
+    isProjectTeamOnly: boolean | null;
+  }) {
+    const [recipients, author] = await Promise.all([
+      audienceFor(post),
+      prisma.user.findUnique({ where: { id: post.authorId }, select: { fullname: true } }),
+    ]);
+    if (!recipients.length) return [];
+    const title = NEW_POST_TITLES[post.type] || "New shoutout";
+    const message = `${author?.fullname || "Someone"}: ${post.title}`;
+    return prisma.$transaction(
+      recipients.map((userId) =>
+        prisma.notification.create({
+          data: {
+            title,
+            message,
+            type: NEW_SHOUTOUT_NOTIFICATION,
+            userId,
+            data: { announcementId: post.id, postType: post.type },
+          },
+        }),
+      ),
+    );
+  },
+
+  /** Unseen new shoutouts for the sidebar badge (ignores since-deleted/hidden posts). */
+  async unreadCount(user: FeedUser) {
+    const unread = await prisma.notification.findMany({
+      where: { userId: user.id, type: NEW_SHOUTOUT_NOTIFICATION, unread: true },
+      select: { data: true },
+    });
+    const ids = Array.from(
+      new Set(
+        unread
+          .map((n) => (n.data as any)?.announcementId)
+          .filter((id): id is string => typeof id === "string" && /^[a-f0-9]{24}$/i.test(id)),
+      ),
+    );
+    if (!ids.length) return 0;
+    const visibility = await visibilityWhere(user);
+    return prisma.announcement.count({
+      where: { AND: [{ id: { in: ids }, deleted: false }, visibility] },
+    });
+  },
+
+  /** The user opened the wall: every "new shoutout" notification is now read. */
+  async markAllSeen(user: FeedUser) {
+    await prisma.notification.updateMany({
+      where: { userId: user.id, type: NEW_SHOUTOUT_NOTIFICATION, unread: true },
+      data: { unread: false },
+    });
+  },
+
   async getFeed(
     user: FeedUser,
     page: number,

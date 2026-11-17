@@ -217,6 +217,12 @@ model Department {
   deleted   Boolean  @default(false)
 }
 
+/// A labelled link on a project: a git repository or a deployed site.
+type ProjectLink {
+  label String?
+  url   String
+}
+
 model Project {
   id          String  @id @default(auto()) @map("_id") @db.ObjectId
   name        String  @unique
@@ -234,6 +240,11 @@ model Project {
 
   teamIds String[] @db.ObjectId
   teams   Team[]   @relation(fields: [teamIds], references: [id])
+
+  // Any number of repositories (e.g. Frontend, Backend) and deployed sites
+  // (e.g. Production, Staging). Repos are hidden from clients.
+  gitRepos ProjectLink[]
+  siteUrls ProjectLink[]
 
   tickets Ticket[]
 

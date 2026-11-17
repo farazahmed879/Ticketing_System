@@ -348,3 +348,92 @@
     overflow-wrap: anywhere;
   }
 }
+
+/* ---------- Links card ---------- */
+
+.linkGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.linkGroup + .linkGroup {
+  margin-top: 16px;
+}
+
+.linkGroupTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.linkRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  min-width: 0;
+}
+
+.linkIcon {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.linkLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.linkUrl {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+a.linkUrl:hover {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
+.linkAction {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.linkAction:hover {
+  color: var(--accent-primary);
+  background: rgba(124, 58, 237, 0.08);
+}
+
+.linkEmpty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}

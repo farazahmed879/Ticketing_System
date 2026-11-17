@@ -1,7 +1,9 @@
 import React from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import api from "../services/api";
+import { API_ROUTES } from "../utils/apiRoutes";
 import { timeAgo } from "../utils/helpers";
 import { useAuth } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
@@ -21,6 +23,10 @@ import { useInstallOption, promptInstallApp } from "../utils/installPrompt";
 import InstallInstructionsModal from "../components/InstallInstructionsModal";
 
 const MOBILE_QUERY = "(max-width: 768px)";
+/** Query key for the sidebar's "unseen shoutouts" badge. */
+const SHOUTOUT_UNREAD_KEY = "shoutoutUnreadCount";
+/** Backend notification type for "a new shoutout was posted". */
+const NEW_SHOUTOUT_TYPE = "shoutout_new";
 
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = React.useState(
@@ -60,6 +66,42 @@ const MainLayout: React.FC = () => {
   // app isn't already installed.
   const installOption = useInstallOption();
   const [isInstallHelpOpen, setIsInstallHelpOpen] = React.useState(false);
+
+  // ---------- Shoutouts badge ----------
+  const isOnShoutouts = location.pathname.startsWith("/announcements");
+
+  const shoutoutUnread = useQuery({
+    queryKey: [SHOUTOUT_UNREAD_KEY],
+    queryFn: async () => {
+      const res = await api.get(API_ROUTES.ANNOUNCEMENTS.FEED_UNREAD_COUNT);
+      return (res.data.count as number) || 0;
+    },
+    enabled: !!user,
+    staleTime: 60_000,
+  });
+
+  /** Clear the badge (and the matching bell notifications) once the wall is open. */
+  const markShoutoutsSeen = React.useCallback(() => {
+    queryClient.setQueryData([SHOUTOUT_UNREAD_KEY], 0);
+    api
+      .post(API_ROUTES.ANNOUNCEMENTS.FEED_SEEN)
+      .then(() => socket.emit("notifications:get"))
+      .catch(() => {});
+  }, [queryClient]);
+
+  React.useEffect(() => {
+    if (user && isOnShoutouts) markShoutoutsSeen();
+  }, [user, isOnShoutouts, markShoutoutsSeen]);
+
+  // A post was edited/deleted: the badge may now be stale.
+  React.useEffect(() => {
+    const onUpdated = () =>
+      queryClient.invalidateQueries({ queryKey: [SHOUTOUT_UNREAD_KEY] });
+    socket.on("announcement:updated", onUpdated);
+    return () => {
+      socket.off("announcement:updated", onUpdated);
+    };
+  }, [queryClient]);
 
   // Automatically prompt user to change password if they are using default/initial password
   React.useEffect(() => {
@@ -178,6 +220,12 @@ const MainLayout: React.FC = () => {
     socket.on("notifications:new", (notification: any) => {
       if (notification.type === "moment") return;
 
+      if (notification.type === NEW_SHOUTOUT_TYPE) {
+        // Already looking at the wall (it refreshes live): just mark it seen.
+        if (location.pathname.startsWith("/announcements")) markShoutoutsSeen();
+        else queryClient.invalidateQueries({ queryKey: [SHOUTOUT_UNREAD_KEY] });
+      }
+
       // When the user is on the messages page, suppress the toast popup
       // and sound for chat message notifications — the Messages component
       // handles its own unread badge + sound.
@@ -231,7 +279,7 @@ const MainLayout: React.FC = () => {
       socket.off("notifications:new");
       socket.off("ticket:updated");
     };
-  }, [user, showNotification, location.pathname, queryClient]);
+  }, [user, showNotification, location.pathname, queryClient, markShoutoutsSeen]);
 
   const handleMarkAsRead = async (id: string) => {
     socket.emit("notifications:markRead", id);
@@ -330,6 +378,7 @@ const MainLayout: React.FC = () => {
         isMobileOpen={isMobileMenuOpen}
         onMobileOpenChange={setIsMobileMenuOpen}
         unreadMessageCount={notifications.filter((n) => n.unread && n.type === "message").length}
+        unreadShoutoutCount={isOnShoutouts ? 0 : shoutoutUnread.data || 0}
       />
 
       <main className={styles.mainContent}>

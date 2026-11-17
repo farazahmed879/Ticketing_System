@@ -11,6 +11,7 @@ import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import type { Project } from "../../types";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import ProjectDeveloperHours from "./components/ProjectDeveloperHours";
+import ProjectLinksCard from "./components/ProjectLinksCard";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 import styles from "./ProjectDetail.module.css";
 
@@ -130,6 +131,13 @@ const ProjectDetail: React.FC = () => {
 
         {/* Sidebar Info (Manager + Clients) */}
         <div className={`${styles.column} ${styles.sidebar}`}>
+          {/* Site URLs + git repositories (repos never reach clients) */}
+          <ProjectLinksCard
+            siteUrls={project.siteUrls}
+            gitRepos={project.gitRepos}
+            showEmpty={user?.role?.roleType !== ROLE_TYPE.CUSTOMER}
+          />
+
           {/* Project Manager */}
           {project.manager && (
             <div className={`glass-card ${styles.card}`}>

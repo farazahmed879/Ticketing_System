@@ -72,6 +72,27 @@ export const announcementController = {
     }
   },
 
+  /** Sidebar badge: new shoutouts the user hasn't seen yet. */
+  async getFeedUnreadCount(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+      res.json({ count: await announcementFeedUsecase.unreadCount(user) });
+    } catch (error: any) {
+      sendError(res, error);
+    }
+  },
+
+  /** The user opened the wall: clear their "new shoutout" notifications. */
+  async markFeedSeen(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+      await announcementFeedUsecase.markAllSeen(user);
+      res.json({ count: 0 });
+    } catch (error: any) {
+      sendError(res, error);
+    }
+  },
+
   async getFeedPost(req: Request, res: Response) {
     try {
       const user = (req as any).user;
@@ -310,8 +331,17 @@ export const announcementController = {
         attachments,
       });
 
-      req.app.get("io")?.emit(SocketEvent.ANNOUNCEMENT_UPDATED);
+      const io = req.app.get("io");
+      io?.emit(SocketEvent.ANNOUNCEMENT_UPDATED);
       res.status(201).json({ announcement });
+
+      // Notify the audience after responding so posting stays fast.
+      announcementFeedUsecase
+        .notifyNewPost(announcement)
+        .then((notifications) => {
+          if (io) notifications.forEach((n) => emitNotificationToUser(io, n.userId, n));
+        })
+        .catch((err) => console.error("[shoutouts] new-post notifications failed:", err));
     } catch (error: any) {
       res.status(error.status || 500).json({ message: error.message });
     }

@@ -132,6 +132,8 @@ export const API_ROUTES = {
     MARK_SEEN: (id: string) => `/announcements/moments/${id}/seen`,
     BY_ID: (id: string) => `/announcements/${id}`,
     FEED: "/announcements/feed",
+    FEED_UNREAD_COUNT: "/announcements/feed/unread-count",
+    FEED_SEEN: "/announcements/feed/seen",
     FEED_POST: (id: string) => `/announcements/feed/${id}`,
     REACTION: (id: string) => `/announcements/${id}/reaction`,
     COMMENTS: (id: string) => `/announcements/${id}/comments`,

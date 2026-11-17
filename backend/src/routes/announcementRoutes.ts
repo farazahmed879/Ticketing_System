@@ -10,6 +10,8 @@ router.post("/moments/:id/seen", authMiddleware, announcementController.markMome
 
 // Feed (wall): posts with reactions and comments. Must stay above "/:id".
 router.get("/feed", authMiddleware, announcementController.getFeed);
+router.get("/feed/unread-count", authMiddleware, announcementController.getFeedUnreadCount);
+router.post("/feed/seen", authMiddleware, announcementController.markFeedSeen);
 router.get("/feed/:id", authMiddleware, announcementController.getFeedPost);
 router.put("/:id/reaction", authMiddleware, announcementController.setReaction);
 router.get("/:id/comments", authMiddleware, announcementController.getComments);

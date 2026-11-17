@@ -62,7 +62,9 @@ model User {
 
   timesheetEntries   TimesheetEntry[] @relation("UserTimesheets")
 
-  announcements Announcement[]
+  announcements         Announcement[]
+  announcementReactions AnnouncementReaction[] @relation("AnnouncementReactions")
+  announcementComments  AnnouncementComment[]  @relation("AnnouncementComments")
   createdCandidates Candidate[] @relation("CandidateCreator")
 
   scheduledInterviews Interview[]         @relation("InterviewScheduler")
@@ -292,6 +294,8 @@ model Announcement {
   type              String   @default("event") // event, important, info
   shouldPopout      Boolean  @default(false)
   isProjectTeamOnly Boolean? @default(false)
+  // Base64 data URLs (images + documents), shown on the shoutouts wall.
+  attachments       String[]
 
   projectId String?  @db.ObjectId
   project   Project? @relation(fields: [projectId], references: [id])
@@ -301,6 +305,38 @@ model Announcement {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deleted   Boolean  @default(false)
+
+  reactions AnnouncementReaction[]
+  comments  AnnouncementComment[]
+}
+
+// One reaction per user per shoutout (like Facebook): reacting again replaces it.
+model AnnouncementReaction {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  type           String // like, love, celebrate, clap, haha, wow
+  announcementId String       @db.ObjectId
+  announcement   Announcement @relation(fields: [announcementId], references: [id])
+  userId         String       @db.ObjectId
+  user           User         @relation("AnnouncementReactions", fields: [userId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([announcementId, userId])
+  @@index([announcementId])
+}
+
+model AnnouncementComment {
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  content        String
+  announcementId String       @db.ObjectId
+  announcement   Announcement @relation(fields: [announcementId], references: [id])
+  userId         String       @db.ObjectId
+  user           User         @relation("AnnouncementComments", fields: [userId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deleted        Boolean      @default(false)
+
+  @@index([announcementId])
 }
 
 // ==================== CHAT ====================

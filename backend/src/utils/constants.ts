@@ -180,6 +180,8 @@ export type LoginHelpType = (typeof LoginHelpType)[keyof typeof LoginHelpType];
 export const SocketEvent = {
   TICKET_UPDATED: "ticket:updated",
   ANNOUNCEMENT_UPDATED: "announcement:updated",
+  /** A reaction or comment changed on a shoutout; payload { announcementId }. */
+  ANNOUNCEMENT_ACTIVITY: "announcement:activity",
   CHAT_SEND: "chat:send",
   CHAT_RECEIVE: "chat:receive",
   CHAT_TYPING: "chat:typing",

@@ -11,6 +11,8 @@ export const announcementRepository = {
       }
       return await (prisma as any).announcement.findMany({
         where: { ...where, deleted: false },
+        // Attachments are only needed on the shoutouts wall; keep list payloads small.
+        omit: { attachments: true },
         include: {
           author: {
             select: {

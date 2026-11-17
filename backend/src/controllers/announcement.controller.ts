@@ -2,8 +2,149 @@ import { Request, Response } from "express";
 import { announcementRepository } from "../repositories/announcement.repository";
 import { RoleType, SocketEvent } from "../utils/constants";
 import prisma from "../prisma";
+import { announcementFeedUsecase } from "../usecases/announcementFeed.usecase";
+import { emitNotificationToUser } from "../socketio/events";
+import { validateFileAttachments } from "../utils/attachments";
+
+/** Announcement types the feed can be filtered by. */
+const FEED_TYPES = new Set(["event", "important", "info", "review", "moment"]);
+
+const REACTION_LABELS: Record<string, string> = {
+  like: "liked",
+  love: "loved",
+  celebrate: "celebrated",
+  clap: "applauded",
+  haha: "laughed at",
+  wow: "was amazed by",
+};
+
+/** Notify a shoutout's author about activity on their post (never themselves). */
+async function notifyAuthor(
+  req: Request,
+  post: { id: string; title: string; authorId: string },
+  actor: { id: string },
+  message: (name: string) => string,
+) {
+  if (post.authorId === actor.id) return;
+  const actorUser = await prisma.user.findUnique({
+    where: { id: actor.id },
+    select: { fullname: true },
+  });
+  const notification = await prisma.notification.create({
+    data: {
+      title: "Shoutout activity",
+      message: message(actorUser?.fullname || "Someone"),
+      type: "shoutout",
+      userId: post.authorId,
+      data: { announcementId: post.id },
+    },
+  });
+  const io = req.app.get("io");
+  if (io) emitNotificationToUser(io, post.authorId, notification);
+}
+
+function sendError(res: Response, error: any) {
+  res.status(error.status || 500).json({ message: error.message });
+}
 
 export const announcementController = {
+  // ---------- Feed (wall) ----------
+
+  async getFeed(req: Request, res: Response) {
+    try {
+      const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+      const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 50);
+      const search = ((req.query.search as string) || "").trim();
+      const user = (req as any).user;
+      // Comma-separated type filters, e.g. ?types=event or ?excludeTypes=important,event
+      const parseTypes = (v: unknown) =>
+        typeof v === "string"
+          ? v.split(",").map((t) => t.trim()).filter((t) => FEED_TYPES.has(t))
+          : [];
+      res.json(
+        await announcementFeedUsecase.getFeed(user, page, limit, search, {
+          types: parseTypes(req.query.types),
+          excludeTypes: parseTypes(req.query.excludeTypes),
+        }),
+      );
+    } catch (error: any) {
+      sendError(res, error);
+    }
+  },
+
+  async getFeedPost(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+      const post = await announcementFeedUsecase.getPost(user, req.params.id as string);
+      res.json({ post });
+    } catch (error: any) {
+      sendError(res, error);
+    }
+  },
+
+  async setReaction(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+      const id = req.params.id as string;
+      const type = req.body?.type ?? null;
+      const { post, isNew } = await announcementFeedUsecase.setReaction(user, id, type);
+
+      req.app.get("io")?.emit(SocketEvent.ANNOUNCEMENT_ACTIVITY, { announcementId: id });
+      if (isNew && type) {
+        await notifyAuthor(req, post, user, (name) =>
+          `${name} ${REACTION_LABELS[type] || "reacted to"} your shoutout "${post.title}".`,
+        );
+      }
+      res.json({ post: await announcementFeedUsecase.getPost(user, id) });
+    } catch (error: any) {
+      sendError(res, error);
+    }
+  },
+
+  async getComments(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+      const comments = await announcementFeedUsecase.listComments(user, req.params.id as string);
+      res.json({ comments });
+    } catch (error: any) {
+      sendError(res, error);
+    }
+  },
+
+  async addComment(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+      const id = req.params.id as string;
+      const { post, comment } = await announcementFeedUsecase.addComment(
+        user,
+        id,
+        req.body?.content,
+      );
+
+      req.app.get("io")?.emit(SocketEvent.ANNOUNCEMENT_ACTIVITY, { announcementId: id });
+      await notifyAuthor(req, post, user, (name) =>
+        `${name} commented on your shoutout "${post.title}".`,
+      );
+      res.status(201).json({ comment });
+    } catch (error: any) {
+      sendError(res, error);
+    }
+  },
+
+  async deleteComment(req: Request, res: Response) {
+    try {
+      const user = (req as any).user;
+      const id = req.params.id as string;
+      await announcementFeedUsecase.deleteComment(user, id, req.params.commentId as string);
+      req.app.get("io")?.emit(SocketEvent.ANNOUNCEMENT_ACTIVITY, { announcementId: id });
+      res.json({ message: "Comment deleted" });
+    } catch (error: any) {
+      sendError(res, error);
+    }
+  },
+
+  // ---------- Existing CRUD ----------
+
   async getAnnouncements(req: Request, res: Response) {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -155,6 +296,7 @@ export const announcementController = {
     try {
       const { title, description, date, type, projectId, shouldPopout, isProjectTeamOnly } = req.body;
       const authorId = (req as any).user.id;
+      const attachments = validateFileAttachments(req.body.attachments) || [];
 
       const announcement = await announcementRepository.create({
         title,
@@ -165,12 +307,13 @@ export const announcementController = {
         projectId: projectId || null,
         shouldPopout: !!shouldPopout,
         isProjectTeamOnly: !!isProjectTeamOnly,
+        attachments,
       });
 
       req.app.get("io")?.emit(SocketEvent.ANNOUNCEMENT_UPDATED);
       res.status(201).json({ announcement });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(error.status || 500).json({ message: error.message });
     }
   },
 
@@ -179,6 +322,7 @@ export const announcementController = {
       const { id } = req.params;
       const { title, description, date, type, projectId, shouldPopout, isProjectTeamOnly } = req.body;
       const user = (req as any).user;
+      const attachments = validateFileAttachments(req.body.attachments);
 
       const existing = await announcementRepository.findById(id as string);
       if (!existing) {
@@ -201,12 +345,13 @@ export const announcementController = {
         projectId: projectId || null,
         shouldPopout: shouldPopout !== undefined ? !!shouldPopout : undefined,
         isProjectTeamOnly: isProjectTeamOnly !== undefined ? !!isProjectTeamOnly : undefined,
+        attachments,
       });
 
       req.app.get("io")?.emit(SocketEvent.ANNOUNCEMENT_UPDATED);
       res.json({ announcement });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      res.status(error.status || 500).json({ message: error.message });
     }
   },
 
@@ -214,6 +359,7 @@ export const announcementController = {
     try {
       const { id } = req.params;
       const user = (req as any).user;
+      const attachments = validateFileAttachments(req.body.attachments);
 
       const existing = await announcementRepository.findById(id as string);
       if (!existing) {

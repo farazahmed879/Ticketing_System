@@ -1,6 +1,8 @@
 import { useEffect, useState, useImperativeHandle, forwardRef } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
+import { format } from "date-fns";
 import CustomInput from "../../../components/CustomInput";
+import CustomDatePicker from "../../../components/CustomDatePicker";
 import CustomSelect from "../../../components/CustomSelect";
 import CustomIcon from "../../../components/CustomIcon";
 import { TaskDescriptionEditor } from "../../timesheet/components/TaskDescriptionEditor";
@@ -9,6 +11,7 @@ import { AnnouncementType } from "../../../utils/constants";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
 import { ROLE_TYPE } from "../../roles/roleConstants";
+import AttachmentPicker from "../feed/AttachmentPicker";
 
 interface AnnouncementFormProps {
   initialData?: any;
@@ -38,6 +41,7 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
     const currentDate = new Date().toISOString().split("T")[0];
 
     const [projects, setProjects] = useState<any[]>([]);
+    const [attachments, setAttachments] = useState<string[]>([]);
 
     useEffect(() => {
       if (canSelectProject) {
@@ -70,6 +74,7 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
     const isProjectTeamOnly = useWatch({ control, name: "isProjectTeamOnly" });
 
     const resetToInitial = () => {
+      setAttachments(initialData?.attachments || []);
       if (initialData) {
         reset({
           title: initialData.title,
@@ -119,7 +124,15 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
     return (
       <form
         id="announcement-form"
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit((data) =>
+          onSubmit({
+            ...data,
+            // Older payloads may not include attachments: don't wipe them on edit.
+            ...(initialData && initialData.attachments === undefined && !attachments.length
+              ? {}
+              : { attachments }),
+          }),
+        )}
         style={{ display: "flex", flexDirection: "column", gap: 20 }}
       >
         <CustomInput
@@ -137,6 +150,7 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
           placeholder="Detailed description"
           required
         />
+        <AttachmentPicker value={attachments} onChange={setAttachments} />
         {canSelectProject && (
           <CustomSelect
             name="projectId"
@@ -268,13 +282,12 @@ const AnnouncementForm = forwardRef<any, AnnouncementFormProps>(
             gap: 20,
           }}
         >
-          <CustomInput
+          <CustomDatePicker
             name="date"
             control={control}
             rules={{ required: "Date is required" }}
             label="Scheduled Date"
-            type="date"
-            min={new Date().toISOString().split("T")[0]}
+            min={format(new Date(), "yyyy-MM-dd")}
           />
           <CustomSelect
             name="type"

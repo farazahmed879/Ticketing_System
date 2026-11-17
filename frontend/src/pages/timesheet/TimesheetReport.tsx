@@ -194,7 +194,7 @@ const TimesheetReport: React.FC = () => {
 
         <div className={`glass-card ${styles.reportCard}`}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: 20 }}>Project Distribution</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className={styles.reportCardBody} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <div key={i}>

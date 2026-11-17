@@ -6,6 +6,7 @@ import "../CustomDatePicker/CustomDatePicker.css";
 
 import styles from "../CustomInput/CustomInput.module.css";
 import CustomIcon from "../CustomIcon";
+import CalendarHeader from "../CustomDatePicker/CalendarHeader";
 import type { CustomDateTimePickerProps } from "../types";
 
 const DateTimeCustomInput = forwardRef<HTMLInputElement, any>(
@@ -75,8 +76,10 @@ const CustomDateTimePicker = <T extends FieldValues>({
           showTimeSelect
           timeFormat="HH:mm"
           timeIntervals={15}
-          dateFormat="yyyy-MM-dd HH:mm"
+          dateFormat={["MMM d, yyyy HH:mm", "yyyy-MM-dd HH:mm"]}
           timeCaption="Time"
+          renderCustomHeader={(h) => <CalendarHeader {...h} />}
+          popperPlacement="bottom-start"
           isClearable
           portalId="root-portal"
           customInput={

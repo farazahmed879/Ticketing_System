@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import CustomInput from "../../components/CustomInput";
+import CustomDateRangePicker from "../../components/CustomDateRangePicker";
 import CustomSelect from "../../components/CustomSelect";
 import { useNotification } from "../../context/NotificationContext";
 import { API_ROUTES } from "../../utils/apiRoutes";
@@ -586,27 +587,16 @@ const CandidateList: React.FC = () => {
 
                   <div className={styles.filterField}>
                     <span className={styles.filterLabel}>
-                      <CustomIcon name="Calendar" size={12} /> Added From
+                      <CustomIcon name="Calendar" size={12} /> Date Added
                     </span>
-                    <CustomInput
-                      type="date"
-                      value={dateFromFilter}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setDateFromFilter(e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div className={styles.filterField}>
-                    <span className={styles.filterLabel}>
-                      <CustomIcon name="Calendar" size={12} /> Added To
-                    </span>
-                    <CustomInput
-                      type="date"
-                      value={dateToFilter}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setDateToFilter(e.target.value)
-                      }
+                    <CustomDateRangePicker
+                      start={dateFromFilter}
+                      end={dateToFilter}
+                      onChange={(s, e) => {
+                        setDateFromFilter(s);
+                        setDateToFilter(e);
+                      }}
+                      placeholder="Select date range"
                     />
                   </div>
 

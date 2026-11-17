@@ -57,6 +57,7 @@ export interface Team {
   id: string;
   name: string;
   description?: string;
+  teamType?: "TECHNICAL" | "ORGANIZATIONAL" | null;
   departmentId?: string;
   department?: { id: string; name: string };
   projectIds: string[];
@@ -193,13 +194,18 @@ export interface UserRequest {
     image?: string;
   };
   approvedById?: string;
+  /** Set by the API: whether the current user may approve/reject it. */
+  canReview?: boolean;
   approvedBy?: {
     id?: string;
     fullname: string;
     email: string;
     image?: string;
   } | null;
+  /** Leave dates as "YYYY-MM-DD" strings. */
+  data?: { startDate?: string; endDate?: string } | null;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface NotificationItem {

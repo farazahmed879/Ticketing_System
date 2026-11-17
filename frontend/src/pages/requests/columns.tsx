@@ -21,6 +21,10 @@ export const formatRequestType = (type: string) => {
   return map[type] || type.replace(/_/g, " ");
 };
 
+/** "Approved by" / "Rejected by" depending on how the request was decided. */
+export const getReviewerLabel = (status: string) =>
+  status === "REJECTED" ? "Rejected by" : "Approved by";
+
 export const getRequestColumns = (
   user: User | null,
   hasPermission: (permPath: string) => boolean,
@@ -47,12 +51,26 @@ export const getRequestColumns = (
     ),
   },
   {
-    header: "Approved By",
+    header: "Approved By / Rejected By",
     key: "approvedBy",
     render: (r) => (
       <div className={styles.userInfo}>
-        {r.approvedBy ? (
+        {r.approvedBy && r.status !== "PENDING" ? (
           <>
+            <span
+              style={{
+                fontSize: "0.68rem",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.03em",
+                color:
+                  r.status === "REJECTED"
+                    ? "var(--accent-danger)"
+                    : "var(--accent-success)",
+              }}
+            >
+              {getReviewerLabel(r.status)}
+            </span>
             <span className={styles.userName}>{r.approvedBy.fullname}</span>
             {r.approvedBy.email && (
               <span className={styles.userEmail}>{r.approvedBy.email}</span>
@@ -98,10 +116,9 @@ export const getRequestColumns = (
     header: "Actions",
     key: "actions",
     render: (r) => (
-      <div className={styles.actions}>
-        {r.status === "PENDING" &&
-          (hasPermission("requests.update") ||
-            (user?.isLead && r.userId !== user?.id)) && (
+      <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
+        {/* The API decides who may review (e.g. organizational teams: manager only). */}
+        {r.status === "PENDING" && r.canReview && (
             <>
               <CustomTooltip text="Approve">
                 <CustomButton

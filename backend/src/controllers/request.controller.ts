@@ -10,18 +10,26 @@ export const requestController = {
       const user = req.user;
       if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-      // Admins and Agents see every request.
-      if (user.role === RoleType.ADMIN || user.role === RoleType.AGENT) {
-        const requests = await requestUsecase.getRequests();
-        return res.json({ success: true, requests });
-      }
+      const ctx = await requestUsecase.getReviewContext(user.id);
 
-      // Everyone else sees their own requests plus, if they lead any teams,
-      // the requests of those teams' members.
-      const memberIds = await requestUsecase.getLedTeamMemberIds(user.id);
-      const scope = Array.from(new Set([user.id, ...memberIds]));
-      const requests = await requestUsecase.getRequests(scope);
-      res.json({ success: true, requests });
+      // Admins and Agents see every request. Everyone else sees their own
+      // requests plus, if they lead any teams, those teams' members' requests.
+      const seesAll =
+        user.role === RoleType.ADMIN || user.role === RoleType.AGENT;
+      const requests = await requestUsecase.getRequests(
+        seesAll
+          ? undefined
+          : Array.from(new Set([user.id, ...ctx.ledMemberIds])),
+      );
+
+      // Tell the UI which requests this user may approve/reject.
+      const withReview = requests.map((r) => ({
+        ...r,
+        canReview:
+          r.status === "PENDING" &&
+          requestUsecase.canReview(user, r.userId, ctx).allowed,
+      }));
+      res.json({ success: true, requests: withReview });
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
     }
@@ -69,47 +77,20 @@ export const requestController = {
       }
 
       // Authority is derived server-side (the JWT only carries { id, role },
-      // never permissions): Admins and Agents may act on any request; everyone
-      // else must be the team lead of the request's owner.
-      const isAdmin = user.role === RoleType.ADMIN;
-      const isAgent = user.role === RoleType.AGENT;
-
-      if (!isAdmin) {
-        // Prevent approving your own request.
-        if (request.userId === user.id) {
-          return res
-            .status(403)
-            .json({
-              success: false,
-              message: "Access denied: You cannot approve your own request",
-            });
-        }
-
-        if (!request.userId) {
-          return res
-            .status(400)
-            .json({
-              success: false,
-              message: "Invalid request: No user associated",
-            });
-        }
-
-        // Non-Agents must be the team lead of the requester.
-        if (!isAgent) {
-          const isLead = await requestUsecase.isTeamLeadOfMember(
-            user.id,
-            request.userId as string,
-          );
-          if (!isLead) {
-            return res
-              .status(403)
-              .json({
-                success: false,
-                message:
-                  "Access denied: You can only manage requests from your team members",
-              });
-          }
-        }
+      // never permissions). See requestUsecase.canReview for the rules.
+      if (user.role !== RoleType.ADMIN && !request.userId) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid request: No user associated",
+        });
+      }
+      const ctx = await requestUsecase.getReviewContext(user.id);
+      const review = requestUsecase.canReview(user, request.userId, ctx);
+      if (!review.allowed) {
+        return res.status(403).json({
+          success: false,
+          message: `Access denied: ${review.reason}`,
+        });
       }
 
       const { status, message } = req.body;

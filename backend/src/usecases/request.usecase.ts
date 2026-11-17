@@ -1,6 +1,12 @@
 import { requestRepository } from "../repositories/request.repository";
 import { userRepository } from "../repositories/user.repository";
 import prisma from "../prisma";
+import { RoleType } from "../utils/constants";
+
+export interface ReviewContext {
+  ledMemberIds: Set<string>;
+  orgManagersByMember: Map<string, Set<string>>;
+}
 
 const LEAVE_TYPES = new Set(["HALFDAY_LEAVE", "FULLDAY_LEAVE", "VACATION"]);
 
@@ -71,17 +77,73 @@ export const requestUsecase = {
     return Array.from(ids);
   },
 
-  /** Whether `leadId` is the team lead of a (non-deleted) team `memberId` belongs to. */
-  async isTeamLeadOfMember(leadId: string, memberId: string): Promise<boolean> {
-    const team = await prisma.team.findFirst({
-      where: {
-        teamLeadId: leadId,
-        memberIds: { has: memberId },
-        deleted: false,
-      },
-      select: { id: true },
+  /**
+   * Everything needed to decide which requests `reviewerId` may approve or
+   * reject: the members of teams they lead, and for every employee in an
+   * organizational team, the manager(s) of those teams.
+   */
+  async getReviewContext(reviewerId: string): Promise<ReviewContext> {
+    const [ledMemberIds, orgTeams] = await Promise.all([
+      this.getLedTeamMemberIds(reviewerId),
+      prisma.team.findMany({
+        where: { deleted: false, teamType: "ORGANIZATIONAL" },
+        select: { teamLeadId: true, memberIds: true },
+      }),
+    ]);
+    const orgManagersByMember = new Map<string, Set<string>>();
+    orgTeams.forEach((team) => {
+      if (!team.teamLeadId) return;
+      team.memberIds.forEach((memberId) => {
+        if (!orgManagersByMember.has(memberId)) {
+          orgManagersByMember.set(memberId, new Set());
+        }
+        orgManagersByMember.get(memberId)!.add(team.teamLeadId!);
+      });
     });
-    return !!team;
+    return { ledMemberIds: new Set(ledMemberIds), orgManagersByMember };
+  },
+
+  /**
+   * Whether `reviewer` may approve/reject a request raised by `requesterId`.
+   * - Admins can review anything.
+   * - Nobody can review their own request.
+   * - Employees in an organizational team: only that team's manager.
+   * - Otherwise: any Manager, or the requester's team lead.
+   */
+  canReview(
+    reviewer: { id: string; role: string },
+    requesterId: string | null | undefined,
+    ctx: ReviewContext,
+  ): { allowed: boolean; reason?: string } {
+    if (reviewer.role === RoleType.ADMIN) return { allowed: true };
+    if (!requesterId) {
+      return { allowed: false, reason: "Invalid request: No user associated" };
+    }
+    if (requesterId === reviewer.id) {
+      return { allowed: false, reason: "You cannot approve your own request" };
+    }
+
+    // A manager's own request (they are a member of the team they manage)
+    // falls through to the regular rules.
+    const orgManagers = Array.from(
+      ctx.orgManagersByMember.get(requesterId) || [],
+    ).filter((id) => id !== requesterId);
+    if (orgManagers.length > 0) {
+      return orgManagers.includes(reviewer.id)
+        ? { allowed: true }
+        : {
+            allowed: false,
+            reason:
+              "This employee belongs to an organizational team; only their manager can approve or reject this request",
+          };
+    }
+
+    if (reviewer.role === RoleType.AGENT) return { allowed: true };
+    if (ctx.ledMemberIds.has(requesterId)) return { allowed: true };
+    return {
+      allowed: false,
+      reason: "You can only manage requests from your team members",
+    };
   },
 
   async createRequest(data: {
@@ -111,6 +173,36 @@ export const requestUsecase = {
           if (end < start) {
             throw new Error("Leave end date cannot be before start date.");
           }
+        }
+
+        // Block re-requesting leave for dates the manager already decided on.
+        const end = startOfDay(new Date(endStr || startStr));
+        const decided = await prisma.userRequest.findMany({
+          where: {
+            userId: data.userId,
+            deleted: false,
+            type: { in: Array.from(LEAVE_TYPES) },
+            status: { in: ["APPROVED", "REJECTED"] },
+          },
+          select: { status: true, data: true },
+        });
+        const clash = decided.find((r) => {
+          const d: any = r.data || {};
+          if (!d.startDate) return false;
+          const s = startOfDay(new Date(d.startDate));
+          const e = startOfDay(new Date(d.endDate || d.startDate));
+          if (isNaN(s.getTime()) || isNaN(e.getTime())) return false;
+          return s <= end && start <= e; // date ranges overlap
+        });
+        if (clash) {
+          const d: any = clash.data;
+          const range =
+            d.endDate && d.endDate !== d.startDate
+              ? `${d.startDate} to ${d.endDate}`
+              : d.startDate;
+          throw new Error(
+            `You already have a leave request for ${range} that was ${clash.status.toLowerCase()}. You cannot request leave for these dates again.`,
+          );
         }
       }
     }

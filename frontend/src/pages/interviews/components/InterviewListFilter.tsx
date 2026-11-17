@@ -3,7 +3,7 @@ import CustomInput from "../../../components/CustomInput";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import CustomSelect from "../../../components/CustomSelect";
-import CustomDatePicker from "../../../components/CustomDatePicker";
+import CustomDateRangePicker from "../../../components/CustomDateRangePicker";
 import styles from "../InterviewList.module.css";
 
 import type { InterviewListFilterProps } from "./interfaces";
@@ -118,20 +118,15 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
                   <span className={styles.filterLabel}>
                     <CustomIcon name="Calendar" size={12} /> Date Range
                   </span>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <CustomDatePicker
-                      value={draftStartDate}
-                      onChange={(val: string) => setDraftStartDate(val)}
-                      placeholder="Start Date"
-                      containerStyle={{ flex: 1 }}
-                    />
-                    <CustomDatePicker
-                      value={draftEndDate}
-                      onChange={(val: string) => setDraftEndDate(val)}
-                      placeholder="End Date"
-                      containerStyle={{ flex: 1 }}
-                    />
-                  </div>
+                  <CustomDateRangePicker
+                    start={draftStartDate}
+                    end={draftEndDate}
+                    onChange={(s, e) => {
+                      setDraftStartDate(s);
+                      setDraftEndDate(e);
+                    }}
+                    placeholder="Select date range"
+                  />
                 </div>
 
                 <div className={styles.filterActions}>

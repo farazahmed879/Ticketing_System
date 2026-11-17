@@ -1508,6 +1508,34 @@
   }
 }
 
+/* Desktop: the report fills the viewport and each card scrolls its own
+   content (Daily Breakdown keeps its sticky header). If the window is too
+   short, the min-height kicks in and the whole report scrolls instead. */
+@media (min-width: 1025px) {
+  .reportGrid {
+    flex: 1 1 0;
+    min-height: 360px;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .reportCard {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .reportCard > h3 {
+    flex-shrink: 0;
+  }
+
+  .tableScroll,
+  .reportCardBody {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     gap: 10px;

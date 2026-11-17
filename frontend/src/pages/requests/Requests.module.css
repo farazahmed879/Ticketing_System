@@ -210,18 +210,3 @@
     min-width: 0;
   }
 }
-
-/* Create-request modal: start / end dates.
-   minmax(0, 1fr) lets native date inputs shrink instead of overflowing. */
-.dateRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
-}
-
-@media (max-width: 420px) {
-  .dateRow {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-  }
-}

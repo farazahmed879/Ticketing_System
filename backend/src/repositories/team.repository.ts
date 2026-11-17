@@ -21,6 +21,7 @@ export const teamRepository = {
         id: true,
         name: true,
         description: true,
+        teamType: true,
         department: { select: { id: true, name: true } },
         teamLead: { select: { id: true, fullname: true, image: true } },
         members: {

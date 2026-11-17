@@ -7,8 +7,14 @@ import { TaskDescriptionEditor } from "../../timesheet/components/TaskDescriptio
 import type { Team, User } from "../../../types";
 import { ROLE_TYPE } from "../../roles/roleConstants";
 
+const TEAM_TYPE_OPTIONS = [
+  { value: "TECHNICAL", label: "Technical Team" },
+  { value: "ORGANIZATIONAL", label: "Organizational Team" },
+];
+
 interface TeamFormData {
   name: string;
+  teamType: string;
   description: string;
   teamLeadId: string;
   memberIds: string[];
@@ -29,6 +35,7 @@ const TeamForm: React.FC<TeamFormProps> = ({
     useForm<TeamFormData>({
       defaultValues: {
         name: "",
+        teamType: "",
         description: "",
         teamLeadId: "",
         memberIds: [],
@@ -36,6 +43,10 @@ const TeamForm: React.FC<TeamFormProps> = ({
     });
 
   const selectedTeamLeadId = watch("teamLeadId");
+  const selectedTeamType = watch("teamType");
+  // Technical teams have a Team Lead; organizational teams have a Manager.
+  const leadLabel =
+    selectedTeamType === "ORGANIZATIONAL" ? "Manager" : "Team Lead";
   const selectedMemberIds = watch("memberIds");
 
   useEffect(() => {
@@ -48,6 +59,7 @@ const TeamForm: React.FC<TeamFormProps> = ({
         [];
       reset({
         name: initialData.name,
+        teamType: initialData.teamType || "",
         description: initialData.description || "",
         // The list/my-team APIs return lean objects without the scalar IDs,
         // so fall back to deriving them from the relation objects.
@@ -57,6 +69,7 @@ const TeamForm: React.FC<TeamFormProps> = ({
     } else {
       reset({
         name: "",
+        teamType: "",
         description: "",
         teamLeadId: "",
         memberIds: [],
@@ -93,6 +106,30 @@ const TeamForm: React.FC<TeamFormProps> = ({
       image: u.image,
     }));
 
+  // Organizational teams are headed by a Manager (agent role type) only.
+  const managerIds = new Set(
+    users
+      .filter((u) => u.role?.roleType === ROLE_TYPE.AGENT)
+      .map((u) => u.id),
+  );
+  const leadOptions =
+    selectedTeamType === "ORGANIZATIONAL"
+      ? userOptions.filter((opt) => managerIds.has(opt.value))
+      : userOptions;
+
+  // Drop a lead who isn't a manager when switching to Organizational.
+  useEffect(() => {
+    if (
+      selectedTeamType === "ORGANIZATIONAL" &&
+      selectedTeamLeadId &&
+      users.length > 0 &&
+      !managerIds.has(selectedTeamLeadId)
+    ) {
+      setValue("teamLeadId", "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTeamType, selectedTeamLeadId, users, setValue]);
+
   const memberOptions = userOptions.filter(
     (opt) => opt.value !== selectedTeamLeadId,
   );
@@ -113,12 +150,25 @@ const TeamForm: React.FC<TeamFormProps> = ({
       />
 
       <CustomSelect
-        name="teamLeadId"
+        name="teamType"
         control={control}
-        label="Team Lead"
-        placeholder="Select Team Lead"
-        options={userOptions}
+        rules={{ required: "Team type is required" }}
+        label="Team Type"
+        placeholder="Select Team Type"
+        options={TEAM_TYPE_OPTIONS}
+        required
       />
+
+      {selectedTeamType && (
+        <CustomSelect
+          key={selectedTeamType}
+          name="teamLeadId"
+          control={control}
+          label={leadLabel}
+          placeholder={`Select ${leadLabel}`}
+          options={leadOptions}
+        />
+      )}
 
       <CustomMultiSelect
         name="memberIds"

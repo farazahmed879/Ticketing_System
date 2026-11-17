@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import Modal from "../../components/Modal";
-import CustomInput from "../../components/CustomInput";
+import CustomDatePicker from "../../components/CustomDatePicker";
+import CustomDateRangePicker from "../../components/CustomDateRangePicker";
 import CustomSelect from "../../components/CustomSelect";
 import CustomButton from "../../components/CustomButton";
-import styles from "./Requests.module.css";
 import { TaskDescriptionEditor } from "../timesheet/components/TaskDescriptionEditor";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import type { UserRequest } from "../../types";
+import { useNotification } from "../../context/NotificationContext";
 
 export const REQUEST_TYPE_OPTIONS = [
   { value: "HALFDAY_LEAVE", label: "Half-Day Leave" },
@@ -32,9 +33,13 @@ const RequestModal: React.FC<RequestModalProps> = ({
 }) => {
   const { control, handleSubmit, reset, watch } = useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const todayIso = new Date().toISOString().split("T")[0];
+  const { showNotification } = useNotification();
+  // Today as a local "YYYY-MM-DD" (toISOString alone is UTC and can be a day off).
+  const now = new Date();
+  const todayIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+    .toISOString()
+    .split("T")[0];
   const watchedType = watch("type");
-  const watchedStart = watch("startDate");
   const isSingleDate =
     watchedType === "HALFDAY_LEAVE" || watchedType === "REIMBURSEMENT";
   const isReimbursement = watchedType === "REIMBURSEMENT";
@@ -57,6 +62,9 @@ const RequestModal: React.FC<RequestModalProps> = ({
       onClose();
     } catch (err) {
       console.error("Failed to create request", err);
+      const data = (err as { response?: { data?: { error?: string } } })
+        .response?.data;
+      showNotification("error", data?.error || "Failed to create request");
     } finally {
       setIsSubmitting(false);
     }
@@ -78,10 +86,9 @@ const RequestModal: React.FC<RequestModalProps> = ({
         />
 
         {isSingleDate ? (
-          <CustomInput
+          <CustomDatePicker
             name="startDate"
             control={control}
-            type="date"
             label={isReimbursement ? "Expense Date" : "Date"}
             min={isReimbursement ? undefined : todayIso}
             rules={{
@@ -91,23 +98,17 @@ const RequestModal: React.FC<RequestModalProps> = ({
             }}
           />
         ) : (
-          <div className={styles.dateRow}>
-            <CustomInput
-              name="startDate"
-              control={control}
-              type="date"
-              label="Start Date"
-              min={todayIso}
-              rules={{ required: "Start date is required" }}
-            />
-            <CustomInput
-              name="endDate"
-              control={control}
-              type="date"
-              label="End Date"
-              min={watchedStart || todayIso}
-            />
-          </div>
+          // One calendar: first click = start, second click = end.
+          // Picking a single day leaves the end empty; it's sent as start.
+          <CustomDateRangePicker
+            control={control}
+            startName="startDate"
+            endName="endDate"
+            label="Dates"
+            placeholder="Select start and end date"
+            min={todayIso}
+            rules={{ required: "Please select the dates" }}
+          />
         )}
 
         <TaskDescriptionEditor

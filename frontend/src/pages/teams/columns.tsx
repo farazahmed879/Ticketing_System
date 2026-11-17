@@ -8,6 +8,20 @@ import CustomTooltip from "../../components/CustomTooltip";
 import { getTaskDescriptionPlainText } from "../timesheet/components/TaskDescriptionEditor";
 import styles from "./columns.module.css";
 import CustomImage from "../../components/CustomImage";
+import CustomBadge from "../../components/CustomBadge";
+
+/** Team type pill; shared by the table column and the grid card. */
+export const TeamTypeBadge = ({ team }: { team: Team }) => {
+  if (team.teamType === "TECHNICAL")
+    return <CustomBadge variant="info">Technical</CustomBadge>;
+  if (team.teamType === "ORGANIZATIONAL")
+    return <CustomBadge variant="warning">Organizational</CustomBadge>;
+  return <span className="text-sm-muted">Not set</span>;
+};
+
+/** Technical teams have a Team Lead; organizational teams have a Manager. */
+export const getLeadLabel = (team: Team) =>
+  team.teamType === "ORGANIZATIONAL" ? "Manager" : "Team Lead";
 
 /** Team lead avatar + name; shared by the table column and the grid card. */
 export const TeamLeadCell = ({ team }: { team: Team }) => (
@@ -33,7 +47,7 @@ export const TeamLeadCell = ({ team }: { team: Team }) => (
         <span className="text-sm">{team.teamLead.fullname}</span>
       </>
     ) : (
-      <span className="text-sm-muted">No Team Lead</span>
+      <span className="text-sm-muted">No {getLeadLabel(team)}</span>
     )}
   </div>
 );
@@ -71,7 +85,12 @@ export const getTeamColumns = (
     ),
   },
   {
-    header: "Team Lead",
+    header: "Type",
+    key: "teamType",
+    render: (t) => <TeamTypeBadge team={t} />,
+  },
+  {
+    header: "Lead / Manager",
     key: "teamLead",
     render: (t) => (
       <TeamLeadCell team={t} />

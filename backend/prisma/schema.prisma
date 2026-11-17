@@ -183,6 +183,8 @@ model Team {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String   @unique
   description String?
+  // "TECHNICAL" | "ORGANIZATIONAL"
+  teamType    String?
   memberIds   String[] @db.ObjectId
   members     User[]   @relation(fields: [memberIds], references: [id])
 

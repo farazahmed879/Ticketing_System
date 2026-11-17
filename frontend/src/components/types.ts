@@ -187,6 +187,12 @@ export interface CustomDatePickerProps<
   containerStyle?: React.CSSProperties;
   value?: string;
   onChange?: (value: string) => void;
+  /** Range highlighting: mark this picker as the start or end of a range. */
+  selectsStart?: boolean;
+  selectsEnd?: boolean;
+  /** The range's start/end as "YYYY-MM-DD"; used to shade the days between. */
+  rangeStart?: string;
+  rangeEnd?: string;
 }
 
 export interface CustomDateTimePickerProps<

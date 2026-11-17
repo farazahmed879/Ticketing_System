@@ -6,6 +6,7 @@ import "./CustomDatePicker.css";
 
 import styles from "../CustomInput/CustomInput.module.css";
 import CustomIcon from "../CustomIcon";
+import CalendarHeader from "./CalendarHeader";
 import type { CustomDatePickerProps } from "../types";
 
 const DateCustomInput = forwardRef<HTMLInputElement, any>(
@@ -28,6 +29,24 @@ const DateCustomInput = forwardRef<HTMLInputElement, any>(
 
 DateCustomInput.displayName = "DateCustomInput";
 
+/** Parse "YYYY-MM-DD" as a local date (new Date("YYYY-MM-DD") is UTC and can shift a day). */
+const parseLocalDate = (value?: string | number | null): Date | null => {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value === "string") {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  }
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+const toIsoDay = (date: Date) => {
+  const offset = date.getTimezoneOffset();
+  return new Date(date.getTime() - offset * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+};
+
 const CustomDatePicker = <T extends FieldValues>({
   label,
   error: manualError,
@@ -41,6 +60,10 @@ const CustomDatePicker = <T extends FieldValues>({
   placeholder,
   min,
   minDate,
+  selectsStart,
+  selectsEnd,
+  rangeStart,
+  rangeEnd,
   ...props
 }: CustomDatePickerProps<T> & { min?: string | number; minDate?: Date }) => {
   const renderPicker = (fieldProps: any = {}) => {
@@ -48,31 +71,14 @@ const CustomDatePicker = <T extends FieldValues>({
     const value = manualValue || fieldProps.field?.value || "";
     const onChange = manualOnChange || fieldProps.field?.onChange;
 
-    const selectedDate = value ? new Date(value) : null;
+    const selectedDate = parseLocalDate(value);
 
     const handleChange = (date: Date | null) => {
-      if (onChange) {
-        if (!date) onChange("");
-        else {
-          const offset = date.getTimezoneOffset();
-          const localDate = new Date(date.getTime() - offset * 60 * 1000);
-          onChange(localDate.toISOString().split("T")[0]);
-        }
-      }
+      if (onChange) onChange(date ? toIsoDay(date) : "");
     };
 
-    let resolvedMinDate: Date | undefined = minDate;
-    if (!resolvedMinDate && min && typeof min === "string") {
-      const parts = min.split("-");
-      if (parts.length === 3) {
-        const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1; // 0-indexed month
-        const day = parseInt(parts[2], 10);
-        resolvedMinDate = new Date(year, month, day);
-      } else {
-        resolvedMinDate = new Date(min);
-      }
-    }
+    const resolvedMinDate: Date | undefined =
+      minDate || parseLocalDate(min) || undefined;
 
     return (
       <div className={styles.container} style={containerStyle}>
@@ -87,12 +93,26 @@ const CustomDatePicker = <T extends FieldValues>({
         <DatePicker
           selected={selectedDate}
           onChange={handleChange as any}
-          customInput={<DateCustomInput error={error} className={className} placeholder={placeholder} {...props} />}
-          dateFormat="yyyy-MM-dd"
-          isClearable
+          customInput={
+            <DateCustomInput
+              error={error}
+              className={className}
+              placeholder={placeholder || "Select a date"}
+              {...props}
+            />
+          }
+          // Shown as "Nov 20, 2026"; typing "2026-11-20" also works.
+          dateFormat={["MMM d, yyyy", "yyyy-MM-dd"]}
+          renderCustomHeader={(h) => <CalendarHeader {...h} />}
+          isClearable={!props.disabled}
           portalId="root-portal"
+          popperPlacement="bottom-start"
           disabled={props.disabled}
           minDate={resolvedMinDate}
+          selectsStart={selectsStart}
+          selectsEnd={selectsEnd}
+          startDate={parseLocalDate(rangeStart)}
+          endDate={parseLocalDate(rangeEnd)}
         />
         {error && <span className={styles.errorText}>{error}</span>}
       </div>

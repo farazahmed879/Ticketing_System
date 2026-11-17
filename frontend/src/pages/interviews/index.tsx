@@ -140,7 +140,8 @@ const InterviewList: React.FC = () => {
   const applyMoreFilters = () => {
     setActiveFilter(draftActiveFilter);
     setStartDate(draftStartDate);
-    setEndDate(draftEndDate);
+    // Only one day picked in the range calendar -> filter that single day.
+    setEndDate(draftEndDate || draftStartDate);
     setCurrentPage(0);
     setShowMoreFilters(false);
   };

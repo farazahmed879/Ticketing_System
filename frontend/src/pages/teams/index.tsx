@@ -19,7 +19,12 @@ import CustomTooltip from "../../components/CustomTooltip";
 import Highlight from "../../components/Highlight";
 
 import StandardListLayout from "../../components/StandardListLayout";
-import { getTeamColumns, TeamLeadCell } from "./columns";
+import {
+  getTeamColumns,
+  getLeadLabel,
+  TeamLeadCell,
+  TeamTypeBadge,
+} from "./columns";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import { useListViewMode } from "../../utils/helpers";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
@@ -343,6 +348,11 @@ const TeamList: React.FC = () => {
                       >
                         {t.projects?.length || 0} Assigned Projects
                       </span>
+                      {t.teamType && (
+                        <div style={{ marginTop: 6 }}>
+                          <TeamTypeBadge team={t} />
+                        </div>
+                      )}
                     </div>
                   </div>
                   {canManageTeams && (
@@ -405,7 +415,7 @@ const TeamList: React.FC = () => {
                         fontWeight: 600,
                       }}
                     >
-                      Team Lead
+                      {getLeadLabel(t)}
                     </span>
                     <TeamLeadCell team={t} />
                   </div>

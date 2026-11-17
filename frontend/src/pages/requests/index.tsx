@@ -19,6 +19,7 @@ import ConfirmationModal from "../../components/ConfirmationModal";
 import StandardListLayout from "../../components/StandardListLayout";
 import { getRequestColumns } from "./columns";
 import RequestCard from "./components/RequestCard";
+import RequestDetailsDrawer from "./components/RequestDetailsDrawer";
 import { useListViewMode } from "../../utils/helpers";
 
 const Requests: React.FC = () => {
@@ -30,10 +31,17 @@ const Requests: React.FC = () => {
   const [filter, setFilter] = useState("PENDING");
   const [viewMode, setViewMode] = useListViewMode();
 
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
+    null,
+  );
+
   // Deep-linked from a notification: show ALL so an already approved/rejected
-  // request isn't hidden by the default PENDING filter.
+  // request isn't hidden by the default PENDING filter, and open its details.
   useEffect(() => {
-    if (highlightRequestId) setFilter("ALL");
+    if (highlightRequestId) {
+      setFilter("ALL");
+      setSelectedRequestId(highlightRequestId);
+    }
   }, [highlightRequestId]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -48,6 +56,9 @@ const Requests: React.FC = () => {
   });
 
   const requests: UserRequest[] = requestData || [];
+  // Looked up from the live list so the drawer reflects approve/reject updates.
+  const selectedRequest =
+    requests.find((r) => r.id === selectedRequestId) || null;
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -64,7 +75,13 @@ const Requests: React.FC = () => {
     },
     onError: (err) => {
       console.error("Failed to update request status", err);
-      showNotification("error", "Failed to update request status");
+      const data = (
+        err as { response?: { data?: { message?: string; error?: string } } }
+      ).response?.data;
+      showNotification(
+        "error",
+        data?.message || data?.error || "Failed to update request status",
+      );
     },
   });
 
@@ -86,6 +103,7 @@ const Requests: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["requests"] });
       setIsDeleteModalOpen(false);
+      if (requestToDelete === selectedRequestId) setSelectedRequestId(null);
       setRequestToDelete(null);
       showNotification("success", "Request deleted successfully");
     },
@@ -186,6 +204,7 @@ const Requests: React.FC = () => {
             columns={columns}
             data={filteredRequests}
             highlightRowId={highlightRequestId}
+            onRowClick={(r) => setSelectedRequestId(r.id)}
             loading={loading}
             loadingMessage="Loading requests..."
             emptyMessage={`No ${filter.toLowerCase()} requests found.`}
@@ -231,11 +250,24 @@ const Requests: React.FC = () => {
                 handleUpdateStatus={handleUpdateStatus}
                 handleDelete={handleDelete}
                 highlighted={r.id === highlightRequestId}
+                onOpen={(req) => setSelectedRequestId(req.id)}
               />
             ))}
           </div>
         )}
       </StandardListLayout>
+
+      <RequestDetailsDrawer
+        request={selectedRequest}
+        onClose={() => setSelectedRequestId(null)}
+        canDelete={
+          !!selectedRequest &&
+          (selectedRequest.userId === user?.id ||
+            hasPermission("requests.delete"))
+        }
+        onUpdateStatus={handleUpdateStatus}
+        onDelete={handleDelete}
+      />
 
       <RequestModal
         isOpen={isModalOpen}

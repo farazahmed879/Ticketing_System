@@ -8,7 +8,7 @@ import {
   getTaskDescriptionPlainText,
 } from "../../timesheet/components/TaskDescriptionEditor";
 import styles from "../Requests.module.css";
-import { formatRequestType } from "../columns";
+import { formatRequestType, getReviewerLabel } from "../columns";
 import type { User, UserRequest } from "../../../types";
 
 interface RequestCardProps {
@@ -18,6 +18,7 @@ interface RequestCardProps {
   handleUpdateStatus: (id: string, status: string) => void;
   handleDelete: (id: string) => void;
   highlighted?: boolean;
+  onOpen?: (request: UserRequest) => void;
 }
 
 const RequestCard = ({
@@ -27,17 +28,18 @@ const RequestCard = ({
   handleUpdateStatus,
   handleDelete,
   highlighted,
+  onOpen,
 }: RequestCardProps) => {
-  const canReview =
-    data.status === "PENDING" &&
-    (hasPermission("requests.update") ||
-      (user?.isLead && data.userId !== user?.id));
+  // The API decides who may review (e.g. organizational teams: manager only).
+  const canReview = data.status === "PENDING" && !!data.canReview;
   const canDelete = data.userId === user?.id || hasPermission("requests.delete");
 
   return (
     <div
       className="glass-card"
+      onClick={() => onOpen?.(data)}
       style={{
+        cursor: onOpen ? "pointer" : undefined,
         padding: 20,
         display: "flex",
         flexDirection: "column",
@@ -97,9 +99,11 @@ const RequestCard = ({
             marginBottom: 2,
           }}
         >
-          Approved by
+          {data.status === "PENDING"
+            ? "Approved / Rejected by"
+            : getReviewerLabel(data.status)}
         </span>
-        {data.approvedBy ? (
+        {data.approvedBy && data.status !== "PENDING" ? (
           <>
             <span
               className={styles.userName}
@@ -162,7 +166,10 @@ const RequestCard = ({
         <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
           Requested {timeAgo(data.createdAt)}
         </span>
-        <div style={{ display: "flex", gap: 4 }}>
+        <div
+          style={{ display: "flex", gap: 4 }}
+          onClick={(e) => e.stopPropagation()}
+        >
           {canReview && (
             <>
               <CustomTooltip text="Approve">

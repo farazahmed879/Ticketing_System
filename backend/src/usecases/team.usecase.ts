@@ -21,6 +21,32 @@ async function assertNoManagers(userIds: (string | undefined | null)[]) {
   }
 }
 
+const TEAM_TYPES = ["TECHNICAL", "ORGANIZATIONAL"];
+
+// Validates the team type; empty values are stored as null.
+function normalizeTeamType(value: unknown): string | null {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string" || !TEAM_TYPES.includes(value)) {
+    throw new Error(`Invalid team type. Allowed: ${TEAM_TYPES.join(", ")}.`);
+  }
+  return value;
+}
+
+// Organizational teams must be headed by a Manager (agent role type).
+async function assertManagerLead(
+  teamType: string | null | undefined,
+  leadId: string | null | undefined,
+) {
+  if (teamType !== "ORGANIZATIONAL" || !leadId) return;
+  const lead = await prisma.user.findFirst({
+    where: { id: leadId, role: { roleType: RoleType.AGENT } },
+    select: { id: true },
+  });
+  if (!lead) {
+    throw new Error("The manager of an organizational team must have the Manager role.");
+  }
+}
+
 export const teamUsecase = {
   async getTeams(
     limitStr: string = "25",
@@ -44,6 +70,7 @@ export const teamUsecase = {
 
   async createTeam(data: any) {
     await assertNoManagers([...(data.memberIds || []), data.teamLeadId]);
+    await assertManagerLead(normalizeTeamType(data.teamType), data.teamLeadId);
     // The team lead is always a member of the team.
     const memberIds: string[] = Array.from(
       new Set([
@@ -54,6 +81,7 @@ export const teamUsecase = {
     const teamData = {
       name: data.name,
       description: data.description || null,
+      teamType: normalizeTeamType(data.teamType),
       teamLeadId: data.teamLeadId || null,
       // Use connect (not a raw memberIds scalar) so both sides of the m2m
       // stay in sync — Team.memberIds AND each User.teamIds. Without this,
@@ -77,11 +105,19 @@ export const teamUsecase = {
     if (!existingTeam) throw new Error("Team not found");
 
     await assertNoManagers([...(data.memberIds || []), data.teamLeadId]);
+    await assertManagerLead(
+      data.teamType !== undefined
+        ? normalizeTeamType(data.teamType)
+        : (existingTeam as any).teamType,
+      data.teamLeadId !== undefined ? data.teamLeadId : existingTeam.teamLeadId,
+    );
 
     const updateData: any = {};
     if (data.name) updateData.name = data.name;
     if (data.description !== undefined)
       updateData.description = data.description || null;
+    if (data.teamType !== undefined)
+      updateData.teamType = normalizeTeamType(data.teamType);
     if (data.teamLeadId !== undefined)
       updateData.teamLeadId = data.teamLeadId || null;
     // `set` replaces the member list while keeping both sides of the m2m synced.

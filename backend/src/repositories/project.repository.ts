@@ -12,7 +12,7 @@ export const projectRepository = {
     if (managerId) where.managerId = managerId;
     // Only projects whose team(s) include this user as a member.
     if (teamMemberId)
-      where.teams = { some: { memberIds: { has: teamMemberId } } };
+      where.teams = { some: { deleted: false, memberIds: { has: teamMemberId } } };
     if (status) where.status = status;
 
     if (search && String(search).trim()) {
@@ -37,7 +37,7 @@ export const projectRepository = {
           clients: { select: { id: true, fullname: true, image: true } },
           manager: { select: { id: true, fullname: true, image: true } },
           createdBy: { select: { id: true, fullname: true, image: true } },
-          teams: { select: { id: true, name: true } },
+          teams: { where: { deleted: false }, select: { id: true, name: true } },
         },
         orderBy: { createdAt: "desc" },
         skip,
@@ -58,6 +58,7 @@ export const projectRepository = {
         manager: { select: { id: true, fullname: true, image: true } },
         createdBy: { select: { id: true, fullname: true, image: true } },
         teams: {
+          where: { deleted: false },
           select: {
             id: true,
             name: true,
@@ -110,7 +111,7 @@ export const projectRepository = {
         department: true,
         clients: { select: { id: true, fullname: true, email: true, image: true } },
         manager: { select: { id: true, fullname: true, email: true, image: true } },
-        teams: { select: { id: true, name: true } },
+        teams: { where: { deleted: false }, select: { id: true, name: true } },
       },
     });
   },
@@ -132,7 +133,7 @@ export const projectRepository = {
         department: true,
         clients: { select: { id: true, fullname: true, email: true, image: true } },
         manager: { select: { id: true, fullname: true, email: true, image: true } },
-        teams: { select: { id: true, name: true } },
+        teams: { where: { deleted: false }, select: { id: true, name: true } },
       },
     });
   },
@@ -149,10 +150,12 @@ export const projectRepository = {
       where: { id, deleted: false },
       include: {
         teams: {
+          where: { deleted: false },
           select: {
             name: true,
             teamLeadId: true,
             members: {
+              where: { deleted: false },
               select: {
                 id: true,
                 fullname: true,
@@ -171,10 +174,12 @@ export const projectRepository = {
       where: { id: projectId, deleted: false },
       include: {
         teams: {
+          where: { deleted: false },
           select: {
             id: true,
             name: true,
             members: {
+              where: { deleted: false },
               select: {
                 id: true,
                 fullname: true,

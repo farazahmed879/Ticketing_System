@@ -35,7 +35,7 @@ export const userRepository = {
         createdAt: true,
         role: true,
         groups: { select: { id: true, name: true } },
-        teams: { select: { id: true, name: true } },
+        teams: { where: { deleted: false }, select: { id: true, name: true } },
       },
       skip,
       take,
@@ -58,7 +58,7 @@ export const userRepository = {
       include: {
         role: true,
         groups: { select: { id: true, name: true } },
-        teams: { select: { id: true, name: true } },
+        teams: { where: { deleted: false }, select: { id: true, name: true } },
       },
     });
   },

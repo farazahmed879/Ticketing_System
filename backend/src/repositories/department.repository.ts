@@ -36,7 +36,10 @@ export const departmentRepository = {
   async create(data: any) {
     return prisma.department.create({
       data,
-      include: { teams: true, projects: true },
+      include: {
+        teams: { where: { deleted: false } },
+        projects: { where: { deleted: false } },
+      },
     });
   },
 
@@ -44,7 +47,10 @@ export const departmentRepository = {
     return prisma.department.update({
       where: { id },
       data,
-      include: { teams: true, projects: true },
+      include: {
+        teams: { where: { deleted: false } },
+        projects: { where: { deleted: false } },
+      },
     });
   },
 

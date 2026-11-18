@@ -13,9 +13,13 @@ export interface DrawerProps {
   footer?: React.ReactNode;
   /** Panel width on desktop; the drawer is full-width on phones. */
   width?: string;
+  /** "right" (default) slides in from the side; "bottom" is a bottom sheet. */
+  placement?: "right" | "bottom";
+  /** Drop the body padding/scroll so the child manages its own layout. */
+  flushContent?: boolean;
 }
 
-/** Side panel that slides in from the right. Closes on overlay click or Escape. */
+/** Panel that slides in from the right (or up from the bottom). Closes on overlay click or Escape. */
 const Drawer: React.FC<DrawerProps> = ({
   isOpen,
   onClose,
@@ -24,7 +28,10 @@ const Drawer: React.FC<DrawerProps> = ({
   children,
   footer,
   width = "480px",
+  placement = "right",
+  flushContent = false,
 }) => {
+  const isBottom = placement === "bottom";
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -37,14 +44,18 @@ const Drawer: React.FC<DrawerProps> = ({
   if (!isOpen) return null;
 
   return ReactDOM.createPortal(
-    <div className={styles.overlay} onClick={onClose}>
+    <div
+      className={`${styles.overlay} ${isBottom ? styles.overlayBottom : ""}`}
+      onClick={onClose}
+    >
       <aside
-        className={styles.panel}
-        style={{ width }}
+        className={`${styles.panel} ${isBottom ? styles.panelBottom : ""}`}
+        style={isBottom ? undefined : { width }}
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
       >
+        {isBottom && <div className={styles.grabber} aria-hidden="true" />}
         <div className={styles.header}>
           <div className={styles.titleBlock}>
             {title && <h2>{title}</h2>}
@@ -59,7 +70,13 @@ const Drawer: React.FC<DrawerProps> = ({
             <CustomIcon name="X" size={20} />
           </button>
         </div>
-        <div className={styles.content}>{children}</div>
+        <div
+          className={`${styles.content} ${
+            flushContent ? styles.contentFlush : ""
+          }`}
+        >
+          {children}
+        </div>
         {footer && <div className={styles.footer}>{footer}</div>}
       </aside>
     </div>,

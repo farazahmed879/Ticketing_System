@@ -22,25 +22,12 @@ import {
 } from "../utils/desktopNotifications";
 import { useInstallOption, promptInstallApp } from "../utils/installPrompt";
 import InstallInstructionsModal from "../components/InstallInstructionsModal";
+import useIsMobile from "../hooks/useIsMobile";
 
-const MOBILE_QUERY = "(max-width: 768px)";
 /** Query key for the sidebar's "unseen shoutouts" badge. */
 const SHOUTOUT_UNREAD_KEY = "shoutoutUnreadCount";
 /** Backend notification type for "a new shoutout was posted". */
 const NEW_SHOUTOUT_TYPE = "shoutout_new";
-
-const useIsMobile = () => {
-  const [isMobile, setIsMobile] = React.useState(
-    () => typeof window !== "undefined" && window.matchMedia(MOBILE_QUERY).matches,
-  );
-  React.useEffect(() => {
-    const mql = window.matchMedia(MOBILE_QUERY);
-    const onChange = () => setIsMobile(mql.matches);
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
-  return isMobile;
-};
 
 const MainLayout: React.FC = () => {
   const { user, updateUser } = useAuth();

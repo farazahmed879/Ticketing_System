@@ -61,7 +61,7 @@ const Login: React.FC = () => {
 
     try {
       const res = await api.post(API_ROUTES.AUTH.LOGIN, {
-        email: data.identifier,
+        email: String(data.identifier ?? "").trim().toLowerCase(),
         password: data.password,
         remember: data.remember !== false,
       });

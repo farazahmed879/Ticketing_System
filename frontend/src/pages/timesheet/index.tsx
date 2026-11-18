@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   format,
@@ -26,6 +26,8 @@ import CustomIcon from "../../components/CustomIcon";
 import CustomTable from "../../components/CustomTable";
 import CustomBadge from "../../components/CustomBadge";
 import TimesheetLogPanel from "./components/TimesheetLogPanel";
+import Drawer from "../../components/Drawer";
+import useIsMobile from "../../hooks/useIsMobile";
 import { FormattedTaskDescription } from "./components/TaskDescriptionEditor";
 import { useAuth } from "../../context/AuthContext";
 
@@ -55,6 +57,15 @@ const Timesheet: React.FC = () => {
   const [tableFilter, setTableFilter] = useState<"all" | "working" | "missing">("all");
   const [isCalendarCollapsed, setIsCalendarCollapsed] = useState(false);
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
+  // Phones: the Log Tasks card opens as a drawer instead of sitting inline.
+  const isMobile = useIsMobile();
+  const [isLogDrawerOpen, setIsLogDrawerOpen] = useState(false);
+  const closeLogDrawer = useCallback(() => setIsLogDrawerOpen(false), []);
+
+  const selectDay = (day: Date) => {
+    setSelectedDate(day);
+    if (isMobile) setIsLogDrawerOpen(true);
+  };
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -246,7 +257,7 @@ const Timesheet: React.FC = () => {
           key={day.toString()}
           className={`${styles.dayCell} ${period === "weekly" ? styles.weeklyDayCell : ""} glass-card ${period === "monthly" && !isCurrentMonth ? styles.otherMonth : ""} ${isTodayDay ? styles.today : ""} ${isSelectedDay ? styles.selectedDay : ""}`}
           style={undefined}
-          onClick={() => setSelectedDate(day)}
+          onClick={() => selectDay(day)}
         >
           <div className={styles.dayCellHeader}>
             <span className={`${styles.dayNumber} ${isTodayDay ? styles.todayDayNumber : ""}`}>
@@ -516,7 +527,7 @@ const Timesheet: React.FC = () => {
               icon={<CustomIcon name="Edit3" size={13} />}
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedDate(row.day);
+                selectDay(row.day);
               }}
             >
               Edit
@@ -530,7 +541,7 @@ const Timesheet: React.FC = () => {
             icon={<CustomIcon name="Plus" size={13} />}
             onClick={(e) => {
               e.stopPropagation();
-              setSelectedDate(row.day);
+              selectDay(row.day);
             }}
           >
             Log
@@ -653,7 +664,7 @@ const Timesheet: React.FC = () => {
           loading={loading}
           emptyMessage="No days match the selected filter."
           highlightRowId={format(selectedDate, "yyyy-MM-dd")}
-          onRowClick={(row) => setSelectedDate(row.day)}
+          onRowClick={(row) => selectDay(row.day)}
           isRowExpanded={(row) => !!expandedDays[row.id]}
           renderExpandedRow={renderExpandedTasks}
         />
@@ -683,11 +694,27 @@ const Timesheet: React.FC = () => {
   const targetHours = period === "monthly" ? 160 : 40;
   const targetPercent = Math.round((totalPeriodHours / targetHours) * 100);
 
+  const selectedEntry = entries.find((e) =>
+    isSameDay(new Date(e.date), selectedDate),
+  );
+  const selectedGoogleEvents = MOCK_GOOGLE_EVENTS.filter((e) =>
+    isSameDay(e.date, selectedDate),
+  );
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={`${styles.fontXl} ${styles.fw700}`}>My Timesheet</h1>
         <div className={styles.headerActions}>
+          {isMobile && (
+            <CustomButton
+              variant="gradient"
+              icon={<CustomIcon name="Plus" size={18} />}
+              onClick={() => setIsLogDrawerOpen(true)}
+            >
+              Log Task
+            </CustomButton>
+          )}
           <CustomButton
             variant="secondary"
             icon={<CustomIcon name="FileText" size={18} />}
@@ -756,28 +783,28 @@ const Timesheet: React.FC = () => {
 
       {/* 60 / 40 Split Layout: Left Log Tasks & Right Calendar/Table */}
       <div className={styles.timesheetLayout}>
-        {/* Left Section (60% or Expanded): Log Tasks Panel */}
-        <div
-          className={`${styles.logTasksSection} ${
-            isCalendarCollapsed ? styles.logTasksSectionExpanded : ""
-          }`}
-        >
-          <TimesheetLogPanel
-            date={selectedDate}
-            existingEntry={entries.find((e) =>
-              isSameDay(new Date(e.date), selectedDate),
-            )}
-            googleEvents={MOCK_GOOGLE_EVENTS.filter((e) =>
-              isSameDay(e.date, selectedDate),
-            )}
-            isCalendarCollapsed={isCalendarCollapsed}
-            onExpandCalendar={() => setIsCalendarCollapsed(false)}
-          />
-        </div>
+        {/* Left Section (60% or Expanded): Log Tasks Panel.
+            On phones it opens as a drawer instead (rendered below). */}
+        {!isMobile && (
+          <div
+            className={`${styles.logTasksSection} ${
+              isCalendarCollapsed ? styles.logTasksSectionExpanded : ""
+            }`}
+          >
+            <TimesheetLogPanel
+              date={selectedDate}
+              existingEntry={selectedEntry}
+              googleEvents={selectedGoogleEvents}
+              isCalendarCollapsed={isCalendarCollapsed}
+              onExpandCalendar={() => setIsCalendarCollapsed(false)}
+            />
+          </div>
+        )}
 
         {/* Edge toggle: sits half on the calendar card's left border (like
             the sidebar toggle). Lives outside the card because the card
             scrolls and would clip it. */}
+        {!isMobile && (
         <div className={styles.calendarToggleAnchor}>
           <button
             type="button"
@@ -792,6 +819,7 @@ const Timesheet: React.FC = () => {
             />
           </button>
         </div>
+        )}
 
         {/* Right Section (40% or Collapsed): Calendar or Table View */}
         <div
@@ -831,6 +859,29 @@ const Timesheet: React.FC = () => {
           )}
         </div>
       </div>
+
+      {isMobile && (
+        <Drawer
+          isOpen={isLogDrawerOpen}
+          onClose={closeLogDrawer}
+          placement="bottom"
+          flushContent
+          title="Log Tasks"
+          subtitle={
+            <span className={styles.logPanelDate}>
+              {format(selectedDate, "EEEE, MMMM dd, yyyy")}
+            </span>
+          }
+        >
+          <TimesheetLogPanel
+            inDrawer
+            date={selectedDate}
+            existingEntry={selectedEntry}
+            googleEvents={selectedGoogleEvents}
+            onSaved={closeLogDrawer}
+          />
+        </Drawer>
+      )}
     </div>
   );
 };

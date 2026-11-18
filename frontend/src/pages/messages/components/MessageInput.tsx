@@ -19,6 +19,7 @@ interface MessageInputProps {
   onCancelReply: () => void;
   attachments: string[];
   onAttachmentsChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onPasteFiles: (files: File[]) => void;
   attachmentError: string | null;
   removeAttachment: (idx: number) => void;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
@@ -32,6 +33,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   onCancelReply,
   attachments,
   onAttachmentsChange,
+  onPasteFiles,
   attachmentError,
   removeAttachment,
   fileInputRef,
@@ -56,6 +58,18 @@ const MessageInput: React.FC<MessageInputProps> = ({
       e.preventDefault();
       e.currentTarget.form?.requestSubmit();
     }
+  };
+
+  // Ctrl+V / Cmd+V of a screenshot or copied image (or file) attaches it.
+  // Plain text pastes are left to the browser.
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = Array.from(e.clipboardData?.items ?? [])
+      .filter((item) => item.kind === "file")
+      .map((item) => item.getAsFile())
+      .filter((f): f is File => !!f);
+    if (!files.length) return;
+    e.preventDefault();
+    onPasteFiles(files);
   };
 
   useEffect(() => {
@@ -203,6 +217,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           className={styles.composerInput}
           aria-label="Message (Shift+Enter for a new line)"
         />

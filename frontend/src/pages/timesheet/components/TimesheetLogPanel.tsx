@@ -36,6 +36,8 @@ export interface TimesheetLogPanelProps {
   onSaved?: () => void;
   isCalendarCollapsed?: boolean;
   onExpandCalendar?: () => void;
+  /** Rendered inside the mobile Drawer: the drawer shows the title/date. */
+  inDrawer?: boolean;
 }
 
 const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
@@ -45,6 +47,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
   onSaved,
   isCalendarCollapsed,
   onExpandCalendar,
+  inDrawer = false,
 }) => {
   const queryClient = useQueryClient();
   const { showNotification, setIsLoading } = useNotification();
@@ -219,18 +222,26 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
   };
 
   return (
-    <div className={`glass-card ${styles.logPanelCard}`}>
+    <div
+      className={
+        inDrawer
+          ? `${styles.logPanelCard} ${styles.logPanelInDrawer}`
+          : `glass-card ${styles.logPanelCard}`
+      }
+    >
       {/* Header */}
       <div className={styles.logPanelHeader}>
-        <div className={styles.logPanelTitleGroup}>
-          <h2 className={styles.logPanelTitle}>
-            <CustomIcon name="Clock" size={19} />
-            <span>Log Tasks</span>
-          </h2>
-          <span className={styles.logPanelDate}>
-            {format(date, "EEEE, MMMM dd, yyyy")}
-          </span>
-        </div>
+        {!inDrawer && (
+          <div className={styles.logPanelTitleGroup}>
+            <h2 className={styles.logPanelTitle}>
+              <CustomIcon name="Clock" size={19} />
+              <span>Log Tasks</span>
+            </h2>
+            <span className={styles.logPanelDate}>
+              {format(date, "EEEE, MMMM dd, yyyy")}
+            </span>
+          </div>
+        )}
 
         <div className={styles.logPanelBadges}>
           {isToday(date) && (

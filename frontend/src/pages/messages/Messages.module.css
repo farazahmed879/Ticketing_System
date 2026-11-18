@@ -1349,24 +1349,7 @@
 
 /* ---------- Phones: list and chat are separate full-width screens ---------- */
 @media (max-width: 768px) {
-  .container {
-    grid-template-columns: minmax(0, 1fr);
-    /* 52px topbar + 12px top/bottom page padding */
-    height: calc(100dvh - 76px);
-    border-radius: 12px;
-  }
-
-  .container .chatArea {
-    display: none;
-  }
-
-  .containerChatOpen .chatArea {
-    display: flex;
-  }
-
-  .containerChatOpen .conversationList {
-    display: none;
-  }
+  /* List/thread switching lives in the earlier phone block (.hasActiveConv) */
 
   /* Conversation list */
   .listHeader {

@@ -327,19 +327,26 @@ const Messages: React.FC = () => {
     setReplyingTo(null);
   };
 
-  const handleAttachmentSelect = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    if (!e.target.files?.length) return;
+  // Shared by the file picker and clipboard paste.
+  const addAttachmentFiles = async (files: FileList | File[]) => {
+    if (!files.length) return;
     setAttachmentError(null);
     const { accepted, errors } = await readAttachmentFiles(
-      e.target.files,
+      files,
       attachments.length,
       { allowDocuments: true },
     );
     if (accepted.length) setAttachments((prev) => [...prev, ...accepted]);
     if (errors.length) setAttachmentError(errors.join(" "));
+  };
+
+  const handleAttachmentSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    if (!e.target.files?.length) return;
+    const files = Array.from(e.target.files);
     e.target.value = "";
+    await addAttachmentFiles(files);
   };
 
   const removeAttachment = (idx: number) => {
@@ -613,6 +620,7 @@ const Messages: React.FC = () => {
               onCancelReply={() => setReplyingTo(null)}
               attachments={attachments}
               onAttachmentsChange={handleAttachmentSelect}
+              onPasteFiles={addAttachmentFiles}
               attachmentError={attachmentError}
               removeAttachment={removeAttachment}
               fileInputRef={fileInputRef}

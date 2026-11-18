@@ -44,6 +44,7 @@ import { startResumeJobWorker } from './services/resumeJobWorker';
 import { startTimesheetReminderScheduler } from './services/timesheetReminder';
 import { startDbBackupScheduler } from './services/dbBackupService';
 import { startSessionCleanupScheduler } from './services/sessionService';
+import { ensureSubAdminRole } from './services/ensureSystemRoles';
 
 const app = express();
 const server = http.createServer(app);
@@ -136,6 +137,8 @@ setupSocketEvents(io);
 // Start Server
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
+  // Built-in roles added after a DB was seeded (e.g. Sub Admin).
+  ensureSubAdminRole();
   startAutoCloseScheduler();
   startNotificationCleanupScheduler();
   startTimesheetReminderScheduler(io);

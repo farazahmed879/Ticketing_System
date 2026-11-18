@@ -6,6 +6,8 @@ import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { DOCUMENT_TYPE_MAP, docTypeLabel, type DocumentType } from "../documents/documentConfig";
 import DocumentViewerModal from "../documents/DocumentViewerModal";
+import CustomSkeleton from "../../components/CustomSkeleton";
+import { formatDate } from "../../utils/helpers";
 import styles from "../documents/Documents.module.css";
 import profileStyles from "./Profile.module.css";
 
@@ -53,7 +55,10 @@ const MyDocumentsCard: React.FC<{ userId: string; isSelf: boolean }> = ({ userId
         </h3>
       </div>
       {isLoading ? (
-        <p className={styles.muted}>Loading…</p>
+        <div className={styles.docList}>
+          <CustomSkeleton height={52} />
+          <CustomSkeleton height={52} />
+        </div>
       ) : items.length === 0 ? (
         <p className={styles.muted}>No documents have been issued to this user.</p>
       ) : (
@@ -70,11 +75,7 @@ const MyDocumentsCard: React.FC<{ userId: string; isSelf: boolean }> = ({ userId
                   <strong>{d.title}</strong>
                   <small>
                     {docTypeLabel(d.type)} ·{" "}
-                    {new Date(d.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                    {formatDate(d.createdAt)}
                   </small>
                 </span>
                 <CustomIcon name="Download" size={16} color="var(--text-muted)" />

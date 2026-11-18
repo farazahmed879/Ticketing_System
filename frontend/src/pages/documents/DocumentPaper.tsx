@@ -5,6 +5,7 @@ import {
   fmtMoney,
   fmtMonth,
   sumItems,
+  toNumber,
   type CompanyProfile,
   type DocData,
   withBrandDefaults,
@@ -90,6 +91,7 @@ const s = {
 
 const tdR: React.CSSProperties = { ...s.td, textAlign: "right", whiteSpace: "nowrap" };
 const label: React.CSSProperties = { ...s.td, color: MUTED, width: "22%" };
+const labelWide: React.CSSProperties = { ...label, width: "34%" };
 
 /** Paragraphs from free text: blank lines split paragraphs, single newlines break lines. */
 const Paras: React.FC<{ text?: string }> = ({ text }) => (
@@ -370,6 +372,74 @@ const AppointmentLetter: React.FC<DocumentPaperProps> = ({ recipientName, data: 
   </>
 );
 
+const IncrementLetter: React.FC<DocumentPaperProps> = ({ recipientName, data: d, company: c }) => {
+  const increase = toNumber(d.newSalary) - toNumber(d.currentSalary);
+  const pct = toNumber(d.currentSalary) > 0 ? (increase / toNumber(d.currentSalary)) * 100 : 0;
+  return (
+    <>
+      <RefDate d={d} />
+      <Recipient name={recipientName} d={d} />
+      <Subject>Salary Increment</Subject>
+      <p style={s.p}>Dear {recipientName},</p>
+      <p style={s.p}>
+        We are pleased to inform you that the management has approved an increment in your salary,
+        effective <strong>{fmtDate(d.effectiveDate)}</strong>.
+      </p>
+      <table style={{ ...s.table, margin: "4px 0 14px" }}>
+        <tbody>
+          <tr><td style={labelWide}>Designation</td><td style={s.td}>{d.designation}{d.department ? `, ${d.department}` : ""}</td></tr>
+          <tr><td style={labelWide}>Current Monthly Salary</td><td style={s.td}>{fmtMoney(d.currentSalary, d.currency)}</td></tr>
+          <tr>
+            <td style={labelWide}>Increment</td>
+            <td style={s.td}>
+              {fmtMoney(increase, d.currency)}
+              {pct > 0 ? ` (${pct.toFixed(pct % 1 ? 1 : 0)}%)` : ""}
+            </td>
+          </tr>
+          <tr style={{ fontWeight: 700 }}>
+            <td style={labelWide}>Revised Monthly Salary</td>
+            <td style={s.td}>{fmtMoney(d.newSalary, d.currency)}</td>
+          </tr>
+        </tbody>
+      </table>
+      <Paras text={d.remarks} />
+      <p style={s.p}>All other terms and conditions of your employment remain unchanged.</p>
+      <Signature c={c} />
+    </>
+  );
+};
+
+const PromotionLetter: React.FC<DocumentPaperProps> = ({ recipientName, data: d, company: c }) => (
+  <>
+    <RefDate d={d} />
+    <Recipient name={recipientName} d={{ ...d, designation: d.currentDesignation }} />
+    <Subject>Promotion to {d.newDesignation}</Subject>
+    <p style={s.p}>Dear {recipientName},</p>
+    <p style={s.p}>
+      We are delighted to inform you that you have been promoted from{" "}
+      <strong>{d.currentDesignation}</strong> to <strong>{d.newDesignation}</strong>
+      {dept(d)}, effective <strong>{fmtDate(d.effectiveDate)}</strong>.
+    </p>
+    {(d.newSalary || d.reportingTo) && (
+      <table style={{ ...s.table, margin: "4px 0 14px" }}>
+        <tbody>
+          <tr><td style={labelWide}>New Designation</td><td style={s.td}>{d.newDesignation}</td></tr>
+          {d.newSalary ? (
+            <tr><td style={labelWide}>Revised Monthly Salary</td><td style={s.td}>{fmtMoney(d.newSalary, d.currency)}</td></tr>
+          ) : null}
+          {d.reportingTo && <tr><td style={labelWide}>Reporting To</td><td style={s.td}>{d.reportingTo}</td></tr>}
+        </tbody>
+      </table>
+    )}
+    <Paras text={d.remarks} />
+    <p style={s.p}>
+      All other terms and conditions of your employment remain unchanged. Congratulations on this
+      well-deserved achievement.
+    </p>
+    <Signature c={c} />
+  </>
+);
+
 const ExperienceLetter: React.FC<DocumentPaperProps> = ({ recipientName, data: d, company: c }) => (
   <>
     <RefDate d={d} />
@@ -473,6 +543,8 @@ const BODIES: Record<DocumentType, React.FC<DocumentPaperProps>> = {
   payslip: Payslip,
   offer_letter: OfferLetter,
   appointment_letter: AppointmentLetter,
+  increment_letter: IncrementLetter,
+  promotion_letter: PromotionLetter,
   experience_letter: ExperienceLetter,
   salary_certificate: SalaryCertificate,
   relieving_letter: RelievingLetter,

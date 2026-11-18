@@ -4,6 +4,7 @@ import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
 import { useHrDocument } from "./documentApi";
 import DocumentPaper from "./DocumentPaper";
+import CustomSkeleton from "../../components/CustomSkeleton";
 import { type HrDocument } from "./documentConfig";
 import { documentFileName, printDocument } from "./printDocument";
 import styles from "./Documents.module.css";
@@ -13,10 +14,17 @@ interface Props {
   onClose: () => void;
   /** Admin actions; omitted for employees viewing their own documents. */
   onEdit?: (doc: HrDocument) => void;
+  onDuplicate?: (doc: HrDocument) => void;
   onDelete?: (doc: HrDocument) => void;
 }
 
-const DocumentViewerModal: React.FC<Props> = ({ documentId, onClose, onEdit, onDelete }) => {
+const DocumentViewerModal: React.FC<Props> = ({
+  documentId,
+  onClose,
+  onEdit,
+  onDuplicate,
+  onDelete,
+}) => {
   const { data: doc, isLoading, isError } = useHrDocument(documentId);
 
   const download = () =>
@@ -38,6 +46,15 @@ const DocumentViewerModal: React.FC<Props> = ({ documentId, onClose, onEdit, onD
         </CustomButton>
       )}
       <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
+        {onDuplicate && (
+          <CustomButton
+            variant="outline"
+            icon={<CustomIcon name="Copy" size={16} />}
+            onClick={() => onDuplicate(doc)}
+          >
+            Duplicate
+          </CustomButton>
+        )}
         {onEdit && (
           <CustomButton
             variant="outline"
@@ -67,7 +84,7 @@ const DocumentViewerModal: React.FC<Props> = ({ documentId, onClose, onEdit, onD
       maxWidth="900px"
       footer={footer || undefined}
     >
-      {isLoading && <p className={styles.muted}>Loading document…</p>}
+      {isLoading && <CustomSkeleton height={520} />}
       {isError && <p className={styles.error}>This document could not be loaded.</p>}
       {doc && (
         <div className={styles.viewerPane}>

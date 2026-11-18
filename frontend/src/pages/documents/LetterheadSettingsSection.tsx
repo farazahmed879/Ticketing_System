@@ -4,6 +4,9 @@ import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
 import CustomInput from "../../components/CustomInput";
 import CustomTextArea from "../../components/CustomTextArea";
+import CustomSkeleton from "../../components/CustomSkeleton";
+import PhoneInput from "../../components/PhoneInput";
+import { COUNTRY_CODES } from "../../utils/constants";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
@@ -81,6 +84,18 @@ const ImagePicker: React.FC<{
   );
 };
 
+/** "+92 421234567" -> { code: "+92", number: "421234567" } (default +92). */
+const splitPhone = (value?: string | null) => {
+  const v = (value || "").trim();
+  // Longest code first so "+971" isn't read as "+9" + "71…".
+  const match = [...COUNTRY_CODES]
+    .sort((a, b) => b.value.length - a.value.length)
+    .find((c) => v.startsWith(c.value));
+  return match
+    ? { code: match.value, number: v.slice(match.value.length).replace(/\D/g, "") }
+    : { code: "+92", number: v.replace(/\D/g, "") };
+};
+
 /** The editable form; mounted once the saved letterhead has loaded. */
 const LetterheadForm: React.FC<{ initial: CompanyProfile }> = ({ initial }) => {
   const { showNotification } = useNotification();
@@ -112,6 +127,11 @@ const LetterheadForm: React.FC<{ initial: CompanyProfile }> = ({ initial }) => {
   const set = (key: keyof CompanyProfile, value: string | null) =>
     setForm((f) => ({ ...f, [key]: value }));
 
+  // Stored like user contacts: "+92 421234567" (code, space, digits).
+  const phoneParts = splitPhone(form.phone);
+  const setPhone = (code: string, number: string) =>
+    set("phone", number ? `${code} ${number}` : "");
+
   const text = (
     key: keyof CompanyProfile,
     label: string,
@@ -141,7 +161,14 @@ const LetterheadForm: React.FC<{ initial: CompanyProfile }> = ({ initial }) => {
     >
       {text("name", "Company Name *", BRAND.name)}
       {text("website", "Website", "www.example.com")}
-      {text("phone", "Phone")}
+      <PhoneInput
+        label="Phone"
+        countryCode={phoneParts.code}
+        phone={phoneParts.number}
+        onCountryCodeChange={(code) => setPhone(code, phoneParts.number)}
+        onPhoneChange={(num) => setPhone(phoneParts.code, num)}
+        placeholder="300 1234567"
+      />
       {text("email", "Email", "hr@example.com")}
       <div className={styles.wide}>
         <CustomTextArea
@@ -209,7 +236,11 @@ const LetterheadSettingsSection: React.FC = () => {
         they were issued with until edited.
       </p>
       {isLoading || !data ? (
-        <p className={styles.muted}>Loading…</p>
+        <div className={styles.letterheadForm}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <CustomSkeleton key={i} height={64} />
+          ))}
+        </div>
       ) : (
         <LetterheadForm key={dataUpdatedAt} initial={data} />
       )}

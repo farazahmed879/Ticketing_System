@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Modal from "../../components/Modal";
 import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
@@ -8,6 +9,7 @@ import CustomTextArea from "../../components/CustomTextArea";
 import CustomDatePicker from "../../components/CustomDatePicker";
 import DocumentPaper from "./DocumentPaper";
 import api from "../../services/api";
+import { formatCnic } from "../../utils/helpers";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import {
   DOCUMENT_TYPE_MAP,
@@ -31,6 +33,7 @@ export interface EmployeeOption {
   email?: string | null;
   companyEmail?: string | null;
   username?: string | null;
+  image?: string | null;
 }
 
 export interface DocumentDraft {
@@ -50,11 +53,62 @@ interface Props {
    */
   type: DocumentType;
   editing?: HrDocument | null;
+  /** Start a new document as a copy of this one (same type). */
+  duplicateOf?: HrDocument | null;
   employees: EmployeeOption[];
   company: CompanyProfile;
   saving?: boolean;
   onSave: (draft: DocumentDraft) => void;
 }
+
+/**
+ * Stored values that belong to one person. When the admin switches to a
+ * different employee, untouched fields from these are cleared if the new
+ * employee has no value, so nobody's CNIC or bank details leak into
+ * another person's document.
+ */
+const PERSONAL_KEYS = new Set([
+  "designation",
+  "department",
+  "cnic",
+  "recipientAddress",
+  "employeeId",
+  "email",
+  "reportingTo",
+  "workLocation",
+  "bankName",
+  "accountNo",
+  "joiningDate",
+  "salary",
+]);
+
+export interface CandidateOption {
+  id: string;
+  name: string;
+  email?: string | null;
+  position?: string | null;
+  cnic?: string | null;
+  address?: string | null;
+  city?: string | null;
+  status?: string | null;
+}
+
+const withoutCandidate = (d: DocData): DocData => {
+  const next = { ...d };
+  delete next.candidateId;
+  return next;
+};
+
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
+/** A duplicate is a fresh document: issue/payment dates start at today. */
+const duplicateData = (src: HrDocument): DocData => {
+  const data: DocData = { ...(src.data || {}) };
+  if ("date" in data) data.date = todayIso();
+  if ("payDate" in data) data.payDate = todayIso();
+  delete data.payPeriod; // older slips: month now follows payDate
+  return data;
+};
 
 interface PrefillResponse {
   values: DocData;
@@ -97,14 +151,15 @@ const LineItemsEditor: React.FC<{
           }
           containerStyle={{ flex: 1 }}
         />
-        <button
+        <CustomButton
           type="button"
-          className={styles.iconBtn}
+          variant="ghost"
+          size="sm"
           aria-label={`Remove ${item.label || "row"}`}
+          title="Remove row"
           onClick={() => onChange(items.filter((_, j) => j !== i))}
-        >
-          <CustomIcon name="X" size={16} />
-        </button>
+          icon={<CustomIcon name="X" size={16} />}
+        />
       </div>
     ))}
     <CustomButton
@@ -124,25 +179,86 @@ const DocumentEditorModal: React.FC<Props> = ({
   onClose,
   type: newType,
   editing,
+  duplicateOf,
   employees,
   company,
   saving,
   onSave,
 }) => {
-  const type = editing?.type || newType;
+  const source = editing || duplicateOf || null;
+  const type = source?.type || newType;
   const def = DOCUMENT_TYPE_MAP[type];
 
-  const [userId, setUserId] = useState<string | null>(editing?.userId || null);
-  const [recipientName, setRecipientName] = useState(editing?.recipientName || "");
-  const [title, setTitle] = useState(editing?.title || def.label);
+  const [userId, setUserId] = useState<string | null>(source?.userId || null);
+  const [recipientName, setRecipientName] = useState(source?.recipientName || "");
+  const [title, setTitle] = useState(source?.title || def.label);
   const [data, setData] = useState<DocData>(() =>
-    editing ? editing.data || {} : def.defaults?.() || {},
+    editing
+      ? editing.data || {}
+      : duplicateOf
+        ? duplicateData(duplicateOf)
+        : def.defaults?.() || {},
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   // Keys the admin typed into; pre-filling never overwrites these.
   const touched = useRef(new Set<string>());
   const prefillSeq = useRef(0);
   const [prefill, setPrefill] = useState<PrefillState>({ status: "idle" });
+
+  // Offer / appointment letters usually go to a candidate (Candidates list).
+  const [recipientKind, setRecipientKind] = useState<"candidate" | "employee">(
+    def.candidateRecipient && !source?.userId ? "candidate" : "employee",
+  );
+  const [candidate, setCandidate] = useState<CandidateOption | null>(() =>
+    source?.data?.candidateId
+      ? {
+          id: source.data.candidateId,
+          name: source.recipientName,
+          position: source.data.designation,
+        }
+      : null,
+  );
+  const [candidateQuery, setCandidateQuery] = useState("");
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onCandidateSearch = (q: string) => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => setCandidateQuery(q.trim()), 300);
+  };
+  const { data: candidateResults = [] } = useQuery({
+    queryKey: ["hr-document-candidates", candidateQuery],
+    queryFn: async () =>
+      ((
+        await api.get(API_ROUTES.DOCUMENTS.CANDIDATES, {
+          params: { search: candidateQuery || undefined },
+        })
+      ).data.items || []) as CandidateOption[],
+    enabled: !!def.candidateRecipient && recipientKind === "candidate",
+    staleTime: 60 * 1000,
+  });
+
+  const candidateOptions = useMemo(() => {
+    // Keep the selected candidate selectable even if a search filters it out.
+    const list =
+      candidate && !candidateResults.some((c) => c.id === candidate.id)
+        ? [candidate, ...candidateResults]
+        : candidateResults;
+    return list.map((c) => ({
+      value: c.id,
+      label: c.name,
+      sublabel: [c.position, c.email, c.status].filter(Boolean).join(" · ") || undefined,
+    }));
+  }, [candidate, candidateResults]);
+
+  const switchRecipientKind = (kind: "candidate" | "employee") => {
+    if (kind === recipientKind) return;
+    setRecipientKind(kind);
+    if (kind === "employee") pickCandidate(null);
+    else {
+      ++prefillSeq.current;
+      setUserId(null);
+      setPrefill({ status: "idle" });
+    }
+  };
 
   const clearError = (key: string) =>
     setErrors((prev) => {
@@ -158,15 +274,60 @@ const DocumentEditorModal: React.FC<Props> = ({
         value: u.id,
         label: u.fullname,
         sublabel: u.title || u.companyEmail || u.email || undefined,
+        image: u.image || undefined,
       })),
     [employees],
   );
 
   /**
+   * Apply stored values (employee profile + earlier documents, or a
+   * candidate record) to the form. Replaces defaults and earlier pre-filled
+   * values, never what the admin typed; clears untouched personal fields the
+   * new person has no value for. Returns per-source counts for the hint.
+   */
+  const applyStored = (res: PrefillResponse) => {
+    // Form key -> stored key it pre-fills from (usually the same).
+    const targets: [string, string][] = def.fields.map((f) => [f.key, f.prefillFrom || f.key]);
+    if (type === "payslip") targets.push(["earnings", "earnings"], ["deductions", "deductions"]);
+    const filled: DocData = {};
+    const cleared: string[] = [];
+    const applied: string[] = [];
+    for (const [key, src] of targets) {
+      if (touched.current.has(key)) continue;
+      if (src in res.values) {
+        filled[key] = res.values[src];
+        applied.push(key);
+      } else if (PERSONAL_KEYS.has(src)) {
+        cleared.push(key);
+      }
+    }
+    const sourceOf = (key: string) => targets.find(([k]) => k === key)?.[1] || key;
+    setData((prev) => {
+      const next = { ...prev, ...filled };
+      for (const k of cleared) delete next[k];
+      return next;
+    });
+    setErrors((prev) => {
+      const next = { ...prev };
+      for (const k of applied) delete next[k];
+      return next;
+    });
+    return {
+      fromProfile: applied.filter((k) => res.sources[sourceOf(k)] === "profile").length,
+      fromDocuments: applied.filter((k) => res.sources[sourceOf(k)] === "documents").length,
+    };
+  };
+
+  const setRecipientFrom = (name: string) => {
+    if (touched.current.has("recipientName")) return;
+    setRecipientName(name);
+    clearError("recipientName");
+  };
+
+  /**
    * Fill the form from the employee's stored data: profile (designation,
    * CNIC, address, department, manager...) and their earlier documents
    * (joining date, salary, bank, last pay slip's earnings/deductions).
-   * Replaces defaults and earlier pre-filled values, never what was typed.
    */
   const pickEmployee = async (id: string | null) => {
     setUserId(id || null);
@@ -176,42 +337,48 @@ const DocumentEditorModal: React.FC<Props> = ({
       setPrefill({ status: "idle" });
       return;
     }
-    if (!touched.current.has("recipientName")) {
-      setRecipientName(u.fullname);
-      clearError("recipientName");
-    }
+    // An employee and a candidate are alternatives, never both.
+    setCandidate(null);
+    setData(withoutCandidate);
+    setRecipientFrom(u.fullname);
     const seq = ++prefillSeq.current;
     setPrefill({ status: "loading", name: u.fullname });
     try {
       const res = (await api.get(API_ROUTES.DOCUMENTS.PREFILL(u.id))).data as PrefillResponse;
       if (seq !== prefillSeq.current) return; // a later pick won
-      const allowed = new Set(def.fields.map((f) => f.key));
-      if (type === "payslip") {
-        allowed.add("earnings");
-        allowed.add("deductions");
-      }
-      const applied = Object.keys(res.values).filter(
-        (k) => allowed.has(k) && !touched.current.has(k),
-      );
-      setData((prev) => {
-        const next = { ...prev };
-        for (const k of applied) next[k] = res.values[k];
-        return next;
-      });
-      setErrors((prev) => {
-        const next = { ...prev };
-        for (const k of applied) delete next[k];
-        return next;
-      });
-      setPrefill({
-        status: "done",
-        name: u.fullname,
-        fromProfile: applied.filter((k) => res.sources[k] === "profile").length,
-        fromDocuments: applied.filter((k) => res.sources[k] === "documents").length,
-      });
+      setPrefill({ status: "done", name: u.fullname, ...applyStored(res) });
     } catch {
       if (seq === prefillSeq.current) setPrefill({ status: "error", name: u.fullname });
     }
+  };
+
+  /** Offer / appointment letters: address a candidate from the Candidates list. */
+  const pickCandidate = (c: CandidateOption | null) => {
+    ++prefillSeq.current; // drop any in-flight employee pre-fill
+    setCandidate(c);
+    clearError("candidateId");
+    if (!c) {
+      setPrefill({ status: "idle" });
+      setData(withoutCandidate);
+      return;
+    }
+    setUserId(null);
+    setRecipientFrom(c.name);
+    const values: DocData = { candidateId: c.id };
+    const sources: PrefillResponse["sources"] = {};
+    const put = (k: string, v?: string | null) => {
+      if (v && v.trim()) {
+        values[k] = v.trim();
+        sources[k] = "profile";
+      }
+    };
+    put("designation", c.position);
+    put("cnic", c.cnic);
+    put("email", c.email);
+    put("recipientAddress", [c.address, c.city].filter((x) => x && x.trim()).join("\n"));
+    const counts = applyStored({ values, sources });
+    setData((prev) => ({ ...prev, candidateId: c.id }));
+    setPrefill({ status: "done", name: c.name, ...counts });
   };
 
   const setField = (key: string, value: unknown) => {
@@ -302,8 +469,13 @@ const DocumentEditorModal: React.FC<Props> = ({
       <CustomInput
         {...common}
         type={f.kind}
+        // Same live XXXXX-XXXXXXX-X formatting as the user/candidate forms.
+        transform={f.key === "cnic" ? formatCnic : undefined}
         value={data[f.key] ?? ""}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setField(f.key, e.target.value)}
+        // With `transform`, CustomInput passes the formatted string, not the event.
+        onChange={(e: React.ChangeEvent<HTMLInputElement> | string) =>
+          setField(f.key, typeof e === "string" ? e : e.target.value)
+        }
       />
     );
   };
@@ -323,7 +495,7 @@ const DocumentEditorModal: React.FC<Props> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`${editing ? "Edit" : "New"} ${def.label}`}
+      title={`${editing ? "Edit" : duplicateOf ? "Duplicate" : "New"} ${def.label}`}
       maxWidth="1280px"
       footer={footer}
     >
@@ -331,17 +503,58 @@ const DocumentEditorModal: React.FC<Props> = ({
         <form id="document-form" className={styles.editorForm} onSubmit={submit} noValidate>
           <div className={styles.formGrid}>
             <div className={styles.wide}>
-              <CustomSelect
-                label={def.employeeOnly ? "Employee" : "Employee (optional)"}
-                required={def.employeeOnly}
-                options={employeeOptions}
-                value={userId || ""}
-                onChange={(v: string) => pickEmployee(v)}
-                placeholder={
-                  def.employeeOnly ? "Select employee…" : "Select an employee, or type a name below"
-                }
-                error={errors.userId}
-              />
+              {def.candidateRecipient && (
+                <div className={`view-mode-switcher ${styles.switcher} ${styles.kindSwitcher}`}>
+                  {(["candidate", "employee"] as const).map((k) => (
+                    <CustomButton
+                      key={k}
+                      type="button"
+                      variant={recipientKind === k ? "primary" : "ghost"}
+                      size="sm"
+                      aria-pressed={recipientKind === k}
+                      onClick={() => switchRecipientKind(k)}
+                      icon={<CustomIcon name={k === "candidate" ? "UserPlus" : "User"} size={15} />}
+                    >
+                      {k === "candidate" ? "Candidate" : "Employee"}
+                    </CustomButton>
+                  ))}
+                </div>
+              )}
+              {def.candidateRecipient && recipientKind === "candidate" ? (
+                <CustomSelect
+                  label="Candidate"
+                  options={candidateOptions}
+                  value={candidate?.id || ""}
+                  onChange={(v: string) =>
+                    pickCandidate(
+                      candidateResults.find((c) => c.id === v) ||
+                        (candidate?.id === v ? candidate : null),
+                    )
+                  }
+                  showSearch
+                  serverSideSearch
+                  onSearch={onCandidateSearch}
+                  placeholder="Search candidates by name, email, position…"
+                />
+              ) : (
+                <CustomSelect
+                  label={def.employeeOnly ? "Employee" : "Employee (optional)"}
+                  required={def.employeeOnly}
+                  options={employeeOptions}
+                  value={userId || ""}
+                  onChange={(v: string) => pickEmployee(v)}
+                  placeholder={
+                    def.employeeOnly ? "Select employee…" : "Select an employee, or type a name below"
+                  }
+                  error={errors.userId}
+                />
+              )}
+              {duplicateOf && prefill.status === "idle" && (
+                <p className={styles.hint}>
+                  Copy of “{duplicateOf.title}” issued to {duplicateOf.recipientName}. Pick another
+                  employee to issue it to them — their details are filled in automatically.
+                </p>
+              )}
               {prefill.status === "loading" && (
                 <p className={styles.hint}>Loading {prefill.name}'s details…</p>
               )}
@@ -358,10 +571,11 @@ const DocumentEditorModal: React.FC<Props> = ({
               {prefill.status === "error" && (
                 <p className={styles.error}>Couldn't load {prefill.name}'s details. Fill the form manually.</p>
               )}
-              {!def.employeeOnly && (
+              {!def.employeeOnly && prefill.status === "idle" && !duplicateOf && (
                 <p className={styles.hint}>
-                  For a candidate or anyone without an account, leave this empty and type their
-                  name. Documents issued to an employee appear on their profile.
+                  {def.candidateRecipient && recipientKind === "candidate"
+                    ? "Pick from the Candidates list, or leave it empty and type the name below."
+                    : "For anyone without an account, leave this empty and type their name. Documents issued to an employee appear on their profile."}
                 </p>
               )}
             </div>

@@ -17,8 +17,10 @@ import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
 import { canDeleteRecords } from "../../utils/deleteAccess";
+import { formatDate, useListViewMode } from "../../utils/helpers";
 import {
   DOCUMENT_TYPES,
+  DOCUMENT_TYPE_MAP,
   docTypeLabel,
   type DocumentType,
   type HrDocument,
@@ -43,19 +45,13 @@ type Row = Pick<
   | "updatedAt"
 >;
 
-const fmtDateTime = (v: string) =>
-  new Date(v).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
 /** Admin / Sub Admin: generate and manage pay slips, letters and certificates. */
 const Documents: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showNotification } = useNotification();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [viewMode, setViewMode] = useListViewMode();
 
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -66,6 +62,7 @@ const Documents: React.FC = () => {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [newType, setNewType] = useState<DocumentType | null>(null);
   const [editing, setEditing] = useState<HrDocument | null>(null);
+  const [duplicating, setDuplicating] = useState<HrDocument | null>(null);
   const [toDelete, setToDelete] = useState<{
     id: string;
     title: string;
@@ -132,6 +129,7 @@ const Documents: React.FC = () => {
         `${doc.title} ${wasEditing ? "updated" : "generated"}${doc.userId ? " and shared with the employee" : ""}.`,
       );
       setEditing(null);
+      setDuplicating(null);
       setNewType(null);
       refresh();
       queryClient.setQueryData(["hr-document", doc.id], doc);
@@ -167,51 +165,17 @@ const Documents: React.FC = () => {
 
   const canDelete = canDeleteRecords();
 
-  const columns: TableColumn<Row>[] = [
-    {
-      header: "Document",
-      key: "title",
-      render: (r) => (
-        <div className={styles.recipient}>
-          <strong>{r.title}</strong>
-          <small>{docTypeLabel(r.type)}</small>
-        </div>
-      ),
-    },
-    {
-      header: "Issued To",
-      key: "recipientName",
-      render: (r) => (
-        <div className={styles.recipient}>
-          <span>{r.recipientName}</span>
-          <small>
-            {r.userId
-              ? employeeName(r.userId)
-                ? "Employee"
-                : "Employee (inactive)"
-              : "External recipient"}
-          </small>
-        </div>
-      ),
-    },
-    { header: "Issued By", key: "issuedByName" },
-    {
-      header: "Date",
-      key: "createdAt",
-      render: (r) => (
-        <div className={styles.recipient}>
-          <span>{fmtDateTime(r.createdAt)}</span>
-          {r.updatedAt !== r.createdAt && (
-            <small>Edited {fmtDateTime(r.updatedAt)}</small>
-          )}
-        </div>
-      ),
-    },
-    {
-      header: "",
-      key: "actions",
-      width: "130px",
-      render: (r) => (
+  /** Fetch the full document (list rows are summaries), then act on it. */
+  const loadThen = async (id: string, then: (doc: HrDocument) => void) => {
+    try {
+      then((await api.get(API_ROUTES.DOCUMENTS.BY_ID(id))).data.document);
+    } catch {
+      showNotification("error", "Could not load document");
+    }
+  };
+
+  // Row actions, shared by the table and the card grid.
+  const renderActions = (r: Row) => (
         <div className={styles.rowActions} onClick={(e) => e.stopPropagation()}>
           <CustomTooltip text="View / Download">
             <CustomButton
@@ -228,17 +192,19 @@ const Documents: React.FC = () => {
               variant="ghost"
               size="sm"
               aria-label="Edit"
-              onClick={async () => {
-                try {
-                  const doc = (await api.get(API_ROUTES.DOCUMENTS.BY_ID(r.id)))
-                    .data.document;
-                  setEditing(doc);
-                } catch {
-                  showNotification("error", "Could not load document");
-                }
-              }}
+              onClick={() => loadThen(r.id, setEditing)}
             >
               <CustomIcon name="Edit2" size={16} />
+            </CustomButton>
+          </CustomTooltip>
+          <CustomTooltip text="Duplicate">
+            <CustomButton
+              variant="ghost"
+              size="sm"
+              aria-label="Duplicate"
+              onClick={() => loadThen(r.id, setDuplicating)}
+            >
+              <CustomIcon name="Copy" size={16} />
             </CustomButton>
           </CustomTooltip>
           {canDelete && (
@@ -258,7 +224,54 @@ const Documents: React.FC = () => {
             </CustomTooltip>
           )}
         </div>
+  );
+
+  const issuedToLabel = (r: Row) =>
+    r.userId
+      ? employeeName(r.userId)
+        ? "Employee"
+        : "Employee (inactive)"
+      : "External recipient";
+
+  const columns: TableColumn<Row>[] = [
+    {
+      header: "Document",
+      key: "title",
+      render: (r) => (
+        <div className={styles.recipient}>
+          <strong>{r.title}</strong>
+          <small>{docTypeLabel(r.type)}</small>
+        </div>
       ),
+    },
+    {
+      header: "Issued To",
+      key: "recipientName",
+      render: (r) => (
+        <div className={styles.recipient}>
+          <span>{r.recipientName}</span>
+          <small>{issuedToLabel(r)}</small>
+        </div>
+      ),
+    },
+    { header: "Issued By", key: "issuedByName" },
+    {
+      header: "Date",
+      key: "createdAt",
+      render: (r) => (
+        <div className={styles.recipient}>
+          <span>{formatDate(r.createdAt)}</span>
+          {r.updatedAt !== r.createdAt && (
+            <small>Edited {formatDate(r.updatedAt)}</small>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: "",
+      key: "actions",
+      width: "170px",
+      render: (r) => renderActions(r),
     },
   ];
 
@@ -341,6 +354,24 @@ const Documents: React.FC = () => {
               style={{ minWidth: 200 }}
               showSearch={false}
             />
+            <div className={`view-mode-switcher ${styles.switcher}`}>
+              <CustomButton
+                variant={viewMode === "list" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                icon={<CustomIcon name="List" size={16} />}
+                title="List view"
+                style={{ padding: "6px 10px" }}
+              />
+              <CustomButton
+                variant={viewMode === "grid" ? "primary" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                icon={<CustomIcon name="LayoutGrid" size={16} />}
+                title="Grid view"
+                style={{ padding: "6px 10px" }}
+              />
+            </div>
           </div>
         }
         pagination={
@@ -359,14 +390,57 @@ const Documents: React.FC = () => {
           ) : undefined
         }
       >
-        <CustomTable
-          columns={columns}
-          data={data?.items || []}
-          loading={isLoading}
-          emptyMessage="No documents yet. Click “New Document” to generate one."
-          onRowClick={(r) => openViewer(r.id)}
-          highlightRowId={viewingId || undefined}
-        />
+        {viewMode === "list" ? (
+          <CustomTable
+            columns={columns}
+            data={data?.items || []}
+            loading={isLoading}
+            loadingMessage="Loading documents..."
+            emptyMessage="No documents yet. Click “New Document” to generate one."
+            onRowClick={(r) => openViewer(r.id)}
+            highlightRowId={viewingId || undefined}
+          />
+        ) : isLoading ? (
+          <div className={styles.gridEmpty}>Loading documents...</div>
+        ) : !data?.items.length ? (
+          <div className={styles.gridEmpty}>
+            No documents yet. Click “New Document” to generate one.
+          </div>
+        ) : (
+          <div className={styles.cardGrid}>
+            {data.items.map((r) => (
+              <div
+                key={r.id}
+                className={`glass-card ${styles.docCard}`}
+                onClick={() => openViewer(r.id)}
+              >
+                <div className={styles.docCardTop}>
+                  <span className={styles.typeIcon}>
+                    <CustomIcon
+                      name={DOCUMENT_TYPE_MAP[r.type]?.icon || "FileText"}
+                      size={20}
+                    />
+                  </span>
+                  <div className={styles.recipient}>
+                    <strong>{r.title}</strong>
+                    <small>{docTypeLabel(r.type)}</small>
+                  </div>
+                </div>
+                <div className={styles.recipient}>
+                  <span>{r.recipientName}</span>
+                  <small>{issuedToLabel(r)}</small>
+                </div>
+                <div className={styles.docCardFooter}>
+                  <small>
+                    {formatDate(r.createdAt)}
+                    {r.issuedByName ? ` · ${r.issuedByName}` : ""}
+                  </small>
+                  {renderActions(r)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </StandardListLayout>
 
       <Modal
@@ -380,10 +454,11 @@ const Documents: React.FC = () => {
             <button
               key={t.id}
               type="button"
-              className={styles.typeCard}
+              className={`glass-card ${styles.typeCard}`}
               onClick={() => {
                 setPickerOpen(false);
                 setEditing(null);
+                setDuplicating(null);
                 setNewType(t.id);
               }}
             >
@@ -400,16 +475,29 @@ const Documents: React.FC = () => {
         </div>
       </Modal>
 
-      {(newType || editing) && (
+      {(newType || editing || duplicating) && (
         <DocumentEditorModal
-          key={editing?.id || newType || ""}
+          key={
+            editing
+              ? `edit-${editing.id}`
+              : duplicating
+                ? `dup-${duplicating.id}`
+                : newType || ""
+          }
           isOpen
           onClose={() => {
             setNewType(null);
             setEditing(null);
+            setDuplicating(null);
           }}
-          type={(editing?.type || newType || "custom") as DocumentType}
+          type={
+            (editing?.type ||
+              duplicating?.type ||
+              newType ||
+              "custom") as DocumentType
+          }
           editing={editing}
+          duplicateOf={duplicating}
           employees={employees}
           company={company || { name: "" }}
           saving={save.isPending}
@@ -423,6 +511,10 @@ const Documents: React.FC = () => {
         onEdit={(doc) => {
           openViewer(null);
           setEditing(doc);
+        }}
+        onDuplicate={(doc) => {
+          openViewer(null);
+          setDuplicating(doc);
         }}
         onDelete={
           canDelete

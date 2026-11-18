@@ -88,6 +88,15 @@ export const documentController = {
     }
   },
 
+  async candidates(req: AuthRequest, res: Response) {
+    try {
+      const search = typeof req.query.search === "string" ? req.query.search : "";
+      res.json({ items: await documentUsecase.searchCandidates(search) });
+    } catch (e) {
+      fail(res, e, "load candidates");
+    }
+  },
+
   async create(req: AuthRequest, res: Response) {
     try {
       const doc = await documentUsecase.create(req.body, req.user!);

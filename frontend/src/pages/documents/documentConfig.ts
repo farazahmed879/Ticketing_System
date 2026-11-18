@@ -8,6 +8,8 @@ export type DocumentType =
   | "payslip"
   | "offer_letter"
   | "appointment_letter"
+  | "increment_letter"
+  | "promotion_letter"
   | "experience_letter"
   | "salary_certificate"
   | "relieving_letter"
@@ -22,6 +24,11 @@ export interface FieldDef {
   kind: FieldKind;
   required?: boolean;
   placeholder?: string;
+  /**
+   * Pre-fill this field from a different stored value, e.g. an increment
+   * letter's "current salary" is the employee's stored salary.
+   */
+  prefillFrom?: string;
   /** Choices for kind "select". */
   options?: string[];
   /** Spans both columns in the form grid. */
@@ -95,6 +102,8 @@ export interface DocumentTypeDef {
   description: string;
   /** Must be issued to an existing employee (vs. any named recipient). */
   employeeOnly: boolean;
+  /** Recipient is usually a candidate: offer a Candidate / Employee picker. */
+  candidateRecipient?: boolean;
   fields: FieldDef[];
   defaults?: () => DocData;
 }
@@ -176,6 +185,7 @@ export const DOCUMENT_TYPES: DocumentTypeDef[] = [
     icon: "Mail",
     description: "Job offer for a candidate or new hire, with salary and joining date.",
     employeeOnly: false,
+    candidateRecipient: true,
     fields: [
       DATE,
       REF,
@@ -200,6 +210,7 @@ export const DOCUMENT_TYPES: DocumentTypeDef[] = [
     icon: "BadgeCheck",
     description: "Formal confirmation of appointment with terms of employment.",
     employeeOnly: false,
+    candidateRecipient: true,
     fields: [
       DATE,
       REF,
@@ -220,6 +231,55 @@ export const DOCUMENT_TYPES: DocumentTypeDef[] = [
       probationMonths: 3,
       workingHours: "Monday to Friday, 9:00 AM – 6:00 PM",
       noticePeriod: "1 month",
+    }),
+  },
+  {
+    id: "increment_letter",
+    label: "Increment Letter",
+    icon: "TrendingUp",
+    description: "Salary increase with the new amount and effective date.",
+    employeeOnly: true,
+    fields: [
+      DATE,
+      REF,
+      DESIGNATION,
+      DEPARTMENT,
+      { key: "currentSalary", label: "Current Monthly Salary", kind: "number", required: true, prefillFrom: "salary" },
+      { key: "newSalary", label: "New Monthly Salary", kind: "number", required: true },
+      CURRENCY,
+      { key: "effectiveDate", label: "Effective From", kind: "date", required: true },
+      { key: "remarks", label: "Remarks", kind: "textarea", wide: true },
+    ],
+    defaults: () => ({
+      date: today(),
+      currency: "PKR",
+      remarks:
+        "This increment is in recognition of your performance and contribution to the company. We look forward to your continued dedication.",
+    }),
+  },
+  {
+    id: "promotion_letter",
+    label: "Promotion Letter",
+    icon: "Rocket",
+    description: "Promotion to a new designation, optionally with a revised salary.",
+    employeeOnly: true,
+    fields: [
+      DATE,
+      REF,
+      { key: "currentDesignation", label: "Current Designation", kind: "text", required: true, prefillFrom: "designation" },
+      { key: "newDesignation", label: "New Designation", kind: "text", required: true },
+      DEPARTMENT,
+      { key: "effectiveDate", label: "Effective From", kind: "date", required: true },
+      { key: "newSalary", label: "Revised Monthly Salary", kind: "number", placeholder: "Optional" },
+      CURRENCY,
+      { key: "reportingTo", label: "Reporting To", kind: "text" },
+      { key: "remarks", label: "Remarks", kind: "textarea", wide: true },
+    ],
+    defaults: () => ({
+      date: today(),
+      currency: "PKR",
+      remarks:
+        "This promotion reflects your consistent performance and the confidence the management has in your abilities. We wish you continued success in your new role.",
     }),
   },
   {

@@ -16,6 +16,7 @@ router.put("/company", requireAdmin, documentController.updateCompany);
 
 router.get("/mine", documentController.mine);
 router.get("/prefill/:userId", requireAdmin, documentController.prefill);
+router.get("/candidates", requireAdmin, documentController.candidates);
 router.get("/", requireAdmin, documentController.list);
 router.post("/", requireAdmin, documentController.create);
 router.get("/:id", documentController.getById);

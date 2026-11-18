@@ -105,6 +105,68 @@
   margin-left: auto;
 }
 
+/* Same look as the list/grid switcher on the other list pages. */
+.switcher {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.03);
+  margin-left: auto;
+}
+
+.kindSwitcher {
+  display: inline-flex;
+  margin: 0 0 10px;
+}
+
+/* ---------- card grid (same layout as Departments' grid view) ---------- */
+.cardGrid {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 4px 0;
+  align-content: start;
+}
+
+.docCard {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  cursor: pointer;
+  border: 1px solid var(--border-glass);
+  transition: var(--transition-normal);
+}
+
+.docCard:hover {
+  border-color: var(--accent-primary);
+}
+
+.docCardTop {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.docCardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+.gridEmpty {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted);
+  flex: 1;
+}
+
 /* ---------- editor ---------- */
 .editor {
   display: grid;
@@ -129,6 +191,11 @@
 .wide {
   grid-column: 1 / -1;
 }
+
+
+
+
+
 
 .prefillNote {
   display: flex;
@@ -177,24 +244,7 @@
   align-items: center;
 }
 
-.iconBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-}
 
-.iconBtn:hover {
-  color: var(--accent-danger);
-  background: color-mix(in srgb, var(--accent-danger) 10%, transparent);
-}
 
 .netPay {
   display: flex;

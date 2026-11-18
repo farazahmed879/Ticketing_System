@@ -109,6 +109,7 @@ export const API_ROUTES = {
     MINE: "/documents/mine",
     COMPANY: "/documents/company",
     PREFILL: (userId: string) => `/documents/prefill/${userId}`,
+    CANDIDATES: "/documents/candidates",
     BY_ID: (id: string) => `/documents/${id}`,
   },
 

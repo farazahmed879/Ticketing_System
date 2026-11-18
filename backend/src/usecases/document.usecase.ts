@@ -10,6 +10,8 @@ export const DOCUMENT_TYPES = [
   "payslip",
   "offer_letter",
   "appointment_letter",
+  "increment_letter",
+  "promotion_letter",
   "experience_letter",
   "salary_certificate",
   "relieving_letter",
@@ -22,6 +24,8 @@ export const DOCUMENT_LABELS: Record<DocumentType, string> = {
   payslip: "Pay Slip",
   offer_letter: "Offer Letter",
   appointment_letter: "Appointment Letter",
+  increment_letter: "Increment Letter",
+  promotion_letter: "Promotion Letter",
   experience_letter: "Experience Letter",
   salary_certificate: "Salary Certificate",
   relieving_letter: "Relieving Letter",
@@ -333,7 +337,14 @@ export const documentUsecase = {
       "recipientAddress",
     ];
     for (const d of docs) {
-      const data = (d.data || {}) as Record<string, any>;
+      const raw = (d.data || {}) as Record<string, any>;
+      // An increment/promotion letter's new salary/designation is the
+      // employee's current one from then on.
+      const data: Record<string, any> = {
+        ...raw,
+        salary: raw.newSalary || raw.salary,
+        designation: raw.newDesignation || raw.designation,
+      };
       for (const k of CARRY) put(k, data[k], "documents");
       // Salary breakdown only from the latest pay slip.
       if (d.type === "payslip" && !("earnings" in values)) {
@@ -357,6 +368,41 @@ export const documentUsecase = {
     }
 
     return { values, sources };
+  },
+
+  /**
+   * Candidates to address offer / appointment letters to. Only the fields a
+   * letter needs (no resume, embeddings, notes). Newest first, max 20.
+   */
+  async searchCandidates(search?: string) {
+    const q = (search || "").trim().slice(0, 100);
+    return prisma.candidate.findMany({
+      where: {
+        deleted: false,
+        ...(q
+          ? {
+              OR: [
+                { name: { contains: q, mode: "insensitive" } },
+                { email: { contains: q, mode: "insensitive" } },
+                { position: { contains: q, mode: "insensitive" } },
+                { cnic: { contains: q, mode: "insensitive" } },
+              ],
+            }
+          : {}),
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 20,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        position: true,
+        cnic: true,
+        address: true,
+        city: true,
+        status: true,
+      },
+    });
   },
 
   async notifyIssued(doc: { id: string; userId: string | null; type: string; title: string }, updated = false) {

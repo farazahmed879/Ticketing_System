@@ -5,6 +5,8 @@ export interface AuthRequest extends Request {
     id: string;
     role: string;
     permissions?: any;
+    /** Login session id (absent on tokens issued before sessions existed). */
+    sid?: string;
   };
 }
 

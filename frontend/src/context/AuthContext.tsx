@@ -1,7 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import api from "../services/api";
-import { connectSocket, disconnectSocket } from "../services/socket";
+import api, {
+  refreshAccessToken,
+  serverLogout,
+  SESSION_EXPIRED_EVENT,
+} from "../services/api";
+import { socket, connectSocket, disconnectSocket } from "../services/socket";
 
 import type { User } from "../types";
 
@@ -22,22 +26,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
 
+  // Restore the session on page load. An expired access token is renewed by
+  // the api interceptor; with no token at all (e.g. a new tab after the
+  // browser was closed), try the refresh cookie before showing the login page.
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      api
-        .get("/auth/me")
-        .then((res) => {
-          setUser(res.data);
-          connectSocket();
-        })
-        .catch(() => {
-          localStorage.removeItem("token");
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    (async () => {
+      try {
+        if (!localStorage.getItem("token")) {
+          const token = await refreshAccessToken();
+          if (!token) return;
+        }
+        const res = await api.get("/auth/me");
+        setUser(res.data);
+        connectSocket();
+      } catch {
+        localStorage.removeItem("token");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   const login = (token: string, userData: User) => {
@@ -51,6 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const logout = () => {
+    // End the session server-side too, so the refresh cookie can't revive it.
+    void serverLogout();
     localStorage.removeItem("token");
     sessionStorage.clear();
     // The QueryClient lives for the whole SPA lifetime and logout only does a
@@ -60,6 +69,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(null);
     disconnectSocket();
   };
+
+  // The server rejects the socket handshake once the (15-minute) access token
+  // has expired — typical after the laptop wakes up — and socket.io does NOT
+  // retry after a server-side rejection. Renew the token and reconnect; only
+  // if the session itself is gone, log out.
+  useEffect(() => {
+    const onConnectError = async (err: Error) => {
+      if (err.message !== "Invalid token" && err.message !== "Authentication required") return;
+      const token = await refreshAccessToken();
+      if (token) socket.connect();
+      else logout();
+    };
+    const onSessionExpired = () => logout();
+
+    socket.on("connect_error", onConnectError);
+    window.addEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+    return () => {
+      socket.off("connect_error", onConnectError);
+      window.removeEventListener(SESSION_EXPIRED_EVENT, onSessionExpired);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Stable identity: MainLayout's socket effect depends on it.
   const updateUser = useCallback((partial: Partial<User>) => {

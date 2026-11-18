@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import CustomIcon from "../../components/CustomIcon";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
@@ -23,6 +23,7 @@ const Login: React.FC = () => {
     defaultValues: {
       identifier: "",
       password: "",
+      remember: true,
     },
   });
 
@@ -62,6 +63,7 @@ const Login: React.FC = () => {
       const res = await api.post(API_ROUTES.AUTH.LOGIN, {
         email: data.identifier,
         password: data.password,
+        remember: data.remember !== false,
       });
       login(res.data.token, res.data.user);
       navigate("/");
@@ -260,6 +262,23 @@ const Login: React.FC = () => {
                   />
 
                   <div className={styles.forgotRow}>
+                    <Controller
+                      name="remember"
+                      control={loginControl}
+                      render={({ field }) => (
+                        <label
+                          className={styles.rememberLabel}
+                          title="Untick on a shared computer: you'll be signed out when the browser closes."
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!field.value}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                          />
+                          Remember me
+                        </label>
+                      )}
+                    />
                     <CustomButton
                       type="button"
                       variant="ghost"

@@ -3,6 +3,7 @@ import { AuthRequest } from "../types";
 import { userUsecase, ForbiddenError } from "../usecases/user.usecase";
 import { RoleType } from "../utils/constants";
 import { leaveUsecase } from "../usecases/leave.usecase";
+import { revokeAllSessions } from "../services/sessionService";
 
 /**
  * Personal data only Admin, HR and the user themselves may see. Everyone else
@@ -194,6 +195,8 @@ export const userController = {
 
       const { currentPassword, newPassword } = req.body;
       await userUsecase.updatePassword(userId, currentPassword, newPassword);
+      // Sign out every other device; this one stays logged in.
+      await revokeAllSessions(userId, req.user?.sid);
       res.json({ success: true });
     } catch (error: any) {
       const isClientError =

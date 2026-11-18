@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { userRepository } from "../repositories/user.repository";
 import { RoleType } from "../utils/constants";
 import prisma from "../prisma";
+import { revokeAllSessions } from "../services/sessionService";
 
 export class ForbiddenError extends Error {
   status = 403;
@@ -262,6 +263,8 @@ export const userUsecase = {
       updateData.password = await bcrypt.hash(data.password, 10);
     }
     const user = await userRepository.update(id, updateData);
+    // Password reset by an admin: log the user out on every device.
+    if (data.password) await revokeAllSessions(id);
     const { password: _, ...safeUser } = user;
     return safeUser;
   },
@@ -274,7 +277,9 @@ export const userUsecase = {
       throw new Error("Admin accounts cannot be deleted");
     }
 
-    return userRepository.update(id, { deleted: true });
+    const deleted = await userRepository.update(id, { deleted: true });
+    await revokeAllSessions(id);
+    return deleted;
   },
 
   async updateProfile(id: string, data: any) {

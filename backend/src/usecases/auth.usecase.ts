@@ -1,5 +1,4 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { authRepository } from "../repositories/auth.repository";
 import { RoleName, LoginHelpType } from "../utils/constants";
 
@@ -19,14 +18,10 @@ export const authUsecase = {
 
     const mustChangePassword = (user as any).mustChangePassword !== false;
 
-    const token = jwt.sign(
-      { id: user.id, role: user.role.roleType },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "1d" },
-    );
 
+    // The access token is issued by the controller together with a session
+    // (see services/sessionService.ts).
     return {
-      token,
       user: {
         id: user.id,
         email: user.email,
@@ -108,14 +103,10 @@ export const authUsecase = {
       roleId: role!.id,
     });
 
-    const token = jwt.sign(
-      { id: user.id, role: user.role.roleType },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "1d" },
-    );
 
+    // The access token is issued by the controller together with a session
+    // (see services/sessionService.ts).
     return {
-      token,
       user: {
         id: user.id,
         email: user.email,

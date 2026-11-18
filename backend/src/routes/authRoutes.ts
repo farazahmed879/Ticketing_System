@@ -67,4 +67,27 @@ router.post('/register', registrationEnabled, publicWriteLimiter, validateBody(s
  */
 router.get('/me', authMiddleware, authController.getMe);
 
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Exchange the refresh cookie for a new access token (rotates the cookie)
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: "{ token }"
+ *       401:
+ *         description: No valid session — log in again
+ */
+router.post('/refresh', authController.refresh);
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: End this browser's session and clear the refresh cookie
+ *     tags: [Auth]
+ */
+router.post('/logout', authController.logout);
+
 export default router;

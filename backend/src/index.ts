@@ -42,6 +42,7 @@ import { startNotificationCleanupScheduler } from './services/cleanupNotificatio
 import { startResumeJobWorker } from './services/resumeJobWorker';
 import { startTimesheetReminderScheduler } from './services/timesheetReminder';
 import { startDbBackupScheduler } from './services/dbBackupService';
+import { startSessionCleanupScheduler } from './services/sessionService';
 
 const app = express();
 const server = http.createServer(app);
@@ -56,7 +57,27 @@ app.set('io', io);
 
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+// The refresh cookie only travels on credentialed requests, which CORS allows
+// for explicitly listed origins only. Production serves the app and /api from
+// one origin (nginx), so this mainly matters for local dev (Vite on :5173
+// calling :4000). Everyone else keeps the old non-credentialed "*" policy.
+const credentialedOrigins = (
+  process.env.CORS_ORIGINS ??
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173')
+)
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+app.use(
+  cors((req, cb) => {
+    const origin = req.headers.origin;
+    if (origin && credentialedOrigins.includes(origin)) {
+      cb(null, { origin, credentials: true });
+    } else {
+      cb(null, { origin: '*' });
+    }
+  }),
+);
 // Large limit to accommodate base64-encoded image attachments on tickets and
 // comments (up to 5 images × 2MB binary ≈ 13.3MB base64 per payload).
 app.use(express.json({ limit: "20mb" }));
@@ -117,6 +138,7 @@ server.listen(PORT, () => {
   startNotificationCleanupScheduler();
   startTimesheetReminderScheduler(io);
   startDbBackupScheduler();
+  startSessionCleanupScheduler();
   startResumeJobWorker();
 });
 

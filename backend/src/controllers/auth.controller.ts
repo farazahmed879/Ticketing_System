@@ -1,6 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { authUsecase } from "../usecases/auth.usecase";
 import { emitNotificationToUser } from "../socketio/events";
+import {
+  startSession,
+  refreshSession,
+  endSession,
+  clearRefreshCookie,
+  SessionError,
+} from "../services/sessionService";
 
 /**
  * Public self-registration is off unless ALLOW_PUBLIC_REGISTRATION=true.
@@ -20,13 +27,45 @@ export const registrationEnabled = (
 
 export const authController = {
   async login(req: Request, res: Response) {
-    const { email, password } = req.body;
+    const { email, password, remember } = req.body;
     try {
       const result = await authUsecase.login(email, password);
-      res.json(result);
+      // Default to a remembered session when the client doesn't say.
+      const token = await startSession(
+        req,
+        res,
+        { id: result.user.id, roleType: result.user.role.roleType },
+        remember !== false,
+      );
+      res.json({ ...result, token });
     } catch (error: any) {
       const status = error.message === "Invalid credentials" ? 401 : 500;
       res.status(status).json({ message: error.message });
+    }
+  },
+
+  async refresh(req: Request, res: Response) {
+    try {
+      const token = await refreshSession(req, res);
+      res.json({ token });
+    } catch (error: any) {
+      if (error instanceof SessionError) {
+        clearRefreshCookie(res);
+        return res.status(401).json({ message: error.message });
+      }
+      console.error("[auth] refresh failed:", error);
+      res.status(500).json({ message: "Could not refresh session" });
+    }
+  },
+
+  async logout(req: Request, res: Response) {
+    try {
+      await endSession(req, res);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("[auth] logout failed:", error);
+      clearRefreshCookie(res);
+      res.json({ success: true });
     }
   },
 
@@ -44,7 +83,13 @@ export const authController = {
     const { email, password, fullname, username } = req.body;
     try {
       const result = await authUsecase.register(email, password, fullname, username);
-      res.status(201).json(result);
+      const token = await startSession(
+        req,
+        res,
+        { id: result.user.id, roleType: result.user.role.roleType },
+        true,
+      );
+      res.status(201).json({ ...result, token });
     } catch (error: any) {
       const status =
         error.message === "Email already exists" ||

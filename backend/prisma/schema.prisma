@@ -611,3 +611,28 @@ model DbBackup {
   startedAt       DateTime  @default(now())
   completedAt     DateTime?
 }
+
+// ==================== AUTH SESSIONS ====================
+
+// One row per signed-in browser/device. The browser holds a random refresh
+// token in an httpOnly cookie; only its SHA-256 hash is stored here. Each
+// refresh rotates the token (previousTokenHash keeps the last one briefly so
+// two tabs refreshing at once aren't mistaken for token theft).
+model AuthSession {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String    @db.ObjectId
+  tokenHash         String    @unique
+  previousTokenHash String?
+  rotatedAt         DateTime?
+  remember          Boolean   @default(true)
+  userAgent         String?
+  ip                String?
+  createdAt         DateTime  @default(now())
+  lastUsedAt        DateTime  @default(now())
+  expiresAt         DateTime  // sliding: pushed forward on every refresh
+  absoluteExpiresAt DateTime  // hard cap: re-login after this no matter what
+  revokedAt         DateTime?
+
+  @@index([userId])
+  @@index([previousTokenHash])
+}

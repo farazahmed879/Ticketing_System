@@ -438,7 +438,8 @@
 
 .forgotRow {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: -6px;
   margin-bottom: 4px;
 }
@@ -563,4 +564,22 @@
     padding-bottom: 16px;
     margin-top: auto;
   }
+}
+
+.rememberLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.rememberLabel input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
 }

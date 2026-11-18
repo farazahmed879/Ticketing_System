@@ -35,6 +35,7 @@ export const schemas = {
     // "email" is really an identifier: company email or username.
     email: trimmed(254),
     password: z.string().min(1, "Required").max(200),
+    remember: z.boolean().optional(),
   }),
 
   register: z.object({

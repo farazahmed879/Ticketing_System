@@ -16,7 +16,7 @@ const MAX_COMMENT_LENGTH = 2000;
 /** How many of the latest comments are sent with each feed post. */
 const PREVIEW_COMMENTS = 2;
 
-type FeedUser = { id: string; role: string };
+type FeedUser = { id: string; role: string; canDelete?: boolean };
 
 const AUTHOR_SELECT = {
   id: true,
@@ -408,8 +408,9 @@ export const announcementFeedUsecase = {
     const allowed =
       comment.userId === user.id ||
       comment.announcement.authorId === user.id ||
-      user.role === RoleType.ADMIN ||
-      user.role === RoleType.AGENT;
+      // Moderation: Admin/Manager, unless delete-restricted (Sub Admin).
+      (user.canDelete !== false &&
+        (user.role === RoleType.ADMIN || user.role === RoleType.AGENT));
     if (!allowed) {
       throw Object.assign(new Error("You cannot delete this comment"), {
         status: 403,

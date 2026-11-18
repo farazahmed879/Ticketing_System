@@ -53,13 +53,45 @@ export const loadCallerRole = async (req: AuthRequest) => {
     where: { id: req.user.id },
     select: {
       deleted: true,
-      role: { select: { roleType: true, permissions: true, deleted: true } },
+      role: { select: { roleType: true, permissions: true, deleted: true, canDelete: true } },
     },
   });
   if (!user || user.deleted || !user.role || user.role.deleted) return null;
   req.user.role = user.role.roleType;
   req.user.permissions = user.role.permissions;
+  req.user.canDelete = user.role.canDelete;
   return user.role;
+};
+
+/**
+ * True unless the caller's role is delete-restricted (Sub Admin: an admin
+ * roleType with canDelete=false). Use where admin/manager power lets someone
+ * delete what they don't own; deleting your own things stays allowed.
+ */
+export const callerMayUseDeletePower = async (req: AuthRequest) => {
+  const role = await loadCallerRole(req);
+  return !!role && role.canDelete !== false;
+};
+
+/** Route guard: 403 for delete-restricted roles (Sub Admin). */
+export const denyRestrictedDelete = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const role = await loadCallerRole(req);
+    if (!role) {
+      return res.status(401).json({ message: "Account is no longer active" });
+    }
+    if (role.canDelete === false) {
+      return res.status(403).json({ message: "Your role is not allowed to delete" });
+    }
+    next();
+  } catch (error) {
+    console.error("[auth] delete check failed:", error);
+    return res.status(500).json({ message: "Permission check failed" });
+  }
 };
 
 /**
@@ -74,6 +106,10 @@ export const requirePermission = (permPath: string) => {
       const role = await loadCallerRole(req);
       if (!role) {
         return res.status(401).json({ message: "Account is no longer active" });
+      }
+      // Delete-restricted roles (Sub Admin) never delete, admin or not.
+      if (action === "delete" && role.canDelete === false) {
+        return res.status(403).json({ message: "Your role is not allowed to delete" });
       }
       if (role.roleType === RoleType.ADMIN) return next();
       const perms = role.permissions as any;
@@ -97,6 +133,9 @@ export const requirePermissionOrRoles = (permPath: string, roleTypes: string[]) 
       const role = await loadCallerRole(req);
       if (!role) {
         return res.status(401).json({ message: "Account is no longer active" });
+      }
+      if (action === "delete" && role.canDelete === false) {
+        return res.status(403).json({ message: "Your role is not allowed to delete" });
       }
       if (role.roleType === RoleType.ADMIN || roleTypes.includes(role.roleType)) return next();
       const perms = role.permissions as any;

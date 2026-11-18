@@ -46,7 +46,13 @@ const RoleModal: React.FC<RoleModalProps> = ({
           form="role-form"
           variant={isCoreAdmin ? "secondary" : "gradient"}
           loading={isLoading}
-          title={isCoreAdmin ? "The system Admin role cannot be modified" : ""}
+          title={
+            isCoreAdmin
+              ? role?.canDelete === false
+                ? "The system Sub Admin role cannot be modified"
+                : "The system Admin role cannot be modified"
+              : ""
+          }
         >
           {role ? "Update Role" : "Create Role"}
         </CustomButton>

@@ -130,6 +130,28 @@ async function main() {
     },
   });
 
+  // Sub Admin: every admin right except deleting. Uses the admin roleType so
+  // all admin-only screens/actions work; canDelete=false is what blocks every
+  // delete (enforced server-side in middleware/auth.ts).
+  const subAdminPermissions = Object.fromEntries(
+    Object.entries(adminPermissions).map(([module, perms]) => [
+      module,
+      "delete" in perms ? { ...perms, delete: false } : perms,
+    ]),
+  ) as typeof adminPermissions;
+
+  await prisma.role.upsert({
+    where: { name: RoleName.SUB_ADMIN },
+    update: { permissions: subAdminPermissions, roleType: RoleType.ADMIN, canDelete: false },
+    create: {
+      name: RoleName.SUB_ADMIN,
+      description: "All admin rights except deleting",
+      roleType: RoleType.ADMIN,
+      permissions: subAdminPermissions,
+      canDelete: false,
+    },
+  });
+
   const agentRole = await prisma.role.upsert({
     where: { name: RoleName.AGENT },
     update: { permissions: agentPermissions },
@@ -199,6 +221,25 @@ async function main() {
     data: {
       permissions: {
         ...adminPermissions,
+        boardStatuses: {
+          [statusMap[StatusName.NEW]]: true,
+          [statusMap[StatusName.OPEN]]: true,
+          [statusMap[StatusName.TRASH]]: false,
+          [statusMap[StatusName.FAILED]]: true,
+          [statusMap[StatusName.IN_PROCESS]]: true,
+          [statusMap[StatusName.RESOLVED]]: true,
+          [statusMap[StatusName.CLOSED]]: false,
+          [statusMap[StatusName.APPROVED]]: true,
+        },
+      },
+    },
+  });
+
+  await prisma.role.update({
+    where: { name: RoleName.SUB_ADMIN },
+    data: {
+      permissions: {
+        ...subAdminPermissions,
         boardStatuses: {
           [statusMap[StatusName.NEW]]: true,
           [statusMap[StatusName.OPEN]]: true,

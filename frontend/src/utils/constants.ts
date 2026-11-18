@@ -1,5 +1,7 @@
 export const RoleName = {
   ADMIN: "Admin",
+  /** Admin rights except delete (roleType admin, role.canDelete = false). */
+  SUB_ADMIN: "Sub Admin",
   AGENT: "Manager",
   EMPLOYEE: "Employee",
   CUSTOMER: "Client",

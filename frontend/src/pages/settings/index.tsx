@@ -11,6 +11,8 @@ import { useAuth } from "../../context/AuthContext";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import Profile from "../profile";
 import BackupSettingsSection from "./BackupSettingsSection";
+import LetterheadSettingsSection from "../documents/LetterheadSettingsSection";
+import { useSearchParams } from "react-router-dom";
 import styles from "./Settings.module.css";
 import { t } from "i18next";
 
@@ -680,7 +682,8 @@ const Settings: React.FC = () => {
   const isAdmin = user?.role?.roleType === ROLE_TYPE.ADMIN;
   const canManageBackups =
     isAdmin || user?.role?.roleType === ROLE_TYPE.AGENT;
-  const [activeTab, setActiveTab] = useState("theme");
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "theme");
   const [primaryColor, setPrimaryColor] = useState(
     localStorage.getItem("--accent-primary") || "#7c3aed",
   );
@@ -762,6 +765,15 @@ const Settings: React.FC = () => {
             id: "ticket-settings",
             label: "Ticket Settings",
             icon: <CustomIcon name="Ticket" size={18} />,
+          },
+        ]
+      : []),
+    ...(isAdmin
+      ? [
+          {
+            id: "letterhead",
+            label: "Company Letterhead",
+            icon: <CustomIcon name="Building2" size={18} />,
           },
         ]
       : []),
@@ -1028,6 +1040,7 @@ const Settings: React.FC = () => {
             activeTab !== "profile" &&
             activeTab !== "notifications" &&
             activeTab !== "ticket-settings" &&
+            activeTab !== "letterhead" &&
             activeTab !== "backups" && (
               <div className={styles.emptyState}>
                 <CustomIcon
@@ -1045,6 +1058,12 @@ const Settings: React.FC = () => {
           {activeTab === "ticket-settings" && isAdmin && (
             <div className="animate-fade-in">
               <TicketSettingsSection />
+            </div>
+          )}
+
+          {activeTab === "letterhead" && isAdmin && (
+            <div className="animate-fade-in">
+              <LetterheadSettingsSection />
             </div>
           )}
 

@@ -1,4 +1,5 @@
 import type { TableColumn } from "../../components/types";
+import { canDeleteRecords } from "../../utils/deleteAccess";
 import type { User } from "../../types";
 import CustomIcon from "../../components/CustomIcon";
 import CustomButton from "../../components/CustomButton";
@@ -129,7 +130,7 @@ export const getUserColumns = (
             </CustomButton>
           </CustomTooltip>
         )}
-        {canEditUsers && (
+        {canEditUsers && canDeleteRecords() && (
           <CustomTooltip
             text={
               u.role.isAdmin ? "Admin accounts cannot be deleted" : "Delete"

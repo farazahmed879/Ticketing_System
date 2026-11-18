@@ -349,7 +349,9 @@ const RoleForm = forwardRef<any, RoleFormProps>(
                   letterSpacing: "0.5px",
                 }}
               >
-                ADMIN OVERRIDE ACTIVE
+                {initialData?.canDelete === false
+                  ? "SUB ADMIN: ADMIN ACCESS, NO DELETE"
+                  : "ADMIN OVERRIDE ACTIVE"}
               </span>
             )}
           </div>

@@ -20,7 +20,8 @@
     "messages": "Messages",
     "users": "Users",
     "roles": "Roles",
-    "myTeam": "My Team"
+    "myTeam": "My Team",
+    "documents": "Documents"
   },
   "topbar": {
     "overview": "Overview",

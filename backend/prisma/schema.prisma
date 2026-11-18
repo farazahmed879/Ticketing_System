@@ -91,6 +91,10 @@ model Role {
   description String?
   roleType    String  @default("employee")
   permissions Json
+  // false = may not delete anything, even with an admin roleType (Sub Admin).
+  // Unset/true = normal behaviour. Kept outside `permissions` because the
+  // Roles editor overwrites that object wholesale on save.
+  canDelete   Boolean?
   users       User[]
   deleted     Boolean @default(false)
 }
@@ -635,4 +639,44 @@ model AuthSession {
 
   @@index([userId])
   @@index([previousTokenHash])
+}
+
+// HR documents (pay slips, offer letters, experience letters, ...) issued by
+// Admin / Sub Admin. `data` holds the template's form fields; `company` is a
+// snapshot of the letterhead at issue time so later letterhead edits don't
+// silently change documents that were already issued. `userId` is the
+// employee it was issued to (they can view it from their profile); null for
+// external recipients such as a candidate receiving an offer letter.
+model HrDocument {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  type          String
+  title         String
+  userId        String?  @db.ObjectId
+  recipientName String
+  data          Json
+  company       Json
+  issuedById    String   @db.ObjectId
+  issuedByName  String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deleted       Boolean  @default(false)
+
+  @@index([userId])
+}
+
+// Letterhead used on HR documents. Singleton – one row with key "global".
+model CompanyProfile {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  key            String   @unique @default("global")
+  name           String   @default("")
+  logo           String?  // data URL
+  address        String?
+  phone          String?
+  email          String?
+  website        String?
+  signatoryName  String?
+  signatoryTitle String?
+  signature      String?  // data URL (image of the signature)
+  footerNote     String?
+  updatedAt      DateTime @updatedAt
 }

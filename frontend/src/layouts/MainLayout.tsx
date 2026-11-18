@@ -234,6 +234,15 @@ const MainLayout: React.FC = () => {
         queryClient.invalidateQueries({ queryKey: ["leaveHistory"] });
       }
 
+      // A pay slip / letter was issued or re-issued: refresh the profile list
+      // and drop any cached copy so the viewer shows the latest version.
+      if (notification.type === "document") {
+        queryClient.invalidateQueries({ queryKey: ["hr-documents-of"] });
+        if (notification.data?.documentId) {
+          queryClient.removeQueries({ queryKey: ["hr-document", notification.data.documentId] });
+        }
+      }
+
       if (!(isOnMessagesPage && isChatNotification)) {
         showNotification(
           isLeaveNotification && notification.data?.leaveChange < 0

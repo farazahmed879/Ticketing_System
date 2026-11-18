@@ -34,6 +34,7 @@ export const authUsecase = {
           name: user.role.name,
           roleType: user.role.roleType,
           permissions: user.role.permissions,
+          canDelete: user.role.canDelete,
         },
       },
     };
@@ -61,6 +62,7 @@ export const authUsecase = {
         name: user.role.name,
         roleType: user.role.roleType,
         permissions: user.role.permissions,
+        canDelete: user.role.canDelete,
       },
     };
   },
@@ -116,6 +118,7 @@ export const authUsecase = {
           name: user.role.name,
           roleType: user.role.roleType,
           permissions: user.role.permissions,
+          canDelete: user.role.canDelete,
         },
       },
     };

@@ -5,6 +5,7 @@ import prisma from "../prisma";
 import { announcementFeedUsecase } from "../usecases/announcementFeed.usecase";
 import { emitNotificationToUser } from "../socketio/events";
 import { validateFileAttachments } from "../utils/attachments";
+import { callerMayUseDeletePower } from "../middleware/auth";
 
 /** Announcement types the feed can be filtered by. */
 const FEED_TYPES = new Set(["event", "important", "info", "review", "moment"]);
@@ -156,7 +157,12 @@ export const announcementController = {
     try {
       const user = (req as any).user;
       const id = req.params.id as string;
-      await announcementFeedUsecase.deleteComment(user, id, req.params.commentId as string);
+      const canModerate = await callerMayUseDeletePower(req as any);
+      await announcementFeedUsecase.deleteComment(
+        { ...user, canDelete: canModerate },
+        id,
+        req.params.commentId as string,
+      );
       req.app.get("io")?.emit(SocketEvent.ANNOUNCEMENT_ACTIVITY, { announcementId: id });
       res.json({ message: "Comment deleted" });
     } catch (error: any) {
@@ -396,10 +402,12 @@ export const announcementController = {
         return res.status(404).json({ message: "Announcement not found" });
       }
 
+      // Own posts can always be deleted; others' only by Admin/Manager, and
+      // never by a delete-restricted role (Sub Admin).
       if (
-        user.role !== RoleType.ADMIN &&
-        user.role !== RoleType.AGENT &&
-        existing.authorId !== user.id
+        existing.authorId !== user.id &&
+        ((user.role !== RoleType.ADMIN && user.role !== RoleType.AGENT) ||
+          !(await callerMayUseDeletePower(req as any)))
       ) {
         return res.status(403).json({ message: "Access denied" });
       }

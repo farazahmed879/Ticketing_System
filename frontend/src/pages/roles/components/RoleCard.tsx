@@ -1,4 +1,5 @@
 import CustomIcon from "../../../components/CustomIcon";
+import { canDeleteRecords } from "../../../utils/deleteAccess";
 import CustomButton from "../../../components/CustomButton";
 import CustomBadge from "../../../components/CustomBadge";
 import CustomTooltip from "../../../components/CustomTooltip";
@@ -78,7 +79,10 @@ const RoleCard = ({ data, handleEdit, handleDelete }: RoleCardProps) => {
       </div>
 
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {role.isAdmin && (
+        {role.isAdmin && role.canDelete === false && (
+          <CustomBadge variant="warning">{RoleName.SUB_ADMIN}</CustomBadge>
+        )}
+        {role.isAdmin && role.canDelete !== false && (
           <CustomBadge variant="danger">{RoleName.ADMIN}</CustomBadge>
         )}
         {role.isAgent && (
@@ -128,15 +132,17 @@ const RoleCard = ({ data, handleEdit, handleDelete }: RoleCardProps) => {
               style={{ color: "var(--text-muted)", padding: "4px 8px" }}
             />
           </CustomTooltip>
-          <CustomTooltip text="Delete">
-            <CustomButton
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDelete(data.id)}
-              icon={<CustomIcon name="Trash2" size={16} />}
-              style={{ color: "var(--accent-danger)", padding: "4px 8px" }}
-            />
-          </CustomTooltip>
+          {canDeleteRecords() && (
+              <CustomTooltip text="Delete">
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(data.id)}
+                icon={<CustomIcon name="Trash2" size={16} />}
+                style={{ color: "var(--accent-danger)", padding: "4px 8px" }}
+              />
+            </CustomTooltip>
+          )}
         </div>
       </div>
     </div>

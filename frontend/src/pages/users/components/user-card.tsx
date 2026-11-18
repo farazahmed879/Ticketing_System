@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { canDeleteRecords } from "../../../utils/deleteAccess";
 import CustomIcon from "../../../components/CustomIcon";
 import CustomButton from "../../../components/CustomButton";
 import styles from "../UserList.module.css";
@@ -253,7 +254,7 @@ const UserCard = ({
             style={{ color: "var(--text-muted)", padding: "4px 8px" }}
           />
         )}
-        {canEditUsers && (
+        {canEditUsers && canDeleteRecords() && (
           <CustomButton
             variant="ghost"
             size="sm"

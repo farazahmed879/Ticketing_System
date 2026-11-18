@@ -124,8 +124,12 @@ const Requests: React.FC = () => {
 
   const hasPermission = (permPath: string) => {
     if (!user || !user.role || !user.role.permissions) return false;
-    if (user.role.name === "Admin") return true;
     const [module, action] = permPath.split(".");
+    // Admin-type roles (Admin, Sub Admin) have every right, except that a
+    // delete-restricted role (Sub Admin) never deletes.
+    if (user.role.roleType === "admin") {
+      return action !== "delete" || user.role.canDelete !== false;
+    }
     return (user.role.permissions as any)?.[module]?.[action] === true;
   };
 

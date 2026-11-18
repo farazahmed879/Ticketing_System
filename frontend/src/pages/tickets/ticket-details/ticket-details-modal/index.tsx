@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { canDeleteRecords } from "../../../../utils/deleteAccess";
 import { createPortal } from "react-dom";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -585,7 +586,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({
               navigate(`/tickets/${displayTicket.id}`);
             },
           },
-          ...(user?.role?.roleType === ROLE_TYPE.ADMIN
+          ...(user?.role?.roleType === ROLE_TYPE.ADMIN && canDeleteRecords()
             ? [
                 {
                   label: "Delete Ticket",

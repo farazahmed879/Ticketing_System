@@ -1,4 +1,5 @@
 import type React from "react";
+import { canDeleteRecords } from "../../utils/deleteAccess";
 import type { TableColumn } from "../../components/types";
 import type { Candidate } from "../../types";
 import type { NavigateFunction } from "react-router-dom";
@@ -104,18 +105,20 @@ export const CandidateActions = ({
         style={buttonStyle}
       />
     </CustomTooltip>
-    <CustomTooltip text="Delete">
-      <CustomButton
-        variant="ghost"
-        size="sm"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(c.id);
-        }}
-        icon={<CustomIcon name="Trash2" size={iconSize} />}
-        style={{ ...buttonStyle, color: "var(--accent-danger)" }}
-      />
-    </CustomTooltip>
+    {canDeleteRecords() && (
+        <CustomTooltip text="Delete">
+        <CustomButton
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(c.id);
+          }}
+          icon={<CustomIcon name="Trash2" size={iconSize} />}
+          style={{ ...buttonStyle, color: "var(--accent-danger)" }}
+        />
+      </CustomTooltip>
+    )}
   </div>
 );
 

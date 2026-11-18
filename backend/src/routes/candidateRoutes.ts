@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import { candidateController } from "../controllers/candidate.controller";
-import { authMiddleware, checkRole } from "../middleware/auth";
+import { authMiddleware, checkRole, denyRestrictedDelete } from "../middleware/auth";
 import { RoleType } from "../utils/constants";
 
 const router = Router();
@@ -61,12 +61,14 @@ router.post(
   "/delete-all",
   authMiddleware,
   checkRole([RoleType.ADMIN]),
+  denyRestrictedDelete,
   candidateController.deleteAllCandidates,
 );
 router.delete(
   "/all",
   authMiddleware,
   checkRole([RoleType.ADMIN]),
+  denyRestrictedDelete,
   candidateController.deleteAllCandidates,
 );
 
@@ -115,6 +117,7 @@ router.delete(
   "/:id",
   authMiddleware,
   checkRole(allowedRoles),
+  denyRestrictedDelete,
   candidateController.deleteCandidate,
 );
 

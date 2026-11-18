@@ -3,6 +3,7 @@ import { AuthRequest } from "../types";
 import { requestUsecase, LEAVE_TYPES } from "../usecases/request.usecase";
 import { emitNotificationToUser } from "../socketio/events";
 import { RoleType } from "../utils/constants";
+import { callerMayUseDeletePower } from "../middleware/auth";
 
 export const requestController = {
   async getRequests(req: AuthRequest, res: Response) {
@@ -144,9 +145,12 @@ export const requestController = {
 
       // Allow owner or Admin to delete
       const isOwner = request.userId === user.id;
+      // Loads role, permissions and canDelete fresh (JWT only has id + role).
+      const mayUseDeletePower = await callerMayUseDeletePower(req);
       const isAdmin =
-        user.role === RoleType.ADMIN ||
-        (user.permissions as any)?.requests?.delete === true;
+        mayUseDeletePower &&
+        (user.role === RoleType.ADMIN ||
+          (user.permissions as any)?.requests?.delete === true);
 
       if (!isOwner && !isAdmin) {
         return res

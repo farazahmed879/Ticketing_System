@@ -1,5 +1,5 @@
 import prisma from "../prisma";
-import { InterviewStatus } from "../utils/constants";
+import { InterviewStatus, RoleType } from "../utils/constants";
 
 export const interviewRepository = {
   async findMany(where: any, skip?: number, take?: number) {
@@ -148,7 +148,8 @@ export const interviewRepository = {
   async findAdmins() {
     return prisma.user.findMany({
       where: {
-        role: { name: "Admin" },
+        // Admin-type roles (Admin and Sub Admin), not just the role named "Admin".
+        role: { roleType: RoleType.ADMIN },
         deleted: false,
       },
       select: { id: true },

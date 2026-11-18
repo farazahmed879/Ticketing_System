@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { canDeleteRecords } from "../../utils/deleteAccess";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
@@ -45,8 +46,9 @@ const InterviewList: React.FC = () => {
     user?.role?.permissions?.interviews?.update;
 
   const canDeleteInterviews =
-    user?.role?.roleType === ROLE_TYPE.ADMIN ||
-    user?.role?.permissions?.interviews?.delete;
+    canDeleteRecords() &&
+    (user?.role?.roleType === ROLE_TYPE.ADMIN ||
+      user?.role?.permissions?.interviews?.delete);
 
   const canCreateInterviews =
     user?.role?.roleType === ROLE_TYPE.ADMIN ||

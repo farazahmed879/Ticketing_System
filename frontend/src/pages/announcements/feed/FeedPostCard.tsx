@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { canDeleteRecords } from "../../../utils/deleteAccess";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import api from "../../../services/api";
@@ -134,12 +135,18 @@ const FeedPostCard = ({
               position="right"
               items={[
                 { label: "Edit", icon: "Edit2", onClick: () => onEdit(post) },
-                {
-                  label: "Delete",
-                  icon: "Trash2",
-                  danger: true,
-                  onClick: () => onDelete(post.id),
-                },
+                // Own posts can always be deleted; others' need delete rights
+                // (Sub Admin may moderate/edit but not delete).
+                ...(post.authorId === me.id || canDeleteRecords()
+                  ? [
+                      {
+                        label: "Delete",
+                        icon: "Trash2",
+                        danger: true,
+                        onClick: () => onDelete(post.id),
+                      },
+                    ]
+                  : []),
               ]}
             />
           )}

@@ -1,4 +1,5 @@
 import { format, parseISO, isBefore, startOfDay } from "date-fns";
+import { canDeleteRecords } from "../../../utils/deleteAccess";
 import CustomDropdownMenu from "../../../components/CustomDropdownMenu";
 import CustomIcon from "../../../components/CustomIcon";
 import { ROLE_TYPE } from "../../roles/roleConstants";
@@ -100,7 +101,7 @@ const TicketCard = ({
                     ...moveMenuItems,
                   ]
                 : []),
-              ...(user?.role?.roleType === ROLE_TYPE.ADMIN
+              ...(user?.role?.roleType === ROLE_TYPE.ADMIN && canDeleteRecords()
                 ? [
                     {
                       label: "Delete Ticket",

@@ -14,6 +14,9 @@ export function getNotificationLink(n: {
     return d.roomId ? `/messages?roomId=${d.roomId}` : "/messages";
   }
   if (n.type === "leave") return "/profile";
+  if (n.type === "document" && d.documentId) {
+    return `/profile?documentId=${d.documentId}`;
+  }
   if (d.interviewId) return `/interviews/${d.interviewId}`;
   if (d.requestId) return `/requests?requestId=${d.requestId}`;
   if (d.announcementId) return `/announcements?postId=${d.announcementId}`;

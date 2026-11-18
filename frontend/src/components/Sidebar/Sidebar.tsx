@@ -167,6 +167,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       permission: "announcements.view",
     },
     {
+      // Admin-type roles only (hasPermission's admin bypass); no other role
+      // has a documents.* permission.
+      icon: <CustomIcon name="FileSignature" size={20} />,
+      label: t("sidebar.documents", "Documents"),
+      path: "/documents",
+      permission: "documents.view",
+    },
+    {
       icon: <CustomIcon name="Users" size={20} />,
       label: t("sidebar.users"),
       path: "/users",

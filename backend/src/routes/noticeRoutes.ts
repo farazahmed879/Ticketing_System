@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { noticeController } from '../controllers/notice.controller';
-import { authMiddleware, requirePermission, requireAdmin } from '../middleware/auth';
+import { authMiddleware, requirePermission, requireAdmin, denyRestrictedDelete } from '../middleware/auth';
 
 const router = Router();
 
@@ -127,6 +127,6 @@ router.post('/clear', authMiddleware, requireAdmin, noticeController.clearNotice
  *       200:
  *         description: Notice deleted
  */
-router.delete('/:id', authMiddleware, requireAdmin, noticeController.deleteNotice);
+router.delete('/:id', authMiddleware, requireAdmin, denyRestrictedDelete, noticeController.deleteNotice);
 
 export default router;

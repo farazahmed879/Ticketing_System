@@ -1,4 +1,5 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { canDeleteRecords } from "../../../utils/deleteAccess";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../../../services/api";
 import { API_ROUTES } from "../../../utils/apiRoutes";
@@ -98,7 +99,9 @@ const CommentsSection = forwardRef<CommentsSectionHandle, CommentsSectionProps>(
 
         {comments.map((c) => {
           const canDelete =
-            c.user.id === me.id || post.authorId === me.id || canModerate;
+            c.user.id === me.id ||
+            post.authorId === me.id ||
+            (canModerate && canDeleteRecords());
           return (
             <div key={c.id} className={styles.comment}>
               <Avatar user={c.user} />

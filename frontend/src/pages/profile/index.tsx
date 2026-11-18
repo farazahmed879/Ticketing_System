@@ -15,6 +15,7 @@ import type { Role, UserFormData } from "../../types";
 import CustomImage from "../../components/CustomImage";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import LeaveBalanceCard from "./LeaveBalanceCard";
+import MyDocumentsCard from "./MyDocumentsCard";
 
 const Profile: React.FC = () => {
   const { id } = useParams();
@@ -221,6 +222,16 @@ const Profile: React.FC = () => {
             isSelf={user.id === currentUser?.id}
           />
         )}
+
+      {/* Pay slips / letters issued to this user. Own profile, or any
+          profile for admin-type roles (Admin, Sub Admin) who issue them. */}
+      {(user.id === currentUser?.id ||
+        currentUser?.role?.roleType === ROLE_TYPE.ADMIN) && (
+        <MyDocumentsCard
+          userId={user.id}
+          isSelf={user.id === currentUser?.id}
+        />
+      )}
 
       <div className={styles.layout}>
         {/* Main Content */}

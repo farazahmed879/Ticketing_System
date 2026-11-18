@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useMemo } from "react";
+import { canDeleteRecords } from "../../utils/deleteAccess";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
@@ -56,8 +57,9 @@ const ProjectList: React.FC = () => {
     user?.role?.roleType === ROLE_TYPE.ADMIN ||
     user?.role?.permissions?.groups?.update === true;
   const canDelete =
-    user?.role?.roleType === ROLE_TYPE.ADMIN ||
-    user?.role?.permissions?.groups?.delete === true;
+    canDeleteRecords() &&
+    (user?.role?.roleType === ROLE_TYPE.ADMIN ||
+      user?.role?.permissions?.groups?.delete === true);
 
   const { data: projectsData, isLoading: loading } = useQuery({
     queryKey: [

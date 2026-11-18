@@ -39,6 +39,8 @@ import CandidateLeaderboard from "./pages/candidates/CandidateLeaderboard.tsx";
 import InterviewList from "./pages/interviews/index.tsx";
 import InterviewDetail from "./pages/interviews/InterviewDetail.tsx";
 import AnnouncementList from "./pages/announcements/index.tsx";
+import Documents from "./pages/documents/index.tsx";
+import { ROLE_TYPE } from "./pages/roles/roleConstants";
 import NotFound from "./pages/NotFound.tsx";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
@@ -59,6 +61,13 @@ const CandidateListRoute: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { user } = useAuth();
   if (!canManageCandidates(user)) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
+// HR documents are for admin-type roles (Admin, Sub Admin) only.
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  if (user?.role?.roleType !== ROLE_TYPE.ADMIN) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
@@ -128,6 +137,14 @@ const App: React.FC = () => {
                 <Route path="interviews" element={<InterviewList />} />
                 <Route path="interviews/:id" element={<InterviewDetail />} />
                 <Route path="announcements" element={<AnnouncementList />} />
+                <Route
+                  path="documents"
+                  element={
+                    <AdminRoute>
+                      <Documents />
+                    </AdminRoute>
+                  }
+                />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

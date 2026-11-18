@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { canDeleteRecords } from "../../utils/deleteAccess";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
@@ -283,7 +284,7 @@ const TicketList: React.FC = () => {
         navigate(`/tickets/${t.id}`);
       },
     },
-    ...(user?.role?.roleType === ROLE_TYPE.ADMIN
+    ...(user?.role?.roleType === ROLE_TYPE.ADMIN && canDeleteRecords()
       ? [
           {
             label: "Delete",

@@ -1,4 +1,5 @@
 import type { TableColumn } from "../../components/types";
+import { canDeleteRecords } from "../../utils/deleteAccess";
 import type { Role } from "../../types";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
@@ -46,7 +47,10 @@ export const getRoleColumns = (
     key: "type",
     render: (role: any) => (
       <div className="flex-row">
-        {role.isAdmin && (
+        {role.isAdmin && role.canDelete === false && (
+          <CustomBadge variant="warning">{RoleName.SUB_ADMIN}</CustomBadge>
+        )}
+        {role.isAdmin && role.canDelete !== false && (
           <CustomBadge variant="danger">{RoleName.ADMIN}</CustomBadge>
         )}
         {role.isAgent && (
@@ -87,15 +91,17 @@ export const getRoleColumns = (
             icon={<CustomIcon name="Edit2" size={18} />}
           />
         </CustomTooltip>
-        <CustomTooltip text="Delete">
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDelete(role.id)}
-            icon={<CustomIcon name="Trash2" size={18} />}
-            style={{ color: "var(--accent-danger)" }}
-          />
-        </CustomTooltip>
+        {canDeleteRecords() && (
+            <CustomTooltip text="Delete">
+            <CustomButton
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDelete(role.id)}
+              icon={<CustomIcon name="Trash2" size={18} />}
+              style={{ color: "var(--accent-danger)" }}
+            />
+          </CustomTooltip>
+        )}
       </div>
     ),
   },

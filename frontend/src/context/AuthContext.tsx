@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { setDeleteAllowed } from "../utils/deleteAccess";
 import { useQueryClient } from "@tanstack/react-query";
 import api, {
   refreshAccessToken,
@@ -23,6 +24,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  // Keep the module-level delete flag (used by Delete buttons) in step with
+  // the logged-in user's role. Idempotent, so setting it during render is fine.
+  setDeleteAllowed(user?.role?.canDelete !== false);
   const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
 

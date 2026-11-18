@@ -1,0 +1,377 @@
+import prisma from "../prisma";
+
+/**
+ * HR documents issued by Admin / Sub Admin (pay slips, offer letters, ...).
+ * The backend stores the form data + a letterhead snapshot; the frontend
+ * renders the printable document from those, so the same document always
+ * looks the same when re-opened.
+ */
+export const DOCUMENT_TYPES = [
+  "payslip",
+  "offer_letter",
+  "appointment_letter",
+  "experience_letter",
+  "salary_certificate",
+  "relieving_letter",
+  "warning_letter",
+  "custom",
+] as const;
+export type DocumentType = (typeof DOCUMENT_TYPES)[number];
+
+export const DOCUMENT_LABELS: Record<DocumentType, string> = {
+  payslip: "Pay Slip",
+  offer_letter: "Offer Letter",
+  appointment_letter: "Appointment Letter",
+  experience_letter: "Experience Letter",
+  salary_certificate: "Salary Certificate",
+  relieving_letter: "Relieving Letter",
+  warning_letter: "Warning Letter",
+  custom: "Custom Letter",
+};
+
+const COMPANY_FIELDS = [
+  "name",
+  "logo",
+  "address",
+  "phone",
+  "email",
+  "website",
+  "signatoryName",
+  "signatoryTitle",
+  "signature",
+  "footerNote",
+] as const;
+
+const IMAGE_DATA_URL_RE = /^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i;
+const MAX_IMAGE_CHARS = 1_500_000; // ~1.1MB binary
+
+export class DocumentError extends Error {
+  constructor(
+    message: string,
+    public status = 400,
+  ) {
+    super(message);
+  }
+}
+
+const cleanImage = (v: unknown, field: string) => {
+  if (v === null || v === undefined || v === "") return null;
+  if (typeof v !== "string" || !IMAGE_DATA_URL_RE.test(v)) {
+    throw new DocumentError(`${field} must be a PNG, JPG, WEBP, GIF or SVG image`);
+  }
+  if (v.length > MAX_IMAGE_CHARS) {
+    throw new DocumentError(`${field} image is too large (max ~1MB)`);
+  }
+  return v;
+};
+
+const OBJECT_ID_RE = /^[0-9a-f]{24}$/i;
+/** Malformed ids would make Prisma throw (500); treat them as not found. */
+const assertId = (id: unknown, what: string) => {
+  if (typeof id !== "string" || !OBJECT_ID_RE.test(id)) {
+    throw new DocumentError(`${what} not found`, 404);
+  }
+};
+
+const str = (v: unknown, max = 2000) =>
+  typeof v === "string" ? v.trim().slice(0, max) : v == null ? null : String(v).slice(0, max);
+
+export const documentUsecase = {
+  async getCompany() {
+    return prisma.companyProfile.upsert({
+      where: { key: "global" },
+      update: {},
+      create: { key: "global", name: "" },
+    });
+  },
+
+  async updateCompany(body: any) {
+    const data: Record<string, any> = {};
+    for (const f of COMPANY_FIELDS) {
+      if (!(f in (body || {}))) continue;
+      data[f] =
+        f === "logo" || f === "signature"
+          ? cleanImage(body[f], f === "logo" ? "Logo" : "Signature")
+          : str(body[f]);
+    }
+    if ("name" in data) data.name = data.name || "";
+    return prisma.companyProfile.upsert({
+      where: { key: "global" },
+      update: data,
+      create: { key: "global", name: "", ...data },
+    });
+  },
+
+  /** Letterhead snapshot stored on each document (no DB ids/timestamps). */
+  async companySnapshot() {
+    const c = await this.getCompany();
+    const snap: Record<string, any> = {};
+    for (const f of COMPANY_FIELDS) snap[f] = (c as any)[f] ?? null;
+    return snap;
+  },
+
+  validate(body: any) {
+    const type = body?.type as DocumentType;
+    if (!DOCUMENT_TYPES.includes(type)) {
+      throw new DocumentError("Unknown document type");
+    }
+    const recipientName = str(body?.recipientName, 200);
+    if (!recipientName) throw new DocumentError("Recipient name is required");
+    if (!body?.data || typeof body.data !== "object" || Array.isArray(body.data)) {
+      throw new DocumentError("Document details are required");
+    }
+    const title = str(body?.title, 200) || DOCUMENT_LABELS[type];
+    return { type, recipientName, title, data: body.data };
+  },
+
+  async assertEmployee(userId?: string | null) {
+    if (!userId) return null;
+    assertId(userId, "Employee");
+    const user = await prisma.user.findFirst({
+      where: { id: userId, deleted: false },
+      select: { id: true },
+    });
+    if (!user) throw new DocumentError("Employee not found", 404);
+    return user.id;
+  },
+
+  async list(params: {
+    type?: string;
+    userId?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const where: any = { deleted: false };
+    if (params.type && DOCUMENT_TYPES.includes(params.type as DocumentType)) {
+      where.type = params.type;
+    }
+    if (params.userId) {
+      if (!OBJECT_ID_RE.test(params.userId)) return { items: [], total: 0 };
+      where.userId = params.userId;
+    }
+    if (params.search?.trim()) {
+      const q = params.search.trim();
+      where.OR = [
+        { recipientName: { contains: q, mode: "insensitive" } },
+        { title: { contains: q, mode: "insensitive" } },
+      ];
+    }
+    const take = Math.min(Math.max(params.limit || 20, 1), 100);
+    const skip = Math.max(params.page || 0, 0) * take;
+    const [items, total] = await Promise.all([
+      prisma.hrDocument.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+        // List rows don't need the (possibly large) letterhead images.
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          userId: true,
+          recipientName: true,
+          issuedByName: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+      prisma.hrDocument.count({ where }),
+    ]);
+    return { items, total };
+  },
+
+  async listForUser(userId: string) {
+    return prisma.hrDocument.findMany({
+      where: { userId, deleted: false },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        recipientName: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  },
+
+  async getById(id: string) {
+    assertId(id, "Document");
+    const doc = await prisma.hrDocument.findFirst({ where: { id, deleted: false } });
+    if (!doc) throw new DocumentError("Document not found", 404);
+    return doc;
+  },
+
+  async create(body: any, issuer: { id: string }) {
+    const v = this.validate(body);
+    const userId = await this.assertEmployee(body?.userId);
+    const issuerUser = await prisma.user.findUnique({
+      where: { id: issuer.id },
+      select: { fullname: true },
+    });
+    return prisma.hrDocument.create({
+      data: {
+        ...v,
+        userId,
+        company: await this.companySnapshot(),
+        issuedById: issuer.id,
+        issuedByName: issuerUser?.fullname || "Admin",
+      },
+    });
+  },
+
+  /** Editing re-issues the document with the current letterhead. */
+  async update(id: string, body: any) {
+    await this.getById(id);
+    const v = this.validate(body);
+    const userId = await this.assertEmployee(body?.userId);
+    return prisma.hrDocument.update({
+      where: { id },
+      data: { ...v, userId, company: await this.companySnapshot() },
+    });
+  },
+
+  async remove(id: string) {
+    await this.getById(id);
+    return prisma.hrDocument.update({ where: { id }, data: { deleted: true } });
+  },
+
+  /**
+   * Values to pre-fill a new document for an employee, keyed by form field.
+   * Current profile data wins (name, designation, CNIC, address, department,
+   * manager...). Things the profile doesn't store (joining date, salary,
+   * bank, earnings/deductions) come from the employee's most recent earlier
+   * documents. Everything stays editable in the form.
+   */
+  async prefill(userId: string) {
+    assertId(userId, "Employee");
+    const user = await prisma.user.findFirst({
+      where: { id: userId, deleted: false },
+      select: {
+        id: true,
+        fullname: true,
+        title: true,
+        cnic: true,
+        address: true,
+        username: true,
+        companyEmail: true,
+        email: true,
+        location: true,
+        branch: true,
+        employeeType: true,
+        teams: {
+          where: { deleted: false },
+          select: {
+            teamType: true,
+            department: { select: { name: true, deleted: true } },
+            teamLead: { select: { id: true, fullname: true } },
+          },
+        },
+      },
+    });
+    if (!user) throw new DocumentError("Employee not found", 404);
+
+    // Organizational team first: it's the reporting line / home department.
+    const teams = [...user.teams].sort(
+      (a, b) => Number(b.teamType === "ORGANIZATIONAL") - Number(a.teamType === "ORGANIZATIONAL"),
+    );
+    const department = teams.find((t) => t.department && !t.department.deleted)?.department?.name;
+    const manager = teams.find((t) => t.teamLead && t.teamLead.id !== user.id)?.teamLead?.fullname;
+    const place = user.branch || user.location;
+    const workLocation = place
+      ? user.employeeType
+        ? `${place} (${user.employeeType})`
+        : place
+      : user.employeeType || undefined;
+
+    const values: Record<string, any> = {};
+    const sources: Record<string, "profile" | "documents"> = {};
+    const put = (key: string, v: unknown, src: "profile" | "documents") => {
+      const empty =
+        v === undefined || v === null || (typeof v === "string" && !v.trim()) ||
+        (Array.isArray(v) && v.length === 0);
+      if (empty || key in values) return;
+      values[key] = v;
+      sources[key] = src;
+    };
+
+    put("recipientName", user.fullname, "profile");
+    put("designation", user.title, "profile");
+    put("cnic", user.cnic, "profile");
+    put("recipientAddress", user.address, "profile");
+    put("employeeId", user.username, "profile");
+    put("email", user.companyEmail || user.email, "profile");
+    put("department", department, "profile");
+    put("reportingTo", manager, "profile");
+    put("workLocation", workLocation, "profile");
+
+    // Newest first; the first document that has a value wins.
+    const docs = await prisma.hrDocument.findMany({
+      where: { userId, deleted: false },
+      orderBy: { updatedAt: "desc" },
+      take: 25,
+      select: { type: true, data: true },
+    });
+    const CARRY = [
+      "designation",
+      "department",
+      "cnic",
+      "employeeId",
+      "joiningDate",
+      "salary",
+      "currency",
+      "bankName",
+      "accountNo",
+      "employmentType",
+      "probationMonths",
+      "workingHours",
+      "noticePeriod",
+      "workLocation",
+      "reportingTo",
+      "recipientAddress",
+    ];
+    for (const d of docs) {
+      const data = (d.data || {}) as Record<string, any>;
+      for (const k of CARRY) put(k, data[k], "documents");
+      // Salary breakdown only from the latest pay slip.
+      if (d.type === "payslip" && !("earnings" in values)) {
+        const rows = (items: any) =>
+          Array.isArray(items)
+            ? items
+                .filter((i) => i && (String(i.label ?? "").trim() || String(i.amount ?? "").trim()))
+                .map((i) => ({ label: String(i.label ?? ""), amount: i.amount ?? "" }))
+            : [];
+        put("earnings", rows(data.earnings), "documents");
+        put("deductions", rows(data.deductions), "documents");
+      }
+    }
+    // Salary certificate / letters: fall back to gross from the last pay slip.
+    if (!("salary" in values) && Array.isArray(values.earnings)) {
+      const gross = values.earnings.reduce(
+        (s: number, i: any) => s + (parseFloat(String(i.amount).replace(/,/g, "")) || 0),
+        0,
+      );
+      if (gross > 0) put("salary", gross, "documents");
+    }
+
+    return { values, sources };
+  },
+
+  async notifyIssued(doc: { id: string; userId: string | null; type: string; title: string }, updated = false) {
+    if (!doc.userId) return null;
+    const label = DOCUMENT_LABELS[doc.type as DocumentType] || "document";
+    return prisma.notification.create({
+      data: {
+        title: updated ? `${label} updated` : `New ${label.toLowerCase()} issued`,
+        message: updated
+          ? `Your ${doc.title} was updated. Open your profile to view or download it.`
+          : `A ${doc.title} has been issued to you. Open your profile to view or download it.`,
+        type: "document",
+        userId: doc.userId,
+        data: { documentId: doc.id },
+      },
+    });
+  },
+};

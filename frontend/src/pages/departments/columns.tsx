@@ -1,4 +1,5 @@
 import type { TableColumn } from "../../components/types";
+import { canDeleteRecords } from "../../utils/deleteAccess";
 import type { Department } from "../../types";
 import CustomIcon from "../../components/CustomIcon";
 import CustomButton from "../../components/CustomButton";
@@ -82,18 +83,20 @@ export const getDepartmentColumns = (
             icon={<CustomIcon name="Edit2" size={16} />}
           />
         </CustomTooltip>
-        <CustomTooltip text="Delete">
-          <CustomButton
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(d.id);
-            }}
-            icon={<CustomIcon name="Trash2" size={16} />}
-            style={{ color: "var(--accent-danger)" }}
-          />
-        </CustomTooltip>
+        {canDeleteRecords() && (
+            <CustomTooltip text="Delete">
+            <CustomButton
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(d.id);
+              }}
+              icon={<CustomIcon name="Trash2" size={16} />}
+              style={{ color: "var(--accent-danger)" }}
+            />
+          </CustomTooltip>
+        )}
       </div>
     ),
   },

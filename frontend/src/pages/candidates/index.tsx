@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { canDeleteRecords } from "../../utils/deleteAccess";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
@@ -343,7 +344,7 @@ const CandidateList: React.FC = () => {
               className={styles.pageHeaderActions}
               style={{ display: "flex", gap: "12px", alignItems: "center" }}
             >
-              {isAdmin && (
+              {isAdmin && canDeleteRecords() && (
                 <CustomButton
                   variant="danger"
                   icon={<CustomIcon name="Trash2" size={18} />}

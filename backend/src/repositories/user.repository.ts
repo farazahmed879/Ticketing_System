@@ -1,4 +1,5 @@
 import prisma from "../prisma";
+import { RoleType } from "../utils/constants";
 
 export const userRepository = {
   async findMany(where: any, skip: number, take: number | undefined) {
@@ -69,9 +70,8 @@ export const userRepository = {
   async findAdmins() {
     return prisma.user.findMany({
       where: {
-        role: {
-          name: "Admin",
-        },
+        // Admin-type roles (Admin and Sub Admin), not just the role named "Admin".
+        role: { roleType: RoleType.ADMIN },
         deleted: false,
       },
     });

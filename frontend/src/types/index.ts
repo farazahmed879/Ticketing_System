@@ -15,6 +15,8 @@ export interface User {
     isEmployee?: boolean;
     isHR?: boolean;
     permissions?: any;
+    /** false = delete-restricted role (Sub Admin). */
+    canDelete?: boolean | null;
   };
   workNumber?: string;
   mobileNumber?: string;
@@ -123,6 +125,8 @@ export interface Role {
   isEmployee: boolean;
   isHR: boolean;
   permissions?: any;
+  /** false = delete-restricted role (Sub Admin). */
+  canDelete?: boolean | null;
   _count?: { users: number };
 }
 

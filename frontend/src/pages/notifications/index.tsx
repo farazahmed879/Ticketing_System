@@ -115,6 +115,8 @@ const Notifications: React.FC = () => {
         return <CustomIcon name="CalendarMinus" size={18} color="var(--accent-warning)" />;
       case "request":
         return <CustomIcon name="FileQuestion" size={18} color="#00bcd4" />;
+      case "document":
+        return <CustomIcon name="FileSignature" size={18} color="#4f46e5" />;
       case "interview":
         return <CustomIcon name="CalendarCheck" size={18} color="#9c27b0" />;
       case "message":

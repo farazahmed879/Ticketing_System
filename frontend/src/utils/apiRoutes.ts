@@ -103,6 +103,15 @@ export const API_ROUTES = {
     SETTINGS: "/common/settings",
   },
 
+  // HR documents (pay slips, letters) — managed by Admin / Sub Admin
+  DOCUMENTS: {
+    BASE: "/documents",
+    MINE: "/documents/mine",
+    COMPANY: "/documents/company",
+    PREFILL: (userId: string) => `/documents/prefill/${userId}`,
+    BY_ID: (id: string) => `/documents/${id}`,
+  },
+
   // Database backups (admin / manager)
   BACKUPS: {
     BASE: "/backups",

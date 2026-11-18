@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { canDeleteRecords } from "../../utils/deleteAccess";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import CustomIcon from "../../components/CustomIcon";
@@ -369,19 +370,21 @@ const TeamList: React.FC = () => {
                           style={{ padding: 6, minHeight: "auto" }}
                         />
                       </CustomTooltip>
-                      <CustomTooltip text="Delete">
-                        <CustomButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteClick(t.id)}
-                          icon={<CustomIcon name="Trash2" size={14} />}
-                          style={{
-                            padding: 6,
-                            minHeight: "auto",
-                            color: "var(--accent-danger)",
-                          }}
-                        />
-                      </CustomTooltip>
+                      {canDeleteRecords() && (
+                          <CustomTooltip text="Delete">
+                          <CustomButton
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClick(t.id)}
+                            icon={<CustomIcon name="Trash2" size={14} />}
+                            style={{
+                              padding: 6,
+                              minHeight: "auto",
+                              color: "var(--accent-danger)",
+                            }}
+                          />
+                        </CustomTooltip>
+                      )}
                     </div>
                   )}
                 </div>

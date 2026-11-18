@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { candidateRepository } from "../repositories/candidate.repository";
 import { roleRepository } from "../repositories/role.repository";
 import prisma from "../prisma";
-import { RoleName } from "../utils/constants";
+import { RoleName, RoleType } from "../utils/constants";
 import {
   uploadToGoogleDrive,
   uploadToGoogleDriveFile,
@@ -96,6 +96,16 @@ async function safeEnrichAndEmbed(
 
   return { skills, yearsExperience, skillEmbedding };
 }
+
+export const CANDIDATE_ACCESS_DENIED =
+  "Access denied. You are not on this candidate's interview panel.";
+
+// Same roles that can open the candidate list (see candidateRoutes.ts).
+const CANDIDATE_FULL_ACCESS_ROLES: string[] = [
+  RoleType.ADMIN,
+  RoleType.AGENT,
+  RoleType.HR,
+];
 
 export const candidateUsecase = {
   async getAllCandidates(filters: any) {
@@ -358,12 +368,36 @@ export const candidateUsecase = {
     return { candidates, total };
   },
 
-  async getCandidateById(id: string) {
+  /**
+   * Admin/Manager/HR get the full profile. Anyone else (e.g. an employee on
+   * an interview panel) only gets candidates they interview, and only sees
+   * their own interviews — HR's internal notes are left out.
+   */
+  async getCandidateById(id: string, viewer?: { id: string; role: string }) {
     const candidate = await candidateRepository.findById(id);
     if (!candidate) {
       throw new Error("Candidate not found");
     }
-    return candidate;
+
+    if (viewer && CANDIDATE_FULL_ACCESS_ROLES.includes(viewer.role?.toLowerCase())) {
+      return candidate;
+    }
+
+    const myInterviews = viewer
+      ? candidate.interviews.filter((iv) =>
+          iv.panelMembers.some((pm) => pm.userId === viewer.id),
+        )
+      : [];
+    if (myInterviews.length === 0) {
+      throw new Error(CANDIDATE_ACCESS_DENIED);
+    }
+
+    return {
+      ...candidate,
+      notes: null,
+      notesLog: [],
+      interviews: myInterviews,
+    };
   },
 
   async createCandidate(

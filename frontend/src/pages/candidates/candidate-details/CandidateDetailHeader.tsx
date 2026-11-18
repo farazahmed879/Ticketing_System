@@ -8,6 +8,8 @@ import styles from "./CandidateDetail.module.css";
 
 interface CandidateDetailHeaderProps {
   candidate: Candidate;
+  /** Admin/Manager/HR: back goes to the list and "Convert to User" shows. */
+  canManage: boolean;
   isConverting: boolean;
   onConvert: () => void;
 }
@@ -27,6 +29,7 @@ const statusBadgeVariant = (status: string) => {
 
 export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
   candidate,
+  canManage,
   isConverting,
   onConvert,
 }) => {
@@ -37,7 +40,7 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
       <div className={styles.headerMain}>
         <CustomButton
           variant="ghost"
-          onClick={() => navigate("/candidates")}
+          onClick={() => (canManage ? navigate("/candidates") : navigate(-1))}
           icon={<CustomIcon name="ArrowLeft" size={20} />}
           className={styles.backButton}
         />
@@ -153,7 +156,7 @@ export const CandidateDetailHeader: React.FC<CandidateDetailHeaderProps> = ({
           </CustomButton>
         )}
 
-        {candidate.status === "Hired" && !candidate.isConverted && (
+        {canManage && candidate.status === "Hired" && !candidate.isConverted && (
           <CustomButton
             variant="gradient"
             onClick={onConvert}

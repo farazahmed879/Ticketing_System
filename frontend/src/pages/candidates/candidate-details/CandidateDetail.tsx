@@ -11,12 +11,16 @@ import { CandidateDetailHeader } from "./CandidateDetailHeader.tsx";
 import { CandidateProfileTab } from "./CandidateProfileTab.tsx";
 import { CandidateHiringTab } from "./CandidateHiringTab.tsx";
 import styles from "./CandidateDetail.module.css";
+import { useAuth } from "../../../context/AuthContext";
+import { canManageCandidates } from "../candidateAccess";
 
 const CandidateDetail: React.FC = () => {
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
+  const canManage = canManageCandidates(user);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"profile" | "hiring">("profile");
 
@@ -30,7 +34,7 @@ const CandidateDetail: React.FC = () => {
       } catch (err) {
         console.error("Failed to fetch candidate details", err);
         showNotification("error", "Failed to load candidate details");
-        navigate("/candidates");
+        navigate(canManage ? "/candidates" : "/interviews");
         throw err;
       }
     },
@@ -91,6 +95,7 @@ const CandidateDetail: React.FC = () => {
 
       <CandidateDetailHeader
         candidate={candidate}
+        canManage={canManage}
         isConverting={convertMutation.isPending}
         onConvert={handleConvert}
       />

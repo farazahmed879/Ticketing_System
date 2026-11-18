@@ -1,6 +1,9 @@
 import { Response } from "express";
 import { AuthRequest } from "../types";
-import { candidateUsecase } from "../usecases/candidate.usecase";
+import {
+  candidateUsecase,
+  CANDIDATE_ACCESS_DENIED,
+} from "../usecases/candidate.usecase";
 
 export const candidateController = {
   async getAllCandidates(req: AuthRequest, res: Response) {
@@ -16,10 +19,16 @@ export const candidateController = {
     try {
       const candidate = await candidateUsecase.getCandidateById(
         req.params.id as string,
+        req.user,
       );
       res.json({ success: true, candidate });
     } catch (error: any) {
-      const status = error.message === "Candidate not found" ? 404 : 500;
+      const status =
+        error.message === "Candidate not found"
+          ? 404
+          : error.message === CANDIDATE_ACCESS_DENIED
+            ? 403
+            : 500;
       res.status(status).json({ success: false, error: error.message });
     }
   },

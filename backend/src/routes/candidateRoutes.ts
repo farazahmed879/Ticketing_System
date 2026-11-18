@@ -70,10 +70,11 @@ router.delete(
   candidateController.deleteAllCandidates,
 );
 
+// Open to any signed-in user: Admin/Manager/HR see every candidate, anyone
+// else only candidates whose interview panel they sit on (checked in usecase).
 router.get(
   "/:id",
   authMiddleware,
-  checkRole(allowedRoles),
   candidateController.getCandidateById,
 );
 router.post(

@@ -24,6 +24,7 @@ import ProjectDetail from "./pages/projects/ProjectDetail.tsx";
 import UserList from "./pages/users/index.tsx";
 import RoleList from "./pages/roles/index.tsx";
 import MainLayout from "./layouts/MainLayout.tsx";
+import { canManageCandidates } from "./pages/candidates/candidateAccess";
 import FullScreenLoader from "./components/FullScreenLoader";
 import Notifications from "./pages/notifications/index.tsx";
 import Requests from "./pages/requests/index.tsx";
@@ -48,6 +49,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   if (loading)
     return <FullScreenLoader subMessage={t("topbar.verifyingSession")} />;
   if (!user) return <Navigate to="/login" />;
+  return <>{children}</>;
+};
+
+// Candidate list pages are for Admin/Manager/HR only; others are sent to the
+// dashboard (they can still open a candidate's profile from their interview).
+const CandidateListRoute: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const { user } = useAuth();
+  if (!canManageCandidates(user)) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
@@ -97,10 +108,21 @@ const App: React.FC = () => {
                 <Route path="requests" element={<Requests />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="profile/:id?" element={<Profile />} />
-                <Route path="candidates" element={<CandidateList />} />
+                <Route
+                  path="candidates"
+                  element={
+                    <CandidateListRoute>
+                      <CandidateList />
+                    </CandidateListRoute>
+                  }
+                />
                 <Route
                   path="candidates/leaderboard"
-                  element={<CandidateLeaderboard />}
+                  element={
+                    <CandidateListRoute>
+                      <CandidateLeaderboard />
+                    </CandidateListRoute>
+                  }
                 />
                 <Route path="candidates/:id" element={<CandidateDetail />} />
                 <Route path="interviews" element={<InterviewList />} />

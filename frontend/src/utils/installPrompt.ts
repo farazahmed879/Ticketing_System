@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 // Chrome/Edge fire `beforeinstallprompt` once, early — often before the
 // logged-in layout mounts — so it is captured at module load (imported from
@@ -69,6 +69,22 @@ export const isRunningStandalone = (): boolean => {
     // iOS Safari's non-standard flag for home-screen apps
     (navigator as Navigator & { standalone?: boolean }).standalone === true
   );
+};
+
+/**
+ * Live "running as an installed app" flag. Updates if the display mode
+ * changes (e.g. the app is opened in its own window after installing).
+ */
+export const useIsStandalone = (): boolean => {
+  const [standalone, setStandalone] = useState(isRunningStandalone);
+  useEffect(() => {
+    const mq = window.matchMedia?.("(display-mode: standalone)");
+    if (!mq) return;
+    const onChange = () => setStandalone(isRunningStandalone());
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return standalone;
 };
 
 const detectManualInstall = (): "ios" | "mac" | null => {

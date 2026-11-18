@@ -20,7 +20,7 @@ import {
   showDesktopNotification,
   playNotificationSound,
 } from "../utils/desktopNotifications";
-import { useInstallOption, promptInstallApp } from "../utils/installPrompt";
+import { useInstallOption, promptInstallApp, useIsStandalone } from "../utils/installPrompt";
 import InstallInstructionsModal from "../components/InstallInstructionsModal";
 import useIsMobile from "../hooks/useIsMobile";
 
@@ -53,6 +53,7 @@ const MainLayout: React.FC = () => {
   // Only true in browsers that support installing (Chrome/Edge) and when the
   // app isn't already installed.
   const installOption = useInstallOption();
+  const isStandalone = useIsStandalone();
   const [isInstallHelpOpen, setIsInstallHelpOpen] = React.useState(false);
 
   // ---------- Shoutouts badge ----------
@@ -493,6 +494,26 @@ const MainLayout: React.FC = () => {
                 onClose={() => setIsInstallHelpOpen(false)}
                 platform={installOption}
               />
+            )}
+            {/* Installed app: no browser toolbar, so offer a reload here.
+                (In a browser tab the browser's own reload is right there.) */}
+            {isStandalone && (
+              <button
+                className="glass-card"
+                style={{
+                  padding: 8,
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                title="Reload"
+                aria-label="Reload"
+                onClick={() => window.location.reload()}
+              >
+                <CustomIcon name="RotateCw" size={20} />
+              </button>
             )}
             <div style={{ position: "relative" }}>
               <button

@@ -1,4 +1,5 @@
 import CustomIcon from "../../../components/CustomIcon";
+import { isDocumentRequest } from "../documentRequest";
 import CustomButton from "../../../components/CustomButton";
 import CustomBadge from "../../../components/CustomBadge";
 import CustomTooltip from "../../../components/CustomTooltip";
@@ -172,13 +173,18 @@ const RequestCard = ({
         >
           {canReview && (
             <>
-              <CustomTooltip text="Approve">
+              <CustomTooltip text={isDocumentRequest(data) ? "Generate document" : "Approve"}>
                 <CustomButton
                   variant="ghost"
                   size="sm"
                   onClick={() => handleUpdateStatus(data.id, "APPROVED")}
                   style={{ color: "var(--accent-success)", padding: "4px 8px" }}
-                  icon={<CustomIcon name="CheckCircle2" size={16} />}
+                  icon={
+                    <CustomIcon
+                      name={isDocumentRequest(data) ? "FileSignature" : "CheckCircle2"}
+                      size={16}
+                    />
+                  }
                 />
               </CustomTooltip>
               <CustomTooltip text="Reject">

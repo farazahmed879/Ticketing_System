@@ -1,4 +1,5 @@
 import type { TableColumn } from "../../components/types";
+import { isDocumentRequest } from "./documentRequest";
 import type { UserRequest } from "../../types";
 import CustomBadge from "../../components/CustomBadge";
 import CustomButton from "../../components/CustomButton";
@@ -16,6 +17,7 @@ export const formatRequestType = (type: string) => {
     VACATION: "Vacation",
     WFH: "Work From Home",
     REIMBURSEMENT: "Reimbursement",
+    DOCUMENT_REQUEST: "Document Request",
     OTHER: "Other / Custom",
   };
   return map[type] || type.replace(/_/g, " ");
@@ -120,13 +122,18 @@ export const getRequestColumns = (
         {/* The API decides who may review (e.g. organizational teams: manager only). */}
         {r.status === "PENDING" && r.canReview && (
             <>
-              <CustomTooltip text="Approve">
+              <CustomTooltip text={isDocumentRequest(r) ? "Generate document" : "Approve"}>
                 <CustomButton
                   variant="ghost"
                   size="sm"
                   onClick={() => handleUpdateStatus(r.id, "APPROVED")}
                   style={{ color: "var(--accent-success)" }}
-                  icon={<CustomIcon name="CheckCircle2" size={18} />}
+                  icon={
+                    <CustomIcon
+                      name={isDocumentRequest(r) ? "FileSignature" : "CheckCircle2"}
+                      size={18}
+                    />
+                  }
                 />
               </CustomTooltip>
               <CustomTooltip text="Reject">

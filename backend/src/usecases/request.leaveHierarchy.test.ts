@@ -77,4 +77,16 @@ describe("leave approval hierarchy", () => {
     );
     expect(r.allowed).toBe(true);
   });
+
+  it("document requests: only admin-type roles (Admin / Sub Admin)", () => {
+    const doc = (role: string) =>
+      requestUsecase.canReview({ id: "r", role }, "requester", emptyCtx(), {
+        isLeave: false,
+        isDocument: true,
+      }).allowed;
+    expect(doc(RoleType.ADMIN)).toBe(true);
+    for (const role of [RoleType.HR, RoleType.AGENT, RoleType.EMPLOYEE]) {
+      expect(doc(role)).toBe(false);
+    }
+  });
 });

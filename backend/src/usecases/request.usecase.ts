@@ -11,6 +11,21 @@ export interface ReviewContext {
 
 export const LEAVE_TYPES = new Set(["HALFDAY_LEAVE", "FULLDAY_LEAVE", "VACATION"]);
 
+/**
+ * An employee asking for an HR document (pay slip, salary certificate, ...).
+ * Handled only by admin-type roles (Admin, Sub Admin), who issue it from the
+ * Documents page; issuing it with the request's id approves the request.
+ */
+export const DOCUMENT_REQUEST = "DOCUMENT_REQUEST";
+export const REQUESTABLE_DOCUMENTS = [
+  "payslip",
+  "salary_certificate",
+  "experience_letter",
+  "relieving_letter",
+  "appointment_letter",
+  "custom",
+];
+
 function startOfDay(d: Date) {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -115,9 +130,15 @@ export const requestUsecase = {
     reviewer: { id: string; role: string },
     requesterId: string | null | undefined,
     ctx: ReviewContext,
-    leave?: { isLeave: boolean; requesterRole?: string | null },
+    leave?: { isLeave: boolean; requesterRole?: string | null; isDocument?: boolean },
   ): { allowed: boolean; reason?: string } {
     if (reviewer.role === RoleType.ADMIN) return { allowed: true };
+    if (leave?.isDocument) {
+      return {
+        allowed: false,
+        reason: "Document requests are handled by an Admin or Sub Admin",
+      };
+    }
     if (!requesterId) {
       return { allowed: false, reason: "Invalid request: No user associated" };
     }
@@ -198,6 +219,27 @@ export const requestUsecase = {
     message?: string;
     data?: any;
   }) {
+    if (data.type === DOCUMENT_REQUEST) {
+      const d = data.data || {};
+      if (!REQUESTABLE_DOCUMENTS.includes(d.documentType)) {
+        throw new Error("Please choose which document you need.");
+      }
+      if (d.payMonth !== undefined && !/^\d{4}-\d{2}$/.test(String(d.payMonth))) {
+        throw new Error("Invalid pay slip month.");
+      }
+      // Keep only the fields the Documents page understands.
+      data.data = {
+        documentType: d.documentType,
+        ...(d.payMonth ? { payMonth: String(d.payMonth) } : {}),
+        ...(typeof d.addressedTo === "string" && d.addressedTo.trim()
+          ? { addressedTo: d.addressedTo.trim().slice(0, 200) }
+          : {}),
+        ...(typeof d.purpose === "string" && d.purpose.trim()
+          ? { purpose: d.purpose.trim().slice(0, 200) }
+          : {}),
+      };
+    }
+
     // Reject past-dated leave requests up-front.
     if (LEAVE_TYPES.has(data.type)) {
       const startStr: string | undefined = data.data?.startDate;
@@ -303,11 +345,14 @@ export const requestUsecase = {
     });
 
     const isLeave = LEAVE_TYPES.has(data.type);
+    const isDocument = data.type === DOCUMENT_REQUEST;
     const creatorRole = creator?.role?.roleType;
     // A manager's or HR's leave can't be approved by a team lead, so team
     // leads are only told about employee leaves (and non-leave requests).
+    // Document requests go to Admin / Sub Admin only (added above).
     const notifyTeamLeads =
-      !isLeave || (creatorRole !== RoleType.AGENT && creatorRole !== RoleType.HR);
+      !isDocument &&
+      (!isLeave || (creatorRole !== RoleType.AGENT && creatorRole !== RoleType.HR));
 
     if (notifyTeamLeads && allTeams.length > 0) {
       const leadIds = allTeams

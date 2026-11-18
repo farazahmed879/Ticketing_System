@@ -215,8 +215,19 @@ export interface UserRequest {
     email: string;
     image?: string;
   } | null;
-  /** Leave dates as "YYYY-MM-DD" strings. */
-  data?: { startDate?: string; endDate?: string } | null;
+  /**
+   * Leave dates as "YYYY-MM-DD" strings; for DOCUMENT_REQUEST, the requested
+   * document (and, once issued, its id).
+   */
+  data?: {
+    startDate?: string;
+    endDate?: string;
+    documentType?: string;
+    payMonth?: string;
+    addressedTo?: string;
+    purpose?: string;
+    documentId?: string;
+  } | null;
   createdAt: string;
   updatedAt?: string;
 }

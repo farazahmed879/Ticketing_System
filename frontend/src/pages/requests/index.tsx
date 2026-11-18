@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { generateDocumentLink, isDocumentRequest } from "./documentRequest";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
@@ -27,6 +28,7 @@ const Requests: React.FC = () => {
   const { showNotification, setIsLoading } = useNotification();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const highlightRequestId = searchParams.get("requestId") || undefined;
   const [filter, setFilter] = useState("PENDING");
   const [viewMode, setViewMode] = useListViewMode();
@@ -86,6 +88,13 @@ const Requests: React.FC = () => {
   });
 
   const handleUpdateStatus = async (id: string, status: string) => {
+    // Approving a document request = generating the document; issuing it
+    // on the Documents page approves the request.
+    const req = requests.find((r) => r.id === id);
+    if (status === "APPROVED" && req && isDocumentRequest(req)) {
+      navigate(generateDocumentLink(req));
+      return;
+    }
     updateMutation.mutate({ id, status });
   };
 

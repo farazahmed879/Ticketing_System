@@ -10,6 +10,12 @@ import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import type { UserRequest } from "../../types";
 import { useNotification } from "../../context/NotificationContext";
+import CustomInput from "../../components/CustomInput";
+import {
+  DOCUMENT_REQUEST,
+  REQUESTABLE_DOCUMENTS,
+  recentMonthOptions,
+} from "./documentRequest";
 
 export const REQUEST_TYPE_OPTIONS = [
   { value: "HALFDAY_LEAVE", label: "Half-Day Leave" },
@@ -17,6 +23,7 @@ export const REQUEST_TYPE_OPTIONS = [
   { value: "VACATION", label: "Vacation" },
   { value: "WFH", label: "Work From Home (WFH)" },
   { value: "REIMBURSEMENT", label: "Reimbursement" },
+  { value: DOCUMENT_REQUEST, label: "Document (pay slip, letter, certificate…)" },
   { value: "OTHER", label: "Other / Custom" },
 ];
 
@@ -43,6 +50,10 @@ const RequestModal: React.FC<RequestModalProps> = ({
   const isSingleDate =
     watchedType === "HALFDAY_LEAVE" || watchedType === "REIMBURSEMENT";
   const isReimbursement = watchedType === "REIMBURSEMENT";
+  const isDocument = watchedType === DOCUMENT_REQUEST;
+  const watchedDocType = watch("documentType");
+  // Document requests only need details for "Other document".
+  const detailsRequired = !isDocument || watchedDocType === "custom";
 
   const onSubmit = async (data: any) => {
     try {
@@ -50,12 +61,21 @@ const RequestModal: React.FC<RequestModalProps> = ({
       const res = await api.post(API_ROUTES.REQUESTS.BASE, {
         type: data.type,
         message: data.message,
-        data: {
-          startDate: data.startDate,
-          endDate: isSingleDate
-            ? data.startDate
-            : data.endDate || data.startDate,
-        },
+        data: isDocument
+          ? {
+              documentType: data.documentType,
+              payMonth: data.documentType === "payslip" ? data.payMonth : undefined,
+              addressedTo:
+                data.documentType === "salary_certificate" ? data.addressedTo : undefined,
+              purpose:
+                data.documentType === "salary_certificate" ? data.purpose : undefined,
+            }
+          : {
+              startDate: data.startDate,
+              endDate: isSingleDate
+                ? data.startDate
+                : data.endDate || data.startDate,
+            },
       });
       onSuccess(res.data.request);
       reset();
@@ -85,7 +105,46 @@ const RequestModal: React.FC<RequestModalProps> = ({
           rules={{ required: "Request type is required" }}
         />
 
-        {isSingleDate ? (
+        {isDocument ? (
+          <>
+            <CustomSelect
+              name="documentType"
+              control={control}
+              label="Document"
+              placeholder="Which document do you need?"
+              options={REQUESTABLE_DOCUMENTS}
+              rules={{ required: "Please choose a document" }}
+              showSearch={false}
+            />
+            {watchedDocType === "payslip" && (
+              <CustomSelect
+                name="payMonth"
+                control={control}
+                label="Month"
+                placeholder="Select month"
+                options={recentMonthOptions()}
+                rules={{ required: "Please choose the month" }}
+                showSearch={false}
+              />
+            )}
+            {watchedDocType === "salary_certificate" && (
+              <>
+                <CustomInput
+                  name="addressedTo"
+                  control={control}
+                  label="Addressed To"
+                  placeholder="e.g. The Manager, Meezan Bank (optional)"
+                />
+                <CustomInput
+                  name="purpose"
+                  control={control}
+                  label="Purpose"
+                  placeholder="e.g. bank account opening, visa (optional)"
+                />
+              </>
+            )}
+          </>
+        ) : isSingleDate ? (
           <CustomDatePicker
             name="startDate"
             control={control}
@@ -114,10 +173,24 @@ const RequestModal: React.FC<RequestModalProps> = ({
         <TaskDescriptionEditor
           name="message"
           control={control}
-          label="Message / Reason"
-          placeholder="Describe your request..."
-          required
-          rules={{ required: "Reason is required" }}
+          label={
+            !isDocument
+              ? "Message / Reason"
+              : detailsRequired
+                ? "Which document do you need?"
+                : "Details (optional)"
+          }
+          placeholder={
+            isDocument
+              ? "Anything the document should include…"
+              : "Describe your request..."
+          }
+          required={detailsRequired}
+          rules={
+            detailsRequired
+              ? { required: isDocument ? "Please describe the document" : "Reason is required" }
+              : undefined
+          }
         />
 
         <div

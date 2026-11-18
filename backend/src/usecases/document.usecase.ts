@@ -211,6 +211,8 @@ export const documentUsecase = {
   async create(body: any, issuer: { id: string }) {
     const v = this.validate(body);
     const userId = await this.assertEmployee(body?.userId);
+    // Issued for an employee's document request? Check it before creating.
+    const request = body?.requestId ? await this.pendingDocumentRequest(body.requestId, userId) : null;
     const issuerUser = await prisma.user.findUnique({
       where: { id: issuer.id },
       select: { fullname: true },
@@ -223,7 +225,36 @@ export const documentUsecase = {
         issuedById: issuer.id,
         issuedByName: issuerUser?.fullname || "Admin",
       },
+    }).then(async (doc) => {
+      if (request) {
+        // Fulfil the request: approved by the issuer, linked to the document.
+        await prisma.userRequest.update({
+          where: { id: request.id },
+          data: {
+            status: "APPROVED",
+            approvedById: issuer.id,
+            data: { ...((request.data as object) || {}), documentId: doc.id },
+          },
+        });
+      }
+      return doc;
     });
+  },
+
+  /** A pending document request by `userId` (the document's employee). */
+  async pendingDocumentRequest(requestId: unknown, userId: string | null) {
+    assertId(requestId, "Request");
+    const request = await prisma.userRequest.findFirst({
+      where: { id: requestId as string, deleted: false, type: "DOCUMENT_REQUEST" },
+    });
+    if (!request) throw new DocumentError("Document request not found", 404);
+    if (request.status !== "PENDING") {
+      throw new DocumentError("This document request has already been handled");
+    }
+    if (!userId || request.userId !== userId) {
+      throw new DocumentError("The document must be issued to the employee who requested it");
+    }
+    return request;
   },
 
   /** Editing re-issues the document with the current letterhead. */

@@ -27,6 +27,7 @@ import {
 } from "./documentConfig";
 import DocumentEditorModal, {
   type DocumentDraft,
+  type DocumentRequestSeed,
   type EmployeeOption,
 } from "./DocumentEditorModal";
 import DocumentViewerModal from "./DocumentViewerModal";
@@ -44,6 +45,35 @@ type Row = Pick<
   | "createdAt"
   | "updatedAt"
 >;
+
+const isoDay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/**
+ * Editor seed from a document request link (see requests/documentRequest.ts):
+ * the pay slip's payment date is the requested month's last day (today if
+ * that month isn't over yet), plus addressee / purpose for certificates.
+ */
+const requestSeedFromParams = (
+  p: URLSearchParams,
+): (DocumentRequestSeed & { type: DocumentType }) | null => {
+  const type = p.get("generate") as DocumentType | null;
+  const requestId = p.get("requestId");
+  const userId = p.get("userId");
+  if (!type || !DOCUMENT_TYPE_MAP[type] || !requestId || !userId) return null;
+  const data: Record<string, string> = {};
+  const month = p.get("payMonth");
+  if (type === "payslip" && month && /^\d{4}-\d{2}$/.test(month)) {
+    const [y, m] = month.split("-").map(Number);
+    const lastDay = new Date(y, m, 0);
+    data.payDate = isoDay(lastDay < new Date() ? lastDay : new Date());
+  }
+  const addressedTo = p.get("addressedTo");
+  const purpose = p.get("purpose");
+  if (addressedTo) data.addressedTo = addressedTo;
+  if (purpose) data.purpose = purpose;
+  return { type, requestId, userId, data };
+};
 
 /** Admin / Sub Admin: generate and manage pay slips, letters and certificates. */
 const Documents: React.FC = () => {
@@ -63,6 +93,20 @@ const Documents: React.FC = () => {
   const [newType, setNewType] = useState<DocumentType | null>(null);
   const [editing, setEditing] = useState<HrDocument | null>(null);
   const [duplicating, setDuplicating] = useState<HrDocument | null>(null);
+  // Opened from an employee's document request: /documents?generate=...
+  const [fromRequest, setFromRequest] = useState<
+    (DocumentRequestSeed & { type: DocumentType }) | null
+  >(() => requestSeedFromParams(searchParams));
+  useEffect(() => {
+    if (!searchParams.has("generate")) return;
+    const next = new URLSearchParams(searchParams);
+    ["generate", "requestId", "userId", "payMonth", "addressedTo", "purpose"].forEach((k) =>
+      next.delete(k),
+    );
+    setSearchParams(next, { replace: true });
+    // Only on mount: the seed was read into state above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [toDelete, setToDelete] = useState<{
     id: string;
     title: string;
@@ -128,8 +172,12 @@ const Documents: React.FC = () => {
         "success",
         `${doc.title} ${wasEditing ? "updated" : "generated"}${doc.userId ? " and shared with the employee" : ""}.`,
       );
+      if (fromRequest && doc.userId === fromRequest.userId) {
+        queryClient.invalidateQueries({ queryKey: ["requests"] });
+      }
       setEditing(null);
       setDuplicating(null);
+      setFromRequest(null);
       setNewType(null);
       refresh();
       queryClient.setQueryData(["hr-document", doc.id], doc);
@@ -475,29 +523,34 @@ const Documents: React.FC = () => {
         </div>
       </Modal>
 
-      {(newType || editing || duplicating) && (
+      {(newType || editing || duplicating || fromRequest) && (
         <DocumentEditorModal
           key={
             editing
               ? `edit-${editing.id}`
               : duplicating
                 ? `dup-${duplicating.id}`
-                : newType || ""
+                : fromRequest
+                  ? `req-${fromRequest.requestId}`
+                  : newType || ""
           }
           isOpen
           onClose={() => {
             setNewType(null);
             setEditing(null);
             setDuplicating(null);
+            setFromRequest(null);
           }}
           type={
             (editing?.type ||
               duplicating?.type ||
+              fromRequest?.type ||
               newType ||
               "custom") as DocumentType
           }
           editing={editing}
           duplicateOf={duplicating}
+          fromRequest={fromRequest}
           employees={employees}
           company={company || { name: "" }}
           saving={save.isPending}

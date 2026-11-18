@@ -7,6 +7,14 @@ import CustomAvatarStack from "../../../components/CustomAvatarStack";
 import { FormattedTaskDescription } from "../../timesheet/components/TaskDescriptionEditor";
 import { timeAgo } from "../../../utils/helpers";
 import { formatRequestType, getReviewerLabel } from "../columns";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
+import { ROLE_TYPE } from "../../roles/roleConstants";
+import {
+  documentRequestSummary,
+  isDocumentRequest,
+  issuedDocumentLink,
+} from "../documentRequest";
 import type { UserRequest } from "../../../types";
 import styles from "./RequestDetailsDrawer.module.css";
 
@@ -97,9 +105,14 @@ const RequestDetailsDrawer: React.FC<RequestDetailsDrawerProps> = ({
   onUpdateStatus,
   onDelete,
 }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   if (!request) return null;
 
   const r = request;
+  const isDoc = isDocumentRequest(r);
+  const isAdmin = user?.role?.roleType === ROLE_TYPE.ADMIN;
+  const documentId = r.data?.documentId;
   const days = leaveDays(r);
   const start = r.data?.startDate;
   const end = r.data?.endDate;
@@ -133,9 +146,9 @@ const RequestDetailsDrawer: React.FC<RequestDetailsDrawerProps> = ({
             <CustomButton
               variant="gradient"
               onClick={() => onUpdateStatus(r.id, "APPROVED")}
-              icon={<CustomIcon name="CheckCircle2" size={16} />}
+              icon={<CustomIcon name={isDoc ? "FileSignature" : "CheckCircle2"} size={16} />}
             >
-              Approve
+              {isDoc ? "Generate document" : "Approve"}
             </CustomButton>
           </>
         )}
@@ -172,6 +185,32 @@ const RequestDetailsDrawer: React.FC<RequestDetailsDrawerProps> = ({
               </Field>
             )}
           </div>
+        )}
+
+        {isDoc && (
+          <>
+            <Field label="Document">{documentRequestSummary(r)}</Field>
+            {(r.data?.addressedTo || r.data?.purpose) && (
+              <div className={styles.grid}>
+                {r.data?.addressedTo && (
+                  <Field label="Addressed to">{r.data.addressedTo}</Field>
+                )}
+                {r.data?.purpose && <Field label="Purpose">{r.data.purpose}</Field>}
+              </div>
+            )}
+            {documentId && (
+              <Field label="Issued document">
+                <CustomButton
+                  variant="outline"
+                  size="sm"
+                  icon={<CustomIcon name="FileText" size={16} />}
+                  onClick={() => navigate(issuedDocumentLink(documentId, isAdmin))}
+                >
+                  View document
+                </CustomButton>
+              </Field>
+            )}
+          </>
         )}
 
         <Field label="Message">

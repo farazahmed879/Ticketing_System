@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthRequest } from "../types";
-import { requestUsecase, LEAVE_TYPES } from "../usecases/request.usecase";
+import { requestUsecase, LEAVE_TYPES, DOCUMENT_REQUEST } from "../usecases/request.usecase";
 import { emitNotificationToUser } from "../socketio/events";
 import { RoleType } from "../utils/constants";
 import { callerMayUseDeletePower } from "../middleware/auth";
@@ -40,6 +40,7 @@ export const requestController = {
           requestUsecase.canReview(user, r.userId, ctx, {
             isLeave: LEAVE_TYPES.has(r.type),
             requesterRole: r.userId ? roles.get(r.userId) : null,
+            isDocument: r.type === DOCUMENT_REQUEST,
           }).allowed,
       }));
       res.json({ success: true, requests: withReview });
@@ -105,6 +106,7 @@ export const requestController = {
       const review = requestUsecase.canReview(user, request.userId, ctx, {
         isLeave,
         requesterRole,
+        isDocument: request.type === DOCUMENT_REQUEST,
       });
       if (!review.allowed) {
         return res.status(403).json({

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Modal from "../../components/Modal";
 import CustomButton from "../../components/CustomButton";
@@ -42,6 +42,16 @@ export interface DocumentDraft {
   userId: string | null;
   recipientName: string;
   data: DocData;
+  /** Issued for this employee document request (approves it). */
+  requestId?: string;
+}
+
+/** Opened from an employee's document request (Requests page). */
+export interface DocumentRequestSeed {
+  requestId: string;
+  userId: string;
+  /** Values taken from the request (pay date, addressed to, purpose). */
+  data: DocData;
 }
 
 interface Props {
@@ -55,6 +65,8 @@ interface Props {
   editing?: HrDocument | null;
   /** Start a new document as a copy of this one (same type). */
   duplicateOf?: HrDocument | null;
+  /** Start a new document for an employee's document request. */
+  fromRequest?: DocumentRequestSeed | null;
   employees: EmployeeOption[];
   company: CompanyProfile;
   saving?: boolean;
@@ -180,6 +192,7 @@ const DocumentEditorModal: React.FC<Props> = ({
   type: newType,
   editing,
   duplicateOf,
+  fromRequest,
   employees,
   company,
   saving,
@@ -189,7 +202,9 @@ const DocumentEditorModal: React.FC<Props> = ({
   const type = source?.type || newType;
   const def = DOCUMENT_TYPE_MAP[type];
 
-  const [userId, setUserId] = useState<string | null>(source?.userId || null);
+  const [userId, setUserId] = useState<string | null>(
+    source?.userId || fromRequest?.userId || null,
+  );
   const [recipientName, setRecipientName] = useState(source?.recipientName || "");
   const [title, setTitle] = useState(source?.title || def.label);
   const [data, setData] = useState<DocData>(() =>
@@ -197,13 +212,16 @@ const DocumentEditorModal: React.FC<Props> = ({
       ? editing.data || {}
       : duplicateOf
         ? duplicateData(duplicateOf)
-        : def.defaults?.() || {},
+        : { ...(def.defaults?.() || {}), ...(fromRequest?.data || {}) },
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
-  // Keys the admin typed into; pre-filling never overwrites these.
-  const touched = useRef(new Set<string>());
+  // Keys the admin typed into; pre-filling never overwrites these. Values
+  // that came from the employee's request count as typed.
+  const touched = useRef(new Set<string>(Object.keys(fromRequest?.data || {})));
   const prefillSeq = useRef(0);
-  const [prefill, setPrefill] = useState<PrefillState>({ status: "idle" });
+  const [prefill, setPrefill] = useState<PrefillState>(
+    fromRequest ? { status: "loading", name: "the employee" } : { status: "idle" },
+  );
 
   // Offer / appointment letters usually go to a candidate (Candidates list).
   const [recipientKind, setRecipientKind] = useState<"candidate" | "employee">(
@@ -381,6 +399,25 @@ const DocumentEditorModal: React.FC<Props> = ({
     setPrefill({ status: "done", name: c.name, ...counts });
   };
 
+  // From a document request: fill in the requesting employee's details once.
+  useEffect(() => {
+    if (!fromRequest) return;
+    const seq = ++prefillSeq.current;
+    api
+      .get(API_ROUTES.DOCUMENTS.PREFILL(fromRequest.userId))
+      .then(({ data: res }: { data: PrefillResponse }) => {
+        if (seq !== prefillSeq.current) return;
+        const name = String(res.values.recipientName || "the employee");
+        setRecipientFrom(name);
+        setPrefill({ status: "done", name, ...applyStored(res) });
+      })
+      .catch(() => {
+        if (seq === prefillSeq.current) setPrefill({ status: "error", name: "the employee" });
+      });
+    // Runs once for the request this editor was opened with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const setField = (key: string, value: unknown) => {
     touched.current.add(key);
     setData((prev) => ({ ...prev, [key]: value }));
@@ -414,6 +451,9 @@ const DocumentEditorModal: React.FC<Props> = ({
       userId,
       recipientName: recipientName.trim(),
       data,
+      // Only while still issued to the employee who asked for it.
+      requestId:
+        fromRequest && userId === fromRequest.userId ? fromRequest.requestId : undefined,
     });
   };
 
@@ -548,6 +588,14 @@ const DocumentEditorModal: React.FC<Props> = ({
                   }
                   error={errors.userId}
                 />
+              )}
+              {fromRequest && (
+                <p className={styles.prefillNote} role="status">
+                  <CustomIcon name="FileQuestion" size={14} />
+                  {userId === fromRequest.userId
+                    ? "Requested by this employee — issuing it approves their request."
+                    : "Issued to someone else, so the employee's request stays pending."}
+                </p>
               )}
               {duplicateOf && prefill.status === "idle" && (
                 <p className={styles.hint}>

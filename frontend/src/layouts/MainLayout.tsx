@@ -192,8 +192,12 @@ const MainLayout: React.FC = () => {
   React.useEffect(() => {
     if (!user) return;
 
-    // Request initial count and list
-    socket.emit("notifications:get");
+    // Request initial count and list — and again after every reconnect
+    // (sleep, Wi-Fi change, server restart), since anything pushed while the
+    // socket was down was only saved to the DB, never delivered live.
+    const requestNotifications = () => socket.emit("notifications:get");
+    requestNotifications();
+    socket.on("connect", requestNotifications);
 
     // Listen for updates
     socket.on(
@@ -274,6 +278,7 @@ const MainLayout: React.FC = () => {
             navigate("/notifications");
           }
         },
+        notification.id,
       );
 
       setNotifications((prev) => [notification, ...prev].slice(0, 20));
@@ -291,6 +296,7 @@ const MainLayout: React.FC = () => {
     });
 
     return () => {
+      socket.off("connect", requestNotifications);
       socket.off("notifications:update");
       socket.off("notifications:new");
       socket.off("ticket:updated");

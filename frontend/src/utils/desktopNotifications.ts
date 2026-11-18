@@ -107,6 +107,7 @@ export function showDesktopNotification(
   title: string,
   body: string,
   onClick?: () => void,
+  id?: string,
 ): void {
   if (document.hasFocus()) {
     console.debug(
@@ -131,10 +132,13 @@ export function showDesktopNotification(
   }
 
   try {
+    // A shared tag made each new alert silently REPLACE the previous one
+    // still sitting in the OS notification centre — no popup, no sound — so
+    // alerts looked random. Give every notification its own tag.
     const n = new Notification(title, {
       body,
       icon: "/favicon.ico",
-      tag: "jami-notification", // collapse bursts into one visible popup
+      tag: `jami-${id ?? Date.now()}`,
     });
     n.onclick = () => {
       window.focus();

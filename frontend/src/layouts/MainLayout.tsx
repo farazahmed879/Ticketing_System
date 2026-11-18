@@ -6,6 +6,7 @@ import api from "../services/api";
 import { API_ROUTES } from "../utils/apiRoutes";
 import { timeAgo } from "../utils/helpers";
 import { useAuth } from "../context/AuthContext";
+import { getNotificationLink } from "../utils/notificationLink";
 import { useNotification } from "../context/NotificationContext";
 import { socket } from "../services/socket";
 import CustomIcon from "../components/CustomIcon";
@@ -264,15 +265,7 @@ const MainLayout: React.FC = () => {
         notification.title || "New Notification",
         notification.message || "",
         () => {
-          if (isChatNotification && notification.data?.roomId) {
-            navigate(`/messages?roomId=${notification.data.roomId}`);
-          } else if (isLeaveNotification) {
-            navigate("/profile");
-          } else if (notification.type === "timesheet_reminder") {
-            navigate("/timesheet");
-          } else {
-            navigate("/notifications");
-          }
+          navigate(getNotificationLink(notification) ?? "/notifications");
         },
       );
 
@@ -658,17 +651,8 @@ const MainLayout: React.FC = () => {
                             }
                             onClick={() => {
                               handleMarkAsRead(n.id);
-                              if (n.data?.ticketId) {
-                                navigate(`/tickets/${n.data.ticketId}`);
-                              } else if (n.type === "message" && n.data?.roomId) {
-                                navigate(`/messages?roomId=${n.data.roomId}`);
-                              } else if (n.type === "message") {
-                                navigate("/messages");
-                              } else if (n.data?.requestId) {
-                                navigate(`/requests?requestId=${n.data.requestId}`);
-                              } else if (n.data?.announcementId) {
-                                navigate(`/announcements?postId=${n.data.announcementId}`);
-                              }
+                              const link = getNotificationLink(n);
+                              if (link) navigate(link);
                               setIsNotificationOpen(false);
                             }}
                           >

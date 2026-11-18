@@ -12,6 +12,7 @@ import CustomPagination from "../../components/CustomPagination";
 import ConfirmationModal from "../../components/ConfirmationModal";
 
 import type { NotificationItem } from "../../types";
+import { getNotificationLink } from "../../utils/notificationLink";
 
 const Notifications: React.FC = () => {
   const queryClient = useQueryClient();
@@ -131,21 +132,8 @@ const Notifications: React.FC = () => {
 
   const handleNotificationClick = (n: NotificationItem) => {
     handleMarkAsRead(n.id);
-    if (n.type === "leave") {
-      navigate("/profile");
-    } else if (n.type === "timesheet_reminder") {
-      navigate("/timesheet");
-    } else if (n.data?.ticketId) {
-      navigate(`/tickets/${n.data.ticketId}`);
-    } else if (n.type === "message" && n.data?.roomId) {
-      navigate(`/messages?roomId=${n.data.roomId}`);
-    } else if (n.type === "message" || n.data?.roomId) {
-      navigate("/messages");
-    } else if (n.data?.requestId) {
-      navigate(`/requests?requestId=${n.data.requestId}`);
-    } else if (n.data?.announcementId) {
-      navigate(`/announcements?postId=${n.data.announcementId}`);
-    }
+    const link = getNotificationLink(n);
+    if (link) navigate(link);
   };
 
   if (loading) {

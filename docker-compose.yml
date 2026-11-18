@@ -1,7 +1,10 @@
-version: '3.8'
+# Release: bump the tags below, then
+#   docker compose build && docker compose push
+# Server:  docker compose pull && docker compose up -d
 
 services:
   backend:
+    image: farazshaikh879/ticketing_system_backend:0.0.98
     build: ./backend
     ports:
       - "4000:4000"
@@ -11,10 +14,14 @@ services:
       - NODE_ENV=production
 
   frontend:
+    image: farazshaikh879/ticketing_system_frontend:0.0.89
     build:
       context: ./frontend
       args:
-        - VITE_API_URL=http://localhost:4000
+        # Empty for release images (API calls use relative URLs).
+        # For a local run, set VITE_API_URL=http://localhost:4000 in a .env
+        # file next to this compose file.
+        - VITE_API_URL=${VITE_API_URL:-}
     ports:
       - "80:80"
     depends_on:

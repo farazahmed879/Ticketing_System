@@ -31,6 +31,7 @@ import candidateRoutes from './routes/candidateRoutes';
 import interviewRoutes from './routes/interviewRoutes';
 import projectRoutes from './routes/projectRoutes';
 import announcementRoutes from './routes/announcementRoutes';
+import backupRoutes from './routes/backupRoutes';
 
 // Swagger & Socket
 import { setupSwagger } from './swagger';
@@ -39,6 +40,8 @@ import { setupSocketEvents } from './socketio/events';
 import { startAutoCloseScheduler } from './services/autoCloseTickets';
 import { startNotificationCleanupScheduler } from './services/cleanupNotifications';
 import { startResumeJobWorker } from './services/resumeJobWorker';
+import { startTimesheetReminderScheduler } from './services/timesheetReminder';
+import { startDbBackupScheduler } from './services/dbBackupService';
 
 const app = express();
 const server = http.createServer(app);
@@ -90,6 +93,7 @@ app.use('/api/candidates', candidateRoutes);
 app.use('/api/interviews', interviewRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/backups', backupRoutes);
 
 // Root → Swagger (or a plain health response when docs are disabled)
 app.get('/', (req, res) => {
@@ -111,6 +115,8 @@ server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   startAutoCloseScheduler();
   startNotificationCleanupScheduler();
+  startTimesheetReminderScheduler(io);
+  startDbBackupScheduler();
   startResumeJobWorker();
 });
 

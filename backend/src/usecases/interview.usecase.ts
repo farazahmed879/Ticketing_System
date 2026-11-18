@@ -225,7 +225,7 @@ export const interviewUsecase = {
               subject,
               issue: `Updated: You are part of the interview panel. Date: ${new Date(
                 fullInterview.scheduledAt,
-              ).toLocaleString()}`,
+              ).toLocaleString("en-US", { timeZone: "Asia/Karachi" })} PKT`,
             },
           });
         }
@@ -327,11 +327,14 @@ export const interviewUsecase = {
     interviewerIds: string[],
     creatorId: string,
   ) {
-    const status = TICKET_STATUSES.find((s) => s.name === StatusName.NEW);
+    // Same rule as regular ticket creation: "Assigned" when the ticket has an
+    // assignee, otherwise "Unassigned".
+    const assignedStatus = TICKET_STATUSES.find((s) => s.name === StatusName.OPEN);
+    const unassignedStatus = TICKET_STATUSES.find((s) => s.name === StatusName.NEW);
     const priority = PRIORITIES.find((p) => p.name === PriorityName.NORMAL);
     const type = TICKET_TYPES.find((t) => t.name === TicketType.TASK);
 
-    if (!status || !priority || !type) {
+    if (!assignedStatus || !unassignedStatus || !priority || !type) {
       console.error(
         "Required Ticket configuration (Status/Priority/Type) not found.",
       );
@@ -351,14 +354,16 @@ export const interviewUsecase = {
             interview.candidate.name
           }.\n\nScheduled At: ${new Date(
             interview.scheduledAt,
-          ).toLocaleString()}\nDuration: ${
+          ).toLocaleString("en-US", { timeZone: "Asia/Karachi" })} PKT\nDuration: ${
             interview.duration
           } mins\nLocation: ${interview.location || "N/A"}`,
-          statusId: status.id,
+          statusId: interviewerId ? assignedStatus.id : unassignedStatus.id,
           priorityId: priority.id,
           typeId: type.id,
           owner: { connect: { id: creatorId } },
-          assignee: { connect: { id: interviewerId } },
+          ...(interviewerId
+            ? { assignee: { connect: { id: interviewerId } } }
+            : {}),
           dueDate: new Date(interview.scheduledAt),
           interview: { connect: { id: interview.id } },
           history: {

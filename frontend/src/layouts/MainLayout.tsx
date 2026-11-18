@@ -268,6 +268,8 @@ const MainLayout: React.FC = () => {
             navigate(`/messages?roomId=${notification.data.roomId}`);
           } else if (isLeaveNotification) {
             navigate("/profile");
+          } else if (notification.type === "timesheet_reminder") {
+            navigate("/timesheet");
           } else {
             navigate("/notifications");
           }

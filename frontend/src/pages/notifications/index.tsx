@@ -133,6 +133,8 @@ const Notifications: React.FC = () => {
     handleMarkAsRead(n.id);
     if (n.type === "leave") {
       navigate("/profile");
+    } else if (n.type === "timesheet_reminder") {
+      navigate("/timesheet");
     } else if (n.data?.ticketId) {
       navigate(`/tickets/${n.data.ticketId}`);
     } else if (n.type === "message" && n.data?.roomId) {

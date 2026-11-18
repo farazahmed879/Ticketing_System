@@ -86,6 +86,25 @@ export const requirePermission = (permPath: string) => {
   };
 };
 
+/** Role-type guard that re-checks the role in the DB (not just the JWT). */
+export const requireRoleTypes = (roleTypes: string[]) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const role = await loadCallerRole(req);
+      if (!role) {
+        return res.status(401).json({ message: "Account is no longer active" });
+      }
+      if (!roleTypes.includes(role.roleType)) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      next();
+    } catch (error) {
+      console.error("[auth] role check failed:", error);
+      res.status(500).json({ message: "Permission check failed" });
+    }
+  };
+};
+
 /** Admin-only guard that re-checks the role in the DB (not just the JWT). */
 export const requireAdmin = async (
   req: AuthRequest,

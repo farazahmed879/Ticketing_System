@@ -103,6 +103,12 @@ export const API_ROUTES = {
     SETTINGS: "/common/settings",
   },
 
+  // Database backups (admin / manager)
+  BACKUPS: {
+    BASE: "/backups",
+    DOWNLOAD: (id: string) => `/backups/${id}/download`,
+  },
+
   // Candidates
   CANDIDATES: {
     BASE: "/candidates",

@@ -590,3 +590,24 @@ model ResumeJob {
 
   @@index([status, createdAt])
 }
+
+// ==================== DATABASE BACKUPS ====================
+
+// One row per backup run (scheduled weekly or triggered manually from
+// Settings). The file itself lives in Google Drive; only metadata is here.
+model DbBackup {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  fileName        String
+  status          String    @default("RUNNING") // RUNNING, SUCCESS, FAILED
+  trigger         String    @default("SCHEDULED") // SCHEDULED, MANUAL
+  triggeredById   String?   @db.ObjectId
+  triggeredByName String?
+  driveFileId     String?
+  sizeBytes       Int?
+  documentCount   Int?
+  collections     Json?     // { collectionName: documentCount }
+  error           String?
+  fileDeleted     Boolean   @default(false) // Drive file removed by retention
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+}

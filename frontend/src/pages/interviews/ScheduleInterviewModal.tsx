@@ -163,6 +163,9 @@ const ScheduleInterviewModal: React.FC<Props> = ({
 
     const payload = {
       ...data,
+      // The picker gives local wall time ("2026-11-18T14:00") with no zone;
+      // send a real UTC instant so a server running in UTC doesn't shift it.
+      scheduledAt: new Date(data.scheduledAt).toISOString(),
       duration: parseInt(data.duration),
       location: data.location || undefined,
       notes: data.notes || undefined,

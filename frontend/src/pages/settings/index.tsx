@@ -10,6 +10,7 @@ import { API_ROUTES } from "../../utils/apiRoutes";
 import { useAuth } from "../../context/AuthContext";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import Profile from "../profile";
+import BackupSettingsSection from "./BackupSettingsSection";
 import styles from "./Settings.module.css";
 import { t } from "i18next";
 
@@ -677,6 +678,8 @@ const Settings: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const isAdmin = user?.role?.roleType === ROLE_TYPE.ADMIN;
+  const canManageBackups =
+    isAdmin || user?.role?.roleType === ROLE_TYPE.AGENT;
   const [activeTab, setActiveTab] = useState("theme");
   const [primaryColor, setPrimaryColor] = useState(
     localStorage.getItem("--accent-primary") || "#7c3aed",
@@ -759,6 +762,15 @@ const Settings: React.FC = () => {
             id: "ticket-settings",
             label: "Ticket Settings",
             icon: <CustomIcon name="Ticket" size={18} />,
+          },
+        ]
+      : []),
+    ...(canManageBackups
+      ? [
+          {
+            id: "backups",
+            label: "Database Backup",
+            icon: <CustomIcon name="DatabaseBackup" size={18} />,
           },
         ]
       : []),
@@ -1015,7 +1027,8 @@ const Settings: React.FC = () => {
             activeTab !== "security" &&
             activeTab !== "profile" &&
             activeTab !== "notifications" &&
-            activeTab !== "ticket-settings" && (
+            activeTab !== "ticket-settings" &&
+            activeTab !== "backups" && (
               <div className={styles.emptyState}>
                 <CustomIcon
                   name="Layout"
@@ -1032,6 +1045,12 @@ const Settings: React.FC = () => {
           {activeTab === "ticket-settings" && isAdmin && (
             <div className="animate-fade-in">
               <TicketSettingsSection />
+            </div>
+          )}
+
+          {activeTab === "backups" && canManageBackups && (
+            <div className="animate-fade-in">
+              <BackupSettingsSection />
             </div>
           )}
         </main>

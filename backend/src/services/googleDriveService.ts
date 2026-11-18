@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import fs from "fs";
 import { Readable } from "stream";
 
 const SCOPES = ["https://www.googleapis.com/auth/drive.file"];
@@ -96,4 +97,54 @@ export async function downloadFromGoogleDrive(fileId: string): Promise<Buffer> {
     { responseType: "arraybuffer" }
   );
   return Buffer.from(res.data as ArrayBuffer);
+}
+
+// ---------------------------------------------------------------------------
+// Private files (database backups). Unlike the uploads above, these are NOT
+// shared "anyone with the link" — they hold the whole database.
+// ---------------------------------------------------------------------------
+
+/** Folder for backups: GOOGLE_DRIVE_BACKUP_FOLDER_ID, else the main folder. */
+function backupFolderId(): string | undefined {
+  return process.env.GOOGLE_DRIVE_BACKUP_FOLDER_ID || process.env.GOOGLE_DRIVE_FOLDER_ID;
+}
+
+export function isDriveBackupConfigured(): boolean {
+  return getAuthClient() !== null && !!backupFolderId();
+}
+
+/** Stream a local file to Drive as a private file; returns its Drive id. */
+export async function uploadPrivateFileToDrive(
+  filePath: string,
+  name: string,
+  mimeType: string,
+): Promise<string> {
+  const auth = getAuthClient();
+  const folderId = backupFolderId();
+  if (!auth || !folderId) {
+    throw new Error("Google Drive credentials not configured");
+  }
+  const drive = google.drive({ version: "v3", auth });
+  const res = await drive.files.create({
+    requestBody: { name, parents: [folderId] },
+    media: { mimeType, body: fs.createReadStream(filePath) },
+    fields: "id",
+  });
+  return res.data.id!;
+}
+
+/** Readable stream of a Drive file's bytes (for proxying a download). */
+export async function streamFromGoogleDrive(fileId: string): Promise<NodeJS.ReadableStream> {
+  const auth = getAuthClient();
+  if (!auth) throw new Error("Google Drive credentials not configured");
+  const drive = google.drive({ version: "v3", auth });
+  const res = await drive.files.get({ fileId, alt: "media" }, { responseType: "stream" });
+  return res.data as unknown as NodeJS.ReadableStream;
+}
+
+export async function deleteFromGoogleDrive(fileId: string): Promise<void> {
+  const auth = getAuthClient();
+  if (!auth) throw new Error("Google Drive credentials not configured");
+  const drive = google.drive({ version: "v3", auth });
+  await drive.files.delete({ fileId });
 }

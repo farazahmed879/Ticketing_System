@@ -14,6 +14,13 @@ import {
 } from "../utils/constants";
 import { startOfDay, endOfDay } from "date-fns";
 
+/** A status change refused for a reason the client should see (4xx). */
+export class InterviewStatusError extends Error {
+  constructor(public httpStatus: number, message: string) {
+    super(message);
+  }
+}
+
 export const interviewUsecase = {
   async getAllInterviews(filters: any, user: any) {
     const { filter, startDate, endDate, candidateId, limit, page, search } = filters;
@@ -257,7 +264,39 @@ export const interviewUsecase = {
     return { interview: fullInterview, notifications };
   },
 
-  async updateInterviewStatus(id: string, status: string) {
+  /**
+   * Admin/HR, or a role with interviews.update, may set any status. Anyone
+   * else (e.g. an employee) may only mark an interview they sit on the panel
+   * of as Completed — never cancel it.
+   */
+  async updateInterviewStatus(
+    id: string,
+    status: string,
+    caller: { id: string; roleType: string; permissions: any },
+  ) {
+    if (!(Object.values(InterviewStatus) as string[]).includes(status)) {
+      throw new InterviewStatusError(400, "Invalid interview status");
+    }
+
+    const canManage =
+      caller.roleType === RoleType.ADMIN ||
+      caller.roleType === RoleType.HR ||
+      caller.permissions?.interviews?.update === true;
+
+    if (!canManage) {
+      if (status !== InterviewStatus.COMPLETED) {
+        throw new InterviewStatusError(403, "You are not allowed to change this interview's status");
+      }
+      const interview = (await interviewRepository.findById(id)) as any;
+      if (!interview) throw new InterviewStatusError(404, "Interview not found");
+      const isPanelMember = interview.panelMembers.some(
+        (pm: any) => pm.userId === caller.id,
+      );
+      if (!isPanelMember) {
+        throw new InterviewStatusError(403, "Access denied. You are not a panel member.");
+      }
+    }
+
     return interviewRepository.updateStatus(id, status);
   },
 

@@ -19,6 +19,7 @@ import CustomSelect from "../../components/CustomSelect";
 import { TaskDescriptionEditor, FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 import { DetailSkeleton } from "../../components/CustomSkeleton/CustomSkeleton";
 import CustomImage from "../../components/CustomImage";
+import { ROLE_TYPE } from "../roles/roleConstants";
 
 const statusBadgeVariant = (status: string) => {
   switch (status) {
@@ -110,6 +111,14 @@ const InterviewDetail: React.FC = () => {
     (f) => f.interviewerId === user?.id,
   );
 
+  // Same rule as the backend: Admin/HR or interviews.update can set any
+  // status; a panel member may only mark their interview Completed.
+  const canManageInterview =
+    user?.role?.roleType === ROLE_TYPE.ADMIN ||
+    user?.role?.roleType === ROLE_TYPE.HR ||
+    user?.role?.permissions?.interviews?.update === true;
+  const canMarkCompleted = canManageInterview || !!isPanelMember;
+
   const handleStatusChange = async (newStatus: string) => {
     setIsLoading(true, UIMessages.LOADING.SAVING_CHANGES);
     try {
@@ -117,7 +126,10 @@ const InterviewDetail: React.FC = () => {
       showNotification("success", `Interview marked as ${newStatus}`);
       fetchInterview();
     } catch (err: any) {
-      showNotification("error", "Failed to update status");
+      showNotification(
+        "error",
+        err?.response?.data?.error || "Failed to update status",
+      );
     } finally {
       setIsLoading(false, "");
     }
@@ -274,20 +286,24 @@ const InterviewDetail: React.FC = () => {
             </CustomBadge>
             {interview.status === InterviewStatus.SCHEDULED && (
               <>
-                <CustomButton
-                  variant="primary"
-                  size="sm"
-                  onClick={() => handleStatusChange(InterviewStatus.COMPLETED)}
-                >
-                  Mark Completed
-                </CustomButton>
-                <CustomButton
-                  variant="danger"
-                  size="sm"
-                  onClick={() => handleStatusChange(InterviewStatus.CANCELLED)}
-                >
-                  Cancel
-                </CustomButton>
+                {canMarkCompleted && (
+                  <CustomButton
+                    variant="primary"
+                    size="sm"
+                    onClick={() => handleStatusChange(InterviewStatus.COMPLETED)}
+                  >
+                    Mark Completed
+                  </CustomButton>
+                )}
+                {canManageInterview && (
+                  <CustomButton
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleStatusChange(InterviewStatus.CANCELLED)}
+                  >
+                    Cancel
+                  </CustomButton>
+                )}
               </>
             )}
           </div>

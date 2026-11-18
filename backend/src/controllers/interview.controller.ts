@@ -1,6 +1,10 @@
 import { Response } from "express";
 import { AuthRequest } from "../types";
-import { interviewUsecase } from "../usecases/interview.usecase";
+import {
+  interviewUsecase,
+  InterviewStatusError,
+} from "../usecases/interview.usecase";
+import { loadCallerRole } from "../middleware/auth";
 import { emitNotificationToUser } from "../socketio/events";
 
 export const interviewController = {
@@ -82,13 +86,24 @@ export const interviewController = {
 
   async updateInterviewStatus(req: AuthRequest, res: Response) {
     try {
+      const role = await loadCallerRole(req);
+      if (!role) {
+        return res.status(401).json({ message: "Account is no longer active" });
+      }
       const interview = await interviewUsecase.updateInterviewStatus(
         req.params.id as string,
         req.body.status,
+        {
+          id: req.user!.id,
+          roleType: role.roleType,
+          permissions: role.permissions,
+        },
       );
       res.json({ success: true, interview });
     } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+      const status =
+        error instanceof InterviewStatusError ? error.httpStatus : 500;
+      res.status(status).json({ success: false, error: error.message });
     }
   },
 

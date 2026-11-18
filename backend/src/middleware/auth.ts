@@ -47,7 +47,7 @@ export const checkRole = (roles: string[]) => {
  * attaches roleType + permissions to req.user. Rejects deleted users and
  * users whose role was removed, so a stale token can't keep acting.
  */
-const loadCallerRole = async (req: AuthRequest) => {
+export const loadCallerRole = async (req: AuthRequest) => {
   if (!req.user?.id) return null;
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
@@ -76,6 +76,29 @@ export const requirePermission = (permPath: string) => {
         return res.status(401).json({ message: "Account is no longer active" });
       }
       if (role.roleType === RoleType.ADMIN) return next();
+      const perms = role.permissions as any;
+      if (perms?.[module]?.[action] === true) return next();
+      return res.status(403).json({ message: "Access denied" });
+    } catch (error) {
+      console.error("[auth] permission check failed:", error);
+      return res.status(500).json({ message: "Permission check failed" });
+    }
+  };
+};
+
+/**
+ * Like requirePermission, but the listed role types always pass too (e.g. HR
+ * for interviews, matching the frontend's canCreate/canUpdate checks).
+ */
+export const requirePermissionOrRoles = (permPath: string, roleTypes: string[]) => {
+  const [module, action] = permPath.split(".");
+  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const role = await loadCallerRole(req);
+      if (!role) {
+        return res.status(401).json({ message: "Account is no longer active" });
+      }
+      if (role.roleType === RoleType.ADMIN || roleTypes.includes(role.roleType)) return next();
       const perms = role.permissions as any;
       if (perms?.[module]?.[action] === true) return next();
       return res.status(403).json({ message: "Access denied" });

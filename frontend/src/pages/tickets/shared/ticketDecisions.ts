@@ -71,7 +71,8 @@ export const displayStatusForUser = (status: any, user: any): any => {
  */
 export const visibleStatusesForUser = (user: any): any[] => {
   const roleType = user?.role?.roleType;
-  if (roleType === ROLE_TYPE.EMPLOYEE && !user?.isLead) {
+  // Team leads and Project Managers see Unassigned so they can assign.
+  if (roleType === ROLE_TYPE.EMPLOYEE && !user?.isLead && !user?.managesProjects) {
     return TICKET_STATUSES.filter(
       (s: any) => s.name !== StatusName.NEW && s.name !== StatusName.TRASH,
     );

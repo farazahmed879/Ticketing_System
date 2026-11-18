@@ -39,6 +39,8 @@ export interface User {
   createdAt?: string;
   teamNames?: string[];
   isLead?: boolean;
+  /** Project Manager of at least one project (can assign its tickets). */
+  managesProjects?: boolean;
   mustChangePassword?: boolean;
 }
 
@@ -521,6 +523,8 @@ export interface UserFormData {
   leaves?: number;
   image?: string;
   isLead?: boolean;
+  /** Project Manager of at least one project (can assign its tickets). */
+  managesProjects?: boolean;
 }
 
 export interface ProjectFormData {

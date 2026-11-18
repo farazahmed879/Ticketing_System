@@ -55,9 +55,11 @@ export const ticketUsecase = {
     }
 
     if (user.role === RoleType.QA) {
-      return {
-        OR: [{ ownerId: user.id }, { assigneeId: user.id }, { qaId: user.id }],
-      };
+      // A QA user who is a project's Project Manager also sees its tickets.
+      const managedProjectIds = await ticketRepository.findManagedProjectIds(user.id);
+      const visibility: any[] = [{ ownerId: user.id }, { assigneeId: user.id }, { qaId: user.id }];
+      if (managedProjectIds.length) visibility.push({ projectId: { in: managedProjectIds } });
+      return { OR: visibility };
     }
 
     if (user.role === RoleType.AGENT) {
@@ -75,12 +77,18 @@ export const ticketUsecase = {
 
     // Regular users see tickets they own or are assigned. Team leads also see
     // every ticket assigned to a member of any team they lead, plus every
-    // UNASSIGNED ticket in the project(s) their team is on.
-    const [myLedMemberIds, ledProjectIds] = await Promise.all([
+    // UNASSIGNED ticket in the project(s) their team is on. Whoever is set as
+    // a project's Project Manager sees all of that project's tickets (incl.
+    // the Unassigned column), like the Manager role does.
+    const [myLedMemberIds, ledProjectIds, managedProjectIds] = await Promise.all([
       ticketRepository.findLedTeamMemberIds(user.id),
       ticketRepository.findLedTeamProjectIds(user.id),
+      ticketRepository.findManagedProjectIds(user.id),
     ]);
     const visibility: any[] = [{ ownerId: user.id }, { assigneeId: user.id }];
+    if (managedProjectIds.length) {
+      visibility.push({ projectId: { in: managedProjectIds } });
+    }
     if (myLedMemberIds.length) {
       visibility.push({ assigneeId: { in: myLedMemberIds } });
     }
@@ -115,6 +123,41 @@ export const ticketUsecase = {
   },
 
   /** Team leads of the teams attached to the ticket's project. */
+  /**
+   * Who may assign a ticket, and to whom:
+   * - Admin / Manager role: anyone.
+   * - A team lead of one of the ticket's project teams, or the project's
+   *   Project Manager: only members (or leads) of that project's teams.
+   *   Unassigning is allowed.
+   * `projectManagerId` is the ticket project's managerId.
+   */
+  async assertCanAssign(
+    ticket: { projectId?: string | null; projectManagerId?: string | null },
+    assigneeId: string | null | undefined,
+    user: any,
+  ) {
+    if (user.role === RoleType.ADMIN || user.role === RoleType.AGENT) return;
+    const teams = ticket.projectId
+      ? await ticketRepository.findTeamsByMembersAndProjects([], [ticket.projectId])
+      : [];
+    const isLead = teams.some((t: any) => t.teamLeadId === user.id);
+    const isProjectManager = !!ticket.projectManagerId && ticket.projectManagerId === user.id;
+    if (!isLead && !isProjectManager) {
+      throw new Error(
+        "Only Admins, Managers, team leads and the project's manager can assign tickets.",
+      );
+    }
+    if (!assigneeId) return;
+    const projectPeople = new Set<string>();
+    for (const t of teams as any[]) {
+      t.memberIds.forEach((m: string) => projectPeople.add(m));
+      if (t.teamLeadId) projectPeople.add(t.teamLeadId);
+    }
+    if (!projectPeople.has(assigneeId)) {
+      throw new Error("You can only assign this ticket to a member of the project's teams.");
+    }
+  },
+
   async getProjectLeadIds(projectId?: string | null): Promise<string[]> {
     if (!projectId) return [];
     const teams = await ticketRepository.findTeamsByMembersAndProjects(
@@ -276,12 +319,14 @@ export const ticketUsecase = {
       }
     }
 
+    // teamLeadIds = the people who manage this ticket: the project's team
+    // leads plus the project's Project Manager (the UI gates assigning and
+    // managing a ticket on this list).
     const ticketsWithLeads = tickets.map((t: any) => {
       const key = t.project?.id ? `${t.project.id}` : null;
-      return {
-        ...t,
-        teamLeadIds: key ? Array.from(leadsByProjectMember.get(key) || []) : [],
-      };
+      const ids = new Set(key ? leadsByProjectMember.get(key) || [] : []);
+      if (t.project?.managerId) ids.add(t.project.managerId);
+      return { ...t, teamLeadIds: Array.from(ids) };
     });
 
     return { tickets: ticketsWithLeads, totalCount };
@@ -319,6 +364,7 @@ export const ticketUsecase = {
       for (const team of leadTeams) {
         if (team.teamLeadId) leads.add(team.teamLeadId);
       }
+      if (ticket.project?.managerId) leads.add(ticket.project.managerId);
       teamLeadIds = Array.from(leads);
     }
 
@@ -414,7 +460,10 @@ export const ticketUsecase = {
 
     const actorId = user.id;
     const isAdmin = user.role === RoleType.ADMIN;
-    const isManager = user?.role === RoleType.AGENT || isLeadOfTicket;
+    // The project's Project Manager manages its tickets like a team lead.
+    const isProjectManager =
+      !!existingTicket.project?.managerId && existingTicket.project.managerId === user.id;
+    const isManager = user?.role === RoleType.AGENT || isLeadOfTicket || isProjectManager;
     const isEmployee = user.role === RoleType.EMPLOYEE;
     const isClient = user.role === RoleType.CUSTOMER;
     const isQA = user.role === RoleType.QA;
@@ -659,9 +708,14 @@ export const ticketUsecase = {
       data.assigneeId !== undefined &&
       data.assigneeId !== existingTicket.assigneeId
     ) {
-      if (!isAdmin && !isManager) {
-        throw new Error("Only Admins and Managers can assign tickets.");
-      }
+      await this.assertCanAssign(
+        {
+          projectId: existingTicket.projectId,
+          projectManagerId: existingTicket.project?.managerId,
+        },
+        data.assigneeId,
+        user,
+      );
     }
 
     // QA Assignee
@@ -870,6 +924,21 @@ export const ticketUsecase = {
     }
     // Every ticket must be visible to the caller before anything is written.
     await this.assertCanAccessTickets(ticketIds, user);
+
+    // Re-assigning in bulk follows the same rule as a single ticket.
+    if (assigneeId !== undefined) {
+      const tickets = await ticketRepository.findManyByIds(ticketIds);
+      const managers = await ticketRepository.findProjectManagers(
+        Array.from(new Set(tickets.map((t: any) => t.projectId).filter(Boolean))),
+      );
+      for (const t of tickets as any[]) {
+        await this.assertCanAssign(
+          { projectId: t.projectId, projectManagerId: managers.get(t.projectId) ?? null },
+          assigneeId,
+          user,
+        );
+      }
+    }
 
     const updateData: any = {};
     if (statusId) updateData.statusId = statusId;

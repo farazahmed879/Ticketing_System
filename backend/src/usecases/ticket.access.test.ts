@@ -7,6 +7,7 @@ const { repo, historyCreate } = vi.hoisted(() => ({
     findManagedProjectIds: vi.fn(async () => [] as string[]),
     findLedTeamMemberIds: vi.fn(async () => [] as string[]),
     findLedTeamProjectIds: vi.fn(async () => [] as string[]),
+    findTeamsByMembersAndProjects: vi.fn(async () => [] as any[]),
     addComment: vi.fn(),
   },
   historyCreate: vi.fn(),
@@ -62,5 +63,46 @@ describe("ticket access control", () => {
       expect.objectContaining({ authorId: "me", ticketId: "t1", isNote: false }),
     );
     expect(historyCreate.mock.calls[0][0].data.actorId).toBe("me");
+  });
+
+  it("a project's Project Manager (any role) sees that project's tickets", async () => {
+    repo.findManagedProjectIds.mockResolvedValueOnce(["p1"]);
+    const clause = await ticketUsecase.buildVisibilityClause({ id: "pm", role: "employee" });
+    expect(clause.OR).toEqual(expect.arrayContaining([{ projectId: { in: ["p1"] } }]));
+  });
+
+  describe("assigning", () => {
+    const team = { memberIds: ["dev1", "dev2"], projectIds: ["p1"], teamLeadId: "lead" };
+
+    it("admins and the Manager role may assign anyone", async () => {
+      for (const role of ["admin", "agent"]) {
+        await expect(
+          ticketUsecase.assertCanAssign({ projectId: "p1" }, "outsider", { id: "x", role }),
+        ).resolves.toBeUndefined();
+      }
+    });
+
+    it("the project's manager may assign only to the project's team members", async () => {
+      repo.findTeamsByMembersAndProjects.mockResolvedValue([team]);
+      const pm = { id: "pm", role: "employee" };
+      const ticket = { projectId: "p1", projectManagerId: "pm" };
+      await expect(ticketUsecase.assertCanAssign(ticket, "dev1", pm)).resolves.toBeUndefined();
+      await expect(ticketUsecase.assertCanAssign(ticket, "lead", pm)).resolves.toBeUndefined();
+      await expect(ticketUsecase.assertCanAssign(ticket, null, pm)).resolves.toBeUndefined();
+      await expect(ticketUsecase.assertCanAssign(ticket, "outsider", pm)).rejects.toThrow(
+        "member of the project's teams",
+      );
+    });
+
+    it("other employees cannot assign", async () => {
+      repo.findTeamsByMembersAndProjects.mockResolvedValue([team]);
+      await expect(
+        ticketUsecase.assertCanAssign(
+          { projectId: "p1", projectManagerId: "pm" },
+          "dev1",
+          { id: "dev2", role: "employee" },
+        ),
+      ).rejects.toThrow("Only Admins, Managers");
+    });
   });
 });

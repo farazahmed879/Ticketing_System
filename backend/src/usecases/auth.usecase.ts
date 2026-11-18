@@ -1,6 +1,15 @@
+import prisma from "../prisma";
 import bcrypt from "bcryptjs";
 import { authRepository } from "../repositories/auth.repository";
 import { RoleName, LoginHelpType } from "../utils/constants";
+
+/**
+ * Whether the user is set as Project Manager on any (non-deleted) project.
+ * Like isLead, it unlocks the Unassigned column so they can assign their
+ * projects' tickets to their teams.
+ */
+const managesAnyProject = async (userId: string) =>
+  (await prisma.project.count({ where: { managerId: userId, deleted: false } })) > 0;
 
 export const authUsecase = {
   async login(email: string, passwordPlain: string) {
@@ -17,6 +26,7 @@ export const authUsecase = {
     }
 
     const mustChangePassword = (user as any).mustChangePassword !== false;
+    const managesProjects = await managesAnyProject(user.id);
 
 
     // The access token is issued by the controller together with a session
@@ -29,6 +39,7 @@ export const authUsecase = {
         image: user.image,
         leaves: user.leaves,
         isLead: user.isLead,
+        managesProjects,
         mustChangePassword,
         role: {
           name: user.role.name,
@@ -48,6 +59,7 @@ export const authUsecase = {
     }
 
     const mustChangePassword = (user as any).mustChangePassword !== false;
+    const managesProjects = await managesAnyProject(user.id);
 
     return {
       id: user.id,
@@ -57,6 +69,7 @@ export const authUsecase = {
       image: user.image,
       leaves: user.leaves,
       isLead: user.isLead,
+      managesProjects,
       mustChangePassword: Boolean(mustChangePassword),
       role: {
         name: user.role.name,

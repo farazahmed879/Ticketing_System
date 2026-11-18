@@ -283,6 +283,16 @@ export const ticketRepository = {
     return projects.map((p) => p.id);
   },
 
+  // managerId of each of the given projects (deleted projects excluded).
+  async findProjectManagers(projectIds: string[]) {
+    if (!projectIds.length) return new Map<string, string | null>();
+    const projects = await prisma.project.findMany({
+      where: { id: { in: projectIds }, deleted: false },
+      select: { id: true, managerId: true },
+    });
+    return new Map(projects.map((p) => [p.id, p.managerId]));
+  },
+
   // Project ids a client is attached to (Project.clientIds contains the user).
   async findClientProjectIds(userId: string) {
     const projects = await prisma.project.findMany({

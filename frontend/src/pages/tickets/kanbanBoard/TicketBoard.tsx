@@ -800,7 +800,12 @@ const TicketBoard: React.FC = () => {
                         user?.role?.permissions?.boardStatuses?.[column.id] ===
                           true ||
                         (!!user?.isLead &&
-                          column.name === StatusName.APPROVED);
+                          column.name === StatusName.APPROVED) ||
+                        // Project Managers assign their projects' tickets:
+                        // Unassigned -> Assigned (the server checks the project).
+                        (!!user?.managesProjects &&
+                          (column.name === StatusName.NEW ||
+                            column.name === StatusName.OPEN));
 
                   return (
                     <ColumnStatus

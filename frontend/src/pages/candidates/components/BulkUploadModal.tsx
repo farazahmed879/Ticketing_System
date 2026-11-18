@@ -645,6 +645,20 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
     }
   };
 
+  // The modal stays mounted between uploads, so clear the finished batch when
+  // leaving; otherwise the next bulk upload adds to it and the summary counts
+  // the old files again.
+  const closeSummary = () => {
+    const hasSuccess = !!summary && summary.successCount > 0;
+    setSummary(null);
+    if (hasSuccess) {
+      setFiles([]);
+      setCsvRows([]);
+      onSuccess();
+      onClose();
+    }
+  };
+
   const isResumesDisabled =
     files.length === 0 ||
     isProcessing ||
@@ -1379,27 +1393,13 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
     {summary && (
       <Modal
         isOpen={!!summary}
-        onClose={() => {
-          const hasSuccess = summary.successCount > 0;
-          setSummary(null);
-          if (hasSuccess) {
-            onSuccess();
-            onClose();
-          }
-        }}
+        onClose={closeSummary}
         title="Bulk Upload Summary"
         maxWidth="620px"
         footer={
           <CustomButton
             variant="gradient"
-            onClick={() => {
-              const hasSuccess = summary.successCount > 0;
-              setSummary(null);
-              if (hasSuccess) {
-                onSuccess();
-                onClose();
-              }
-            }}
+            onClick={closeSummary}
           >
             {summary.successCount > 0 ? "Done & View Candidates" : "Close"}
           </CustomButton>

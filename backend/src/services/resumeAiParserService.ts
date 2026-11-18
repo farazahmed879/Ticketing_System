@@ -141,11 +141,14 @@ async function parseWithClaude(text: string): Promise<ParsedResume> {
  */
 async function parse(
   text: string,
+  { allowFallback = true }: { allowFallback?: boolean } = {},
 ): Promise<Partial<ParsedResume> & Record<string, any>> {
   if (!text.trim()) return {};
   try {
     return await parseWithClaude(text);
   } catch (err) {
+    // The bulk worker retries the job later instead of saving a regex parse.
+    if (!allowFallback) throw err;
     console.error(
       "Claude resume parsing failed, falling back to regex:",
       err instanceof Anthropic.APIError ? `${err.status} ${err.message}` : err,

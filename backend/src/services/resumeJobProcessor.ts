@@ -5,6 +5,7 @@ import { resumeParserService } from "./resumeParserService";
 import { resumeAiParserService } from "./resumeAiParserService";
 import { candidateUsecase } from "../usecases/candidate.usecase";
 import { candidateRepository } from "../repositories/candidate.repository";
+import { RESUME_JOB_MAX_ATTEMPTS } from "../repositories/resumeJob.repository";
 
 /**
  * The heavy per-resume pipeline, run by the worker process (NOT the web
@@ -20,6 +21,19 @@ import { candidateRepository } from "../repositories/candidate.repository";
  */
 
 // Port of the frontend deriveNameFromFilename fallback.
+// Words that show the "name" is really a heading, school or degree the parser
+// picked up ("Work Experience", "Bahria University", "Ms Computer Science").
+const NOT_A_NAME =
+  /\b(university|college|institute|school|academy|experience|summary|profile|objective|education|skills|projects?|diagrams?|science|engineering|resume|curriculum|vitae|manager|developer|engineer|analyst|executive|architect|outcomes?|certifications?|references?)\b/i;
+
+export function looksLikePersonName(name: unknown): name is string {
+  if (typeof name !== "string") return false;
+  const n = name.trim();
+  if (!n || n.length > 60 || /[.:|,\d@]$/.test(n) || /[|@\d]/.test(n)) return false;
+  const words = n.split(/\s+/);
+  return words.length >= 1 && words.length <= 5 && !NOT_A_NAME.test(n);
+}
+
 function deriveNameFromFilename(filename: string): string {
   if (!filename) return "";
   let base = filename.replace(/\.[^.]+$/, "");
@@ -51,6 +65,7 @@ export interface ResumeJobRecord {
   originalName: string;
   mimetype: string;
   createdById: string | null;
+  attempts: number;
 }
 
 export async function processResumeJob(
@@ -93,10 +108,17 @@ export async function processResumeJob(
     text = await resumeParserService.extractText(buffer, job.mimetype);
   }
 
-  const parsed: any = await resumeAiParserService.parse(text);
+  // Until the last attempt, a Claude failure fails the job so the worker
+  // retries it later; only the last attempt settles for the regex parse.
+  const parsed: any = await resumeAiParserService.parse(text, {
+    allowFallback: job.attempts >= RESUME_JOB_MAX_ATTEMPTS,
+  });
 
   const name =
-    parsed.name || deriveNameFromFilename(job.originalName) || "Unknown Candidate";
+    (looksLikePersonName(parsed.name) && parsed.name) ||
+    deriveNameFromFilename(job.originalName) ||
+    parsed.name ||
+    "Unknown Candidate";
 
   const payload = {
     name,

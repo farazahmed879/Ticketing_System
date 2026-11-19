@@ -79,6 +79,7 @@ const AddGroupMembersModal: React.FC<AddGroupMembersModalProps> = ({
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <CustomInput
           placeholder="Search new members..."
+          allowClear
           value={userSearch}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setUserSearch(e.target.value)

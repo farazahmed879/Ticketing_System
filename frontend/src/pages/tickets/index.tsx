@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { canDeleteRecords } from "../../utils/deleteAccess";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import usePersistedState, { useShouldRestoreList } from "../../hooks/usePersistedState";
 import CustomIcon from "../../components/CustomIcon";
 import api from "../../services/api";
 import { socket } from "../../services/socket";
@@ -34,22 +35,32 @@ const TicketList: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const defaultMode = getDefaultListView();
-  const viewMode =
-    (searchParams.get("view") as "list" | "grid" | "board") || defaultMode;
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [page, setPage] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  // List state below survives opening a ticket and coming back.
+  // Restore search/filters/page only when coming back from a detail page.
+  const restoreList = useShouldRestoreList(["/tickets/"]);
+  const [lastView, setLastView] = usePersistedState<"list" | "grid" | "board">(
+    "tickets.view",
+    defaultMode,
+  );
+  const viewParam = searchParams.get("view") as "list" | "grid" | "board" | null;
+  const viewMode = viewParam || lastView;
+  React.useEffect(() => {
+    if (viewParam) setLastView(viewParam);
+  }, [viewParam, setLastView]);
+  const [search, setSearch] = usePersistedState("tickets.search", "", restoreList);
+  const [searchInput, setSearchInput] = usePersistedState("tickets.searchInput", "", restoreList);
+  const [page, setPage] = usePersistedState("tickets.page", 0, restoreList);
+  const [itemsPerPage, setItemsPerPage] = usePersistedState("tickets.pageSize", 10, restoreList);
 
   // Advanced ("More") filters — each supports multiple selections.
   // Applied values drive the fetch; draft values are edited in the panel and
   // committed via the "Apply Filters" button.
   const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const [statusNames, setStatusNames] = useState<string[]>([]);
-  const [priorityNames, setPriorityNames] = useState<string[]>([]);
-  const [projectIds, setProjectIds] = useState<string[]>([]);
-  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
-  const [ownerIds, setOwnerIds] = useState<string[]>([]);
+  const [statusNames, setStatusNames] = usePersistedState<string[]>("tickets.statusNames", [], restoreList);
+  const [priorityNames, setPriorityNames] = usePersistedState<string[]>("tickets.priorityNames", [], restoreList);
+  const [projectIds, setProjectIds] = usePersistedState<string[]>("tickets.projectIds", [], restoreList);
+  const [assigneeIds, setAssigneeIds] = usePersistedState<string[]>("tickets.assigneeIds", [], restoreList);
+  const [ownerIds, setOwnerIds] = usePersistedState<string[]>("tickets.ownerIds", [], restoreList);
 
   const [draftStatuses, setDraftStatuses] = useState<string[]>([]);
   const [draftPriorities, setDraftPriorities] = useState<string[]>([]);
@@ -331,6 +342,7 @@ const TicketList: React.FC = () => {
               <div className={styles.searchBox}>
                 <CustomInput
                   placeholder="Search by subject or ID..."
+                  allowClear
                   value={searchInput}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const val = e.target.value;

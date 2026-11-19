@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { canDeleteRecords } from "../../utils/deleteAccess";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -28,13 +28,16 @@ import ProjectCard from "./components/ProjectCard";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import { useListViewMode } from "../../utils/helpers";
 import pageStyles from "./ProjectPages.module.css";
+import usePersistedState, { useShouldRestoreList } from "../../hooks/usePersistedState";
 
 const ProjectList: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  // Restore search/filters/page only when coming back from a detail page.
+  const restoreList = useShouldRestoreList(["/projects/"]);
+  const [search, setSearch] = usePersistedState("projects.search", "", restoreList);
+  const [searchInput, setSearchInput] = usePersistedState("projects.searchInput", "", restoreList);
+  const [statusFilter, setStatusFilter] = usePersistedState("projects.statusFilter", "", restoreList);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
 
@@ -46,8 +49,8 @@ const ProjectList: React.FC = () => {
   const [confirmLoading, setConfirmLoading] = useState(false);
 
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
+  const [currentPage, setCurrentPage] = usePersistedState("projects.currentPage", 0, restoreList);
+  const [itemsPerPage, setItemsPerPage] = usePersistedState("projects.itemsPerPage", DEFAULT_PAGE_SIZE, restoreList);
   const [viewMode, setViewMode] = useListViewMode();
 
   const canCreate =
@@ -122,9 +125,14 @@ const ProjectList: React.FC = () => {
   const teams = modalData?.teams || [];
 
   // Reset page to 0 when status filter changes
-  useEffect(() => {
+  // Back to page 1 when the statusFilter changes — but not on mount, so a page
+  // number restored after visiting a detail page is kept.
+  const prevStatusFilter = React.useRef(statusFilter);
+  React.useEffect(() => {
+    if (prevStatusFilter.current === statusFilter) return;
+    prevStatusFilter.current = statusFilter;
     setCurrentPage(0);
-  }, [statusFilter]);
+  }, [statusFilter, setCurrentPage]);
 
   const handleEdit = (project: Project) => {
     setEditingProject(project);
@@ -241,6 +249,7 @@ const ProjectList: React.FC = () => {
             <div className={pageStyles.searchBox}>
               <CustomInput
                 placeholder="Search projects..."
+                allowClear
                 value={searchInput}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   const val = e.target.value;

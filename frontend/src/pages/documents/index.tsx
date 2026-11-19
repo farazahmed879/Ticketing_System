@@ -435,6 +435,7 @@ const Documents: React.FC = () => {
             )}
             <CustomInput
               placeholder="Search by recipient or title..."
+              allowClear
               value={search}
               icon={<CustomIcon name="Search" size={16} />}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>

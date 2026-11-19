@@ -22,6 +22,7 @@ import UserCard from "./components/user-card";
 import { getRoleStyle, getUserColumns } from "./columns";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import { useListViewMode } from "../../utils/helpers";
+import usePersistedState, { useShouldRestoreList } from "../../hooks/usePersistedState";
 
 const UserList: React.FC = () => {
   const navigate = useNavigate();
@@ -36,11 +37,14 @@ const UserList: React.FC = () => {
   const { showNotification, setIsLoading } = useNotification();
 
   // Pagination & Filter state
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  // List state below survives opening a profile and coming back.
+  // Restore search/filters/page only when coming back from a detail page.
+  const restoreList = useShouldRestoreList(["/profile/"]);
+  const [searchTerm, setSearchTerm] = usePersistedState("users.search", "", restoreList);
+  const [searchInput, setSearchInput] = usePersistedState("users.searchInput", "", restoreList);
+  const [roleFilter, setRoleFilter] = usePersistedState("users.role", "all", restoreList);
+  const [currentPage, setCurrentPage] = usePersistedState("users.page", 0, restoreList);
+  const [itemsPerPage, setItemsPerPage] = usePersistedState("users.pageSize", 10, restoreList);
   const [viewMode, setViewMode] = useListViewMode();
 
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -209,6 +213,7 @@ const UserList: React.FC = () => {
           <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
             <CustomInput
               placeholder="Search users..."
+              allowClear
               value={searchInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 const val = e.target.value;

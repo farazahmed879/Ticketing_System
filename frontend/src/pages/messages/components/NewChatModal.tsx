@@ -39,6 +39,7 @@ const NewChatModal: React.FC<NewChatModalProps> = ({
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <CustomInput
           placeholder="Search by name or email..."
+          allowClear
           value={userSearch}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             onUserSearchChange(e.target.value)

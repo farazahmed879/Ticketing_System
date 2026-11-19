@@ -46,6 +46,28 @@
   flex-shrink: 0;
 }
 
+.clearBtn {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 8px;
+  padding: 0;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.clearBtn:hover,
+.clearBtn:focus-visible {
+  background: rgba(148, 163, 184, 0.3);
+  color: var(--text-primary);
+}
+
 .suffix {
   display: flex;
   align-items: center;

@@ -90,6 +90,8 @@ export interface CustomInputProps<
   rules?: RegisterOptions<T, Path<T>>;
   /** Sanitize/format the raw input value before it is stored (e.g. digits-only, CNIC dashes). */
   transform?: (value: string) => string;
+  /** Show a ✕ button while the field has text; clicking it empties the field. */
+  allowClear?: boolean;
 }
 
 export interface CustomTextAreaProps<

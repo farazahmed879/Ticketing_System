@@ -29,11 +29,14 @@ import {
 import { ROLE_TYPE } from "../roles/roleConstants";
 import { useListViewMode } from "../../utils/helpers";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
+import usePersistedState, { useShouldRestoreList } from "../../hooks/usePersistedState";
 
 const TeamList: React.FC = () => {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
+  // Restore search/filters/page only when coming back from a detail page.
+  const restoreList = useShouldRestoreList(["/teams/"]);
+  const [search, setSearch] = usePersistedState("teams.search", "", restoreList);
+  const [searchInput, setSearchInput] = usePersistedState("teams.searchInput", "", restoreList);
   const [teamToDelete, setTeamToDelete] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -201,6 +204,7 @@ const TeamList: React.FC = () => {
           >
             <CustomInput
               placeholder="Search teams..."
+              allowClear
               value={searchInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 const val = e.target.value;

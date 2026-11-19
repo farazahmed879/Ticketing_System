@@ -274,6 +274,7 @@ const AnnouncementFeed: React.FC = () => {
             </div>
             <CustomInput
               placeholder={`Search ${entityNamePlural.toLowerCase()}...`}
+              allowClear
               value={searchInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setSearchInput(e.target.value);

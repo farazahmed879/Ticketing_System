@@ -1,6 +1,7 @@
-import type { ChangeEvent } from "react";
+import { useRef, type ChangeEvent } from "react";
 import styles from "./CustomInput.module.css";
 import { Controller, type FieldValues } from "react-hook-form";
+import CustomIcon from "../CustomIcon";
 
 import type { CustomInputProps } from "../types";
 
@@ -15,8 +16,11 @@ const CustomInput = <T extends FieldValues>({
   control,
   rules,
   transform,
+  allowClear,
   ...props
 }: CustomInputProps<T>) => {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
   const renderInput = (fieldProps: any = {}) => {
     const error = manualError || fieldProps.error;
     const field = fieldProps.field;
@@ -29,6 +33,27 @@ const CustomInput = <T extends FieldValues>({
       ? (e: ChangeEvent<HTMLInputElement>) =>
           baseOnChange?.(transform(e.target.value))
       : baseOnChange;
+
+    const showClear =
+      allowClear && !props.disabled && !props.readOnly && Boolean(hasValue);
+
+    // Empty the field through the same handler typing uses. RHF takes the
+    // value directly; manual `onChange={(e) => set(e.target.value)}` handlers
+    // get an event-shaped object.
+    const handleClear = () => {
+      if (field) {
+        field.onChange("");
+      } else {
+        const target = { value: "", name: inputRef.current?.name ?? "" };
+        (props.onChange as any)?.({ target, currentTarget: target });
+      }
+      inputRef.current?.focus();
+    };
+
+    const setRefs = (el: HTMLInputElement | null) => {
+      inputRef.current = el;
+      field?.ref?.(el);
+    };
 
     return (
       <div className={styles.container} style={containerStyle}>
@@ -48,8 +73,22 @@ const CustomInput = <T extends FieldValues>({
             className={`${styles.input} ${className || ""} ${hasValue ? styles.hasValue : ""}`}
             {...props}
             {...field}
+            ref={setRefs}
             onChange={handleChange}
           />
+          {showClear && (
+            <button
+              type="button"
+              className={styles.clearBtn}
+              onClick={handleClear}
+              // Keep focus in the input (no blur flicker before clearing).
+              onMouseDown={(e) => e.preventDefault()}
+              aria-label="Clear"
+              title="Clear"
+            >
+              <CustomIcon name="X" size={14} />
+            </button>
+          )}
           {suffix && <span className={styles.suffix}>{suffix}</span>}
         </div>
         {error && <span className={styles.errorText}>{error}</span>}

@@ -40,6 +40,7 @@ export const InterviewListFilter: React.FC<InterviewListFilterProps> = ({
           <div className={styles.searchBox}>
             <CustomInput
               placeholder="Search interviews..."
+              allowClear
               value={searchInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 const val = e.target.value;

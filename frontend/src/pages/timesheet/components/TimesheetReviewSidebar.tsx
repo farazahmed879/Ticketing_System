@@ -60,6 +60,7 @@ export const TimesheetReviewSidebar: React.FC<TimesheetReviewSidebarProps> = ({
       <div className={styles.rvSideSearch}>
         <CustomInput
           placeholder="Search members..."
+          allowClear
           value={userSearch}
           onChange={(e) => setUserSearch(e.target.value)}
           icon={

@@ -20,12 +20,15 @@ import styles from "./DepartmentList.module.css";
 import { FormattedTaskDescription } from "../timesheet/components/TaskDescriptionEditor";
 import { useListViewMode } from "../../utils/helpers";
 import CustomTooltip from "../../components/CustomTooltip";
+import usePersistedState, { useShouldRestoreList } from "../../hooks/usePersistedState";
 
 const DepartmentList: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
+  // Restore search/filters/page only when coming back from a detail page.
+  const restoreList = useShouldRestoreList(["/departments/"]);
+  const [search, setSearch] = usePersistedState("departments.search", "", restoreList);
+  const [searchInput, setSearchInput] = usePersistedState("departments.searchInput", "", restoreList);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const { showNotification, setIsLoading } = useNotification();
@@ -34,7 +37,7 @@ const DepartmentList: React.FC = () => {
   const [deptToDelete, setDeptToDelete] = useState<string | null>(null);
 
   // Pagination State
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = usePersistedState("departments.currentPage", 0, restoreList);
   const [itemsPerPage] = useState(10);
   const [viewMode, setViewMode] = useListViewMode();
 
@@ -162,6 +165,7 @@ const DepartmentList: React.FC = () => {
           <div style={{ display: "flex", gap: 16, alignItems: "center", width: "100%" }}>
             <CustomInput
               placeholder="Search departments..."
+              allowClear
               value={searchInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 const val = e.target.value;

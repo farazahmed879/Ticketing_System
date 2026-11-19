@@ -32,6 +32,7 @@ import { InterviewListFilter } from "./components/InterviewListFilter";
 import { ROLE_TYPE } from "../roles/roleConstants";
 import { getDefaultListView } from "../../utils/helpers";
 import styles from "./InterviewList.module.css";
+import usePersistedState, { useShouldRestoreList } from "../../hooks/usePersistedState";
 
 const InterviewList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -55,10 +56,12 @@ const InterviewList: React.FC = () => {
     user?.role?.roleType === ROLE_TYPE.HR ||
     user?.role?.permissions?.interviews?.create;
 
-  const [search, setSearch] = useState("");
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  // Restore search/filters/page only when coming back from a detail page.
+  const restoreList = useShouldRestoreList(["/interviews/"]);
+  const [search, setSearch] = usePersistedState("interviews.search", "", restoreList);
+  const [activeFilter, setActiveFilter] = usePersistedState("interviews.activeFilter", "all", restoreList);
+  const [startDate, setStartDate] = usePersistedState("interviews.startDate", "", restoreList);
+  const [endDate, setEndDate] = usePersistedState("interviews.endDate", "", restoreList);
 
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [draftActiveFilter, setDraftActiveFilter] = useState("all");
@@ -80,13 +83,18 @@ const InterviewList: React.FC = () => {
     null,
   );
 
-  const [currentPage, setCurrentPage] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
-  const [viewMode, setViewMode] = useState<"list" | "grid">(getDefaultListView());
+  const [currentPage, setCurrentPage] = usePersistedState("interviews.currentPage", 0, restoreList);
+  const [itemsPerPage, setItemsPerPage] = usePersistedState("interviews.itemsPerPage", DEFAULT_PAGE_SIZE, restoreList);
+  const [viewMode, setViewMode] = usePersistedState<"list" | "grid">("interviews.viewMode", getDefaultListView());
 
+  // Back to page 1 when the search changes — but not on mount, so a page
+  // number restored after visiting a detail page is kept.
+  const prevSearch = React.useRef(search);
   React.useEffect(() => {
+    if (prevSearch.current === search) return;
+    prevSearch.current = search;
     setCurrentPage(0);
-  }, [search]);
+  }, [search, setCurrentPage]);
 
   const filters = [
     { value: "all", label: "All" },

@@ -83,6 +83,7 @@ const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
       <div className={styles.listSearch}>
         <CustomInput
           placeholder="Search chats..."
+          allowClear
           value={searchTerm}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             onSearchChange(e.target.value)

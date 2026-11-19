@@ -65,6 +65,7 @@ const NewGroupModal: React.FC<NewGroupModalProps> = ({
         />
         <CustomInput
           placeholder="Search members..."
+          allowClear
           value={userSearch}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             onUserSearchChange(e.target.value)

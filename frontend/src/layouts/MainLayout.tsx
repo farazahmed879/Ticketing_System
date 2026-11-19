@@ -23,6 +23,7 @@ import {
 import { useInstallOption, promptInstallApp, useIsStandalone } from "../utils/installPrompt";
 import InstallInstructionsModal from "../components/InstallInstructionsModal";
 import useIsMobile from "../hooks/useIsMobile";
+import { useTrackLastPath } from "../hooks/usePersistedState";
 
 /** Query key for the sidebar's "unseen shoutouts" badge. */
 const SHOUTOUT_UNREAD_KEY = "shoutoutUnreadCount";
@@ -47,6 +48,8 @@ const MainLayout: React.FC = () => {
   const [isPillOpen, setIsPillOpen] = React.useState(false);
   const pillRef = React.useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  // Lets list pages tell "back from a detail page" from "arrived fresh".
+  useTrackLastPath();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const notificationRef = React.useRef<HTMLDivElement>(null);

@@ -40,6 +40,7 @@ import { formatDate , useListViewMode } from "../../utils/helpers";
 import CustomBadge from "../../components/CustomBadge";
 import CustomImage from "../../components/CustomImage";
 import styles from "./CandidateList.module.css";
+import usePersistedState, { useShouldRestoreList } from "../../hooks/usePersistedState";
 
 const CandidateList: React.FC = () => {
   const queryClient = useQueryClient();
@@ -58,27 +59,29 @@ const CandidateList: React.FC = () => {
   const navigate = useNavigate();
 
   // Pagination & Filter state
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("exclude_hired");
-  const [positionFilter, setPositionFilter] = useState("");
-  const [skillsFilter, setSkillsFilter] = useState("");
-  const [isAiMode, setIsAiMode] = useState(false);
-  const [aiPrompt, setAiPrompt] = useState("");
+  // Restore search/filters/page only when coming back from a detail page.
+  const restoreList = useShouldRestoreList(["/candidates/"]);
+  const [searchTerm, setSearchTerm] = usePersistedState("candidates.searchTerm", "", restoreList);
+  const [statusFilter, setStatusFilter] = usePersistedState("candidates.statusFilter", "exclude_hired", restoreList);
+  const [positionFilter, setPositionFilter] = usePersistedState("candidates.positionFilter", "", restoreList);
+  const [skillsFilter, setSkillsFilter] = usePersistedState("candidates.skillsFilter", "", restoreList);
+  const [isAiMode, setIsAiMode] = usePersistedState("candidates.isAiMode", false, restoreList);
+  const [aiPrompt, setAiPrompt] = usePersistedState("candidates.aiPrompt", "", restoreList);
   // Applied (submitted) search values — the query reads THESE, not the live
   // input, so it only refetches on Search/Analyze/Enter, never on each keystroke.
-  const [appliedSearch, setAppliedSearch] = useState("");
-  const [appliedAiPrompt, setAppliedAiPrompt] = useState("");
+  const [appliedSearch, setAppliedSearch] = usePersistedState("candidates.appliedSearch", "", restoreList);
+  const [appliedAiPrompt, setAppliedAiPrompt] = usePersistedState("candidates.appliedAiPrompt", "", restoreList);
   const [currentEditingId, setCurrentEditingId] = useState<string | null>(null);
 
   // More Filters state
   const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const [cityFilter, setCityFilter] = useState("");
-  const [immediateJoinerFilter, setImmediateJoinerFilter] = useState("");
-  const [dateFromFilter, setDateFromFilter] = useState("");
-  const [dateToFilter, setDateToFilter] = useState("");
+  const [cityFilter, setCityFilter] = usePersistedState("candidates.cityFilter", "", restoreList);
+  const [immediateJoinerFilter, setImmediateJoinerFilter] = usePersistedState("candidates.immediateJoinerFilter", "", restoreList);
+  const [dateFromFilter, setDateFromFilter] = usePersistedState("candidates.dateFromFilter", "", restoreList);
+  const [dateToFilter, setDateToFilter] = usePersistedState("candidates.dateToFilter", "", restoreList);
 
-  const [currentPage, setCurrentPage] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_PAGE_SIZE);
+  const [currentPage, setCurrentPage] = usePersistedState("candidates.currentPage", 0, restoreList);
+  const [itemsPerPage, setItemsPerPage] = usePersistedState("candidates.itemsPerPage", DEFAULT_PAGE_SIZE, restoreList);
   const [viewMode, setViewMode] = useListViewMode();
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

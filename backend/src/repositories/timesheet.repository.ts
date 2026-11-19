@@ -76,6 +76,7 @@ export const timesheetRepository = {
           data: tasks.map((t: any) => ({
             description: t.description,
             hours: parseFloat(t.hours),
+            workType: t.workType || null,
             projectId: t.projectId || null,
             ticketId: t.ticketId || null,
             entryId: upsertedEntry.id,

@@ -47,6 +47,24 @@ export const userRepository = {
     return prisma.user.findUnique({ where: { id }, include: { role: true } });
   },
 
+  /** Profile page: also the user's teams and, through them, departments. */
+  async findProfileById(id: string) {
+    return prisma.user.findUnique({
+      where: { id },
+      include: {
+        role: true,
+        teams: {
+          where: { deleted: false },
+          select: {
+            id: true,
+            name: true,
+            department: { select: { id: true, name: true, deleted: true } },
+          },
+        },
+      },
+    });
+  },
+
   async create(data: any) {
     return prisma.user.create({ data, include: { role: true } });
   },

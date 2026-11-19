@@ -724,6 +724,16 @@
   color: var(--text-secondary);
 }
 
+.taskWorkTypeTag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--accent-primary);
+  white-space: nowrap;
+}
+
 .taskHoursTag {
   font-size: 0.72rem;
   font-weight: 700;
@@ -753,14 +763,14 @@
 
 .taskInputsGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr 120px;
+  grid-template-columns: 1fr 1fr 170px 100px;
   gap: 14px;
   align-items: start;
 }
 
 .taskInputsGridNoTicket {
   display: grid;
-  grid-template-columns: 1fr 120px;
+  grid-template-columns: 1fr 170px 100px;
   gap: 14px;
   align-items: start;
 }
@@ -1168,6 +1178,10 @@
   flex: 0 0 95px;
 }
 
+.taskInputWorkType {
+  min-width: 0;
+}
+
 @media (max-width: 1024px) {
   .container {
     height: auto;
@@ -1268,11 +1282,11 @@
 
 /* Grid children must be allowed to shrink below their content width. */
 .taskInputsGrid {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 120px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 170px 100px;
 }
 
 .taskInputsGridNoTicket {
-  grid-template-columns: minmax(0, 1fr) 120px;
+  grid-template-columns: minmax(0, 1fr) 170px 100px;
 }
 
 .modalTopRow {

@@ -51,3 +51,17 @@ export function normalizeEntryType(entryType?: string | null): TimesheetEntryTyp
   if (!entryType || entryType === "WORK") return "ONSITE_OFFICE";
   return entryType as TimesheetEntryType;
 }
+
+// Per-task location. A task defaults to the day's type when that is a work
+// location; on leave/other days it falls back to Onsite / Office.
+export const TASK_WORK_TYPE_OPTIONS: { value: TimesheetEntryType; label: string }[] =
+  ENTRY_TYPE_OPTIONS.filter((o) =>
+    ["ONSITE_OFFICE", "ONSITE_CLIENT", "WORK_FROM_HOME"].includes(o.value),
+  );
+
+const TASK_WORK_TYPES = new Set(TASK_WORK_TYPE_OPTIONS.map((o) => o.value as string));
+
+export function defaultTaskWorkType(entryType?: string | null): TimesheetEntryType {
+  const normalized = normalizeEntryType(entryType);
+  return TASK_WORK_TYPES.has(normalized) ? normalized : "ONSITE_OFFICE";
+}

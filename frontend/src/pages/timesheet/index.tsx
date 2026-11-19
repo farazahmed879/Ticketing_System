@@ -378,6 +378,12 @@ const Timesheet: React.FC = () => {
                         #{task.ticket.uid} {task.ticket.subject}
                       </span>
                     )}
+                    {task.workType && (
+                      <span className={styles.childTaskProject}>
+                        <CustomIcon name="MapPin" size={12} />
+                        {getEntryTypeLabel(task.workType)}
+                      </span>
+                    )}
                   </div>
                   {task.hours > 0 && (
                     <span className={styles.childTaskHours}>{task.hours}h</span>

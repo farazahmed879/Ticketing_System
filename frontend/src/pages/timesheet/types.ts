@@ -9,6 +9,8 @@ export interface TimesheetFormData {
     hours: number;
     projectId: string;
     ticketId: string;
+    /** Where the task was done; defaults to the day type (server-side too). */
+    workType?: string;
   }[];
 }
 

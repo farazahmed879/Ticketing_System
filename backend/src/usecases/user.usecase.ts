@@ -332,7 +332,7 @@ export const userUsecase = {
   },
 
   async getUserById(id: string) {
-    const user = await userRepository.findById(id);
+    const user = await userRepository.findProfileById(id);
     if (!user) throw new Error("User not found");
     const { password: _, ...safeUser } = user;
     return safeUser;

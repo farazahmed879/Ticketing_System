@@ -31,17 +31,23 @@ const Profile: React.FC = () => {
     currentUser?.role?.roleType === ROLE_TYPE.ADMIN ||
     currentUser?.role?.roleType === ROLE_TYPE.HR;
 
+  // Always load the full record. The signed-in user from AuthContext is the
+  // slim login payload (no username, contacts, CNIC, teams…), so "My Profile"
+  // fetches it by id too, falling back to the session copy if that fails.
+  const profileId = id || currentUser?.id;
+
   const fetchUser = async () => {
+    if (!profileId) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
-      if (id) {
-        const res = await api.get(API_ROUTES.USERS.BY_ID(id));
-        setUser(res.data.account);
-      } else {
-        setUser(currentUser);
-      }
+      const res = await api.get(API_ROUTES.USERS.BY_ID(profileId));
+      setUser(res.data.account);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
+      if (!id) setUser(currentUser);
     } finally {
       setLoading(false);
     }
@@ -50,7 +56,20 @@ const Profile: React.FC = () => {
   useEffect(() => {
     fetchUser();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, currentUser]);
+  }, [profileId]);
+
+  // Departments come through the user's teams (Team → Department).
+  const departmentNames: string[] = Array.from(
+    new Set(
+      (user?.teams || [])
+        .map((t: any) => t?.department)
+        .filter((d: any) => d && !d.deleted)
+        .map((d: any) => d.name as string),
+    ),
+  );
+  const teamNames: string[] = (user?.teams || [])
+    .map((t: any) => t?.name)
+    .filter(Boolean);
 
   // Roles list is needed by the edit modal; lazy-load once on first open.
   const openEditModal = async () => {
@@ -141,7 +160,7 @@ const Profile: React.FC = () => {
                 }}
               />
             ) : (
-              user.fullname.charAt(0)
+              user.fullname?.charAt(0)?.toUpperCase()
             )}
           </div>
           <div className={styles.headerText}>
@@ -286,7 +305,11 @@ const Profile: React.FC = () => {
             <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
                 <label>Department</label>
-                <span>{user.department?.name || "Operations"}</span>
+                <span>{departmentNames.join(", ") || "-"}</span>
+              </div>
+              <div className={styles.infoItem}>
+                <label>Team</label>
+                <span>{teamNames.join(", ") || "-"}</span>
               </div>
               <div className={styles.infoItem}>
                 <label>Branch / Location</label>
@@ -306,7 +329,7 @@ const Profile: React.FC = () => {
               </div>
               <div className={styles.infoItem}>
                 <label>
-                  {user.role.roleType === ROLE_TYPE.CUSTOMER
+                  {user.role?.roleType === ROLE_TYPE.CUSTOMER
                     ? "Client ID"
                     : "Employee ID"}
                 </label>
@@ -342,7 +365,7 @@ const Profile: React.FC = () => {
               </div>
               <div className={styles.infoItem}>
                 <label>Username</label>
-                <span>@{user.username}</span>
+                <span>{user.username ? `@${user.username}` : "-"}</span>
               </div>
               <div className={styles.infoItem}>
                 <label>CNIC</label>

@@ -19,6 +19,17 @@ const ENTRY_TYPES = new Set([
 // half-day's hours/tasks to be logged.
 const ZERO_HOUR_ENTRY_TYPES = new Set(["WEEKEND", "PUBLIC_HOLIDAY", "FULL_DAY_LEAVE"]);
 
+// Where a single task was done. Each task carries one of these; it defaults
+// to the day's entry type when that is a work location, else Onsite / Office.
+const TASK_WORK_TYPES = new Set(["ONSITE_OFFICE", "ONSITE_CLIENT", "WORK_FROM_HOME"]);
+
+const resolveTaskWorkType = (taskWorkType: unknown, entryType: string): string => {
+  if (typeof taskWorkType === "string" && TASK_WORK_TYPES.has(taskWorkType)) {
+    return taskWorkType;
+  }
+  return TASK_WORK_TYPES.has(entryType) ? entryType : "ONSITE_OFFICE";
+};
+
 // Entry types that consume days from the employee's leave balance, and how many.
 const LEAVE_DAYS_BY_ENTRY_TYPE: Record<string, number> = {
   HALF_DAY_LEAVE: 0.5,
@@ -99,7 +110,12 @@ export const timesheetUsecase = {
     // Weekend / Public Holiday / Full Day Leave days have no work hours or
     // tasks — enforce this server-side regardless of what the client sends.
     const isZeroHourDay = ZERO_HOUR_ENTRY_TYPES.has(entryType);
-    const finalTasks = isZeroHourDay ? [] : tasks;
+    const finalTasks = isZeroHourDay
+      ? []
+      : (tasks || []).map((t: any) => ({
+          ...t,
+          workType: resolveTaskWorkType(t?.workType, entryType),
+        }));
     const finalHours = isZeroHourDay ? 0 : parseFloat(totalHours);
 
     const entry = await timesheetRepository.upsertEntryWithTasks(

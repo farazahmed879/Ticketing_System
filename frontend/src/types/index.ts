@@ -275,6 +275,8 @@ export interface TimesheetTask {
   id: string;
   description: string;
   hours: number;
+  /** ONSITE_OFFICE / ONSITE_CLIENT / WORK_FROM_HOME; null on older tasks. */
+  workType?: string | null;
   projectId?: string;
   project?: { name: string };
   ticketId?: string;

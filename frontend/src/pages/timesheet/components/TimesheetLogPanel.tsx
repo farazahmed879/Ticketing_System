@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import CustomInput from "../../../components/CustomInput";
@@ -22,12 +22,22 @@ import type { TimesheetEntry } from "../../../types";
 import type { TimesheetFormData } from "../types";
 import {
   ENTRY_TYPE_OPTIONS,
+  TASK_WORK_TYPE_OPTIONS,
+  defaultTaskWorkType,
   isZeroHourEntryType,
   normalizeEntryType,
 } from "../entryTypes";
 
 // Sentinel for "Miscellaneous" (no specific project) option
 const MISC_PROJECT = "misc";
+
+const emptyTask = (workType: string) => ({
+  description: "",
+  hours: 0,
+  projectId: "",
+  ticketId: "",
+  workType,
+});
 
 export interface TimesheetLogPanelProps {
   date: Date;
@@ -53,13 +63,13 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
   const { showNotification, setIsLoading } = useNotification();
   const { user } = useAuth();
 
-  const { handleSubmit, control, reset, watch, setValue } =
+  const { handleSubmit, control, reset, watch, setValue, getValues } =
     useForm<TimesheetFormData>({
       defaultValues: {
         totalHours: "8",
         notes: "",
         entryType: "ONSITE_OFFICE",
-        tasks: [{ description: "", hours: 0, projectId: "", ticketId: "" }],
+        tasks: [emptyTask("ONSITE_OFFICE")],
       },
     });
 
@@ -117,13 +127,20 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
     setValue("totalHours", isZeroHourDay ? "0" : String(taskSum));
   }, [taskSum, isZeroHourDay, setValue]);
 
+  // Day type of the last render, so a day-type change can carry along the
+  // tasks that were still on the old default (hand-picked ones are kept).
+  const prevEntryTypeRef = useRef<string>("ONSITE_OFFICE");
+
   // Reset form whenever date or existingEntry changes
   useEffect(() => {
+    const entryType = normalizeEntryType(existingEntry?.entryType);
+    const dayDefault = defaultTaskWorkType(entryType);
+    prevEntryTypeRef.current = entryType;
     if (existingEntry) {
       reset({
         totalHours: existingEntry.totalHours?.toString() || "8",
         notes: existingEntry.notes || "",
-        entryType: normalizeEntryType(existingEntry.entryType),
+        entryType,
         tasks:
           existingEntry.tasks && existingEntry.tasks.length > 0
             ? existingEntry.tasks.map((t: any) => ({
@@ -131,20 +148,44 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                 hours: t.hours || 0,
                 projectId: t.projectId || MISC_PROJECT,
                 ticketId: t.ticketId || "",
+                // Tasks saved before per-task types existed follow the day.
+                workType: t.workType || dayDefault,
               }))
-            : [{ description: "", hours: 0, projectId: "", ticketId: "" }],
+            : [emptyTask(dayDefault)],
       });
     } else {
       reset({
         totalHours: "8",
         notes: "",
         entryType: "ONSITE_OFFICE",
-        tasks: [{ description: "", hours: 0, projectId: "", ticketId: "" }],
+        tasks: [emptyTask("ONSITE_OFFICE")],
       });
     }
     // Default first task open on day change
     setExpandedTasks({ 0: true });
   }, [existingEntry, date, reset]);
+
+  // Day type changed by the user (not by reset): tasks still on the old
+  // default follow the new one; tasks set by hand keep their value.
+  useEffect(() => {
+    const sub = watch((values, { name, type }) => {
+      if (name !== "entryType" || type !== "change") return;
+      const next = values.entryType || "";
+      const oldDefault = defaultTaskWorkType(prevEntryTypeRef.current);
+      const newDefault = defaultTaskWorkType(next);
+      prevEntryTypeRef.current = next;
+      if (oldDefault === newDefault) return;
+      (getValues("tasks") || []).forEach((t, i) => {
+        if (!t.workType || t.workType === oldDefault) {
+          setValue(`tasks.${i}.workType`, newDefault);
+        }
+      });
+    });
+    return () => sub.unsubscribe();
+  }, [watch, getValues, setValue]);
+
+  const workTypeLabel = (value?: string) =>
+    TASK_WORK_TYPE_OPTIONS.find((o) => o.value === value)?.label;
 
   const { data: metadata } = useQuery({
     queryKey: ["timesheet-metadata", user?.id],
@@ -408,6 +449,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                   const taskHours = watchedTasks?.[index]?.hours;
                   const taskDesc = watchedTasks?.[index]?.description;
                   const taskProjId = watchedTasks?.[index]?.projectId;
+                  const taskWorkType = watchedTasks?.[index]?.workType;
                   const taskProjName =
                     taskProjId === MISC_PROJECT
                       ? "Miscellaneous"
@@ -434,6 +476,12 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                               • <span>{taskProjName}</span>
                             </span>
                           )}
+                          {taskWorkType &&
+                            taskWorkType !== defaultTaskWorkType(watchedEntryType) && (
+                              <span className={styles.taskWorkTypeTag}>
+                                {workTypeLabel(taskWorkType)}
+                              </span>
+                            )}
                           {Number(taskHours) > 0 && (
                             <span className={styles.taskHoursTag}>
                               {taskHours}h
@@ -524,6 +572,16 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                               </div>
                             )}
 
+                            <div className={styles.taskInputWorkType}>
+                              <CustomSelect
+                                name={`tasks.${index}.workType` as const}
+                                control={control}
+                                label="Work Type"
+                                options={TASK_WORK_TYPE_OPTIONS}
+                                disabled={isLocked}
+                              />
+                            </div>
+
                             <div className={styles.taskInputHours}>
                               <CustomInput
                                 name={`tasks.${index}.hours` as const}
@@ -579,12 +637,7 @@ const TimesheetLogPanel: React.FC<TimesheetLogPanelProps> = ({
                 icon={<CustomIcon name="PlusCircle" size={15} />}
                 onClick={() => {
                   const nextIdx = fields.length;
-                  append({
-                    description: "",
-                    hours: 0,
-                    projectId: "",
-                    ticketId: "",
-                  });
+                  append(emptyTask(defaultTaskWorkType(watchedEntryType)));
                   // Collapse every existing task so only the new one is open.
                   const next: Record<number, boolean> = {};
                   for (let i = 0; i < nextIdx; i++) next[i] = false;

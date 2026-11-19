@@ -169,6 +169,14 @@ const TimesheetReviewModal: React.FC<TimesheetReviewModalProps> = ({
                       {t.ticket.uid}
                     </span>
                   )}
+                  {t.workType && (
+                    <span
+                      style={{ display: "flex", alignItems: "center", gap: 4 }}
+                    >
+                      <CustomIcon name="MapPin" size={12} />{" "}
+                      {getEntryTypeLabel(t.workType)}
+                    </span>
+                  )}
                 </div>
               </div>
               <strong style={{ color: "var(--accent-primary)", flexShrink: 0 }}>

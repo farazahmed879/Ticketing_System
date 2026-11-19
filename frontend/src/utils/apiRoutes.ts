@@ -112,9 +112,15 @@ export const API_ROUTES = {
     CANDIDATES: "/documents/candidates",
     BY_ID: (id: string) => `/documents/${id}`,
     DELIVER: (id: string) => `/documents/${id}/deliver`,
+    // Document passphrase (Admin / Sub Admin)
+    VAULT: "/documents/vault",
+    VAULT_SETUP: "/documents/vault/setup",
+    VAULT_UNLOCK: "/documents/vault/unlock",
+    VAULT_CHANGE: "/documents/vault/change",
+    VAULT_LOCK: "/documents/vault/lock",
   },
 
-  // Database backups (admin / manager)
+  // Database backups (Admin / Sub Admin)
   BACKUPS: {
     BASE: "/backups",
     DOWNLOAD: (id: string) => `/backups/${id}/download`,

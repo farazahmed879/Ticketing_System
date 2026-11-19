@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthRequest } from "../types";
 import { documentUsecase, DocumentError } from "../usecases/document.usecase";
+import { documentVault } from "../usecases/documentVault.usecase";
 import { loadCallerRole } from "../middleware/auth";
 import { RoleType } from "../utils/constants";
 import { emitNotificationToUser } from "../socketio/events";
@@ -24,6 +25,53 @@ const notify = async (req: AuthRequest, doc: any, updated = false) => {
 };
 
 export const documentController = {
+  // ---- document passphrase (Admin / Sub Admin) ----
+  async vaultStatus(_req: AuthRequest, res: Response) {
+    try {
+      res.json(await documentVault.status());
+    } catch (e) {
+      fail(res, e, "load document security");
+    }
+  },
+
+  async vaultSetup(req: AuthRequest, res: Response) {
+    try {
+      res.json(await documentVault.setup(req.body?.passphrase, req.user!.id));
+    } catch (e) {
+      fail(res, e, "set the document passphrase");
+    }
+  },
+
+  async vaultUnlock(req: AuthRequest, res: Response) {
+    try {
+      res.json(await documentVault.unlock(req.body?.passphrase, req.user!.id));
+    } catch (e) {
+      fail(res, e, "unlock documents");
+    }
+  },
+
+  async vaultChange(req: AuthRequest, res: Response) {
+    try {
+      res.json(
+        await documentVault.changePassphrase(
+          req.body?.currentPassphrase,
+          req.body?.newPassphrase,
+          req.user!.id,
+        ),
+      );
+    } catch (e) {
+      fail(res, e, "change the document passphrase");
+    }
+  },
+
+  async vaultLock(req: AuthRequest, res: Response) {
+    try {
+      res.json(await documentVault.lock(req.user!.id));
+    } catch (e) {
+      fail(res, e, "lock documents");
+    }
+  },
+
   async getCompany(_req: AuthRequest, res: Response) {
     try {
       res.json({ company: await documentUsecase.getCompany() });

@@ -23,6 +23,26 @@ export const useHrDocument = (id: string | null) =>
     staleTime: 0,
   });
 
+/** Document passphrase state (see backend documentVault.usecase.ts). */
+export interface VaultStatus {
+  state: "not_set_up" | "locked" | "unlocked";
+  setAt: string | null;
+  setByName: string | null;
+  unlockedAt: string | null;
+  unlockedByName: string | null;
+  minLength: number;
+}
+
+export const VAULT_QUERY_KEY = ["hr-document-vault"];
+
+export const useDocumentVault = () =>
+  useQuery({
+    queryKey: VAULT_QUERY_KEY,
+    queryFn: async () => (await api.get(API_ROUTES.DOCUMENTS.VAULT)).data as VaultStatus,
+    // A server restart locks documents: re-check now and then.
+    refetchInterval: 60_000,
+  });
+
 /** Server error message from an axios error, or `fallback`. */
 export const apiErrorMessage = (err: unknown, fallback: string) =>
   (err as { response?: { data?: { message?: string } } })?.response?.data?.message || fallback;

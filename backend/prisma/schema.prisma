@@ -675,6 +675,21 @@ model HrDocument {
   @@index([userId])
 }
 
+// Key for HR document encryption, locked by the document passphrase that
+// only Admin / Sub Admin know. Singleton – one row with key "global".
+// wrappedKey = the random data key, AES-256-GCM encrypted with a scrypt key
+// derived from the passphrase (kdf holds the scrypt params + salt).
+model DocumentVault {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  key        String   @unique @default("global")
+  kdf        Json
+  wrappedKey Json
+  setById    String?  @db.ObjectId
+  setByName  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 // Letterhead used on HR documents. Singleton – one row with key "global".
 model CompanyProfile {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId

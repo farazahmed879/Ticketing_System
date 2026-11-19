@@ -11,7 +11,7 @@
  * temp file, so memory stays flat even with large attachment documents. The
  * file is then uploaded to Drive as a PRIVATE file and the temp file removed.
  *
- * Runs weekly (Sunday 02:00 PKT) and on demand from Settings (admin/manager).
+ * Runs weekly (Sunday 02:00 PKT) and on demand from Settings (Admin / Sub Admin).
  * Only one backup runs at a time.
  */
 import fs from "fs";

@@ -1,4 +1,14 @@
 import prisma from "../prisma";
+import {
+  DocumentKeyMissingError,
+  decryptDocumentData,
+  encryptDocumentData,
+  isEncrypted,
+} from "../utils/documentCrypto";
+import { DocumentError } from "./documentError";
+import { documentVault, setOnUnlocked } from "./documentVault.usecase";
+
+export { DocumentError };
 
 /**
  * HR documents issued by Admin / Sub Admin (pay slips, offer letters, ...).
@@ -49,14 +59,25 @@ const COMPANY_FIELDS = [
 const IMAGE_DATA_URL_RE = /^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i;
 const MAX_IMAGE_CHARS = 1_500_000; // ~1.1MB binary
 
-export class DocumentError extends Error {
-  constructor(
-    message: string,
-    public status = 400,
-  ) {
-    super(message);
+/** Document details are encrypted at rest (see utils/documentCrypto). */
+const openData = (stored: unknown): Record<string, any> => {
+  try {
+    return decryptDocumentData(stored);
+  } catch (err) {
+    if (err instanceof DocumentKeyMissingError) {
+      throw new DocumentError(
+        "Documents are locked. An Admin or Sub Admin must unlock them with the document passphrase.",
+        423,
+      );
+    }
+    // Wrong key or tampered data (GCM authentication failed).
+    console.error("[documents] Could not decrypt a document:", (err as Error).message);
+    throw new DocumentError("This document could not be decrypted", 500);
   }
-}
+};
+
+/** A document with its details decrypted, for the API response. */
+const reveal = <T extends { data: unknown }>(doc: T): T => ({ ...doc, data: openData(doc.data) });
 
 const cleanImage = (v: unknown, field: string) => {
   if (v === null || v === undefined || v === "") return null;
@@ -213,11 +234,12 @@ export const documentUsecase = {
     assertId(id, "Document");
     const doc = await prisma.hrDocument.findFirst({ where: { id, deleted: false } });
     if (!doc) throw new DocumentError("Document not found", 404);
-    return doc;
+    return reveal(doc);
   },
 
   /** Saved as a draft; the employee only gets it once it's delivered. */
   async create(body: any, issuer: { id: string }) {
+    await documentVault.assertUnlocked();
     const v = this.validate(body);
     const userId = await this.assertEmployee(body?.userId);
     // Generated for an employee's document request? Check it now; the
@@ -227,9 +249,10 @@ export const documentUsecase = {
       where: { id: issuer.id },
       select: { fullname: true },
     });
-    return prisma.hrDocument.create({
+    const doc = await prisma.hrDocument.create({
       data: {
         ...v,
+        data: encryptDocumentData(v.data) as any,
         userId,
         company: await this.companySnapshot(),
         issuedById: issuer.id,
@@ -238,6 +261,7 @@ export const documentUsecase = {
         requestId: request?.id ?? null,
       },
     });
+    return reveal(doc);
   },
 
   /**
@@ -270,7 +294,7 @@ export const documentUsecase = {
         deliveredById: by.id,
         deliveredByName: deliverer?.fullname || "Admin",
       },
-    });
+    }).then(reveal);
     if (doc.requestId) {
       const request = await prisma.userRequest.findFirst({
         where: { id: doc.requestId, deleted: false, status: "PENDING", userId: doc.userId },
@@ -288,6 +312,29 @@ export const documentUsecase = {
       }
     }
     return delivered;
+  },
+
+  /**
+   * Encrypts the details of documents saved before encryption. Runs each
+   * time documents are unlocked; only touches unencrypted ones.
+   */
+  async encryptLegacyDocuments() {
+    if ((await documentVault.state()) !== "unlocked") return;
+    try {
+      const docs = await prisma.hrDocument.findMany({ select: { id: true, data: true } });
+      let count = 0;
+      for (const d of docs) {
+        if (isEncrypted(d.data)) continue;
+        await prisma.hrDocument.update({
+          where: { id: d.id },
+          data: { data: encryptDocumentData(d.data) as any },
+        });
+        count++;
+      }
+      if (count) console.log(`[documents] Encrypted ${count} earlier document(s).`);
+    } catch (err) {
+      console.error("[documents] Could not encrypt earlier documents:", err);
+    }
   },
 
   /**
@@ -329,17 +376,27 @@ export const documentUsecase = {
 
   /** Editing re-issues the document with the current letterhead. */
   async update(id: string, body: any) {
+    await documentVault.assertUnlocked();
     await this.getById(id);
     const v = this.validate(body);
     const userId = await this.assertEmployee(body?.userId);
-    return prisma.hrDocument.update({
+    const doc = await prisma.hrDocument.update({
       where: { id },
-      data: { ...v, userId, company: await this.companySnapshot() },
+      data: {
+        ...v,
+        data: encryptDocumentData(v.data) as any,
+        userId,
+        company: await this.companySnapshot(),
+      },
     });
+    return reveal(doc);
   },
 
   async remove(id: string) {
-    await this.getById(id);
+    // Works while locked too: nothing needs decrypting.
+    assertId(id, "Document");
+    const exists = await prisma.hrDocument.findFirst({ where: { id, deleted: false }, select: { id: true } });
+    if (!exists) throw new DocumentError("Document not found", 404);
     return prisma.hrDocument.update({ where: { id }, data: { deleted: true } });
   },
 
@@ -438,7 +495,13 @@ export const documentUsecase = {
       "recipientAddress",
     ];
     for (const d of docs) {
-      const raw = (d.data || {}) as Record<string, any>;
+      // Skip a document that can't be decrypted rather than fail the form.
+      let raw: Record<string, any>;
+      try {
+        raw = openData(d.data);
+      } catch {
+        continue;
+      }
       // An increment/promotion letter's new salary/designation is the
       // employee's current one from then on.
       const data: Record<string, any> = {
@@ -522,3 +585,6 @@ export const documentUsecase = {
     });
   },
 };
+
+// Encrypt older unencrypted documents whenever documents get unlocked.
+setOnUnlocked(() => documentUsecase.encryptLegacyDocuments());

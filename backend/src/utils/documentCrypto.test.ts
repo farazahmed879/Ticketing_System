@@ -1,12 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   DocumentKeyMissingError,
   decryptDocumentData,
   encryptDocumentData,
+  hasActiveDocumentKey,
   isEncrypted,
+  newDataKey,
+  newKdfParams,
+  setActiveDocumentKey,
+  unwrapDataKey,
+  wrapDataKey,
 } from "./documentCrypto";
 
-const KEY = "test-key-for-document-encryption-0123456789";
+const KEY = newDataKey();
 const DATA = {
   salary: "250000",
   currency: "PKR",
@@ -14,7 +20,9 @@ const DATA = {
   accountNo: "PK36SCBL0000001123456702",
 };
 
-describe("documentCrypto", () => {
+afterEach(() => setActiveDocumentKey(null));
+
+describe("document data encryption", () => {
   it("round-trips document details", () => {
     const enc = encryptDocumentData(DATA, KEY);
     expect(isEncrypted(enc)).toBe(true);
@@ -28,21 +36,17 @@ describe("documentCrypto", () => {
     expect(stored).not.toContain("Basic");
   });
 
-  it("uses a fresh IV each time", () => {
-    const a = encryptDocumentData(DATA, KEY) as any;
-    const b = encryptDocumentData(DATA, KEY) as any;
+  it("uses a fresh IV each time and never double-encrypts", () => {
+    const a = encryptDocumentData(DATA, KEY);
+    const b = encryptDocumentData(DATA, KEY);
     expect(a.iv).not.toBe(b.iv);
     expect(a.ct).not.toBe(b.ct);
-  });
-
-  it("does not double-encrypt", () => {
-    const enc = encryptDocumentData(DATA, KEY);
-    expect(encryptDocumentData(enc, KEY)).toBe(enc);
+    expect(encryptDocumentData(a, KEY)).toBe(a);
   });
 
   it("rejects the wrong key and tampered data", () => {
-    const enc = encryptDocumentData(DATA, KEY) as any;
-    expect(() => decryptDocumentData(enc, "another-key")).toThrow();
+    const enc = encryptDocumentData(DATA, KEY);
+    expect(() => decryptDocumentData(enc, newDataKey())).toThrow();
     const ct = Buffer.from(enc.ct, "base64");
     ct[0] ^= 1;
     expect(() => decryptDocumentData({ ...enc, ct: ct.toString("base64") }, KEY)).toThrow();
@@ -52,14 +56,26 @@ describe("documentCrypto", () => {
     expect(decryptDocumentData(DATA, KEY)).toEqual(DATA);
   });
 
-  it("needs the key to open encrypted details", () => {
+  it("is locked until a key is in memory", () => {
     const enc = encryptDocumentData(DATA, KEY);
-    const saved = process.env.DOCUMENT_ENCRYPTION_KEY;
-    delete process.env.DOCUMENT_ENCRYPTION_KEY;
-    try {
-      expect(() => decryptDocumentData(enc)).toThrow(DocumentKeyMissingError);
-    } finally {
-      if (saved !== undefined) process.env.DOCUMENT_ENCRYPTION_KEY = saved;
-    }
+    expect(hasActiveDocumentKey()).toBe(false);
+    expect(() => decryptDocumentData(enc)).toThrow(DocumentKeyMissingError);
+    expect(() => encryptDocumentData(DATA)).toThrow(DocumentKeyMissingError);
+    setActiveDocumentKey(KEY);
+    expect(decryptDocumentData(enc)).toEqual(DATA);
+  });
+});
+
+describe("passphrase wrapping", () => {
+  it("unwraps the data key only with the right passphrase", async () => {
+    const kdf = newKdfParams();
+    const wrapped = await wrapDataKey(KEY, "correct horse battery staple", kdf);
+    expect(JSON.stringify(wrapped)).not.toContain(KEY.toString("base64"));
+    expect((await unwrapDataKey(wrapped, "correct horse battery staple", kdf))?.equals(KEY)).toBe(true);
+    expect(await unwrapDataKey(wrapped, "wrong passphrase!!", kdf)).toBeNull();
+  });
+
+  it("uses a new salt for every passphrase", () => {
+    expect(newKdfParams().salt).not.toBe(newKdfParams().salt);
   });
 });

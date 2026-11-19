@@ -2,7 +2,7 @@ import React from "react";
 import Modal from "../../components/Modal";
 import CustomButton from "../../components/CustomButton";
 import CustomIcon from "../../components/CustomIcon";
-import { useHrDocument } from "./documentApi";
+import { apiErrorMessage, useHrDocument } from "./documentApi";
 import DocumentPaper from "./DocumentPaper";
 import CustomSkeleton from "../../components/CustomSkeleton";
 import { type HrDocument } from "./documentConfig";
@@ -29,7 +29,7 @@ const DocumentViewerModal: React.FC<Props> = ({
   onDelete,
   onDeliver,
 }) => {
-  const { data: doc, isLoading, isError } = useHrDocument(documentId);
+  const { data: doc, isLoading, isError, error } = useHrDocument(documentId);
 
   const download = () =>
     doc &&
@@ -99,7 +99,12 @@ const DocumentViewerModal: React.FC<Props> = ({
       footer={footer || undefined}
     >
       {isLoading && <CustomSkeleton height={520} />}
-      {isError && <p className={styles.error}>This document could not be loaded.</p>}
+      {isError && (
+        <p className={styles.error}>
+          {/* e.g. "Documents are locked..." from the server */}
+          {apiErrorMessage(error, "This document could not be loaded.")}
+        </p>
+      )}
       {doc && onDeliver && doc.userId && (
         <p className={styles.deliveryNote}>
           {doc.delivered

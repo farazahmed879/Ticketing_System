@@ -30,7 +30,8 @@ import DocumentEditorModal, {
   type EmployeeOption,
 } from "./DocumentEditorModal";
 import DocumentViewerModal from "./DocumentViewerModal";
-import { apiErrorMessage, useCompanyProfile } from "./documentApi";
+import { apiErrorMessage, useCompanyProfile, useDocumentVault } from "./documentApi";
+import DocumentSecurityModal from "./DocumentSecurityModal";
 import styles from "./Documents.module.css";
 
 type Row = Pick<
@@ -144,6 +145,10 @@ const Documents: React.FC = () => {
   });
 
   const { data: company } = useCompanyProfile();
+  // Document passphrase: documents are encrypted and must be unlocked.
+  const { data: vault } = useDocumentVault();
+  const [securityOpen, setSecurityOpen] = useState(false);
+  const unlocked = vault?.state === "unlocked";
 
   const { data: employees = [] } = useQuery({
     queryKey: ["hr-document-employees"],
@@ -404,9 +409,18 @@ const Documents: React.FC = () => {
                 Letterhead
               </CustomButton>
               <CustomButton
+                variant="outline"
+                icon={<CustomIcon name={unlocked ? "LockOpen" : "Lock"} size={18} />}
+                onClick={() => setSecurityOpen(true)}
+                disabled={!vault}
+              >
+                Security
+              </CustomButton>
+              <CustomButton
                 variant="gradient"
                 icon={<CustomIcon name="Plus" size={20} />}
-                onClick={() => setPickerOpen(true)}
+                // Issuing needs unlocked documents: ask for the passphrase first.
+                onClick={() => (vault && !unlocked ? setSecurityOpen(true) : setPickerOpen(true))}
               >
                 New Document
               </CustomButton>
@@ -415,6 +429,17 @@ const Documents: React.FC = () => {
         }
         filters={
           <div className={styles.filters}>
+            {vault && !unlocked && (
+              <div className={styles.letterheadWarning} style={{ width: "100%" }}>
+                <CustomIcon name="Lock" size={18} />
+                {vault.state === "not_set_up"
+                  ? "Set a document passphrase to encrypt salary and other document details before issuing documents."
+                  : "Documents are locked after a server restart. Nobody, employees included, can open them until an Admin or Sub Admin unlocks them."}
+                <CustomButton size="sm" variant="outline" onClick={() => setSecurityOpen(true)}>
+                  {vault.state === "not_set_up" ? "Set passphrase" : "Unlock"}
+                </CustomButton>
+              </div>
+            )}
             {noLetterhead && (
               <div
                 className={styles.letterheadWarning}
@@ -633,6 +658,15 @@ const Documents: React.FC = () => {
           setToDeliver({ id: doc.id, title: doc.title, recipientName: doc.recipientName })
         }
       />
+
+      {securityOpen && vault && (
+        <DocumentSecurityModal
+          key={vault.state}
+          isOpen
+          vault={vault}
+          onClose={() => setSecurityOpen(false)}
+        />
+      )}
 
       <ConfirmationModal
         isOpen={!!toDeliver}

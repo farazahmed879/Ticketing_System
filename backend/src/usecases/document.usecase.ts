@@ -3,9 +3,12 @@ import {
   DocumentKeyMissingError,
   decryptDocumentData,
   encryptDocumentData,
-  hasDocumentKey,
   isEncrypted,
 } from "../utils/documentCrypto";
+import { DocumentError } from "./documentError";
+import { documentVault, setOnUnlocked } from "./documentVault.usecase";
+
+export { DocumentError };
 
 /**
  * HR documents issued by Admin / Sub Admin (pay slips, offer letters, ...).
@@ -56,22 +59,16 @@ const COMPANY_FIELDS = [
 const IMAGE_DATA_URL_RE = /^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i;
 const MAX_IMAGE_CHARS = 1_500_000; // ~1.1MB binary
 
-export class DocumentError extends Error {
-  constructor(
-    message: string,
-    public status = 400,
-  ) {
-    super(message);
-  }
-}
-
 /** Document details are encrypted at rest (see utils/documentCrypto). */
 const openData = (stored: unknown): Record<string, any> => {
   try {
     return decryptDocumentData(stored);
   } catch (err) {
     if (err instanceof DocumentKeyMissingError) {
-      throw new DocumentError("Documents can't be opened: the encryption key isn't configured", 500);
+      throw new DocumentError(
+        "Documents are locked. An Admin or Sub Admin must unlock them with the document passphrase.",
+        423,
+      );
     }
     // Wrong key or tampered data (GCM authentication failed).
     console.error("[documents] Could not decrypt a document:", (err as Error).message);
@@ -242,6 +239,7 @@ export const documentUsecase = {
 
   /** Saved as a draft; the employee only gets it once it's delivered. */
   async create(body: any, issuer: { id: string }) {
+    await documentVault.assertUnlocked();
     const v = this.validate(body);
     const userId = await this.assertEmployee(body?.userId);
     // Generated for an employee's document request? Check it now; the
@@ -317,16 +315,11 @@ export const documentUsecase = {
   },
 
   /**
-   * Encrypts the details of documents saved before encryption (or while no
-   * key was configured). Runs on startup; only touches unencrypted ones.
+   * Encrypts the details of documents saved before encryption. Runs each
+   * time documents are unlocked; only touches unencrypted ones.
    */
   async encryptLegacyDocuments() {
-    if (!hasDocumentKey()) {
-      console.warn(
-        "[documents] WARNING: DOCUMENT_ENCRYPTION_KEY is not set. Salary and other document details are stored unencrypted.",
-      );
-      return;
-    }
+    if ((await documentVault.state()) !== "unlocked") return;
     try {
       const docs = await prisma.hrDocument.findMany({ select: { id: true, data: true } });
       let count = 0;
@@ -383,6 +376,7 @@ export const documentUsecase = {
 
   /** Editing re-issues the document with the current letterhead. */
   async update(id: string, body: any) {
+    await documentVault.assertUnlocked();
     await this.getById(id);
     const v = this.validate(body);
     const userId = await this.assertEmployee(body?.userId);
@@ -399,7 +393,10 @@ export const documentUsecase = {
   },
 
   async remove(id: string) {
-    await this.getById(id);
+    // Works while locked too: nothing needs decrypting.
+    assertId(id, "Document");
+    const exists = await prisma.hrDocument.findFirst({ where: { id, deleted: false }, select: { id: true } });
+    if (!exists) throw new DocumentError("Document not found", 404);
     return prisma.hrDocument.update({ where: { id }, data: { deleted: true } });
   },
 
@@ -588,3 +585,6 @@ export const documentUsecase = {
     });
   },
 };
+
+// Encrypt older unencrypted documents whenever documents get unlocked.
+setOnUnlocked(() => documentUsecase.encryptLegacyDocuments());

@@ -143,6 +143,8 @@ export const documentUsecase = {
     type?: string;
     userId?: string;
     search?: string;
+    /** true = delivered only, false = drafts only, undefined = both. */
+    delivered?: boolean;
     page?: number;
     limit?: number;
   }) {
@@ -154,6 +156,7 @@ export const documentUsecase = {
       if (!OBJECT_ID_RE.test(params.userId)) return { items: [], total: 0 };
       where.userId = params.userId;
     }
+    if (params.delivered !== undefined) where.delivered = params.delivered;
     if (params.search?.trim()) {
       const q = params.search.trim();
       where.OR = [

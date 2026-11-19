@@ -46,6 +46,8 @@ export const documentController = {
       const result = await documentUsecase.list({
         type: q.type as string | undefined,
         userId: q.userId as string | undefined,
+        delivered:
+          q.delivered === "true" ? true : q.delivered === "false" ? false : undefined,
         search: q.search as string | undefined,
         page: q.page ? Number(q.page) : 0,
         limit: q.limit ? Number(q.limit) : 20,

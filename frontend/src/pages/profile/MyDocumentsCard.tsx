@@ -19,9 +19,10 @@ interface Row {
 }
 
 /**
- * Documents issued to a user (pay slips, letters). Employees see their own
- * on their profile; admins (Admin / Sub Admin) also see them on anyone's
- * profile. `?documentId=` (used by notifications) opens one directly.
+ * Documents delivered to a user (pay slips, letters). Employees see their
+ * own on their profile; admins (Admin / Sub Admin) also see them on anyone's
+ * profile. Drafts aren't shown here: they're on the Documents page until
+ * delivered. `?documentId=` (used by notifications) opens one directly.
  */
 const MyDocumentsCard: React.FC<{ userId: string; isSelf: boolean }> = ({ userId, isSelf }) => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -32,8 +33,12 @@ const MyDocumentsCard: React.FC<{ userId: string; isSelf: boolean }> = ({ userId
     queryFn: async () =>
       isSelf
         ? ((await api.get(API_ROUTES.DOCUMENTS.MINE)).data.items as Row[])
-        : ((await api.get(API_ROUTES.DOCUMENTS.BASE, { params: { userId, limit: 100 } })).data
-            .items as Row[]),
+        : // Same list the employee sees: drafts stay on the Documents page.
+          ((
+            await api.get(API_ROUTES.DOCUMENTS.BASE, {
+              params: { userId, delivered: true, limit: 100 },
+            })
+          ).data.items as Row[]),
   });
 
   const setOpen = (id: string | null) => {

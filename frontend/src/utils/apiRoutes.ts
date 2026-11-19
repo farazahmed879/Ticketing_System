@@ -114,7 +114,7 @@ export const API_ROUTES = {
     DELIVER: (id: string) => `/documents/${id}/deliver`,
   },
 
-  // Database backups (admin / manager)
+  // Database backups (Admin / Sub Admin)
   BACKUPS: {
     BASE: "/backups",
     DOWNLOAD: (id: string) => `/backups/${id}/download`,

@@ -141,6 +141,7 @@ server.listen(PORT, () => {
   // Built-in roles added after a DB was seeded (e.g. Sub Admin).
   ensureSubAdminRole();
   documentUsecase.markLegacyDelivered();
+  documentUsecase.encryptLegacyDocuments();
   startAutoCloseScheduler();
   startNotificationCleanupScheduler();
   startTimesheetReminderScheduler(io);

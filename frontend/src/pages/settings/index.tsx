@@ -680,8 +680,8 @@ const Settings: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const isAdmin = user?.role?.roleType === ROLE_TYPE.ADMIN;
-  const canManageBackups =
-    isAdmin || user?.role?.roleType === ROLE_TYPE.AGENT;
+  // Admin / Sub Admin only: a backup is a full copy of the database.
+  const canManageBackups = isAdmin;
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "theme");
   const [primaryColor, setPrimaryColor] = useState(

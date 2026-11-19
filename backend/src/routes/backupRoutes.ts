@@ -12,8 +12,9 @@ import { streamFromGoogleDrive } from '../services/googleDriveService';
 
 const router = Router();
 
-// Admins and Managers only (role re-checked in the DB on every call).
-router.use(authMiddleware, requireRoleTypes([RoleType.ADMIN, RoleType.AGENT]));
+// Admin / Sub Admin only (role re-checked in the DB on every call): a backup
+// is a full copy of the database, including staff personal data.
+router.use(authMiddleware, requireRoleTypes([RoleType.ADMIN]));
 
 /**
  * @swagger

@@ -1,4 +1,11 @@
 import prisma from "../prisma";
+import {
+  DocumentKeyMissingError,
+  decryptDocumentData,
+  encryptDocumentData,
+  hasDocumentKey,
+  isEncrypted,
+} from "../utils/documentCrypto";
 
 /**
  * HR documents issued by Admin / Sub Admin (pay slips, offer letters, ...).
@@ -57,6 +64,23 @@ export class DocumentError extends Error {
     super(message);
   }
 }
+
+/** Document details are encrypted at rest (see utils/documentCrypto). */
+const openData = (stored: unknown): Record<string, any> => {
+  try {
+    return decryptDocumentData(stored);
+  } catch (err) {
+    if (err instanceof DocumentKeyMissingError) {
+      throw new DocumentError("Documents can't be opened: the encryption key isn't configured", 500);
+    }
+    // Wrong key or tampered data (GCM authentication failed).
+    console.error("[documents] Could not decrypt a document:", (err as Error).message);
+    throw new DocumentError("This document could not be decrypted", 500);
+  }
+};
+
+/** A document with its details decrypted, for the API response. */
+const reveal = <T extends { data: unknown }>(doc: T): T => ({ ...doc, data: openData(doc.data) });
 
 const cleanImage = (v: unknown, field: string) => {
   if (v === null || v === undefined || v === "") return null;
@@ -213,7 +237,7 @@ export const documentUsecase = {
     assertId(id, "Document");
     const doc = await prisma.hrDocument.findFirst({ where: { id, deleted: false } });
     if (!doc) throw new DocumentError("Document not found", 404);
-    return doc;
+    return reveal(doc);
   },
 
   /** Saved as a draft; the employee only gets it once it's delivered. */
@@ -227,9 +251,10 @@ export const documentUsecase = {
       where: { id: issuer.id },
       select: { fullname: true },
     });
-    return prisma.hrDocument.create({
+    const doc = await prisma.hrDocument.create({
       data: {
         ...v,
+        data: encryptDocumentData(v.data) as any,
         userId,
         company: await this.companySnapshot(),
         issuedById: issuer.id,
@@ -238,6 +263,7 @@ export const documentUsecase = {
         requestId: request?.id ?? null,
       },
     });
+    return reveal(doc);
   },
 
   /**
@@ -270,7 +296,7 @@ export const documentUsecase = {
         deliveredById: by.id,
         deliveredByName: deliverer?.fullname || "Admin",
       },
-    });
+    }).then(reveal);
     if (doc.requestId) {
       const request = await prisma.userRequest.findFirst({
         where: { id: doc.requestId, deleted: false, status: "PENDING", userId: doc.userId },
@@ -288,6 +314,34 @@ export const documentUsecase = {
       }
     }
     return delivered;
+  },
+
+  /**
+   * Encrypts the details of documents saved before encryption (or while no
+   * key was configured). Runs on startup; only touches unencrypted ones.
+   */
+  async encryptLegacyDocuments() {
+    if (!hasDocumentKey()) {
+      console.warn(
+        "[documents] WARNING: DOCUMENT_ENCRYPTION_KEY is not set. Salary and other document details are stored unencrypted.",
+      );
+      return;
+    }
+    try {
+      const docs = await prisma.hrDocument.findMany({ select: { id: true, data: true } });
+      let count = 0;
+      for (const d of docs) {
+        if (isEncrypted(d.data)) continue;
+        await prisma.hrDocument.update({
+          where: { id: d.id },
+          data: { data: encryptDocumentData(d.data) as any },
+        });
+        count++;
+      }
+      if (count) console.log(`[documents] Encrypted ${count} earlier document(s).`);
+    } catch (err) {
+      console.error("[documents] Could not encrypt earlier documents:", err);
+    }
   },
 
   /**
@@ -332,10 +386,16 @@ export const documentUsecase = {
     await this.getById(id);
     const v = this.validate(body);
     const userId = await this.assertEmployee(body?.userId);
-    return prisma.hrDocument.update({
+    const doc = await prisma.hrDocument.update({
       where: { id },
-      data: { ...v, userId, company: await this.companySnapshot() },
+      data: {
+        ...v,
+        data: encryptDocumentData(v.data) as any,
+        userId,
+        company: await this.companySnapshot(),
+      },
     });
+    return reveal(doc);
   },
 
   async remove(id: string) {
@@ -438,7 +498,13 @@ export const documentUsecase = {
       "recipientAddress",
     ];
     for (const d of docs) {
-      const raw = (d.data || {}) as Record<string, any>;
+      // Skip a document that can't be decrypted rather than fail the form.
+      let raw: Record<string, any>;
+      try {
+        raw = openData(d.data);
+      } catch {
+        continue;
+      }
       // An increment/promotion letter's new salary/designation is the
       // employee's current one from then on.
       const data: Record<string, any> = {

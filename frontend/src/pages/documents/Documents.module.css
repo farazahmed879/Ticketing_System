@@ -266,6 +266,12 @@
   font-size: 0.8rem;
 }
 
+.deliveryNote {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
 .muted {
   color: var(--text-muted);
 }

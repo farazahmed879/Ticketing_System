@@ -91,6 +91,12 @@ export interface HrDocument {
   data: DocData;
   company: CompanyProfile;
   issuedByName?: string;
+  /** False = draft, only Admin / Sub Admin see it. */
+  delivered?: boolean;
+  deliveredAt?: string | null;
+  deliveredByName?: string | null;
+  /** Document request it was generated for (fulfilled on delivery). */
+  requestId?: string | null;
   createdAt: string;
   updatedAt: string;
 }

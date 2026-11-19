@@ -660,6 +660,14 @@ model HrDocument {
   company       Json
   issuedById    String   @db.ObjectId
   issuedByName  String
+  // Drafts are visible to Admin / Sub Admin only. The employee sees (and is
+  // notified about) a document once an admin delivers it.
+  delivered       Boolean   @default(false)
+  deliveredAt     DateTime?
+  deliveredById   String?   @db.ObjectId
+  deliveredByName String?
+  // Document request this was generated for; fulfilled on delivery.
+  requestId     String?  @db.ObjectId
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   deleted       Boolean  @default(false)

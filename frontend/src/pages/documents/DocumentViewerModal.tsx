@@ -8,6 +8,7 @@ import CustomSkeleton from "../../components/CustomSkeleton";
 import { type HrDocument } from "./documentConfig";
 import { documentFileName, printDocument } from "./printDocument";
 import styles from "./Documents.module.css";
+import { formatDate } from "../../utils/helpers";
 
 interface Props {
   documentId: string | null;
@@ -16,6 +17,8 @@ interface Props {
   onEdit?: (doc: HrDocument) => void;
   onDuplicate?: (doc: HrDocument) => void;
   onDelete?: (doc: HrDocument) => void;
+  /** Hand a draft to its employee. */
+  onDeliver?: (doc: HrDocument) => void;
 }
 
 const DocumentViewerModal: React.FC<Props> = ({
@@ -24,6 +27,7 @@ const DocumentViewerModal: React.FC<Props> = ({
   onEdit,
   onDuplicate,
   onDelete,
+  onDeliver,
 }) => {
   const { data: doc, isLoading, isError } = useHrDocument(documentId);
 
@@ -64,6 +68,16 @@ const DocumentViewerModal: React.FC<Props> = ({
             Edit
           </CustomButton>
         )}
+        {onDeliver && doc.userId && !doc.delivered && (
+          <CustomButton
+            variant="outline"
+            icon={<CustomIcon name="Send" size={16} />}
+            onClick={() => onDeliver(doc)}
+            title="Share this document with the employee"
+          >
+            Deliver
+          </CustomButton>
+        )}
         <CustomButton
           variant="gradient"
           icon={<CustomIcon name="Download" size={16} />}
@@ -86,6 +100,13 @@ const DocumentViewerModal: React.FC<Props> = ({
     >
       {isLoading && <CustomSkeleton height={520} />}
       {isError && <p className={styles.error}>This document could not be loaded.</p>}
+      {doc && onDeliver && doc.userId && (
+        <p className={styles.deliveryNote}>
+          {doc.delivered
+            ? `Delivered to ${doc.recipientName}${doc.deliveredAt ? ` on ${formatDate(doc.deliveredAt)}` : ""}${doc.deliveredByName ? ` by ${doc.deliveredByName}` : ""}.`
+            : `Draft: ${doc.recipientName} can't see this document until you deliver it.`}
+        </p>
+      )}
       {doc && (
         <div className={styles.viewerPane}>
           <div className={styles.paperScaler}>

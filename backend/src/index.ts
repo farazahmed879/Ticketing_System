@@ -45,6 +45,7 @@ import { startTimesheetReminderScheduler } from './services/timesheetReminder';
 import { startDbBackupScheduler } from './services/dbBackupService';
 import { startSessionCleanupScheduler } from './services/sessionService';
 import { ensureSubAdminRole } from './services/ensureSystemRoles';
+import { documentUsecase } from './usecases/document.usecase';
 
 const app = express();
 const server = http.createServer(app);
@@ -139,6 +140,7 @@ server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   // Built-in roles added after a DB was seeded (e.g. Sub Admin).
   ensureSubAdminRole();
+  documentUsecase.markLegacyDelivered();
   startAutoCloseScheduler();
   startNotificationCleanupScheduler();
   startTimesheetReminderScheduler(io);

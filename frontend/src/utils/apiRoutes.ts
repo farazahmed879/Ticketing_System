@@ -111,6 +111,7 @@ export const API_ROUTES = {
     PREFILL: (userId: string) => `/documents/prefill/${userId}`,
     CANDIDATES: "/documents/candidates",
     BY_ID: (id: string) => `/documents/${id}`,
+    DELIVER: (id: string) => `/documents/${id}/deliver`,
   },
 
   // Database backups (admin / manager)

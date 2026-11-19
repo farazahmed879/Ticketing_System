@@ -88,8 +88,8 @@ const Requests: React.FC = () => {
   });
 
   const handleUpdateStatus = async (id: string, status: string) => {
-    // Approving a document request = generating the document; issuing it
-    // on the Documents page approves the request.
+    // Approving a document request = generating the document; delivering
+    // it on the Documents page approves the request.
     const req = requests.find((r) => r.id === id);
     if (status === "APPROVED" && req && isDocumentRequest(req)) {
       navigate(generateDocumentLink(req));

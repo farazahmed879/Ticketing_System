@@ -3,8 +3,8 @@ import { docTypeLabel } from "../documents/documentConfig";
 
 /**
  * "Document request": an employee asks Admin / Sub Admin for an HR document.
- * Approving one means generating the document on the Documents page; issuing
- * it there with the request id approves the request and links the document.
+ * Approving one means generating the document on the Documents page (saved
+ * as a draft); delivering it there approves the request and links the document.
  * Keep in sync with DOCUMENT_REQUEST / REQUESTABLE_DOCUMENTS in
  * backend/src/usecases/request.usecase.ts.
  */

@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { documentController } from "../controllers/document.controller";
-import { authMiddleware, requireAdmin, denyRestrictedDelete } from "../middleware/auth";
+import { authMiddleware, requireAdmin } from "../middleware/auth";
 
 /**
  * HR documents (pay slips, offer letters, ...). Managed by admin-type roles
- * (Admin and Sub Admin); Sub Admin can't delete. Employees can read the
+ * (Admin and Sub Admin). Both can delete documents: an intentional exception
+ * to Sub Admin's no-delete rule. Employees can read the
  * documents issued to them via /mine and /:id.
  */
 const router = Router();
@@ -21,6 +22,7 @@ router.get("/", requireAdmin, documentController.list);
 router.post("/", requireAdmin, documentController.create);
 router.get("/:id", documentController.getById);
 router.put("/:id", requireAdmin, documentController.update);
-router.delete("/:id", requireAdmin, denyRestrictedDelete, documentController.remove);
+router.post("/:id/deliver", requireAdmin, documentController.deliver);
+router.delete("/:id", requireAdmin, documentController.remove);
 
 export default router;

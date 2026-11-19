@@ -71,7 +71,8 @@ export const documentController = {
       const doc = await documentUsecase.getById(req.params.id as string);
       const role = await loadCallerRole(req);
       const isAdmin = role?.roleType === RoleType.ADMIN;
-      if (!isAdmin && doc.userId !== req.user!.id) {
+      // Employees only see their own documents, and only once delivered.
+      if (!isAdmin && (doc.userId !== req.user!.id || !doc.delivered)) {
         return res.status(404).json({ message: "Document not found" });
       }
       res.json({ document: doc });
@@ -99,8 +100,8 @@ export const documentController = {
 
   async create(req: AuthRequest, res: Response) {
     try {
+      // A draft: the employee is notified when it's delivered.
       const doc = await documentUsecase.create(req.body, req.user!);
-      await notify(req, doc);
       res.status(201).json({ document: doc });
     } catch (e) {
       fail(res, e, "create document");
@@ -110,10 +111,21 @@ export const documentController = {
   async update(req: AuthRequest, res: Response) {
     try {
       const doc = await documentUsecase.update(req.params.id as string, req.body);
-      await notify(req, doc, true);
+      // Only tell the employee about changes to a document they already have.
+      if (doc.delivered) await notify(req, doc, true);
       res.json({ document: doc });
     } catch (e) {
       fail(res, e, "update document");
+    }
+  },
+
+  async deliver(req: AuthRequest, res: Response) {
+    try {
+      const doc = await documentUsecase.deliver(req.params.id as string, req.user!);
+      await notify(req, doc);
+      res.json({ document: doc });
+    } catch (e) {
+      fail(res, e, "deliver document");
     }
   },
 

@@ -177,6 +177,9 @@ export const documentUsecase = {
           userId: true,
           recipientName: true,
           issuedByName: true,
+          delivered: true,
+          deliveredAt: true,
+          deliveredByName: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -186,15 +189,17 @@ export const documentUsecase = {
     return { items, total };
   },
 
+  /** The employee's delivered documents (drafts stay with the admins). */
   async listForUser(userId: string) {
     return prisma.hrDocument.findMany({
-      where: { userId, deleted: false },
+      where: { userId, deleted: false, delivered: true },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
         type: true,
         title: true,
         recipientName: true,
+        deliveredAt: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -208,10 +213,12 @@ export const documentUsecase = {
     return doc;
   },
 
+  /** Saved as a draft; the employee only gets it once it's delivered. */
   async create(body: any, issuer: { id: string }) {
     const v = this.validate(body);
     const userId = await this.assertEmployee(body?.userId);
-    // Issued for an employee's document request? Check it before creating.
+    // Generated for an employee's document request? Check it now; the
+    // request is fulfilled when the document is delivered.
     const request = body?.requestId ? await this.pendingDocumentRequest(body.requestId, userId) : null;
     const issuerUser = await prisma.user.findUnique({
       where: { id: issuer.id },
@@ -224,21 +231,81 @@ export const documentUsecase = {
         company: await this.companySnapshot(),
         issuedById: issuer.id,
         issuedByName: issuerUser?.fullname || "Admin",
+        delivered: false,
+        requestId: request?.id ?? null,
       },
-    }).then(async (doc) => {
+    });
+  },
+
+  /**
+   * Hand the document to its employee: from now on they see it on their
+   * profile (and get notified). Fulfils the document request it was
+   * generated for, if that's still pending.
+   */
+  async deliver(id: string, by: { id: string }) {
+    const doc = await this.getById(id);
+    if (!doc.userId) {
+      throw new DocumentError(
+        "Only documents issued to an employee can be delivered. Download the PDF to share it with an external recipient.",
+      );
+    }
+    if (doc.delivered) throw new DocumentError("This document has already been delivered");
+    const employee = await prisma.user.findFirst({
+      where: { id: doc.userId, deleted: false },
+      select: { id: true },
+    });
+    if (!employee) throw new DocumentError("This employee is no longer active");
+    const deliverer = await prisma.user.findUnique({
+      where: { id: by.id },
+      select: { fullname: true },
+    });
+    const delivered = await prisma.hrDocument.update({
+      where: { id },
+      data: {
+        delivered: true,
+        deliveredAt: new Date(),
+        deliveredById: by.id,
+        deliveredByName: deliverer?.fullname || "Admin",
+      },
+    });
+    if (doc.requestId) {
+      const request = await prisma.userRequest.findFirst({
+        where: { id: doc.requestId, deleted: false, status: "PENDING", userId: doc.userId },
+      });
       if (request) {
-        // Fulfil the request: approved by the issuer, linked to the document.
+        // Approved by whoever delivered it, linked to the document.
         await prisma.userRequest.update({
           where: { id: request.id },
           data: {
             status: "APPROVED",
-            approvedById: issuer.id,
+            approvedById: by.id,
             data: { ...((request.data as object) || {}), documentId: doc.id },
           },
         });
       }
-      return doc;
-    });
+    }
+    return delivered;
+  },
+
+  /**
+   * Documents issued before delivery existed were already shown to their
+   * employees: mark them delivered so they stay visible. New documents
+   * always store `delivered`, so this only touches old ones. Safe on every boot.
+   */
+  async markLegacyDelivered() {
+    try {
+      // Raw: Prisma can't filter a required field on "not stored".
+      const res: any = await prisma.$runCommandRaw({
+        update: "HrDocument",
+        updates: [
+          { q: { delivered: { $exists: false } }, u: { $set: { delivered: true } }, multi: true },
+        ],
+      });
+      const count = Number(res?.nModified ?? 0);
+      if (count) console.log(`[documents] Marked ${count} earlier document(s) as delivered.`);
+    } catch (err) {
+      console.error("[documents] Could not mark earlier documents as delivered:", err);
+    }
   },
 
   /** A pending document request by `userId` (the document's employee). */

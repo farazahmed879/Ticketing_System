@@ -16,7 +16,6 @@ import type { TableColumn } from "../../components/types";
 import api from "../../services/api";
 import { API_ROUTES } from "../../utils/apiRoutes";
 import { useNotification } from "../../context/NotificationContext";
-import { canDeleteRecords } from "../../utils/deleteAccess";
 import { formatDate, useListViewMode } from "../../utils/helpers";
 import {
   DOCUMENT_TYPES,
@@ -42,6 +41,8 @@ type Row = Pick<
   | "userId"
   | "recipientName"
   | "issuedByName"
+  | "delivered"
+  | "deliveredAt"
   | "createdAt"
   | "updatedAt"
 >;
@@ -111,6 +112,11 @@ const Documents: React.FC = () => {
     id: string;
     title: string;
   } | null>(null);
+  const [toDeliver, setToDeliver] = useState<{
+    id: string;
+    title: string;
+    recipientName: string;
+  } | null>(null);
   const viewingId = searchParams.get("documentId");
 
   useEffect(() => {
@@ -170,11 +176,12 @@ const Documents: React.FC = () => {
       const wasEditing = !!editing;
       showNotification(
         "success",
-        `${doc.title} ${wasEditing ? "updated" : "generated"}${doc.userId ? " and shared with the employee" : ""}.`,
+        wasEditing
+          ? `${doc.title} updated${doc.delivered ? " (the employee was notified)" : ""}.`
+          : doc.userId
+            ? `${doc.title} saved as a draft. Deliver it when it's ready for the employee.`
+            : `${doc.title} generated.`,
       );
-      if (fromRequest && doc.userId === fromRequest.userId) {
-        queryClient.invalidateQueries({ queryKey: ["requests"] });
-      }
       setEditing(null);
       setDuplicating(null);
       setFromRequest(null);
@@ -206,12 +213,30 @@ const Documents: React.FC = () => {
       ),
   });
 
+  const deliver = useMutation({
+    mutationFn: async (id: string) =>
+      (await api.post(API_ROUTES.DOCUMENTS.DELIVER(id))).data
+        .document as HrDocument,
+    onSuccess: (doc) => {
+      showNotification("success", `${doc.title} delivered to ${doc.recipientName}.`);
+      setToDeliver(null);
+      refresh();
+      queryClient.setQueryData(["hr-document", doc.id], doc);
+      // Delivering fulfils the document request it was generated for.
+      if (doc.requestId) queryClient.invalidateQueries({ queryKey: ["requests"] });
+    },
+    onError: (err) =>
+      showNotification("error", apiErrorMessage(err, "Failed to deliver document")),
+  });
+
   const employeeName = useMemo(() => {
     const m = new Map(employees.map((e) => [e.id, e.fullname]));
     return (id?: string | null) => (id ? m.get(id) : undefined);
   }, [employees]);
 
-  const canDelete = canDeleteRecords();
+  // Admin and Sub Admin can both delete documents: an intentional exception
+  // to Sub Admin's no-delete rule (the backend route allows it too).
+  const canDelete = true;
 
   /** Fetch the full document (list rows are summaries), then act on it. */
   const loadThen = async (id: string, then: (doc: HrDocument) => void) => {
@@ -225,6 +250,20 @@ const Documents: React.FC = () => {
   // Row actions, shared by the table and the card grid.
   const renderActions = (r: Row) => (
         <div className={styles.rowActions} onClick={(e) => e.stopPropagation()}>
+          {r.userId && !r.delivered && (
+            <CustomTooltip text="Deliver to employee">
+              <CustomButton
+                variant="ghost"
+                size="sm"
+                aria-label="Deliver"
+                onClick={() =>
+                  setToDeliver({ id: r.id, title: r.title, recipientName: r.recipientName })
+                }
+              >
+                <CustomIcon name="Send" size={16} color="var(--accent-primary)" />
+              </CustomButton>
+            </CustomTooltip>
+          )}
           <CustomTooltip text="View / Download">
             <CustomButton
               variant="ghost"
@@ -281,6 +320,16 @@ const Documents: React.FC = () => {
         : "Employee (inactive)"
       : "External recipient";
 
+  // Draft until delivered; external recipients get the PDF instead.
+  const statusBadge = (r: Row) =>
+    !r.userId ? (
+      <CustomBadge variant="neutral">PDF only</CustomBadge>
+    ) : r.delivered ? (
+      <CustomBadge variant="success">Delivered</CustomBadge>
+    ) : (
+      <CustomBadge variant="warning">Draft</CustomBadge>
+    );
+
   const columns: TableColumn<Row>[] = [
     {
       header: "Document",
@@ -304,6 +353,11 @@ const Documents: React.FC = () => {
     },
     { header: "Issued By", key: "issuedByName" },
     {
+      header: "Status",
+      key: "delivered",
+      render: (r) => statusBadge(r),
+    },
+    {
       header: "Date",
       key: "createdAt",
       render: (r) => (
@@ -318,7 +372,7 @@ const Documents: React.FC = () => {
     {
       header: "",
       key: "actions",
-      width: "170px",
+      width: "210px",
       render: (r) => renderActions(r),
     },
   ];
@@ -473,6 +527,7 @@ const Documents: React.FC = () => {
                     <strong>{r.title}</strong>
                     <small>{docTypeLabel(r.type)}</small>
                   </div>
+                  <span style={{ marginLeft: "auto" }}>{statusBadge(r)}</span>
                 </div>
                 <div className={styles.recipient}>
                   <span>{r.recipientName}</span>
@@ -574,6 +629,19 @@ const Documents: React.FC = () => {
             ? (doc) => setToDelete({ id: doc.id, title: doc.title })
             : undefined
         }
+        onDeliver={(doc) =>
+          setToDeliver({ id: doc.id, title: doc.title, recipientName: doc.recipientName })
+        }
+      />
+
+      <ConfirmationModal
+        isOpen={!!toDeliver}
+        onClose={() => setToDeliver(null)}
+        onConfirm={() => toDeliver && deliver.mutate(toDeliver.id)}
+        title="Deliver document"
+        message={`Deliver “${toDeliver?.title}” to ${toDeliver?.recipientName}? They'll be notified and can view and download it from their profile.`}
+        confirmText="Deliver"
+        loading={deliver.isPending}
       />
 
       <ConfirmationModal

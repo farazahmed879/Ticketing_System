@@ -4,6 +4,7 @@ import CustomIcon from "../../../components/CustomIcon";
 import CustomBadge from "../../../components/CustomBadge";
 import type { Candidate } from "../../../types";
 import styles from "./CandidateDetail.module.css";
+import { FormattedTaskDescription } from "../../timesheet/components/TaskDescriptionEditor";
 
 interface CandidateHiringTabProps {
   candidate: Candidate;
@@ -186,9 +187,15 @@ export const CandidateHiringTab: React.FC<CandidateHiringTabProps> = ({
                             >
                               Comments
                             </span>
-                            <p className={styles.feedbackComment}>
-                              {fb.comments || "No comments provided."}
-                            </p>
+                            {/* Comments are rich text (HTML) from the feedback editor */}
+                            {fb.comments ? (
+                              <FormattedTaskDescription
+                                content={fb.comments}
+                                className={styles.feedbackComment}
+                              />
+                            ) : (
+                              <p className={styles.feedbackComment}>No comments provided.</p>
+                            )}
                           </div>
                           <div className={styles.recommendationRow}>
                             <span

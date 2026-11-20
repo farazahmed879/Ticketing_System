@@ -71,12 +71,14 @@ const TimesheetReport: React.FC = () => {
             onChange={(val) => setMonth(parseInt(val))}
             options={months.map((m, i) => ({ value: i.toString(), label: m }))}
             className={styles.reportSelectMonth}
+            isClearable={false}
           />
           <CustomSelect
             value={year.toString()}
             onChange={(val) => setYear(parseInt(val))}
             options={years.map(y => ({ value: y.toString(), label: y.toString() }))}
             className={styles.reportSelectYear}
+            isClearable={false}
           />
           <CustomButton variant="secondary" icon={<CustomIcon name="Download" size={18} />}>
             Export PDF
